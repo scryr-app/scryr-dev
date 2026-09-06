@@ -39,7 +39,7 @@ pub async fn run(args: ServerArgs) -> std::io::Result<()> {
     let clerk_client = env::var("CLERK_SECRET_KEY")
         .ok()
         .filter(|value| !value.trim().is_empty())
-        .map(|secret_key| Clerk::new(ClerkConfiguration::new(None, None, Some(secret_key), None)));
+        .map(|secret_key| Clerk::new(ClerkConfiguration::new(secret_key)));
     let clerk_authorizer = clerk_client
         .clone()
         .map(|clerk| ClerkAuthorizer::new(MemoryCacheJwksProvider::new(clerk), true));

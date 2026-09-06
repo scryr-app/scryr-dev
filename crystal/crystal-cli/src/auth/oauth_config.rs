@@ -3,7 +3,7 @@
 use crate::args::LoginArgs;
 use base64::Engine;
 use base64::engine::general_purpose::{STANDARD, URL_SAFE_NO_PAD};
-use rand::RngCore;
+use rand::Rng;
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use url::Url;

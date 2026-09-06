@@ -88,7 +88,7 @@ const SCHEMA_STATEMENTS: &[(&str, &str)] = &[
 /// Create the local `SQLite` artifact storage tables when they do not already exist.
 async fn ensure_sqlite_table(pool: &SqlitePool) -> Result<(), String> {
     for (description, statement) in SCHEMA_STATEMENTS {
-        sqlx::query(statement)
+        sqlx::query(*statement)
             .execute(pool)
             .await
             .map_err(|error| format!("Failed to {description} in local SQLite storage: {error}"))?;
