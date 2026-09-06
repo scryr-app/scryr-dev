@@ -27,7 +27,7 @@ COPY crystal-cli ./crystal-cli
 RUN cargo build --release -p crystal-cli --bin scryr
 
 # --- Runtime stage ---
-FROM ubuntu:24.04
+FROM ubuntu:26.04
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates \
