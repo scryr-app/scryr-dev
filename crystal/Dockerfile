@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # --- Build stage ---
-FROM rust:1.96-bookworm AS builder
+FROM rust:1.98-bookworm AS builder
 
 WORKDIR /app
 
@@ -27,7 +27,7 @@ COPY crystal-cli ./crystal-cli
 RUN cargo build --release -p crystal-cli --bin scryr
 
 # --- Runtime stage ---
-FROM ubuntu:24.04
+FROM ubuntu:26.04
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates \

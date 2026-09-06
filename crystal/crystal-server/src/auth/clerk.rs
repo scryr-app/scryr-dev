@@ -2,7 +2,7 @@
 
 use super::models::{AuthOrganizationContext, AuthenticatedRequest};
 use crate::state::AppState;
-use clerk_rs::{apis::users_api::User as ClerkUserApi, validators::authorizer::ClerkJwt};
+use clerk_rs::{apis::users_api, validators::authorizer::ClerkJwt};
 use crystal_core::manifest::ManifestRequestContext;
 use serde_json::{Map, Value};
 
@@ -21,11 +21,11 @@ pub(super) async fn verified_manifest_request_context(
     let mut verified_contexts = Vec::new();
     let mut offset = 0_u64;
     loop {
-        let memberships = ClerkUserApi::users_get_organization_memberships(
-            clerk_client,
+        let memberships = users_api::users_get_organization_memberships(
+            &clerk_client.config,
             auth.user_id(),
             Some(100),
-            Some(offset),
+            Some(u32::try_from(offset).map_err(|_| "Clerk membership offset exceeds API limit")?),
         )
         .await
         .map_err(|error| {
@@ -37,15 +37,13 @@ pub(super) async fn verified_manifest_request_context(
         let returned_count = memberships.data.len() as u64;
 
         for membership in memberships.data {
-            let Some(organization) = membership.organization.as_deref() else {
-                continue;
-            };
+            let organization = &membership.organization;
             let context = ManifestRequestContext {
                 clerk_user_id: auth.user_id().to_string(),
                 clerk_org_id: organization.id.clone(),
                 clerk_org_slug: non_empty_string(Some(organization.slug.as_str())),
-                clerk_org_role: membership.role,
-                clerk_org_permissions: membership.permissions.unwrap_or_default(),
+                clerk_org_role: Some(membership.role),
+                clerk_org_permissions: membership.permissions,
             };
             if requested_org_id == Some(context.clerk_org_id.as_str()) {
                 return Ok(context);
