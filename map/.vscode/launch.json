@@ -1,0 +1,25 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "🗺️ Vite (deno task dev + inspect)",
+			"type": "node-terminal",
+			"request": "launch",
+			"command": "deno task dev",
+			"cwd": "${workspaceFolder}",
+			"env": {
+				"NODE_ENV": "development",
+				"NODE_OPTIONS": "--inspect=9229",
+				"BROWSER": "none"
+			}
+		},
+		{
+			"name": "🌐 Chrome: Vite client",
+			"type": "pwa-chrome",
+			"request": "launch",
+			"url": "http://localhost:3000",
+			"webRoot": "${workspaceFolder}",
+			"sourceMaps": true
+		}
+	]
+}

@@ -1,0 +1,3953 @@
+{
+  "files": [
+    {
+      "path": "index.scry",
+      "content": "\"\"\"OpenTelemetry Astronomy Shop Demo manifest.\n\nA polyglot microservice e-commerce demo illustrating OpenTelemetry\ninstrumentation across many languages and runtimes.\n\nArchitecture reference: https://opentelemetry.io/docs/demo/architecture/\nSource: https://github.com/open-telemetry/opentelemetry-demo\n\"\"\"\n\nfrom scryr.manifest import Diagram, Link, Manifest\nfrom scryr.saas import Classification\nfrom scryr.types import (\n    AuthType,\n    CICDToolType,\n    DeploymentTarget,\n    IaCToolType,\n    LogAggregationType,\n    MonitoringType,\n    ProgrammingLanguage,\n    TracingType,\n    Url,\n    WebFramework,\n    parse_version,\n)\n\n_SOURCE = Url(\"https://github.com/open-telemetry/opentelemetry-demo\")\n_DOCS = Url(\"https://opentelemetry.io/docs/demo/\")\n_DEPLOYMENT = DeploymentTarget.k8s_cluster\n_CICD = CICDToolType.github_actions\n_IAC = IaCToolType.helm\n_MONITOR = MonitoringType.prometheus\n_LOGS = LogAggregationType.loki\n_TRACING = TracingType.jaeger\nkafka_block = Manifest(\n    name=\"Kafka\",\n    icon=\"📨\",\n    classification=Classification.queue,\n    tags=[\"messaging\", \"async\", \"infra\"],\n    connections=[],\n    description=\"Apache Kafka message queue used for async order events between Checkout, Accounting, and Fraud Detection.\",\n    version=parse_version(\"3.6.0\"),\n    language=ProgrammingLanguage.java,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Platform\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=3,\n    min_replicas=1,\n    links=[Link(site_name=\"Demo Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nvalkey_block = Manifest(\n    name=\"Valkey\",\n    icon=\"🗄️\",\n    classification=Classification.cache_store,\n    tags=[\"cache\", \"infra\"],\n    connections=[],\n    description=\"Valkey (Redis-compatible) in-memory cache used by the Cart Service to store shopping cart state.\",\n    version=parse_version(\"7.2.0\"),\n    language=ProgrammingLanguage.c,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Platform\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[Link(site_name=\"Demo Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\npostgres_block = Manifest(\n    name=\"PostgreSQL\",\n    icon=\"🐘\",\n    classification=Classification.database,\n    tags=[\"database\", \"sql\", \"infra\"],\n    connections=[],\n    description=\"Relational database used by the Accounting Service to persist order records.\",\n    version=parse_version(\"16.0.0\"),\n    language=ProgrammingLanguage.c,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Platform\",\n    auth_type=AuthType.basic,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[Link(site_name=\"Demo Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nflagd_block = Manifest(\n    name=\"Flagd\",\n    icon=\"🚩\",\n    classification=Classification.internal_api,\n    tags=[\"feature-flags\", \"infra\"],\n    connections=[],\n    description=\"OpenFeature-compatible feature flag daemon consumed by Ad and other services for runtime toggles.\",\n    version=parse_version(\"0.10.0\"),\n    language=ProgrammingLanguage.go,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Platform\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[Link(site_name=\"Demo Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\naccounting_block = Manifest(\n    name=\"Accounting\",\n    icon=\"🧾\",\n    classification=Classification.worker,\n    tags=[\"orders\", \"finance\"],\n    connections=[\"Kafka\", \"PostgreSQL\"],\n    description=\"Processes incoming orders from Kafka and tallies the sum of all orders (mock). Written in .NET.\",\n    version=parse_version(\"1.0.0\"),\n    language=ProgrammingLanguage.csharp,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Finance\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=2,\n    min_replicas=1,\n    links=[Link(site_name=\"Demo Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nad_block = Manifest(\n    name=\"Ad\",\n    icon=\"📢\",\n    classification=Classification.internal_api,\n    tags=[\"ads\", \"recommendations\"],\n    connections=[\"Flagd\"],\n    description=\"Provides contextual text ads based on product category keywords. Uses Flagd for feature-flag controlled ad campaigns. Written in Java.\",\n    version=parse_version(\"1.0.0\"),\n    language=ProgrammingLanguage.java,\n    frameworks=[WebFramework.spring_boot],\n    deployment=_DEPLOYMENT,\n    owner_team=\"Growth\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=3,\n    min_replicas=1,\n    links=[Link(site_name=\"Demo Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\ncart_block = Manifest(\n    name=\"Cart\",\n    icon=\"🛒\",\n    classification=Classification.internal_api,\n    tags=[\"cart\", \"shopping\"],\n    connections=[\"Valkey\", \"Flagd\"],\n    description=\"Stores and retrieves shopping cart items per user session in Valkey. Written in .NET.\",\n    version=parse_version(\"1.0.0\"),\n    language=ProgrammingLanguage.csharp,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Commerce\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=3,\n    min_replicas=1,\n    links=[Link(site_name=\"Demo Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\ncheckout_block = Manifest(\n    name=\"Checkout\",\n    icon=\"💳\",\n    classification=Classification.internal_api,\n    tags=[\"checkout\", \"orders\", \"orchestration\"],\n    connections=[\"Cart\", \"Currency\", \"Email\", \"Payment\", \"Product Catalog\", \"Shipping\", \"Kafka\"],\n    description=\"Orchestrates the full purchase flow: retrieves cart, converts currency, charges payment, ships order, sends email, and publishes order events to Kafka. Written in Go.\",\n    version=parse_version(\"1.0.0\"),\n    language=ProgrammingLanguage.go,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Commerce\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=3,\n    min_replicas=1,\n    links=[Link(site_name=\"Demo Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\ncurrency_block = Manifest(\n    name=\"Currency\",\n    icon=\"💱\",\n    classification=Classification.internal_api,\n    tags=[\"currency\", \"finance\"],\n    connections=[],\n    description=\"Converts monetary amounts between currencies using real exchange rates from the European Central Bank. Highest QPS service. Written in C++.\",\n    version=parse_version(\"1.0.0\"),\n    language=ProgrammingLanguage.cpp,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Commerce\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=5,\n    min_replicas=2,\n    links=[Link(site_name=\"Demo Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nemail_block = Manifest(\n    name=\"Email\",\n    icon=\"✉️\",\n    classification=Classification.internal_api,\n    tags=[\"email\", \"notifications\"],\n    connections=[],\n    description=\"Sends order confirmation emails to customers (mock). Written in Ruby.\",\n    version=parse_version(\"1.0.0\"),\n    language=ProgrammingLanguage.ruby,\n    frameworks=[WebFramework.sinatra],\n    deployment=_DEPLOYMENT,\n    owner_team=\"Commerce\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=2,\n    min_replicas=1,\n    links=[Link(site_name=\"Demo Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nflagd_ui_block = Manifest(\n    name=\"Flagd-UI\",\n    icon=\"🎛️\",\n    classification=Classification.admin_ui,\n    tags=[\"feature-flags\", \"admin\"],\n    connections=[\"Flagd\"],\n    description=\"Web UI for toggling and editing OpenFeature feature flags backed by Flagd. Written in Elixir/Phoenix.\",\n    version=parse_version(\"1.0.0\"),\n    language=ProgrammingLanguage.elixir,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Platform\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[Link(site_name=\"Demo Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nfraud_detection_block = Manifest(\n    name=\"Fraud Detection\",\n    icon=\"🕵️\",\n    classification=Classification.worker,\n    tags=[\"fraud\", \"risk\", \"async\"],\n    connections=[\"Kafka\"],\n    description=\"Consumes order events from Kafka and applies heuristics to flag potentially fraudulent transactions (mock). Written in Kotlin.\",\n    version=parse_version(\"1.0.0\"),\n    language=ProgrammingLanguage.kotlin,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Trust & Safety\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=2,\n    min_replicas=1,\n    links=[Link(site_name=\"Demo Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nimage_provider_block = Manifest(\n    name=\"Image Provider\",\n    icon=\"🖼️\",\n    classification=Classification.object_storage,\n    tags=[\"assets\", \"static\", \"images\"],\n    connections=[],\n    description=\"Serves product images via nginx. Acts as a static asset CDN inside the demo cluster.\",\n    version=parse_version(\"1.25.0\"),\n    language=ProgrammingLanguage.go,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Frontend\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=2,\n    min_replicas=1,\n    links=[Link(site_name=\"Demo Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\npayment_block = Manifest(\n    name=\"Payment\",\n    icon=\"💰\",\n    classification=Classification.internal_api,\n    tags=[\"payments\", \"billing\"],\n    connections=[\"Flagd\"],\n    description=\"Charges credit cards (mock) with a given amount and returns a transaction ID. Written in JavaScript/Node.\",\n    version=parse_version(\"1.0.0\"),\n    language=ProgrammingLanguage.javascript,\n    frameworks=[WebFramework.express],\n    deployment=_DEPLOYMENT,\n    owner_team=\"Commerce\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=3,\n    min_replicas=1,\n    links=[Link(site_name=\"Demo Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nproduct_catalog_block = Manifest(\n    name=\"Product Catalog\",\n    icon=\"📦\",\n    classification=Classification.internal_api,\n    tags=[\"products\", \"catalog\"],\n    connections=[\"Flagd\"],\n    description=\"Serves a product list from a JSON file and supports product search and individual product lookup. Written in Go.\",\n    version=parse_version(\"1.0.0\"),\n    language=ProgrammingLanguage.go,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Catalog\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=3,\n    min_replicas=1,\n    links=[Link(site_name=\"Demo Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nproduct_reviews_block = Manifest(\n    name=\"Product Reviews\",\n    icon=\"⭐\",\n    classification=Classification.internal_api,\n    tags=[\"reviews\", \"genai\", \"llm\"],\n    connections=[],\n    description=\"Returns product reviews and answers questions about products using GenAI (LLM). Written in Python.\",\n    version=parse_version(\"1.0.0\"),\n    language=ProgrammingLanguage.python,\n    frameworks=[WebFramework.fastapi],\n    deployment=_DEPLOYMENT,\n    owner_team=\"Catalog\",\n    auth_type=AuthType.api_key,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=2,\n    min_replicas=1,\n    links=[Link(site_name=\"Demo Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nquote_block = Manifest(\n    name=\"Quote\",\n    icon=\"📬\",\n    classification=Classification.internal_api,\n    tags=[\"shipping\", \"quotes\", \"pricing\"],\n    connections=[],\n    description=\"Calculates shipping cost estimates based on the number of items in the cart. Written in PHP.\",\n    version=parse_version(\"1.0.0\"),\n    language=ProgrammingLanguage.php,\n    frameworks=[WebFramework.symfony],\n    deployment=_DEPLOYMENT,\n    owner_team=\"Logistics\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=2,\n    min_replicas=1,\n    links=[Link(site_name=\"Demo Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nrecommendation_block = Manifest(\n    name=\"Recommendation\",\n    icon=\"👍\",\n    classification=Classification.internal_api,\n    tags=[\"recommendations\", \"personalization\"],\n    connections=[\"Product Catalog\"],\n    description=\"Recommends related products based on the current cart contents. Written in Python.\",\n    version=parse_version(\"1.0.0\"),\n    language=ProgrammingLanguage.python,\n    frameworks=[WebFramework.flask],\n    deployment=_DEPLOYMENT,\n    owner_team=\"Growth\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=3,\n    min_replicas=1,\n    links=[Link(site_name=\"Demo Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nshipping_block = Manifest(\n    name=\"Shipping\",\n    icon=\"🚚\",\n    classification=Classification.internal_api,\n    tags=[\"shipping\", \"logistics\"],\n    connections=[\"Quote\"],\n    description=\"Provides shipping cost estimates and ships items to an address (mock). Written in Rust.\",\n    version=parse_version(\"1.0.0\"),\n    language=ProgrammingLanguage.rust,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Logistics\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=3,\n    min_replicas=1,\n    links=[Link(site_name=\"Demo Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nfrontend_block = Manifest(\n    name=\"Frontend\",\n    icon=\"🌐\",\n    classification=Classification.public_ui,\n    tags=[\"web\", \"storefront\", \"ui\"],\n    connections=[\n        \"Ad\",\n        \"Cart\",\n        \"Checkout\",\n        \"Currency\",\n        \"Product Catalog\",\n        \"Recommendation\",\n        \"Shipping\",\n        \"Product Reviews\",\n    ],\n    description=\"Next.js web storefront. Auto-generates session IDs — no sign-up required. Calls all backend services directly. Written in TypeScript.\",\n    version=parse_version(\"1.0.0\"),\n    language=ProgrammingLanguage.typescript,\n    frameworks=[WebFramework.nextjs],\n    deployment=_DEPLOYMENT,\n    owner_team=\"Frontend\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=5,\n    min_replicas=2,\n    links=[\n        Link(\n            site_name=\"Demo Screenshots\",\n            http_url=Url(\"https://opentelemetry.io/docs/demo/screenshots/\"),\n        )\n    ],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nfrontend_proxy_block = Manifest(\n    name=\"Frontend Proxy\",\n    icon=\"🔀\",\n    classification=Classification.network_gateway,\n    tags=[\"proxy\", \"ingress\", \"envoy\"],\n    connections=[\"Frontend\", \"Flagd-UI\", \"Image Provider\"],\n    description=\"Envoy reverse proxy that routes all inbound traffic to Frontend, Flagd-UI, and Image Provider. Single ingress point for the demo.\",\n    version=parse_version(\"1.29.0\"),\n    language=ProgrammingLanguage.cpp,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Platform\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=2,\n    min_replicas=1,\n    links=[Link(site_name=\"Demo Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nload_generator_block = Manifest(\n    name=\"Load Generator\",\n    icon=\"⚡\",\n    classification=Classification.worker,\n    tags=[\"testing\", \"load\", \"simulation\"],\n    connections=[\"Frontend Proxy\"],\n    description=\"Locust-based load generator that continuously simulates realistic user shopping flows against the Frontend Proxy. Written in Python.\",\n    version=parse_version(\"1.0.0\"),\n    language=ProgrammingLanguage.python,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Platform\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[Link(site_name=\"Demo Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nreact_native_app_block = Manifest(\n    name=\"React Native App\",\n    icon=\"📱\",\n    classification=Classification.mobile_app,\n    tags=[\"mobile\", \"react-native\", \"ui\"],\n    connections=[\"Frontend Proxy\"],\n    description=\"React Native mobile application providing a shopping UI on top of the demo backend via the Frontend Proxy. Written in TypeScript.\",\n    version=parse_version(\"1.0.0\"),\n    language=ProgrammingLanguage.typescript,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Mobile\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[Link(site_name=\"Demo Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\n\notel_demo_diagram = Diagram(\n    name=\"OpenTelemetry Demo\",\n    manifests=[\n        kafka_block,\n        valkey_block,\n        postgres_block,\n        flagd_block,\n        accounting_block,\n        ad_block,\n        cart_block,\n        checkout_block,\n        currency_block,\n        email_block,\n        flagd_ui_block,\n        fraud_detection_block,\n        image_provider_block,\n        payment_block,\n        product_catalog_block,\n        product_reviews_block,\n        quote_block,\n        recommendation_block,\n        shipping_block,\n        frontend_block,\n        frontend_proxy_block,\n        load_generator_block,\n        react_native_app_block,\n    ],\n)\n\notel_demo_checkout_flow_diagram = Diagram(\n    name=\"OpenTelemetry Checkout Flow\",\n    manifests=[\n        frontend_block,\n        frontend_proxy_block,\n        cart_block,\n        checkout_block,\n        product_catalog_block,\n        currency_block,\n        payment_block,\n        shipping_block,\n        email_block,\n        kafka_block,\n    ],\n)\n"
+    }
+  ],
+  "manifests": [
+    {
+      "name": "Accounting",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "worker",
+      "connections": [
+        "Kafka",
+        "PostgreSQL"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🧾",
+      "info": {
+        "authType": "none",
+        "deployment": "k8s_cluster",
+        "description": "Processes incoming orders from Kafka and tallies the sum of all orders (mock). Written in .NET.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "helm",
+        "language": "csharp",
+        "links": [
+          {
+            "http_url": "https://opentelemetry.io/docs/demo/",
+            "site_name": "Demo Docs"
+          }
+        ],
+        "logAggregation": "loki",
+        "maxReplicas": 2,
+        "minReplicas": 1,
+        "monitoring": "prometheus",
+        "ownerTeam": "Finance",
+        "tracing": "jaeger",
+        "version": "1.0.0"
+      },
+      "line_number": 122,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "orders",
+        "finance"
+      ],
+      "tests": null,
+      "variable_name": "accounting_block"
+    },
+    {
+      "name": "Ad",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "internal_api",
+      "connections": [
+        "Flagd"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "📢",
+      "info": {
+        "authType": "none",
+        "deployment": "k8s_cluster",
+        "description": "Provides contextual text ads based on product category keywords. Uses Flagd for feature-flag controlled ad campaigns. Written in Java.",
+        "docs": [],
+        "frameworks": [
+          "spring_boot"
+        ],
+        "iacTool": "helm",
+        "language": "java",
+        "links": [
+          {
+            "http_url": "https://opentelemetry.io/docs/demo/",
+            "site_name": "Demo Docs"
+          }
+        ],
+        "logAggregation": "loki",
+        "maxReplicas": 3,
+        "minReplicas": 1,
+        "monitoring": "prometheus",
+        "ownerTeam": "Growth",
+        "tracing": "jaeger",
+        "version": "1.0.0"
+      },
+      "line_number": 144,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "ads",
+        "recommendations"
+      ],
+      "tests": null,
+      "variable_name": "ad_block"
+    },
+    {
+      "name": "Cart",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "internal_api",
+      "connections": [
+        "Valkey",
+        "Flagd"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🛒",
+      "info": {
+        "authType": "none",
+        "deployment": "k8s_cluster",
+        "description": "Stores and retrieves shopping cart items per user session in Valkey. Written in .NET.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "helm",
+        "language": "csharp",
+        "links": [
+          {
+            "http_url": "https://opentelemetry.io/docs/demo/",
+            "site_name": "Demo Docs"
+          }
+        ],
+        "logAggregation": "loki",
+        "maxReplicas": 3,
+        "minReplicas": 1,
+        "monitoring": "prometheus",
+        "ownerTeam": "Commerce",
+        "tracing": "jaeger",
+        "version": "1.0.0"
+      },
+      "line_number": 167,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "cart",
+        "shopping"
+      ],
+      "tests": null,
+      "variable_name": "cart_block"
+    },
+    {
+      "name": "Checkout",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "internal_api",
+      "connections": [
+        "Cart",
+        "Currency",
+        "Email",
+        "Payment",
+        "Product Catalog",
+        "Shipping",
+        "Kafka"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "💳",
+      "info": {
+        "authType": "none",
+        "deployment": "k8s_cluster",
+        "description": "Orchestrates the full purchase flow: retrieves cart, converts currency, charges payment, ships order, sends email, and publishes order events to Kafka. Written in Go.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "helm",
+        "language": "go",
+        "links": [
+          {
+            "http_url": "https://opentelemetry.io/docs/demo/",
+            "site_name": "Demo Docs"
+          }
+        ],
+        "logAggregation": "loki",
+        "maxReplicas": 3,
+        "minReplicas": 1,
+        "monitoring": "prometheus",
+        "ownerTeam": "Commerce",
+        "tracing": "jaeger",
+        "version": "1.0.0"
+      },
+      "line_number": 189,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "checkout",
+        "orders",
+        "orchestration"
+      ],
+      "tests": null,
+      "variable_name": "checkout_block"
+    },
+    {
+      "name": "Currency",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "internal_api",
+      "connections": [],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "💱",
+      "info": {
+        "authType": "none",
+        "deployment": "k8s_cluster",
+        "description": "Converts monetary amounts between currencies using real exchange rates from the European Central Bank. Highest QPS service. Written in C++.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "helm",
+        "language": "cpp",
+        "links": [
+          {
+            "http_url": "https://opentelemetry.io/docs/demo/",
+            "site_name": "Demo Docs"
+          }
+        ],
+        "logAggregation": "loki",
+        "maxReplicas": 5,
+        "minReplicas": 2,
+        "monitoring": "prometheus",
+        "ownerTeam": "Commerce",
+        "tracing": "jaeger",
+        "version": "1.0.0"
+      },
+      "line_number": 211,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "currency",
+        "finance"
+      ],
+      "tests": null,
+      "variable_name": "currency_block"
+    },
+    {
+      "name": "Email",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "internal_api",
+      "connections": [],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "✉️",
+      "info": {
+        "authType": "none",
+        "deployment": "k8s_cluster",
+        "description": "Sends order confirmation emails to customers (mock). Written in Ruby.",
+        "docs": [],
+        "frameworks": [
+          "sinatra"
+        ],
+        "iacTool": "helm",
+        "language": "ruby",
+        "links": [
+          {
+            "http_url": "https://opentelemetry.io/docs/demo/",
+            "site_name": "Demo Docs"
+          }
+        ],
+        "logAggregation": "loki",
+        "maxReplicas": 2,
+        "minReplicas": 1,
+        "monitoring": "prometheus",
+        "ownerTeam": "Commerce",
+        "tracing": "jaeger",
+        "version": "1.0.0"
+      },
+      "line_number": 233,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "email",
+        "notifications"
+      ],
+      "tests": null,
+      "variable_name": "email_block"
+    },
+    {
+      "name": "Flagd",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "internal_api",
+      "connections": [],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🚩",
+      "info": {
+        "authType": "none",
+        "deployment": "k8s_cluster",
+        "description": "OpenFeature-compatible feature flag daemon consumed by Ad and other services for runtime toggles.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "helm",
+        "language": "go",
+        "links": [
+          {
+            "http_url": "https://opentelemetry.io/docs/demo/",
+            "site_name": "Demo Docs"
+          }
+        ],
+        "logAggregation": "loki",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "prometheus",
+        "ownerTeam": "Platform",
+        "tracing": "jaeger",
+        "version": "0.10.0"
+      },
+      "line_number": 100,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "feature-flags",
+        "infra"
+      ],
+      "tests": null,
+      "variable_name": "flagd_block"
+    },
+    {
+      "name": "Flagd-UI",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "admin_ui",
+      "connections": [
+        "Flagd"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🎛️",
+      "info": {
+        "authType": "none",
+        "deployment": "k8s_cluster",
+        "description": "Web UI for toggling and editing OpenFeature feature flags backed by Flagd. Written in Elixir/Phoenix.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "helm",
+        "language": "elixir",
+        "links": [
+          {
+            "http_url": "https://opentelemetry.io/docs/demo/",
+            "site_name": "Demo Docs"
+          }
+        ],
+        "logAggregation": "loki",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "prometheus",
+        "ownerTeam": "Platform",
+        "tracing": "jaeger",
+        "version": "1.0.0"
+      },
+      "line_number": 256,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "feature-flags",
+        "admin"
+      ],
+      "tests": null,
+      "variable_name": "flagd_ui_block"
+    },
+    {
+      "name": "Fraud Detection",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "worker",
+      "connections": [
+        "Kafka"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🕵️",
+      "info": {
+        "authType": "none",
+        "deployment": "k8s_cluster",
+        "description": "Consumes order events from Kafka and applies heuristics to flag potentially fraudulent transactions (mock). Written in Kotlin.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "helm",
+        "language": "kotlin",
+        "links": [
+          {
+            "http_url": "https://opentelemetry.io/docs/demo/",
+            "site_name": "Demo Docs"
+          }
+        ],
+        "logAggregation": "loki",
+        "maxReplicas": 2,
+        "minReplicas": 1,
+        "monitoring": "prometheus",
+        "ownerTeam": "Trust & Safety",
+        "tracing": "jaeger",
+        "version": "1.0.0"
+      },
+      "line_number": 278,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "fraud",
+        "risk",
+        "async"
+      ],
+      "tests": null,
+      "variable_name": "fraud_detection_block"
+    },
+    {
+      "name": "Frontend",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "public_ui",
+      "connections": [
+        "Ad",
+        "Cart",
+        "Checkout",
+        "Currency",
+        "Product Catalog",
+        "Recommendation",
+        "Shipping",
+        "Product Reviews"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🌐",
+      "info": {
+        "authType": "none",
+        "deployment": "k8s_cluster",
+        "description": "Next.js web storefront. Auto-generates session IDs — no sign-up required. Calls all backend services directly. Written in TypeScript.",
+        "docs": [],
+        "frameworks": [
+          "nextjs"
+        ],
+        "iacTool": "helm",
+        "language": "typescript",
+        "links": [
+          {
+            "http_url": "https://opentelemetry.io/docs/demo/screenshots/",
+            "site_name": "Demo Screenshots"
+          }
+        ],
+        "logAggregation": "loki",
+        "maxReplicas": 5,
+        "minReplicas": 2,
+        "monitoring": "prometheus",
+        "ownerTeam": "Frontend",
+        "tracing": "jaeger",
+        "version": "1.0.0"
+      },
+      "line_number": 458,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "web",
+        "storefront",
+        "ui"
+      ],
+      "tests": null,
+      "variable_name": "frontend_block"
+    },
+    {
+      "name": "Frontend Proxy",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "network_router",
+      "connections": [
+        "Frontend",
+        "Flagd-UI",
+        "Image Provider"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🔀",
+      "info": {
+        "authType": "none",
+        "deployment": "k8s_cluster",
+        "description": "Envoy reverse proxy that routes all inbound traffic to Frontend, Flagd-UI, and Image Provider. Single ingress point for the demo.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "helm",
+        "language": "cpp",
+        "links": [
+          {
+            "http_url": "https://opentelemetry.io/docs/demo/",
+            "site_name": "Demo Docs"
+          }
+        ],
+        "logAggregation": "loki",
+        "maxReplicas": 2,
+        "minReplicas": 1,
+        "monitoring": "prometheus",
+        "ownerTeam": "Platform",
+        "tracing": "jaeger",
+        "version": "1.29.0"
+      },
+      "line_number": 495,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "proxy",
+        "ingress",
+        "envoy"
+      ],
+      "tests": null,
+      "variable_name": "frontend_proxy_block"
+    },
+    {
+      "name": "Image Provider",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "object_storage",
+      "connections": [],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🖼️",
+      "info": {
+        "authType": "none",
+        "deployment": "k8s_cluster",
+        "description": "Serves product images via nginx. Acts as a static asset CDN inside the demo cluster.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "helm",
+        "language": "go",
+        "links": [
+          {
+            "http_url": "https://opentelemetry.io/docs/demo/",
+            "site_name": "Demo Docs"
+          }
+        ],
+        "logAggregation": "loki",
+        "maxReplicas": 2,
+        "minReplicas": 1,
+        "monitoring": "prometheus",
+        "ownerTeam": "Frontend",
+        "tracing": "jaeger",
+        "version": "1.25.0"
+      },
+      "line_number": 300,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "assets",
+        "static",
+        "images"
+      ],
+      "tests": null,
+      "variable_name": "image_provider_block"
+    },
+    {
+      "name": "Kafka",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "queue",
+      "connections": [],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "📨",
+      "info": {
+        "authType": "none",
+        "deployment": "k8s_cluster",
+        "description": "Apache Kafka message queue used for async order events between Checkout, Accounting, and Fraud Detection.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "helm",
+        "language": "java",
+        "links": [
+          {
+            "http_url": "https://opentelemetry.io/docs/demo/",
+            "site_name": "Demo Docs"
+          }
+        ],
+        "logAggregation": "loki",
+        "maxReplicas": 3,
+        "minReplicas": 1,
+        "monitoring": "prometheus",
+        "ownerTeam": "Platform",
+        "tracing": "jaeger",
+        "version": "3.6.0"
+      },
+      "line_number": 34,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "messaging",
+        "async",
+        "infra"
+      ],
+      "tests": null,
+      "variable_name": "kafka_block"
+    },
+    {
+      "name": "Load Generator",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "worker",
+      "connections": [
+        "Frontend Proxy"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "⚡",
+      "info": {
+        "authType": "none",
+        "deployment": "k8s_cluster",
+        "description": "Locust-based load generator that continuously simulates realistic user shopping flows against the Frontend Proxy. Written in Python.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "helm",
+        "language": "python",
+        "links": [
+          {
+            "http_url": "https://opentelemetry.io/docs/demo/",
+            "site_name": "Demo Docs"
+          }
+        ],
+        "logAggregation": "loki",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "prometheus",
+        "ownerTeam": "Platform",
+        "tracing": "jaeger",
+        "version": "1.0.0"
+      },
+      "line_number": 517,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "testing",
+        "load",
+        "simulation"
+      ],
+      "tests": null,
+      "variable_name": "load_generator_block"
+    },
+    {
+      "name": "Payment",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "internal_api",
+      "connections": [
+        "Flagd"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "💰",
+      "info": {
+        "authType": "none",
+        "deployment": "k8s_cluster",
+        "description": "Charges credit cards (mock) with a given amount and returns a transaction ID. Written in JavaScript/Node.",
+        "docs": [],
+        "frameworks": [
+          "express"
+        ],
+        "iacTool": "helm",
+        "language": "javascript",
+        "links": [
+          {
+            "http_url": "https://opentelemetry.io/docs/demo/",
+            "site_name": "Demo Docs"
+          }
+        ],
+        "logAggregation": "loki",
+        "maxReplicas": 3,
+        "minReplicas": 1,
+        "monitoring": "prometheus",
+        "ownerTeam": "Commerce",
+        "tracing": "jaeger",
+        "version": "1.0.0"
+      },
+      "line_number": 322,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "payments",
+        "billing"
+      ],
+      "tests": null,
+      "variable_name": "payment_block"
+    },
+    {
+      "name": "PostgreSQL",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "database",
+      "connections": [],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🐘",
+      "info": {
+        "authType": "basic",
+        "deployment": "k8s_cluster",
+        "description": "Relational database used by the Accounting Service to persist order records.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "helm",
+        "language": "c",
+        "links": [
+          {
+            "http_url": "https://opentelemetry.io/docs/demo/",
+            "site_name": "Demo Docs"
+          }
+        ],
+        "logAggregation": "loki",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "prometheus",
+        "ownerTeam": "Platform",
+        "tracing": "jaeger",
+        "version": "16.0.0"
+      },
+      "line_number": 78,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "database",
+        "sql",
+        "infra"
+      ],
+      "tests": null,
+      "variable_name": "postgres_block"
+    },
+    {
+      "name": "Product Catalog",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "internal_api",
+      "connections": [
+        "Flagd"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "📦",
+      "info": {
+        "authType": "none",
+        "deployment": "k8s_cluster",
+        "description": "Serves a product list from a JSON file and supports product search and individual product lookup. Written in Go.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "helm",
+        "language": "go",
+        "links": [
+          {
+            "http_url": "https://opentelemetry.io/docs/demo/",
+            "site_name": "Demo Docs"
+          }
+        ],
+        "logAggregation": "loki",
+        "maxReplicas": 3,
+        "minReplicas": 1,
+        "monitoring": "prometheus",
+        "ownerTeam": "Catalog",
+        "tracing": "jaeger",
+        "version": "1.0.0"
+      },
+      "line_number": 345,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "products",
+        "catalog"
+      ],
+      "tests": null,
+      "variable_name": "product_catalog_block"
+    },
+    {
+      "name": "Product Reviews",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "internal_api",
+      "connections": [],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "⭐",
+      "info": {
+        "authType": "api_key",
+        "deployment": "k8s_cluster",
+        "description": "Returns product reviews and answers questions about products using GenAI (LLM). Written in Python.",
+        "docs": [],
+        "frameworks": [
+          "fastapi"
+        ],
+        "iacTool": "helm",
+        "language": "python",
+        "links": [
+          {
+            "http_url": "https://opentelemetry.io/docs/demo/",
+            "site_name": "Demo Docs"
+          }
+        ],
+        "logAggregation": "loki",
+        "maxReplicas": 2,
+        "minReplicas": 1,
+        "monitoring": "prometheus",
+        "ownerTeam": "Catalog",
+        "tracing": "jaeger",
+        "version": "1.0.0"
+      },
+      "line_number": 367,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "reviews",
+        "genai",
+        "llm"
+      ],
+      "tests": null,
+      "variable_name": "product_reviews_block"
+    },
+    {
+      "name": "Quote",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "internal_api",
+      "connections": [],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "📬",
+      "info": {
+        "authType": "none",
+        "deployment": "k8s_cluster",
+        "description": "Calculates shipping cost estimates based on the number of items in the cart. Written in PHP.",
+        "docs": [],
+        "frameworks": [
+          "symfony"
+        ],
+        "iacTool": "helm",
+        "language": "php",
+        "links": [
+          {
+            "http_url": "https://opentelemetry.io/docs/demo/",
+            "site_name": "Demo Docs"
+          }
+        ],
+        "logAggregation": "loki",
+        "maxReplicas": 2,
+        "minReplicas": 1,
+        "monitoring": "prometheus",
+        "ownerTeam": "Logistics",
+        "tracing": "jaeger",
+        "version": "1.0.0"
+      },
+      "line_number": 390,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "shipping",
+        "quotes",
+        "pricing"
+      ],
+      "tests": null,
+      "variable_name": "quote_block"
+    },
+    {
+      "name": "React Native App",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "mobile_app",
+      "connections": [
+        "Frontend Proxy"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "📱",
+      "info": {
+        "authType": "none",
+        "deployment": "k8s_cluster",
+        "description": "React Native mobile application providing a shopping UI on top of the demo backend via the Frontend Proxy. Written in TypeScript.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "helm",
+        "language": "typescript",
+        "links": [
+          {
+            "http_url": "https://opentelemetry.io/docs/demo/",
+            "site_name": "Demo Docs"
+          }
+        ],
+        "logAggregation": "loki",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "prometheus",
+        "ownerTeam": "Mobile",
+        "tracing": "jaeger",
+        "version": "1.0.0"
+      },
+      "line_number": 539,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "mobile",
+        "react-native",
+        "ui"
+      ],
+      "tests": null,
+      "variable_name": "react_native_app_block"
+    },
+    {
+      "name": "Recommendation",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "internal_api",
+      "connections": [
+        "Product Catalog"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "👍",
+      "info": {
+        "authType": "none",
+        "deployment": "k8s_cluster",
+        "description": "Recommends related products based on the current cart contents. Written in Python.",
+        "docs": [],
+        "frameworks": [
+          "flask"
+        ],
+        "iacTool": "helm",
+        "language": "python",
+        "links": [
+          {
+            "http_url": "https://opentelemetry.io/docs/demo/",
+            "site_name": "Demo Docs"
+          }
+        ],
+        "logAggregation": "loki",
+        "maxReplicas": 3,
+        "minReplicas": 1,
+        "monitoring": "prometheus",
+        "ownerTeam": "Growth",
+        "tracing": "jaeger",
+        "version": "1.0.0"
+      },
+      "line_number": 413,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "recommendations",
+        "personalization"
+      ],
+      "tests": null,
+      "variable_name": "recommendation_block"
+    },
+    {
+      "name": "Shipping",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "internal_api",
+      "connections": [
+        "Quote"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🚚",
+      "info": {
+        "authType": "none",
+        "deployment": "k8s_cluster",
+        "description": "Provides shipping cost estimates and ships items to an address (mock). Written in Rust.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "helm",
+        "language": "rust",
+        "links": [
+          {
+            "http_url": "https://opentelemetry.io/docs/demo/",
+            "site_name": "Demo Docs"
+          }
+        ],
+        "logAggregation": "loki",
+        "maxReplicas": 3,
+        "minReplicas": 1,
+        "monitoring": "prometheus",
+        "ownerTeam": "Logistics",
+        "tracing": "jaeger",
+        "version": "1.0.0"
+      },
+      "line_number": 436,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "shipping",
+        "logistics"
+      ],
+      "tests": null,
+      "variable_name": "shipping_block"
+    },
+    {
+      "name": "Valkey",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "cache_store",
+      "connections": [],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🗄️",
+      "info": {
+        "authType": "none",
+        "deployment": "k8s_cluster",
+        "description": "Valkey (Redis-compatible) in-memory cache used by the Cart Service to store shopping cart state.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "helm",
+        "language": "c",
+        "links": [
+          {
+            "http_url": "https://opentelemetry.io/docs/demo/",
+            "site_name": "Demo Docs"
+          }
+        ],
+        "logAggregation": "loki",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "prometheus",
+        "ownerTeam": "Platform",
+        "tracing": "jaeger",
+        "version": "7.2.0"
+      },
+      "line_number": 56,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "cache",
+        "infra"
+      ],
+      "tests": null,
+      "variable_name": "valkey_block"
+    }
+  ],
+  "forges": [],
+  "diagrams": [
+    {
+      "name": "OpenTelemetry Checkout Flow",
+      "variable_name": "otel_demo_checkout_flow_diagram",
+      "manifests": [
+        {
+          "name": "Frontend",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "public_ui",
+          "connections": [
+            "Ad",
+            "Cart",
+            "Checkout",
+            "Currency",
+            "Product Catalog",
+            "Recommendation",
+            "Shipping",
+            "Product Reviews"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🌐",
+          "info": {
+            "authType": "none",
+            "deployment": "k8s_cluster",
+            "description": "Next.js web storefront. Auto-generates session IDs — no sign-up required. Calls all backend services directly. Written in TypeScript.",
+            "docs": [],
+            "frameworks": [
+              "nextjs"
+            ],
+            "iacTool": "helm",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/screenshots/",
+                "site_name": "Demo Screenshots"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 5,
+            "minReplicas": 2,
+            "monitoring": "prometheus",
+            "ownerTeam": "Frontend",
+            "tracing": "jaeger",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "web",
+            "storefront",
+            "ui"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Frontend Proxy",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "network_router",
+          "connections": [
+            "Frontend",
+            "Flagd-UI",
+            "Image Provider"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🔀",
+          "info": {
+            "authType": "none",
+            "deployment": "k8s_cluster",
+            "description": "Envoy reverse proxy that routes all inbound traffic to Frontend, Flagd-UI, and Image Provider. Single ingress point for the demo.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "helm",
+            "language": "cpp",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/",
+                "site_name": "Demo Docs"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 2,
+            "minReplicas": 1,
+            "monitoring": "prometheus",
+            "ownerTeam": "Platform",
+            "tracing": "jaeger",
+            "version": "1.29.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "proxy",
+            "ingress",
+            "envoy"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Cart",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "internal_api",
+          "connections": [
+            "Valkey",
+            "Flagd"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🛒",
+          "info": {
+            "authType": "none",
+            "deployment": "k8s_cluster",
+            "description": "Stores and retrieves shopping cart items per user session in Valkey. Written in .NET.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "helm",
+            "language": "csharp",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/",
+                "site_name": "Demo Docs"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 3,
+            "minReplicas": 1,
+            "monitoring": "prometheus",
+            "ownerTeam": "Commerce",
+            "tracing": "jaeger",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "cart",
+            "shopping"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Checkout",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "internal_api",
+          "connections": [
+            "Cart",
+            "Currency",
+            "Email",
+            "Payment",
+            "Product Catalog",
+            "Shipping",
+            "Kafka"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "💳",
+          "info": {
+            "authType": "none",
+            "deployment": "k8s_cluster",
+            "description": "Orchestrates the full purchase flow: retrieves cart, converts currency, charges payment, ships order, sends email, and publishes order events to Kafka. Written in Go.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "helm",
+            "language": "go",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/",
+                "site_name": "Demo Docs"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 3,
+            "minReplicas": 1,
+            "monitoring": "prometheus",
+            "ownerTeam": "Commerce",
+            "tracing": "jaeger",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "checkout",
+            "orders",
+            "orchestration"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Product Catalog",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "internal_api",
+          "connections": [
+            "Flagd"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "📦",
+          "info": {
+            "authType": "none",
+            "deployment": "k8s_cluster",
+            "description": "Serves a product list from a JSON file and supports product search and individual product lookup. Written in Go.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "helm",
+            "language": "go",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/",
+                "site_name": "Demo Docs"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 3,
+            "minReplicas": 1,
+            "monitoring": "prometheus",
+            "ownerTeam": "Catalog",
+            "tracing": "jaeger",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "products",
+            "catalog"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Currency",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "internal_api",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "💱",
+          "info": {
+            "authType": "none",
+            "deployment": "k8s_cluster",
+            "description": "Converts monetary amounts between currencies using real exchange rates from the European Central Bank. Highest QPS service. Written in C++.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "helm",
+            "language": "cpp",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/",
+                "site_name": "Demo Docs"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 5,
+            "minReplicas": 2,
+            "monitoring": "prometheus",
+            "ownerTeam": "Commerce",
+            "tracing": "jaeger",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "currency",
+            "finance"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Payment",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "internal_api",
+          "connections": [
+            "Flagd"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "💰",
+          "info": {
+            "authType": "none",
+            "deployment": "k8s_cluster",
+            "description": "Charges credit cards (mock) with a given amount and returns a transaction ID. Written in JavaScript/Node.",
+            "docs": [],
+            "frameworks": [
+              "express"
+            ],
+            "iacTool": "helm",
+            "language": "javascript",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/",
+                "site_name": "Demo Docs"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 3,
+            "minReplicas": 1,
+            "monitoring": "prometheus",
+            "ownerTeam": "Commerce",
+            "tracing": "jaeger",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "payments",
+            "billing"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Shipping",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "internal_api",
+          "connections": [
+            "Quote"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🚚",
+          "info": {
+            "authType": "none",
+            "deployment": "k8s_cluster",
+            "description": "Provides shipping cost estimates and ships items to an address (mock). Written in Rust.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "helm",
+            "language": "rust",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/",
+                "site_name": "Demo Docs"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 3,
+            "minReplicas": 1,
+            "monitoring": "prometheus",
+            "ownerTeam": "Logistics",
+            "tracing": "jaeger",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "shipping",
+            "logistics"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Email",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "internal_api",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "✉️",
+          "info": {
+            "authType": "none",
+            "deployment": "k8s_cluster",
+            "description": "Sends order confirmation emails to customers (mock). Written in Ruby.",
+            "docs": [],
+            "frameworks": [
+              "sinatra"
+            ],
+            "iacTool": "helm",
+            "language": "ruby",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/",
+                "site_name": "Demo Docs"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 2,
+            "minReplicas": 1,
+            "monitoring": "prometheus",
+            "ownerTeam": "Commerce",
+            "tracing": "jaeger",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "email",
+            "notifications"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Kafka",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "queue",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "📨",
+          "info": {
+            "authType": "none",
+            "deployment": "k8s_cluster",
+            "description": "Apache Kafka message queue used for async order events between Checkout, Accounting, and Fraud Detection.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "helm",
+            "language": "java",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/",
+                "site_name": "Demo Docs"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 3,
+            "minReplicas": 1,
+            "monitoring": "prometheus",
+            "ownerTeam": "Platform",
+            "tracing": "jaeger",
+            "version": "3.6.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "messaging",
+            "async",
+            "infra"
+          ],
+          "tests": null
+        }
+      ],
+      "description": "",
+      "line_number": 591,
+      "query": null
+    },
+    {
+      "name": "OpenTelemetry Demo",
+      "variable_name": "otel_demo_diagram",
+      "manifests": [
+        {
+          "name": "Kafka",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "queue",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "📨",
+          "info": {
+            "authType": "none",
+            "deployment": "k8s_cluster",
+            "description": "Apache Kafka message queue used for async order events between Checkout, Accounting, and Fraud Detection.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "helm",
+            "language": "java",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/",
+                "site_name": "Demo Docs"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 3,
+            "minReplicas": 1,
+            "monitoring": "prometheus",
+            "ownerTeam": "Platform",
+            "tracing": "jaeger",
+            "version": "3.6.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "messaging",
+            "async",
+            "infra"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Valkey",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "cache_store",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🗄️",
+          "info": {
+            "authType": "none",
+            "deployment": "k8s_cluster",
+            "description": "Valkey (Redis-compatible) in-memory cache used by the Cart Service to store shopping cart state.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "helm",
+            "language": "c",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/",
+                "site_name": "Demo Docs"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "prometheus",
+            "ownerTeam": "Platform",
+            "tracing": "jaeger",
+            "version": "7.2.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "cache",
+            "infra"
+          ],
+          "tests": null
+        },
+        {
+          "name": "PostgreSQL",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "database",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🐘",
+          "info": {
+            "authType": "basic",
+            "deployment": "k8s_cluster",
+            "description": "Relational database used by the Accounting Service to persist order records.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "helm",
+            "language": "c",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/",
+                "site_name": "Demo Docs"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "prometheus",
+            "ownerTeam": "Platform",
+            "tracing": "jaeger",
+            "version": "16.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "database",
+            "sql",
+            "infra"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Flagd",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "internal_api",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🚩",
+          "info": {
+            "authType": "none",
+            "deployment": "k8s_cluster",
+            "description": "OpenFeature-compatible feature flag daemon consumed by Ad and other services for runtime toggles.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "helm",
+            "language": "go",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/",
+                "site_name": "Demo Docs"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "prometheus",
+            "ownerTeam": "Platform",
+            "tracing": "jaeger",
+            "version": "0.10.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "feature-flags",
+            "infra"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Accounting",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "worker",
+          "connections": [
+            "Kafka",
+            "PostgreSQL"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🧾",
+          "info": {
+            "authType": "none",
+            "deployment": "k8s_cluster",
+            "description": "Processes incoming orders from Kafka and tallies the sum of all orders (mock). Written in .NET.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "helm",
+            "language": "csharp",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/",
+                "site_name": "Demo Docs"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 2,
+            "minReplicas": 1,
+            "monitoring": "prometheus",
+            "ownerTeam": "Finance",
+            "tracing": "jaeger",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "orders",
+            "finance"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Ad",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "internal_api",
+          "connections": [
+            "Flagd"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "📢",
+          "info": {
+            "authType": "none",
+            "deployment": "k8s_cluster",
+            "description": "Provides contextual text ads based on product category keywords. Uses Flagd for feature-flag controlled ad campaigns. Written in Java.",
+            "docs": [],
+            "frameworks": [
+              "spring_boot"
+            ],
+            "iacTool": "helm",
+            "language": "java",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/",
+                "site_name": "Demo Docs"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 3,
+            "minReplicas": 1,
+            "monitoring": "prometheus",
+            "ownerTeam": "Growth",
+            "tracing": "jaeger",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "ads",
+            "recommendations"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Cart",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "internal_api",
+          "connections": [
+            "Valkey",
+            "Flagd"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🛒",
+          "info": {
+            "authType": "none",
+            "deployment": "k8s_cluster",
+            "description": "Stores and retrieves shopping cart items per user session in Valkey. Written in .NET.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "helm",
+            "language": "csharp",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/",
+                "site_name": "Demo Docs"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 3,
+            "minReplicas": 1,
+            "monitoring": "prometheus",
+            "ownerTeam": "Commerce",
+            "tracing": "jaeger",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "cart",
+            "shopping"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Checkout",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "internal_api",
+          "connections": [
+            "Cart",
+            "Currency",
+            "Email",
+            "Payment",
+            "Product Catalog",
+            "Shipping",
+            "Kafka"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "💳",
+          "info": {
+            "authType": "none",
+            "deployment": "k8s_cluster",
+            "description": "Orchestrates the full purchase flow: retrieves cart, converts currency, charges payment, ships order, sends email, and publishes order events to Kafka. Written in Go.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "helm",
+            "language": "go",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/",
+                "site_name": "Demo Docs"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 3,
+            "minReplicas": 1,
+            "monitoring": "prometheus",
+            "ownerTeam": "Commerce",
+            "tracing": "jaeger",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "checkout",
+            "orders",
+            "orchestration"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Currency",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "internal_api",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "💱",
+          "info": {
+            "authType": "none",
+            "deployment": "k8s_cluster",
+            "description": "Converts monetary amounts between currencies using real exchange rates from the European Central Bank. Highest QPS service. Written in C++.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "helm",
+            "language": "cpp",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/",
+                "site_name": "Demo Docs"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 5,
+            "minReplicas": 2,
+            "monitoring": "prometheus",
+            "ownerTeam": "Commerce",
+            "tracing": "jaeger",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "currency",
+            "finance"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Email",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "internal_api",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "✉️",
+          "info": {
+            "authType": "none",
+            "deployment": "k8s_cluster",
+            "description": "Sends order confirmation emails to customers (mock). Written in Ruby.",
+            "docs": [],
+            "frameworks": [
+              "sinatra"
+            ],
+            "iacTool": "helm",
+            "language": "ruby",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/",
+                "site_name": "Demo Docs"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 2,
+            "minReplicas": 1,
+            "monitoring": "prometheus",
+            "ownerTeam": "Commerce",
+            "tracing": "jaeger",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "email",
+            "notifications"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Flagd-UI",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "admin_ui",
+          "connections": [
+            "Flagd"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🎛️",
+          "info": {
+            "authType": "none",
+            "deployment": "k8s_cluster",
+            "description": "Web UI for toggling and editing OpenFeature feature flags backed by Flagd. Written in Elixir/Phoenix.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "helm",
+            "language": "elixir",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/",
+                "site_name": "Demo Docs"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "prometheus",
+            "ownerTeam": "Platform",
+            "tracing": "jaeger",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "feature-flags",
+            "admin"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Fraud Detection",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "worker",
+          "connections": [
+            "Kafka"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🕵️",
+          "info": {
+            "authType": "none",
+            "deployment": "k8s_cluster",
+            "description": "Consumes order events from Kafka and applies heuristics to flag potentially fraudulent transactions (mock). Written in Kotlin.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "helm",
+            "language": "kotlin",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/",
+                "site_name": "Demo Docs"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 2,
+            "minReplicas": 1,
+            "monitoring": "prometheus",
+            "ownerTeam": "Trust & Safety",
+            "tracing": "jaeger",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "fraud",
+            "risk",
+            "async"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Image Provider",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "object_storage",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🖼️",
+          "info": {
+            "authType": "none",
+            "deployment": "k8s_cluster",
+            "description": "Serves product images via nginx. Acts as a static asset CDN inside the demo cluster.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "helm",
+            "language": "go",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/",
+                "site_name": "Demo Docs"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 2,
+            "minReplicas": 1,
+            "monitoring": "prometheus",
+            "ownerTeam": "Frontend",
+            "tracing": "jaeger",
+            "version": "1.25.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "assets",
+            "static",
+            "images"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Payment",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "internal_api",
+          "connections": [
+            "Flagd"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "💰",
+          "info": {
+            "authType": "none",
+            "deployment": "k8s_cluster",
+            "description": "Charges credit cards (mock) with a given amount and returns a transaction ID. Written in JavaScript/Node.",
+            "docs": [],
+            "frameworks": [
+              "express"
+            ],
+            "iacTool": "helm",
+            "language": "javascript",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/",
+                "site_name": "Demo Docs"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 3,
+            "minReplicas": 1,
+            "monitoring": "prometheus",
+            "ownerTeam": "Commerce",
+            "tracing": "jaeger",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "payments",
+            "billing"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Product Catalog",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "internal_api",
+          "connections": [
+            "Flagd"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "📦",
+          "info": {
+            "authType": "none",
+            "deployment": "k8s_cluster",
+            "description": "Serves a product list from a JSON file and supports product search and individual product lookup. Written in Go.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "helm",
+            "language": "go",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/",
+                "site_name": "Demo Docs"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 3,
+            "minReplicas": 1,
+            "monitoring": "prometheus",
+            "ownerTeam": "Catalog",
+            "tracing": "jaeger",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "products",
+            "catalog"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Product Reviews",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "internal_api",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "⭐",
+          "info": {
+            "authType": "api_key",
+            "deployment": "k8s_cluster",
+            "description": "Returns product reviews and answers questions about products using GenAI (LLM). Written in Python.",
+            "docs": [],
+            "frameworks": [
+              "fastapi"
+            ],
+            "iacTool": "helm",
+            "language": "python",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/",
+                "site_name": "Demo Docs"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 2,
+            "minReplicas": 1,
+            "monitoring": "prometheus",
+            "ownerTeam": "Catalog",
+            "tracing": "jaeger",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "reviews",
+            "genai",
+            "llm"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Quote",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "internal_api",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "📬",
+          "info": {
+            "authType": "none",
+            "deployment": "k8s_cluster",
+            "description": "Calculates shipping cost estimates based on the number of items in the cart. Written in PHP.",
+            "docs": [],
+            "frameworks": [
+              "symfony"
+            ],
+            "iacTool": "helm",
+            "language": "php",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/",
+                "site_name": "Demo Docs"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 2,
+            "minReplicas": 1,
+            "monitoring": "prometheus",
+            "ownerTeam": "Logistics",
+            "tracing": "jaeger",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "shipping",
+            "quotes",
+            "pricing"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Recommendation",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "internal_api",
+          "connections": [
+            "Product Catalog"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "👍",
+          "info": {
+            "authType": "none",
+            "deployment": "k8s_cluster",
+            "description": "Recommends related products based on the current cart contents. Written in Python.",
+            "docs": [],
+            "frameworks": [
+              "flask"
+            ],
+            "iacTool": "helm",
+            "language": "python",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/",
+                "site_name": "Demo Docs"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 3,
+            "minReplicas": 1,
+            "monitoring": "prometheus",
+            "ownerTeam": "Growth",
+            "tracing": "jaeger",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "recommendations",
+            "personalization"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Shipping",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "internal_api",
+          "connections": [
+            "Quote"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🚚",
+          "info": {
+            "authType": "none",
+            "deployment": "k8s_cluster",
+            "description": "Provides shipping cost estimates and ships items to an address (mock). Written in Rust.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "helm",
+            "language": "rust",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/",
+                "site_name": "Demo Docs"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 3,
+            "minReplicas": 1,
+            "monitoring": "prometheus",
+            "ownerTeam": "Logistics",
+            "tracing": "jaeger",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "shipping",
+            "logistics"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Frontend",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "public_ui",
+          "connections": [
+            "Ad",
+            "Cart",
+            "Checkout",
+            "Currency",
+            "Product Catalog",
+            "Recommendation",
+            "Shipping",
+            "Product Reviews"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🌐",
+          "info": {
+            "authType": "none",
+            "deployment": "k8s_cluster",
+            "description": "Next.js web storefront. Auto-generates session IDs — no sign-up required. Calls all backend services directly. Written in TypeScript.",
+            "docs": [],
+            "frameworks": [
+              "nextjs"
+            ],
+            "iacTool": "helm",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/screenshots/",
+                "site_name": "Demo Screenshots"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 5,
+            "minReplicas": 2,
+            "monitoring": "prometheus",
+            "ownerTeam": "Frontend",
+            "tracing": "jaeger",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "web",
+            "storefront",
+            "ui"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Frontend Proxy",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "network_router",
+          "connections": [
+            "Frontend",
+            "Flagd-UI",
+            "Image Provider"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🔀",
+          "info": {
+            "authType": "none",
+            "deployment": "k8s_cluster",
+            "description": "Envoy reverse proxy that routes all inbound traffic to Frontend, Flagd-UI, and Image Provider. Single ingress point for the demo.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "helm",
+            "language": "cpp",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/",
+                "site_name": "Demo Docs"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 2,
+            "minReplicas": 1,
+            "monitoring": "prometheus",
+            "ownerTeam": "Platform",
+            "tracing": "jaeger",
+            "version": "1.29.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "proxy",
+            "ingress",
+            "envoy"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Load Generator",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "worker",
+          "connections": [
+            "Frontend Proxy"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "⚡",
+          "info": {
+            "authType": "none",
+            "deployment": "k8s_cluster",
+            "description": "Locust-based load generator that continuously simulates realistic user shopping flows against the Frontend Proxy. Written in Python.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "helm",
+            "language": "python",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/",
+                "site_name": "Demo Docs"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "prometheus",
+            "ownerTeam": "Platform",
+            "tracing": "jaeger",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "testing",
+            "load",
+            "simulation"
+          ],
+          "tests": null
+        },
+        {
+          "name": "React Native App",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "mobile_app",
+          "connections": [
+            "Frontend Proxy"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/open-telemetry/opentelemetry-demo",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "📱",
+          "info": {
+            "authType": "none",
+            "deployment": "k8s_cluster",
+            "description": "React Native mobile application providing a shopping UI on top of the demo backend via the Frontend Proxy. Written in TypeScript.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "helm",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://opentelemetry.io/docs/demo/",
+                "site_name": "Demo Docs"
+              }
+            ],
+            "logAggregation": "loki",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "prometheus",
+            "ownerTeam": "Mobile",
+            "tracing": "jaeger",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "mobile",
+            "react-native",
+            "ui"
+          ],
+          "tests": null
+        }
+      ],
+      "description": "",
+      "line_number": 562,
+      "query": null
+    }
+  ]
+}

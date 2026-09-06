@@ -1,0 +1,100 @@
+# Rust
+/target/
+**/*.rs.bk
+crystal/target/
+crystal/.cargo/
+
+# TypeScript
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]
+manifest/scryr/build/
+manifest/scryr/src/*.egg-info/
+
+# Vite
+node_modules/
+dist/
+.vite/
+.cache/
+# Deno
+.deno/
+
+# macOS
+.DS_Store
+
+# Local mise overrides
+mise.local.toml
+mise.*.local.toml
+mise.local.lock
+mise.*.local.lock
+**/mise.local.toml
+**/mise.*.local.toml
+**/mise.local.lock
+**/mise.*.local.lock
+
+# Scryr-managed local Python environment
+.scryr/
+**/.scryr/
+
+# General
+*.log
+*.tmp
+*.swp
+*.bak
+*.old
+*.orig
+*.rej
+*.sublime-workspace
+*.sublime-project
+.idea/
+*.iml
+*.env
+.env.*
+
+# Ignore build artifacts
+/build/
+/out/
+/target/
+
+
+# Python
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+*.egg-info/
+.installed.cfg
+*.egg
+pip-wheel-metadata/
+
+# Virtual environments
+venv/
+ENV/
+env/
+.env
+.venv/
+venv.bak/
+
+# Pytest / coverage
+.pytest_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Byte-compiled cache
+*.pyc

@@ -1,0 +1,95 @@
+"""LAMP stack sample focused on Info card fields only."""
+
+from scryr.manifest import Diagram, Link, Manifest
+from scryr.saas import Classification
+from scryr.types import (
+    AuthType,
+    DeploymentTarget,
+    IaCToolType,
+    LogAggregationType,
+    MonitoringType,
+    ProgrammingLanguage,
+    SemVer,
+    TracingType,
+    Url,
+    WebFramework,
+)
+
+linux_host_block = Manifest(
+    name="Linux Host",
+    classification=Classification.network_gateway,
+    connections=["Apache Web Server", "PHP Application", "MySQL Database"],
+    description="Ubuntu VM providing the operating system, firewall rules, process supervision, and local package management for the LAMP deployment.",
+    version=SemVer("22.4.0"),
+    language=ProgrammingLanguage.bash,
+    deployment=DeploymentTarget.vm,
+    owner_team="Platform Team",
+    auth_type=AuthType.service_account,
+    monitoring=MonitoringType.prometheus,
+    log_aggregation=LogAggregationType.elk_stack,
+    tracing=TracingType.none,
+    iac_tool=IaCToolType.terraform,
+    docs=["https://ubuntu.com/server/docs"],
+)
+
+apache_web_block = Manifest(
+    name="Apache Web Server",
+    classification=Classification.public_ui,
+    connections=["PHP Application"],
+    description="Apache HTTP Server terminates browser traffic, serves static assets, and forwards dynamic page requests to the PHP application runtime.",
+    version=SemVer("2.4.0"),
+    language=ProgrammingLanguage.html,
+    deployment=DeploymentTarget.vm,
+    owner_team="Web Team",
+    auth_type=AuthType.basic,
+    monitoring=MonitoringType.prometheus,
+    log_aggregation=LogAggregationType.elk_stack,
+    tracing=TracingType.none,
+    iac_tool=IaCToolType.terraform,
+    docs=["https://httpd.apache.org/docs/2.4/"],
+    links=[Link(site_name="Example Site", http_url=Url("https://lamp.example.com"))],
+)
+
+php_app_block = Manifest(
+    name="PHP Application",
+    classification=Classification.internal_api,
+    connections=["MySQL Database"],
+    description="PHP application layer rendering server-side pages, handling form submissions, and coordinating reads and writes against MySQL.",
+    version=SemVer("8.3.0"),
+    language=ProgrammingLanguage.php,
+    frameworks=[WebFramework.laravel],
+    deployment=DeploymentTarget.vm,
+    owner_team="App Team",
+    auth_type=AuthType.jwt,
+    monitoring=MonitoringType.prometheus,
+    log_aggregation=LogAggregationType.elk_stack,
+    tracing=TracingType.none,
+    iac_tool=IaCToolType.terraform,
+    docs=["https://www.php.net/manual/en/", "https://laravel.com/docs"],
+)
+
+mysql_database_block = Manifest(
+    name="MySQL Database",
+    classification=Classification.database,
+    description="Relational datastore for users, sessions, application content, and transactional records used by the PHP application.",
+    version=SemVer("8.4.0"),
+    language=ProgrammingLanguage.sql,
+    deployment=DeploymentTarget.vm,
+    owner_team="Data Team",
+    auth_type=AuthType.basic,
+    monitoring=MonitoringType.prometheus,
+    log_aggregation=LogAggregationType.elk_stack,
+    tracing=TracingType.none,
+    iac_tool=IaCToolType.terraform,
+    docs=["https://dev.mysql.com/doc/"],
+)
+
+lamp_diagram = Diagram(
+    name="LAMP",
+    manifests=[
+        linux_host_block,
+        apache_web_block,
+        php_app_block,
+        mysql_database_block,
+    ],
+)

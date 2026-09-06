@@ -1,0 +1,730 @@
+# Tool versions used by local development, CI-style checks, packaging, and
+# deployment tasks.
+[tools]
+rust = "latest"
+python = "3.14.6"
+uv = "latest"
+node = "26"
+"npm:quicktype" = "latest"
+"cargo:sqlx-cli" = { version = "latest", features = "sqlite,rustls", no-default-features = true }
+docker-cli = "29.4.3"
+flyctl = "latest"
+gh = "latest"
+
+[settings]
+python.uv_venv_auto = "create|source"
+
+# Defaults for the no-cloud local stack. Cloud workflows validate their required
+# settings in the private check:cloud-env helper instead of relying on defaults.
+[env]
+HOST = "127.0.0.1"
+PORT = "8000"
+AUTH_MODE = "local"
+SCRYR_API_TOKEN = "windrunner"
+SCRYR_DIR = "{{config_root}}/.cache/scryr"
+SCRYR_SQLITE_PATH = "{{config_root}}/.cache/scryr/scryr.db"
+SCRYR_GRAPHQL_URL = "http://127.0.0.1:8000/graphql"
+VITE_GRAPHQL_ENDPOINT = "http://localhost:8000/graphql"
+VITE_DEBUG = "false"
+VITE_SCRYR_AUTH_MODE = "local"
+UV_CACHE_DIR = "{{config_root}}/.cache/uv"
+
+# Setup and dependency installation
+#
+# Public entrypoints:
+# - install-dependencies: fetch all Rust, Python, and TypeScript dependencies
+# - setup/dev: prepare the default local development stack
+# - dev:cloud: prepare a local stack backed by Clerk and Turso
+[tasks."install-dependencies"]
+description = "Install all local development dependencies"
+dir = "{{config_root}}"
+run = [
+  "mise run rust:install-dependencies",
+  "mise run python:install-dependencies",
+  "mise run typescript:install-dependencies",
+]
+
+[tasks."rust:install-dependencies"]
+description = "Fetch Rust dependencies"
+dir = "{{config_root}}"
+hide = true
+run = "cargo fetch --manifest-path crystal/Cargo.toml"
+
+[tasks."python:install-dependencies"]
+description = "Install Python workspace dependencies"
+dir = "{{config_root}}"
+hide = true
+run = "cd manifest && uv sync"
+
+[tasks."typescript:install-dependencies"]
+description = "Install TypeScript frontend dependencies"
+dir = "{{config_root}}"
+hide = true
+run = "npm --prefix map install"
+
+[tasks.setup]
+description = "Prepare the default no-cloud local development environment"
+alias = ["dev"]
+dir = "{{config_root}}"
+run = "mise run setup:dev:local"
+
+[tasks."setup:dev:local"]
+description = "Install dependencies and build the no-cloud local development stack"
+dir = "{{config_root}}"
+hide = true
+run = ["mise run install-dependencies", "mise run build"]
+
+[tasks."dev:cloud"]
+description = "Install dependencies and build the Clerk/cloud-backed local development stack"
+dir = "{{config_root}}"
+run = [
+  "mise run check:cloud-env",
+  "mise run install-dependencies",
+  "mise run build:cloud",
+]
+
+# Static analysis
+#
+# Public entrypoints:
+# - static: full formatting, lint, and type pass
+# - fix/lint:fix: apply formatters and auto-fixable lint fixes
+# - lint, format:check, type-check: aggregate check groups
+[tasks.static]
+description = "Run formatting checks, linters, and type checks"
+dir = "{{config_root}}"
+run = ["mise run format:check", "mise run lint", "mise run type-check"]
+
+[tasks.lint]
+description = "Run all linters"
+dir = "{{config_root}}"
+run = ["mise run lint:rust", "mise run lint:python", "mise run lint:typescript"]
+
+[tasks."lint:rust"]
+description = "Run Rust clippy across the workspace"
+dir = "{{config_root}}"
+hide = true
+run = "cargo clippy --manifest-path crystal/Cargo.toml --workspace -- -D warnings"
+
+[tasks."lint:python"]
+description = "Run Ruff against the Python SDK and sample manifests"
+dir = "{{config_root}}"
+hide = true
+run = "cd manifest && uv run ruff check . samples/*/*.scry"
+
+[tasks."lint:typescript"]
+description = "Run Biome lint for TypeScript code"
+dir = "{{config_root}}"
+hide = true
+run = "npm --prefix map run lint"
+
+[tasks."lint:fix"]
+description = "Fix auto-fixable Python and TypeScript lint issues"
+alias = ["lint-fix"]
+dir = "{{config_root}}"
+run = ["mise run lint:fix:python", "mise run lint:fix:typescript"]
+
+[tasks."lint:fix:python"]
+description = "Fix auto-fixable Ruff issues"
+dir = "{{config_root}}"
+hide = true
+run = "cd manifest && uv run ruff check --fix --unsafe-fixes . samples/*/*.scry"
+
+[tasks."lint:fix:typescript"]
+description = "Fix auto-fixable TypeScript lint issues"
+dir = "{{config_root}}"
+hide = true
+run = "cd map && npm exec biome -- check --write --unsafe ."
+
+[tasks.format]
+description = "Format Rust, Python, and TypeScript code"
+dir = "{{config_root}}"
+run = [
+  "mise run format:rust",
+  "mise run format:python",
+  "mise run format:typescript",
+]
+
+[tasks."format:rust"]
+description = "Format Rust code"
+dir = "{{config_root}}"
+hide = true
+run = "cargo fmt --manifest-path crystal/Cargo.toml --all"
+
+[tasks."format:python"]
+description = "Format Python code and sample manifests"
+dir = "{{config_root}}"
+hide = true
+run = "cd manifest && uv run ruff format . samples/*/*.scry"
+
+[tasks."format:typescript"]
+description = "Format TypeScript code"
+dir = "{{config_root}}"
+hide = true
+run = "cd map && npm exec biome -- format --write ."
+
+[tasks."format:check"]
+description = "Check Rust, Python, and TypeScript formatting"
+alias = ["format-check"]
+dir = "{{config_root}}"
+run = [
+  "mise run format:check:rust",
+  "mise run format:check:python",
+  "mise run format:check:typescript",
+]
+
+[tasks."format:check:rust"]
+description = "Check Rust formatting"
+dir = "{{config_root}}"
+hide = true
+run = "cargo fmt --manifest-path crystal/Cargo.toml --all -- --check"
+
+[tasks."format:check:python"]
+description = "Check Python formatting"
+dir = "{{config_root}}"
+hide = true
+run = "cd manifest && uv run ruff format --check . samples/*/*.scry"
+
+[tasks."format:check:typescript"]
+description = "Check TypeScript formatting"
+dir = "{{config_root}}"
+hide = true
+run = "cd map && npm exec biome -- format ."
+
+[tasks."type-check"]
+description = "Run Rust, Python, and TypeScript type checks"
+dir = "{{config_root}}"
+run = [
+  "mise run type-check:rust",
+  "mise run type-check:python",
+  "mise run type-check:typescript",
+]
+
+[tasks."type-check:rust"]
+description = "Run Rust compile checks"
+dir = "{{config_root}}"
+hide = true
+run = "cargo check --manifest-path crystal/Cargo.toml --workspace"
+
+[tasks."type-check:python"]
+description = "Run Python static type checks"
+dir = "{{config_root}}"
+hide = true
+run = "cd manifest && uv run ty check . samples/*/*.scry"
+
+[tasks."type-check:typescript"]
+description = "Run TypeScript type checks"
+dir = "{{config_root}}"
+hide = true
+run = "cd map && npm exec tsc -- --noEmit"
+
+[tasks.fix]
+description = "Apply formatting and auto-fixable lint fixes"
+dir = "{{config_root}}"
+run = ["mise run format", "mise run lint:fix"]
+
+# Tests
+#
+# Public entrypoints:
+# - test: all unit and integration suites
+# - test:unit/test:integration: suite groups
+[tasks.test]
+description = "Run unit tests first, then integration tests"
+dir = "{{config_root}}"
+run = ["mise run test:unit", "mise run test:integration"]
+
+[tasks."test:unit"]
+description = "Run all unit test suites"
+dir = "{{config_root}}"
+run = [
+  "mise run test:unit:rust",
+  "mise run test:unit:python",
+  "mise run test:unit:ui",
+]
+
+[tasks."test:unit:rust"]
+description = "Run Rust unit tests"
+dir = "{{config_root}}"
+hide = true
+run = "cargo test --manifest-path crystal/Cargo.toml --workspace --lib --bins"
+
+[tasks."test:unit:python"]
+description = "Run Python unit tests"
+dir = "{{config_root}}"
+hide = true
+run = "cd manifest && uv run pytest tests --ignore=tests/test_sample_mern_integration.py"
+
+[tasks."test:unit:ui"]
+description = "Run frontend unit tests"
+dir = "{{config_root}}"
+hide = true
+run = "npm --prefix map run test -- --passWithNoTests"
+
+[tasks."test:integration"]
+description = "Run integration test suites"
+dir = "{{config_root}}"
+run = ["mise run test:integration:rust", "mise run test:integration:python"]
+
+[tasks."test:integration:rust"]
+description = "Run Rust integration tests"
+dir = "{{config_root}}"
+hide = true
+run = "cargo test --manifest-path crystal/Cargo.toml -p crystal-cli --test cli"
+
+[tasks."test:integration:python"]
+description = "Run Python sample integration tests"
+dir = "{{config_root}}"
+hide = true
+run = "cd manifest && uv run pytest tests/test_sample_mern_integration.py"
+
+[tasks."test:rust"]
+description = "Run all Rust tests"
+dir = "{{config_root}}"
+hide = true
+run = ["mise run test:unit:rust", "mise run test:integration:rust"]
+
+[tasks."test:python"]
+description = "Run all Python tests"
+dir = "{{config_root}}"
+hide = true
+run = ["mise run test:unit:python", "mise run test:integration:python"]
+
+[tasks."test:ui"]
+description = "Run all frontend tests"
+dir = "{{config_root}}"
+hide = true
+run = "mise run test:unit:ui"
+
+# Build
+#
+# Public entrypoints:
+# - build: local development build
+# - build:oss/install:oss: self-contained CLI packaging
+# - build:docker: server image packaging
+[tasks.build]
+description = "Build Rust, Python, and frontend artifacts for local development"
+dir = "{{config_root}}"
+run = ["mise run build:rust", "mise run build:python", "mise run build:ui"]
+
+[tasks."build:rust"]
+description = "Build the Rust workspace"
+dir = "{{config_root}}"
+hide = true
+run = "cargo build --manifest-path crystal/Cargo.toml --workspace"
+
+[tasks."build:python"]
+description = "Build the Python SDK distribution"
+dir = "{{config_root}}"
+hide = true
+run = "cd manifest/scryr && uv build --sdist --wheel"
+
+[tasks."build:ui"]
+description = "Build the frontend for local development"
+dir = "{{config_root}}"
+hide = true
+run = "npm --prefix map run build"
+
+[tasks."build:cloud"]
+description = "Build the embedded app with Clerk/cloud frontend settings"
+dir = "{{config_root}}"
+hide = true
+run = [
+  "mise run check:cloud-env",
+  "mise run sync:embedded-sdk",
+  "mise run embed:ui:cloud",
+  "mise run embed:samples",
+  "mise run build:rust:release",
+]
+
+[tasks."build:docker"]
+description = "Build the Fly/server Docker image from the Crystal context"
+dir = "{{config_root}}"
+run = "docker build -f crystal/Dockerfile -t scryr-server crystal"
+
+[tasks."build:oss"]
+description = "Build the self-contained open-source scryr CLI with embedded SDK, UI, and sample artifacts"
+dir = "{{config_root}}"
+run = [
+  "mise run sync:embedded-sdk",
+  "mise run embed:ui:local",
+  "mise run embed:samples",
+  "mise run build:rust:release",
+]
+
+[tasks."build:rust:release"]
+description = "Build the release scryr binary"
+dir = "{{config_root}}"
+hide = true
+run = "cargo build --manifest-path crystal/Cargo.toml -p crystal-cli --release"
+
+# Run
+#
+# Public entrypoints:
+# - run/run:local: start the default local server and UI together
+# - run:cloud: start the cloud-backed server and UI together
+# - run:server:* and run:ui:*: start one side of either stack
+# - run:cli:samples: seed local sample data through the CLI
+[tasks.run]
+description = "Run the no-cloud local development stack"
+alias = ["run:local"]
+dir = "{{config_root}}"
+depends = ["run:server:local", "run:ui:local"]
+
+[tasks."run:server:local"]
+description = "Run the GraphQL server with SQLite and local auth"
+dir = "{{config_root}}"
+run = '''
+set -eu
+mkdir -p .cache/scryr
+unset DATABASE_URL
+unset TURSO_DATABASE_URL
+unset TURSO_AUTH_TOKEN
+unset LIBSQL_AUTH_TOKEN
+AUTH_MODE=local cargo run --manifest-path crystal/Cargo.toml -p crystal-cli -- serve \
+  --host "${HOST:-127.0.0.1}" \
+  --port "${PORT:-8000}"
+'''
+
+[tasks."run:ui:local"]
+description = "Run the UI frontend against the local no-cloud server"
+dir = "{{config_root}}"
+run = '''
+set -eu
+VITE_GRAPHQL_ENDPOINT="${VITE_GRAPHQL_ENDPOINT:-http://localhost:8000/graphql}" \
+VITE_SCRYR_AUTH_MODE=local \
+npm --prefix map run dev
+'''
+
+[tasks."run:cloud"]
+description = "Run the local development stack against cloud services"
+dir = "{{config_root}}"
+depends = ["run:server:cloud", "run:ui:cloud"]
+
+[tasks."run:server:cloud"]
+description = "Run the GraphQL server locally with Clerk and cloud database settings"
+dir = "{{config_root}}"
+run = '''
+set -eu
+mise run check:cloud-env
+AUTH_MODE=clerk cargo run --manifest-path crystal/Cargo.toml -p crystal-cli -- serve \
+  --host "${HOST:-127.0.0.1}" \
+  --port "${PORT:-8000}"
+'''
+
+[tasks."run:ui:cloud"]
+description = "Run the UI frontend locally with Clerk enabled"
+dir = "{{config_root}}"
+run = '''
+set -eu
+mise run check:cloud-env
+VITE_SCRYR_AUTH_MODE=clerk npm --prefix map run dev
+'''
+
+[tasks."run:cli:samples"]
+description = "Upload every sample manifest to the local GraphQL API and SQLite database"
+dir = "{{config_root}}"
+run = '''
+set -eu
+port="${PORT:-8000}"
+health_url="http://127.0.0.1:${port}/health"
+server_log="${TMPDIR:-/tmp}/scryr-sample-upload-server-${port}.log"
+
+if ! curl --silent --show-error --fail "$health_url" >/dev/null 2>&1; then
+  (
+    HOST=127.0.0.1 PORT="$port" AUTH_MODE=local mise run run:server:local
+  ) >"$server_log" 2>&1 &
+  server_pid=$!
+  trap 'kill "${server_pid}" 2>/dev/null || true' EXIT
+
+  if ! curl --silent --fail \
+    --retry 40 \
+    --retry-all-errors \
+    --retry-connrefused \
+    --retry-delay 1 \
+    "$health_url" >/dev/null 2>&1; then
+    cat "$server_log" >&2
+    exit 1
+  fi
+fi
+
+for sample in manifest/samples/*/index.scry; do
+  sample_name="$(basename "$(dirname "$sample")")"
+  cargo run --manifest-path crystal/Cargo.toml -p crystal-cli -- generate upload \
+    --path "samples/${sample_name}/index.scry" \
+    --manifest-dir manifest \
+    --scryr-dir "${SCRYR_DIR:-.cache/scryr}"
+done
+'''
+
+# Code generation
+#
+# Public entrypoints:
+# - codegen-graphql-requests: generate frontend GraphQL types, starting a local
+#   server when needed
+# - codegen:manifest-types: generate Scryr manifest field metadata
+[tasks."codegen-graphql-requests"]
+description = "Generate frontend GraphQL types from the local server"
+dir = "{{config_root}}"
+run = '''
+set -eu
+token="${SCRYR_API_TOKEN:-windrunner}"
+
+if ! curl --silent --show-error --fail \
+  -H "x-scryr-token: ${token}" \
+  -H "content-type: application/json" \
+  --data '{"query":"query { __typename }"}' \
+  http://127.0.0.1:8000/graphql >/dev/null; then
+  (
+    HOST=127.0.0.1 PORT=8000 AUTH_MODE=local mise run run:server:local
+  ) >/tmp/scryr-codegen-server.log 2>&1 &
+  server_pid=$!
+  trap 'kill "${server_pid}" 2>/dev/null || true' EXIT
+
+  curl --silent --show-error --fail \
+    --retry 40 \
+    --retry-all-errors \
+    --retry-connrefused \
+    --retry-delay 1 \
+    -H "x-scryr-token: ${token}" \
+    -H "content-type: application/json" \
+    --data '{"query":"query { __typename }"}' \
+    http://127.0.0.1:8000/graphql >/dev/null
+fi
+
+mise run codegen:ui
+'''
+
+[tasks."codegen:ui"]
+description = "Generate TypeScript GraphQL client code"
+dir = "{{config_root}}"
+hide = true
+run = "npm --prefix map run codegen"
+
+[tasks."codegen:manifest-types"]
+description = "Generate manifest field type metadata via the Scryr CLI"
+dir = "{{config_root}}"
+run = "cargo run --manifest-path crystal/Cargo.toml -p crystal-cli -- generate types --path samples/open_saas/index.scry --manifest-dir manifest --scryr-dir .cache/scryr"
+
+# Self-contained CLI install
+[tasks."install:oss"]
+description = "Build and install the self-contained scryr CLI on PATH"
+alias = ["scryr-cli:setup"]
+dir = "{{config_root}}"
+run = '''
+set -eu
+
+mise run build:oss
+
+install_dir="${SCRYR_CLI_INSTALL_DIR:-$HOME/.local/bin}"
+mkdir -p "$install_dir"
+tmp_binary="$install_dir/scryr.tmp.$$"
+cp crystal/target/release/scryr "$tmp_binary"
+chmod +x "$tmp_binary"
+mv "$tmp_binary" "$install_dir/scryr"
+
+path_entry="$install_dir"
+if [ "$install_dir" = "$HOME/.local/bin" ]; then
+  path_entry='$HOME/.local/bin'
+fi
+
+shell_name="$(basename "${SHELL:-}")"
+case "$shell_name" in
+  zsh)
+    profile="$HOME/.zshrc"
+    path_line="export PATH=\"$path_entry:\$PATH\""
+    ;;
+  bash)
+    if [ "$(uname -s)" = "Darwin" ]; then
+      profile="$HOME/.bash_profile"
+    else
+      profile="$HOME/.bashrc"
+    fi
+    path_line="export PATH=\"$path_entry:\$PATH\""
+    ;;
+  fish)
+    profile="${XDG_CONFIG_HOME:-$HOME/.config}/fish/config.fish"
+    mkdir -p "$(dirname "$profile")"
+    path_line="fish_add_path -g \"$install_dir\""
+    ;;
+  *)
+    profile=""
+    path_line=""
+    ;;
+esac
+
+if [ -n "$profile" ]; then
+  if ! grep -F "$install_dir" "$profile" >/dev/null 2>&1; then
+    printf '\n# Added by scryr-cli setup\n%s\n' "$path_line" >> "$profile"
+    echo "Added $install_dir to PATH in $profile"
+  else
+    echo "$install_dir is already configured in $profile"
+  fi
+else
+  echo "Installed scryr to $install_dir"
+  echo "Add this directory to PATH for shell ${SHELL:-unknown}: $install_dir"
+fi
+
+echo "Installed $( "$install_dir/scryr" --version ) at $install_dir/scryr"
+echo "Restart your shell or run: export PATH=\"$install_dir:\$PATH\""
+'''
+
+# Deployment
+#
+# Public entrypoints:
+# - deploy:secrets: push Clerk/Turso secrets to Fly
+# - deploy:cloud: build cloud assets and deploy the Fly app
+[tasks."deploy:cloud"]
+description = "Build Clerk-enabled assets and deploy the Fly GraphQL/server app"
+dir = "{{config_root}}"
+run = '''
+set -eu
+
+mise run build:cloud
+
+if [ -n "${CLERK_SECRET_KEY:-}" ]; then
+  flyctl secrets set CLERK_SECRET_KEY="$CLERK_SECRET_KEY" --config crystal/fly.toml
+fi
+
+if [ -n "${TURSO_DATABASE_URL:-}" ]; then
+  flyctl secrets set TURSO_DATABASE_URL="$TURSO_DATABASE_URL" --config crystal/fly.toml
+fi
+
+if [ -n "${TURSO_AUTH_TOKEN:-}" ]; then
+  flyctl secrets set TURSO_AUTH_TOKEN="$TURSO_AUTH_TOKEN" --config crystal/fly.toml
+fi
+
+flyctl deploy --config crystal/fly.toml
+'''
+
+[tasks."deploy:secrets"]
+description = "Push Clerk and Turso secrets to the Fly app"
+dir = "{{config_root}}"
+run = '''
+set -eu
+: "${CLERK_SECRET_KEY:?Set CLERK_SECRET_KEY before running deploy:secrets}"
+: "${TURSO_DATABASE_URL:?Set TURSO_DATABASE_URL before running deploy:secrets}"
+: "${TURSO_AUTH_TOKEN:?Set TURSO_AUTH_TOKEN before running deploy:secrets}"
+flyctl secrets set CLERK_SECRET_KEY="$CLERK_SECRET_KEY" --config crystal/fly.toml
+flyctl secrets set TURSO_DATABASE_URL="$TURSO_DATABASE_URL" --config crystal/fly.toml
+flyctl secrets set TURSO_AUTH_TOKEN="$TURSO_AUTH_TOKEN" --config crystal/fly.toml
+'''
+
+# Utility aliases
+[tasks.crystal]
+description = "Build or prepare the Rust workspace"
+dir = "{{config_root}}"
+hide = true
+run = "mise run build:rust"
+
+[tasks.manifest]
+description = "Build or prepare the Python SDK"
+dir = "{{config_root}}"
+hide = true
+run = "mise run build:python"
+
+[tasks.ui]
+description = "Build or prepare the UI"
+dir = "{{config_root}}"
+hide = true
+run = "mise run build:ui"
+
+[tasks."pre-commit"]
+description = "Run fixers, static analysis, unit tests, and integration tests"
+dir = "{{config_root}}"
+run = ["mise run fix", "mise run static", "mise run test"]
+
+# Private orchestration helpers
+[tasks."check:cloud-env"]
+description = "Validate local cloud-service development environment variables"
+dir = "{{config_root}}"
+hide = true
+run = '''
+set -eu
+missing=""
+for name in TURSO_DATABASE_URL TURSO_AUTH_TOKEN CLERK_SECRET_KEY VITE_CLERK_PUBLISHABLE_KEY; do
+  eval "value=\${$name:-}"
+  if [ -z "$value" ]; then
+    missing="$missing $name"
+  fi
+done
+
+if [ -n "$missing" ]; then
+  echo "Missing required cloud development environment variables:$missing" >&2
+  echo "Set them in your shell or in untracked mise.local.toml." >&2
+  exit 1
+fi
+'''
+
+[tasks."sync:embedded-sdk"]
+description = "Refresh the crate-local Python SDK copy embedded in crystal-cli packages"
+dir = "{{config_root}}"
+hide = true
+run = '''
+set -eu
+
+rm -rf crystal/crystal-cli/static/scryr-sdk
+mkdir -p crystal/crystal-cli/static/scryr-sdk
+cp -R manifest/scryr/. crystal/crystal-cli/static/scryr-sdk/
+rm -rf crystal/crystal-cli/static/scryr-sdk/build
+rm -rf crystal/crystal-cli/static/scryr-sdk/src/scryr.egg-info
+find crystal/crystal-cli/static/scryr-sdk -type d -name __pycache__ -prune -exec rm -rf {} +
+find crystal/crystal-cli/static/scryr-sdk -type f -name '*.pyc' -delete
+'''
+
+[tasks."embed:ui:local"]
+description = "Build and copy the local-auth UI into Rust embedded assets"
+dir = "{{config_root}}"
+hide = true
+run = '''
+set -eu
+
+npm --prefix map ci
+VITE_GRAPHQL_ENDPOINT=/graphql VITE_SCRYR_AUTH_MODE=local npm --prefix map run build
+
+rm -rf crystal/crystal-server/static/map
+mkdir -p crystal/crystal-server/static/map
+cp -R map/dist/. crystal/crystal-server/static/map/
+find crystal/crystal-server/static/map -name .DS_Store -delete
+test -f crystal/crystal-server/static/map/index.html
+'''
+
+[tasks."embed:ui:cloud"]
+description = "Build and copy the Clerk-enabled UI into Rust embedded assets"
+dir = "{{config_root}}"
+hide = true
+run = '''
+set -eu
+: "${VITE_CLERK_PUBLISHABLE_KEY:?Set VITE_CLERK_PUBLISHABLE_KEY before building cloud assets}"
+
+npm --prefix map ci
+VITE_GRAPHQL_ENDPOINT="${VITE_GRAPHQL_ENDPOINT:-/graphql}" \
+VITE_SCRYR_AUTH_MODE=clerk \
+VITE_CLERK_PUBLISHABLE_KEY="$VITE_CLERK_PUBLISHABLE_KEY" \
+npm --prefix map run build
+
+rm -rf crystal/crystal-server/static/map
+mkdir -p crystal/crystal-server/static/map
+cp -R map/dist/. crystal/crystal-server/static/map/
+find crystal/crystal-server/static/map -name .DS_Store -delete
+test -f crystal/crystal-server/static/map/index.html
+'''
+
+[tasks."embed:samples"]
+description = "Generate bundled sample artifacts for the embedded server"
+dir = "{{config_root}}"
+hide = true
+run = '''
+set -eu
+
+rm -rf crystal/crystal-server/static/samples
+mkdir -p crystal/crystal-server/static/samples
+for sample_path in manifest/samples/*/index.scry; do
+  sample_name="$(basename "$(dirname "$sample_path")")"
+  cargo run --manifest-path crystal/Cargo.toml --quiet -p crystal-cli -- generate artifact-json \
+    --path "samples/${sample_name}/index.scry" \
+    --manifest-dir manifest \
+    --scryr-dir .cache/scryr \
+    > "crystal/crystal-server/static/samples/${sample_name}.json"
+done
+
+test -f crystal/crystal-server/static/samples/mern.json
+'''

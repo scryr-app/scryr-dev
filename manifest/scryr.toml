@@ -1,0 +1,2 @@
+# Opt into the Python workspace dependencies in pyproject.toml and uv.lock.
+# No configuration keys are currently required.

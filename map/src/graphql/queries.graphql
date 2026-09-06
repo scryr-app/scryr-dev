@@ -1,0 +1,55 @@
+query HealthCheck {
+	health {
+		status
+		databaseOk
+		databaseMessage
+	}
+}
+
+query GetScryrMaps {
+	scryrMaps {
+		id
+		key
+		scryIdentifier
+		name
+		clerkOrgId
+		orgSlug
+		folderPath
+		fileName
+		gitCommitSha
+		updatedAt
+	}
+}
+
+query GetBlocks($scryIdentifier: String, $sample: String) {
+	blocks(scryIdentifier: $scryIdentifier, sample: $sample) {
+		name
+		description
+		version
+		lineNumber
+		consumerType
+		icon
+		language
+		frameworks
+		deployment
+		deploymentProvider
+		sourceCodeUrl
+		connections
+		docs
+		ownerTeam
+		tags
+		authType
+		monitoring
+		logAggregation
+		tracing
+		iacTool
+		cicdTool
+		maxReplicas
+		minReplicas
+		links {
+			siteName
+			httpUrl
+		}
+		rawJsonString
+	}
+}

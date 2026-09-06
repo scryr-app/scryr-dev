@@ -1,0 +1,77 @@
+[project]
+name = "scryr-manifest-workspace"
+version = "0.2.0"
+description = "Workspace root for the Scryr manifest library, samples, and tests"
+requires-python = ">=3.14,<3.15"
+dependencies = ["scryr"]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+scryr = { workspace = true }
+
+[tool.uv.workspace]
+members = ["scryr", "samples", "tests"]
+
+[dependency-groups]
+dev = ["ruff>=0.8.0", "pytest>=8.0.0", "ty"]
+
+[tool.ruff]
+extension = { scry = "python" }
+extend-include = ["*.scry"]
+line-length = 100
+target-version = "py314"
+lint.select = [
+    "ALL",
+]
+lint.ignore = [
+    "D203",
+    "D213",
+    "COM812",
+    "ISC001",
+    "INP001",
+    "S101",
+    "PLR2004",
+    "PT017",
+    "BLE001",
+    "S110",
+    "S112",
+    "PLC0415",
+    "SLF001",
+    "S102",
+    "C901",
+    "PLR0912",
+]
+lint.fixable = ["ALL"]
+lint.unfixable = []
+lint.extend-safe-fixes = ["F401", "F841"]
+lint.per-file-ignores."__init__.py" = [
+    "F401",
+    "D104",
+]
+lint.per-file-ignores."samples/**/*.py" = [
+    "D",
+    "T201",
+    "E501",
+]
+lint.per-file-ignores."samples/**/*.scry" = [
+    "D",
+    "T201",
+    "E501",
+]
+lint.per-file-ignores."tests/*.py" = ["ANN001", "ARG001"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+known-first-party = ["scryr"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = true
+docstring-code-line-length = "dynamic"

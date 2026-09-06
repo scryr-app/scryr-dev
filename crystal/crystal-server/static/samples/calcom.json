@@ -1,0 +1,1582 @@
+{
+  "files": [
+    {
+      "path": "index.scry",
+      "content": "\"\"\"Cal.com scheduling platform manifest.\n\nOpen-source scheduling infrastructure for everyone.\nA Turborepo TypeScript monorepo offering a full-featured Calendly\nalternative with a Next.js/tRPC web app and a NestJS platform API.\n\nArchitecture reference: https://github.com/calcom/cal.com\nSource: https://github.com/calcom/cal.com\n\"\"\"\n\nfrom scryr.manifest import Diagram, Link, Manifest\nfrom scryr.saas import Classification\nfrom scryr.types import (\n    AuthType,\n    CICDToolType,\n    DeploymentTarget,\n    IaCToolType,\n    LogAggregationType,\n    MonitoringType,\n    ProgrammingLanguage,\n    TracingType,\n    Url,\n    WebFramework,\n    parse_version,\n)\n\n_SOURCE = Url(\"https://github.com/calcom/cal.com\")\n_DOCS = Url(\"https://cal.com/docs\")\n_CICD = CICDToolType.github_actions\n_IAC = IaCToolType.none\n_MONITOR = MonitoringType.none\n_LOGS = LogAggregationType.none\n_TRACING = TracingType.none\npostgres_block = Manifest(\n    name=\"PostgreSQL\",\n    icon=\"🐘\",\n    classification=Classification.database,\n    tags=[\"database\", \"sql\", \"infra\"],\n    connections=[],\n    description=\"Primary relational database storing all cal.com data: users, bookings, event types, availability rules, and workflows. Accessed exclusively via Prisma ORM.\",\n    version=parse_version(\"15.0.0\"),\n    language=ProgrammingLanguage.sql,\n    deployment=DeploymentTarget.render,\n    owner_team=\"Platform\",\n    auth_type=AuthType.basic,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=2,\n    min_replicas=1,\n    links=[Link(site_name=\"Cal.com Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nredis_block = Manifest(\n    name=\"Redis\",\n    icon=\"🔴\",\n    classification=Classification.cache_store,\n    tags=[\"cache\", \"rate-limiting\", \"infra\"],\n    connections=[],\n    description=\"In-memory cache and rate-limit store (Upstash or self-hosted). Used for caching availability calculations and API rate limiting.\",\n    version=parse_version(\"7.0.0\"),\n    language=ProgrammingLanguage.c,\n    deployment=DeploymentTarget.render,\n    owner_team=\"Platform\",\n    auth_type=AuthType.api_key,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[Link(site_name=\"Cal.com Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nweb_block = Manifest(\n    name=\"Web App\",\n    icon=\"📅\",\n    classification=Classification.public_ui,\n    tags=[\"frontend\", \"scheduling\", \"monolith\"],\n    connections=[\"PostgreSQL\", \"Redis\", \"Email\", \"Daily.co\", \"Workflow Cron\"],\n    description=\"Main Next.js application serving the cal.com scheduling UI and tRPC backend. Handles booking flows, event types, availability, user auth (NextAuth.js), calendar integrations, Prisma data access, and outbound webhooks.\",\n    version=parse_version(\"6.2.0\"),\n    language=ProgrammingLanguage.typescript,\n    frameworks=[WebFramework.nextjs],\n    deployment=DeploymentTarget.vercel,\n    owner_team=\"Product\",\n    auth_type=AuthType.oauth2,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=10,\n    min_replicas=2,\n    links=[\n        Link(site_name=\"Cal.com\", http_url=Url(\"https://cal.com\")),\n        Link(site_name=\"Source\", http_url=_SOURCE),\n    ],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\napi_v2_block = Manifest(\n    name=\"API v2\",\n    icon=\"🔌\",\n    classification=Classification.public_api,\n    tags=[\"api\", \"platform\", \"headless\"],\n    connections=[\"PostgreSQL\", \"Redis\"],\n    description=\"NestJS REST API for the Cal.com Platform offering (Cal Atoms). Provides headless scheduling endpoints so third-party developers can embed cal.com booking experiences into their own products.\",\n    version=parse_version(\"2.0.0\"),\n    language=ProgrammingLanguage.typescript,\n    frameworks=[WebFramework.nestjs],\n    deployment=DeploymentTarget.vercel,\n    owner_team=\"Platform\",\n    auth_type=AuthType.api_key,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=5,\n    min_replicas=1,\n    links=[\n        Link(\n            site_name=\"API v2 Reference\",\n            http_url=Url(\"https://cal.com/docs/api-reference/v2/introduction\"),\n        )\n    ],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nemail_block = Manifest(\n    name=\"Email\",\n    icon=\"✉️\",\n    classification=Classification.public_api,\n    tags=[\"email\", \"notifications\", \"transactional\"],\n    connections=[],\n    description=\"Transactional email service (SendGrid) that delivers booking confirmations, cancellations, reschedule requests, team invitations, and workflow-triggered reminders to attendees and organizers.\",\n    version=parse_version(\"1.0.0\"),\n    language=ProgrammingLanguage.typescript,\n    deployment=DeploymentTarget.vercel,\n    owner_team=\"Product\",\n    auth_type=AuthType.api_key,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[Link(site_name=\"Cal.com Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nworkflow_cron_block = Manifest(\n    name=\"Workflow Cron\",\n    icon=\"⏰\",\n    classification=Classification.scheduler,\n    tags=[\"cron\", \"workflows\", \"automation\"],\n    connections=[\"PostgreSQL\", \"Email\"],\n    description=\"Vercel cron-based job runner that processes automated cal.com workflows: scheduled email and SMS reminders (via Twilio), booking follow-ups, expired booking cleanup, and daily digest jobs.\",\n    version=parse_version(\"1.0.0\"),\n    language=ProgrammingLanguage.typescript,\n    deployment=DeploymentTarget.vercel,\n    owner_team=\"Product\",\n    auth_type=AuthType.api_key,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[Link(site_name=\"Cal.com Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\ndaily_video_block = Manifest(\n    name=\"Daily.co\",\n    icon=\"📹\",\n    classification=Classification.public_api,\n    tags=[\"video\", \"conferencing\", \"integration\"],\n    connections=[],\n    description=\"Embedded video conferencing provider powering Cal Video — the built-in video call option for bookings. Rooms are created and managed via the Daily REST API.\",\n    version=parse_version(\"1.0.0\"),\n    language=ProgrammingLanguage.javascript,\n    deployment=DeploymentTarget.unknown,\n    owner_team=\"Product\",\n    auth_type=AuthType.api_key,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[Link(site_name=\"Daily Docs\", http_url=Url(\"https://docs.daily.co/reference\"))],\n    repo_url=Url(\"https://github.com/daily-co/daily-js\"),\n    cicd_tool=CICDToolType.none,\n)\napp_store_block = Manifest(\n    name=\"App Store\",\n    icon=\"🧩\",\n    classification=Classification.sdk,\n    tags=[\"integrations\", \"calendars\", \"payments\"],\n    connections=[\"PostgreSQL\", \"Web App\"],\n    description=\"Cal.com App Store — a collection of OAuth2 and API-key integrations: Google Calendar, Outlook, Zoom, Stripe, HubSpot, Salesforce, Zapier, and 100+ more. Each app is a self-contained package in packages/app-store.\",\n    version=parse_version(\"1.0.0\"),\n    language=ProgrammingLanguage.typescript,\n    deployment=DeploymentTarget.vercel,\n    owner_team=\"Product\",\n    auth_type=AuthType.oauth2,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[Link(site_name=\"App Store\", http_url=Url(\"https://app.cal.com/apps\"))],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\n\ncalcom_diagram = Diagram(\n    name=\"Cal.com\",\n    manifests=[\n        postgres_block,\n        redis_block,\n        web_block,\n        api_v2_block,\n        email_block,\n        workflow_cron_block,\n        daily_video_block,\n        app_store_block,\n    ],\n)\n\ncalcom_booking_flow_diagram = Diagram(\n    name=\"Cal.com Booking Flow\",\n    manifests=[\n        web_block,\n        postgres_block,\n        redis_block,\n        email_block,\n        workflow_cron_block,\n        daily_video_block,\n    ],\n)\n"
+    }
+  ],
+  "manifests": [
+    {
+      "name": "API v2",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "public_api",
+      "connections": [
+        "PostgreSQL",
+        "Redis"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/calcom/cal.com",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🔌",
+      "info": {
+        "authType": "api_key",
+        "deployment": "vercel",
+        "description": "NestJS REST API for the Cal.com Platform offering (Cal Atoms). Provides headless scheduling endpoints so third-party developers can embed cal.com booking experiences into their own products.",
+        "docs": [],
+        "frameworks": [
+          "nestjs"
+        ],
+        "iacTool": "none",
+        "language": "typescript",
+        "links": [
+          {
+            "http_url": "https://cal.com/docs/api-reference/v2/introduction",
+            "site_name": "API v2 Reference"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 5,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Platform",
+        "tracing": "none",
+        "version": "2.0.0"
+      },
+      "line_number": 104,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "api",
+        "platform",
+        "headless"
+      ],
+      "tests": null,
+      "variable_name": "api_v2_block"
+    },
+    {
+      "name": "App Store",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "sdk",
+      "connections": [
+        "PostgreSQL",
+        "Web App"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/calcom/cal.com",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🧩",
+      "info": {
+        "authType": "oauth2",
+        "deployment": "vercel",
+        "description": "Cal.com App Store — a collection of OAuth2 and API-key integrations: Google Calendar, Outlook, Zoom, Stripe, HubSpot, Salesforce, Zapier, and 100+ more. Each app is a self-contained package in packages/app-store.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "none",
+        "language": "typescript",
+        "links": [
+          {
+            "http_url": "https://app.cal.com/apps",
+            "site_name": "App Store"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Product",
+        "tracing": "none",
+        "version": "1.0.0"
+      },
+      "line_number": 198,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "integrations",
+        "calendars",
+        "payments"
+      ],
+      "tests": null,
+      "variable_name": "app_store_block"
+    },
+    {
+      "name": "Daily.co",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "none"
+      },
+      "classification": "public_api",
+      "connections": [],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/daily-co/daily-js",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "📹",
+      "info": {
+        "authType": "api_key",
+        "deployment": "unknown",
+        "description": "Embedded video conferencing provider powering Cal Video — the built-in video call option for bookings. Rooms are created and managed via the Daily REST API.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "none",
+        "language": "javascript",
+        "links": [
+          {
+            "http_url": "https://docs.daily.co/reference",
+            "site_name": "Daily Docs"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Product",
+        "tracing": "none",
+        "version": "1.0.0"
+      },
+      "line_number": 176,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "video",
+        "conferencing",
+        "integration"
+      ],
+      "tests": null,
+      "variable_name": "daily_video_block"
+    },
+    {
+      "name": "Email",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "public_api",
+      "connections": [],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/calcom/cal.com",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "✉️",
+      "info": {
+        "authType": "api_key",
+        "deployment": "vercel",
+        "description": "Transactional email service (SendGrid) that delivers booking confirmations, cancellations, reschedule requests, team invitations, and workflow-triggered reminders to attendees and organizers.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "none",
+        "language": "typescript",
+        "links": [
+          {
+            "http_url": "https://cal.com/docs",
+            "site_name": "Cal.com Docs"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Product",
+        "tracing": "none",
+        "version": "1.0.0"
+      },
+      "line_number": 132,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "email",
+        "notifications",
+        "transactional"
+      ],
+      "tests": null,
+      "variable_name": "email_block"
+    },
+    {
+      "name": "PostgreSQL",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "database",
+      "connections": [],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/calcom/cal.com",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🐘",
+      "info": {
+        "authType": "basic",
+        "deployment": "render",
+        "description": "Primary relational database storing all cal.com data: users, bookings, event types, availability rules, and workflows. Accessed exclusively via Prisma ORM.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "none",
+        "language": "sql",
+        "links": [
+          {
+            "http_url": "https://cal.com/docs",
+            "site_name": "Cal.com Docs"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 2,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Platform",
+        "tracing": "none",
+        "version": "15.0.0"
+      },
+      "line_number": 34,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "database",
+        "sql",
+        "infra"
+      ],
+      "tests": null,
+      "variable_name": "postgres_block"
+    },
+    {
+      "name": "Redis",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "cache_store",
+      "connections": [],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/calcom/cal.com",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🔴",
+      "info": {
+        "authType": "api_key",
+        "deployment": "render",
+        "description": "In-memory cache and rate-limit store (Upstash or self-hosted). Used for caching availability calculations and API rate limiting.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "none",
+        "language": "c",
+        "links": [
+          {
+            "http_url": "https://cal.com/docs",
+            "site_name": "Cal.com Docs"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Platform",
+        "tracing": "none",
+        "version": "7.0.0"
+      },
+      "line_number": 56,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "cache",
+        "rate-limiting",
+        "infra"
+      ],
+      "tests": null,
+      "variable_name": "redis_block"
+    },
+    {
+      "name": "Web App",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "public_ui",
+      "connections": [
+        "PostgreSQL",
+        "Redis",
+        "Email",
+        "Daily.co",
+        "Workflow Cron"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/calcom/cal.com",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "📅",
+      "info": {
+        "authType": "oauth2",
+        "deployment": "vercel",
+        "description": "Main Next.js application serving the cal.com scheduling UI and tRPC backend. Handles booking flows, event types, availability, user auth (NextAuth.js), calendar integrations, Prisma data access, and outbound webhooks.",
+        "docs": [],
+        "frameworks": [
+          "nextjs"
+        ],
+        "iacTool": "none",
+        "language": "typescript",
+        "links": [
+          {
+            "http_url": "https://cal.com",
+            "site_name": "Cal.com"
+          },
+          {
+            "http_url": "https://github.com/calcom/cal.com",
+            "site_name": "Source"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 10,
+        "minReplicas": 2,
+        "monitoring": "none",
+        "ownerTeam": "Product",
+        "tracing": "none",
+        "version": "6.2.0"
+      },
+      "line_number": 78,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "frontend",
+        "scheduling",
+        "monolith"
+      ],
+      "tests": null,
+      "variable_name": "web_block"
+    },
+    {
+      "name": "Workflow Cron",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "scheduler",
+      "connections": [
+        "PostgreSQL",
+        "Email"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/calcom/cal.com",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "⏰",
+      "info": {
+        "authType": "api_key",
+        "deployment": "vercel",
+        "description": "Vercel cron-based job runner that processes automated cal.com workflows: scheduled email and SMS reminders (via Twilio), booking follow-ups, expired booking cleanup, and daily digest jobs.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "none",
+        "language": "typescript",
+        "links": [
+          {
+            "http_url": "https://cal.com/docs",
+            "site_name": "Cal.com Docs"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Product",
+        "tracing": "none",
+        "version": "1.0.0"
+      },
+      "line_number": 154,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "cron",
+        "workflows",
+        "automation"
+      ],
+      "tests": null,
+      "variable_name": "workflow_cron_block"
+    }
+  ],
+  "forges": [],
+  "diagrams": [
+    {
+      "name": "Cal.com Booking Flow",
+      "variable_name": "calcom_booking_flow_diagram",
+      "manifests": [
+        {
+          "name": "Web App",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "public_ui",
+          "connections": [
+            "PostgreSQL",
+            "Redis",
+            "Email",
+            "Daily.co",
+            "Workflow Cron"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/calcom/cal.com",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "📅",
+          "info": {
+            "authType": "oauth2",
+            "deployment": "vercel",
+            "description": "Main Next.js application serving the cal.com scheduling UI and tRPC backend. Handles booking flows, event types, availability, user auth (NextAuth.js), calendar integrations, Prisma data access, and outbound webhooks.",
+            "docs": [],
+            "frameworks": [
+              "nextjs"
+            ],
+            "iacTool": "none",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://cal.com",
+                "site_name": "Cal.com"
+              },
+              {
+                "http_url": "https://github.com/calcom/cal.com",
+                "site_name": "Source"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 10,
+            "minReplicas": 2,
+            "monitoring": "none",
+            "ownerTeam": "Product",
+            "tracing": "none",
+            "version": "6.2.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "frontend",
+            "scheduling",
+            "monolith"
+          ],
+          "tests": null
+        },
+        {
+          "name": "PostgreSQL",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "database",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/calcom/cal.com",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🐘",
+          "info": {
+            "authType": "basic",
+            "deployment": "render",
+            "description": "Primary relational database storing all cal.com data: users, bookings, event types, availability rules, and workflows. Accessed exclusively via Prisma ORM.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "sql",
+            "links": [
+              {
+                "http_url": "https://cal.com/docs",
+                "site_name": "Cal.com Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 2,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Platform",
+            "tracing": "none",
+            "version": "15.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "database",
+            "sql",
+            "infra"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Redis",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "cache_store",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/calcom/cal.com",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🔴",
+          "info": {
+            "authType": "api_key",
+            "deployment": "render",
+            "description": "In-memory cache and rate-limit store (Upstash or self-hosted). Used for caching availability calculations and API rate limiting.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "c",
+            "links": [
+              {
+                "http_url": "https://cal.com/docs",
+                "site_name": "Cal.com Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Platform",
+            "tracing": "none",
+            "version": "7.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "cache",
+            "rate-limiting",
+            "infra"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Email",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "public_api",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/calcom/cal.com",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "✉️",
+          "info": {
+            "authType": "api_key",
+            "deployment": "vercel",
+            "description": "Transactional email service (SendGrid) that delivers booking confirmations, cancellations, reschedule requests, team invitations, and workflow-triggered reminders to attendees and organizers.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://cal.com/docs",
+                "site_name": "Cal.com Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Product",
+            "tracing": "none",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "email",
+            "notifications",
+            "transactional"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Workflow Cron",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "scheduler",
+          "connections": [
+            "PostgreSQL",
+            "Email"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/calcom/cal.com",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "⏰",
+          "info": {
+            "authType": "api_key",
+            "deployment": "vercel",
+            "description": "Vercel cron-based job runner that processes automated cal.com workflows: scheduled email and SMS reminders (via Twilio), booking follow-ups, expired booking cleanup, and daily digest jobs.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://cal.com/docs",
+                "site_name": "Cal.com Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Product",
+            "tracing": "none",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "cron",
+            "workflows",
+            "automation"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Daily.co",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "none"
+          },
+          "classification": "public_api",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/daily-co/daily-js",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "📹",
+          "info": {
+            "authType": "api_key",
+            "deployment": "unknown",
+            "description": "Embedded video conferencing provider powering Cal Video — the built-in video call option for bookings. Rooms are created and managed via the Daily REST API.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "javascript",
+            "links": [
+              {
+                "http_url": "https://docs.daily.co/reference",
+                "site_name": "Daily Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Product",
+            "tracing": "none",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "video",
+            "conferencing",
+            "integration"
+          ],
+          "tests": null
+        }
+      ],
+      "description": "",
+      "line_number": 235,
+      "query": null
+    },
+    {
+      "name": "Cal.com",
+      "variable_name": "calcom_diagram",
+      "manifests": [
+        {
+          "name": "PostgreSQL",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "database",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/calcom/cal.com",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🐘",
+          "info": {
+            "authType": "basic",
+            "deployment": "render",
+            "description": "Primary relational database storing all cal.com data: users, bookings, event types, availability rules, and workflows. Accessed exclusively via Prisma ORM.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "sql",
+            "links": [
+              {
+                "http_url": "https://cal.com/docs",
+                "site_name": "Cal.com Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 2,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Platform",
+            "tracing": "none",
+            "version": "15.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "database",
+            "sql",
+            "infra"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Redis",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "cache_store",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/calcom/cal.com",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🔴",
+          "info": {
+            "authType": "api_key",
+            "deployment": "render",
+            "description": "In-memory cache and rate-limit store (Upstash or self-hosted). Used for caching availability calculations and API rate limiting.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "c",
+            "links": [
+              {
+                "http_url": "https://cal.com/docs",
+                "site_name": "Cal.com Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Platform",
+            "tracing": "none",
+            "version": "7.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "cache",
+            "rate-limiting",
+            "infra"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Web App",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "public_ui",
+          "connections": [
+            "PostgreSQL",
+            "Redis",
+            "Email",
+            "Daily.co",
+            "Workflow Cron"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/calcom/cal.com",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "📅",
+          "info": {
+            "authType": "oauth2",
+            "deployment": "vercel",
+            "description": "Main Next.js application serving the cal.com scheduling UI and tRPC backend. Handles booking flows, event types, availability, user auth (NextAuth.js), calendar integrations, Prisma data access, and outbound webhooks.",
+            "docs": [],
+            "frameworks": [
+              "nextjs"
+            ],
+            "iacTool": "none",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://cal.com",
+                "site_name": "Cal.com"
+              },
+              {
+                "http_url": "https://github.com/calcom/cal.com",
+                "site_name": "Source"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 10,
+            "minReplicas": 2,
+            "monitoring": "none",
+            "ownerTeam": "Product",
+            "tracing": "none",
+            "version": "6.2.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "frontend",
+            "scheduling",
+            "monolith"
+          ],
+          "tests": null
+        },
+        {
+          "name": "API v2",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "public_api",
+          "connections": [
+            "PostgreSQL",
+            "Redis"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/calcom/cal.com",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🔌",
+          "info": {
+            "authType": "api_key",
+            "deployment": "vercel",
+            "description": "NestJS REST API for the Cal.com Platform offering (Cal Atoms). Provides headless scheduling endpoints so third-party developers can embed cal.com booking experiences into their own products.",
+            "docs": [],
+            "frameworks": [
+              "nestjs"
+            ],
+            "iacTool": "none",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://cal.com/docs/api-reference/v2/introduction",
+                "site_name": "API v2 Reference"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 5,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Platform",
+            "tracing": "none",
+            "version": "2.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "api",
+            "platform",
+            "headless"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Email",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "public_api",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/calcom/cal.com",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "✉️",
+          "info": {
+            "authType": "api_key",
+            "deployment": "vercel",
+            "description": "Transactional email service (SendGrid) that delivers booking confirmations, cancellations, reschedule requests, team invitations, and workflow-triggered reminders to attendees and organizers.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://cal.com/docs",
+                "site_name": "Cal.com Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Product",
+            "tracing": "none",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "email",
+            "notifications",
+            "transactional"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Workflow Cron",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "scheduler",
+          "connections": [
+            "PostgreSQL",
+            "Email"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/calcom/cal.com",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "⏰",
+          "info": {
+            "authType": "api_key",
+            "deployment": "vercel",
+            "description": "Vercel cron-based job runner that processes automated cal.com workflows: scheduled email and SMS reminders (via Twilio), booking follow-ups, expired booking cleanup, and daily digest jobs.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://cal.com/docs",
+                "site_name": "Cal.com Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Product",
+            "tracing": "none",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "cron",
+            "workflows",
+            "automation"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Daily.co",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "none"
+          },
+          "classification": "public_api",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/daily-co/daily-js",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "📹",
+          "info": {
+            "authType": "api_key",
+            "deployment": "unknown",
+            "description": "Embedded video conferencing provider powering Cal Video — the built-in video call option for bookings. Rooms are created and managed via the Daily REST API.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "javascript",
+            "links": [
+              {
+                "http_url": "https://docs.daily.co/reference",
+                "site_name": "Daily Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Product",
+            "tracing": "none",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "video",
+            "conferencing",
+            "integration"
+          ],
+          "tests": null
+        },
+        {
+          "name": "App Store",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "sdk",
+          "connections": [
+            "PostgreSQL",
+            "Web App"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/calcom/cal.com",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🧩",
+          "info": {
+            "authType": "oauth2",
+            "deployment": "vercel",
+            "description": "Cal.com App Store — a collection of OAuth2 and API-key integrations: Google Calendar, Outlook, Zoom, Stripe, HubSpot, Salesforce, Zapier, and 100+ more. Each app is a self-contained package in packages/app-store.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://app.cal.com/apps",
+                "site_name": "App Store"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Product",
+            "tracing": "none",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "integrations",
+            "calendars",
+            "payments"
+          ],
+          "tests": null
+        }
+      ],
+      "description": "",
+      "line_number": 221,
+      "query": null
+    }
+  ]
+}

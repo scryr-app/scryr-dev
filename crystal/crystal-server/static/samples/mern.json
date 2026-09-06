@@ -1,0 +1,1248 @@
+{
+  "files": [
+    {
+      "path": "index.scry",
+      "content": "from scryr.manifest import Diagram, Forge, ForgeTask, ForgeTool, Link, Manifest, ManifestQuery\nfrom scryr.saas import Classification\nfrom scryr.types import (\n    AuthType,\n    CICDToolType,\n    DeploymentTarget,\n    IaCToolType,\n    LogAggregationType,\n    MonitoringType,\n    ProgrammingLanguage,\n    SemVer,\n    TracingType,\n    Url,\n    WebFramework,\n)\n\nmern_forge = Forge(\n    name=\"MERN Forge\",\n    description=\"Node.js toolchain, environment, and common developer tasks for the MERN sample.\",\n    tools={\n        \"node\": ForgeTool(version=\"22\", postinstall=\"corepack enable\"),\n        \"mongodb\": \"8\",\n        \"redis\": \"7\",\n    },\n    env={\n        \"NODE_ENV\": \"development\",\n        \"MONGO_URL\": \"mongodb://localhost:27017/mern\",\n        \"REDIS_URL\": \"redis://localhost:6379\",\n    },\n    vars={\"api_port\": 3001, \"web_port\": 3000},\n    tasks={\n        \"install\": ForgeTask(run=\"npm install\"),\n        \"dev:web\": ForgeTask(\n            description=\"Run the React frontend\",\n            run=\"npm run dev --workspace web\",\n            depends=\"install\",\n        ),\n        \"dev:api\": ForgeTask(\n            description=\"Run the Express API\", run=\"npm run dev --workspace api\", depends=\"install\"\n        ),\n        \"test\": ForgeTask(\n            description=\"Run all package tests\",\n            run=[\"npm test --workspace api\", \"npm test --workspace web\"],\n        ),\n    },\n)\nreact_block = Manifest(\n    name=\"React it all yo\",\n    icon=\"🌐\",\n    classification=Classification.public_ui,\n    tags=[\"user_interface\"],\n    forges=[mern_forge.name],\n    connections=[\"Express\"],\n    description=\"This be a Billy Goat! A sample MERN-style application: MongoDB datastore, Express backend, React frontend. Boy Howdy\",\n    version=SemVer(\"0.1.0-alpha.1\"),\n    language=ProgrammingLanguage.javascript,\n    frameworks=[WebFramework.express, WebFramework.nextjs],\n    deployment=DeploymentTarget.ec2,\n    owner_team=\"Frontend Team\",\n    auth_type=AuthType.oauth2,\n    monitoring=MonitoringType.datadog,\n    log_aggregation=LogAggregationType.cloudwatch,\n    tracing=TracingType.datadog,\n    iac_tool=IaCToolType.terraform,\n    max_replicas=5,\n    min_replicas=2,\n    links=[Link(site_name=\"Example Site\", http_url=Url(\"https://www.example.com\"))],\n    docs=[\"https://www.mongodb.com/docs/\", \"https://expressjs.com/\", \"https://reactjs.org/\"],\n    repo_url=Url(\"https://github.com/example/mern-app\"),\n    cicd_tool=CICDToolType.github_actions,\n)\nredis_pubsub_block = Manifest(\n    name=\"Redis Pub/Sub\",\n    classification=Classification.queue,\n    tags=[\"user_interface\"],\n    forges=[mern_forge.name],\n    connections=[\"Express\", \"React\"],\n    description=\"Redis configured for real-time messaging and event streaming\",\n    version=SemVer(\"7.2.0\"),\n    language=ProgrammingLanguage.c,\n    deployment=DeploymentTarget.ec2,\n    owner_team=\"Events Team\",\n    auth_type=AuthType.api_key,\n    monitoring=MonitoringType.prometheus,\n    log_aggregation=LogAggregationType.elk_stack,\n    tracing=TracingType.jaeger,\n    iac_tool=IaCToolType.terraform,\n    max_replicas=4,\n    min_replicas=2,\n    links=[\n        Link(\n            site_name=\"Redis Pub/Sub Documentation\",\n            http_url=Url(\"https://redis.io/docs/manual/pubsub/\"),\n        )\n    ],\n    docs=[\"https://redis.io/docs/latest/\", \"https://redis.io/docs/latest/apis/\"],\n    cicd_tool=CICDToolType.gitlab_ci,\n)\nexpress_block = Manifest(\n    name=\"Express\",\n    classification=Classification.internal_api,\n    connections=[\"MongoDB\"],\n    forges=[mern_forge.name],\n    language=ProgrammingLanguage.javascript,\n    deployment=DeploymentTarget.amplify,\n    owner_team=\"Backend Team\",\n    auth_type=AuthType.jwt,\n    log_aggregation=LogAggregationType.elk_stack,\n    tracing=TracingType.jaeger,\n    iac_tool=IaCToolType.cloudformation,\n    max_replicas=3,\n    min_replicas=1,\n)\nmongo_block = Manifest(\n    name=\"MongoDB\",\n    classification=Classification.database,\n    connections=[\"Express\", \"React\"],\n    forges=[mern_forge.name],\n    frameworks=[WebFramework.nextjs],\n    owner_team=\"Data Team\",\n    auth_type=AuthType.basic,\n    monitoring=MonitoringType.cloudwatch,\n    log_aggregation=LogAggregationType.cloudwatch,\n    tracing=TracingType.aws_xray,\n    iac_tool=IaCToolType.terraform,\n    max_replicas=3,\n    min_replicas=1,\n    cicd_tool=CICDToolType.github_actions,\n)\nangularjs_admin_block = Manifest(\n    name=\"AngularJS Admin Console\",\n    icon=\"🛠️\",\n    classification=Classification.admin_ui,\n    forges=[mern_forge.name],\n    connections=[\"Express\"],\n    description=\"Legacy AngularJS-based admin console for operational management\",\n    version=SemVer(\"1.7.9\"),\n    language=ProgrammingLanguage.javascript,\n    deployment=DeploymentTarget.cloudfront,\n    owner_team=\"Ops Team\",\n    auth_type=AuthType.basic,\n    monitoring=MonitoringType.cloudwatch,\n    log_aggregation=LogAggregationType.elk_stack,\n    tracing=TracingType.none,\n    iac_tool=IaCToolType.cloudformation,\n    max_replicas=2,\n    min_replicas=1,\n    links=[Link(site_name=\"Admin Portal\", http_url=Url(\"https://admin.example.com\"))],\n    docs=[\"https://docs.angularjs.org/\"],\n    repo_url=Url(\"https://github.com/example/angularjs-admin\"),\n)\n\nmern_diagram = Diagram(\n    name=\"MERN\",\n    manifests=[\n        react_block,\n        redis_pubsub_block,\n        express_block,\n        mongo_block,\n        angularjs_admin_block,\n    ],\n)\n\nmern_customer_path_diagram = Diagram(\n    name=\"MERN Customer Path\",\n    manifests=[\n        react_block,\n        express_block,\n        mongo_block,\n    ],\n)\n\nmern_terraform_managed_diagram = Diagram(\n    name=\"MERN Terraform Managed\",\n    query=ManifestQuery(iac_tool=IaCToolType.terraform),\n)\n\nmern_operability_diagram = Diagram(\n    name=\"MERN Operability\",\n    query=ManifestQuery(where={\"info\": {\"logAggregation\": LogAggregationType.elk_stack}}),\n)\n"
+    }
+  ],
+  "manifests": [
+    {
+      "name": "AngularJS Admin Console",
+      "cicd": null,
+      "classification": "admin_ui",
+      "connections": [
+        "Express"
+      ],
+      "dependencies": null,
+      "forges": [
+        "MERN Forge"
+      ],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/example/angularjs-admin",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🛠️",
+      "info": {
+        "authType": "basic",
+        "deployment": "cloudfront",
+        "description": "Legacy AngularJS-based admin console for operational management",
+        "docs": [
+          "https://docs.angularjs.org/"
+        ],
+        "frameworks": [],
+        "iacTool": "cloudformation",
+        "language": "javascript",
+        "links": [
+          {
+            "http_url": "https://admin.example.com",
+            "site_name": "Admin Portal"
+          }
+        ],
+        "logAggregation": "elk_stack",
+        "maxReplicas": 2,
+        "minReplicas": 1,
+        "monitoring": "cloudwatch",
+        "ownerTeam": "Ops Team",
+        "tracing": "none",
+        "version": "1.7.9"
+      },
+      "line_number": 130,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [],
+      "tests": null,
+      "variable_name": "angularjs_admin_block"
+    },
+    {
+      "name": "Express",
+      "cicd": null,
+      "classification": "internal_api",
+      "connections": [
+        "MongoDB"
+      ],
+      "dependencies": null,
+      "forges": [
+        "MERN Forge"
+      ],
+      "github": null,
+      "icon": "",
+      "info": {
+        "authType": "jwt",
+        "deployment": "amplify",
+        "description": "",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "cloudformation",
+        "language": "javascript",
+        "links": [],
+        "logAggregation": "elk_stack",
+        "maxReplicas": 3,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Backend Team",
+        "tracing": "jaeger",
+        "version": "0.1.0"
+      },
+      "line_number": 99,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [],
+      "tests": null,
+      "variable_name": "express_block"
+    },
+    {
+      "name": "MongoDB",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "database",
+      "connections": [
+        "Express",
+        "React"
+      ],
+      "dependencies": null,
+      "forges": [
+        "MERN Forge"
+      ],
+      "github": null,
+      "icon": "",
+      "info": {
+        "authType": "basic",
+        "deployment": "ec2",
+        "description": "",
+        "docs": [],
+        "frameworks": [
+          "nextjs"
+        ],
+        "iacTool": "terraform",
+        "language": "python",
+        "links": [],
+        "logAggregation": "cloudwatch",
+        "maxReplicas": 3,
+        "minReplicas": 1,
+        "monitoring": "cloudwatch",
+        "ownerTeam": "Data Team",
+        "tracing": "aws_xray",
+        "version": "0.1.0"
+      },
+      "line_number": 114,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [],
+      "tests": null,
+      "variable_name": "mongo_block"
+    },
+    {
+      "name": "React it all yo",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "public_ui",
+      "connections": [
+        "Express"
+      ],
+      "dependencies": null,
+      "forges": [
+        "MERN Forge"
+      ],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/example/mern-app",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🌐",
+      "info": {
+        "authType": "oauth2",
+        "deployment": "ec2",
+        "description": "This be a Billy Goat! A sample MERN-style application: MongoDB datastore, Express backend, React frontend. Boy Howdy",
+        "docs": [
+          "https://www.mongodb.com/docs/",
+          "https://expressjs.com/",
+          "https://reactjs.org/"
+        ],
+        "frameworks": [
+          "express",
+          "nextjs"
+        ],
+        "iacTool": "terraform",
+        "language": "javascript",
+        "links": [
+          {
+            "http_url": "https://www.example.com",
+            "site_name": "Example Site"
+          }
+        ],
+        "logAggregation": "cloudwatch",
+        "maxReplicas": 5,
+        "minReplicas": 2,
+        "monitoring": "datadog",
+        "ownerTeam": "Frontend Team",
+        "tracing": "datadog",
+        "version": "0.1.0-alpha.1"
+      },
+      "line_number": 47,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "user_interface"
+      ],
+      "tests": null,
+      "variable_name": "react_block"
+    },
+    {
+      "name": "Redis Pub/Sub",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "gitlab_ci"
+      },
+      "classification": "queue",
+      "connections": [
+        "Express",
+        "React"
+      ],
+      "dependencies": null,
+      "forges": [
+        "MERN Forge"
+      ],
+      "github": null,
+      "icon": "",
+      "info": {
+        "authType": "api_key",
+        "deployment": "ec2",
+        "description": "Redis configured for real-time messaging and event streaming",
+        "docs": [
+          "https://redis.io/docs/latest/",
+          "https://redis.io/docs/latest/apis/"
+        ],
+        "frameworks": [],
+        "iacTool": "terraform",
+        "language": "c",
+        "links": [
+          {
+            "http_url": "https://redis.io/docs/manual/pubsub/",
+            "site_name": "Redis Pub/Sub Documentation"
+          }
+        ],
+        "logAggregation": "elk_stack",
+        "maxReplicas": 4,
+        "minReplicas": 2,
+        "monitoring": "prometheus",
+        "ownerTeam": "Events Team",
+        "tracing": "jaeger",
+        "version": "7.2.0"
+      },
+      "line_number": 72,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "user_interface"
+      ],
+      "tests": null,
+      "variable_name": "redis_pubsub_block"
+    }
+  ],
+  "forges": [
+    {
+      "description": "Node.js toolchain, environment, and common developer tasks for the MERN sample.",
+      "env": {
+        "MONGO_URL": "mongodb://localhost:27017/mern",
+        "NODE_ENV": "development",
+        "REDIS_URL": "redis://localhost:6379"
+      },
+      "file_name": "mise.toml",
+      "line_number": 17,
+      "name": "MERN Forge",
+      "plugins": {},
+      "raw": {},
+      "redactions": [],
+      "settings": {},
+      "tasks": {
+        "dev:api": {
+          "alias": null,
+          "confirm": null,
+          "depends": "install",
+          "depends_post": null,
+          "description": "Run the Express API",
+          "dir": null,
+          "env": {},
+          "file": null,
+          "hide": false,
+          "interactive": false,
+          "output": null,
+          "outputs": null,
+          "quiet": false,
+          "raw": false,
+          "raw_args": false,
+          "run": "npm run dev --workspace api",
+          "run_windows": null,
+          "shell": null,
+          "silent": false,
+          "sources": null,
+          "tools": {},
+          "usage": null,
+          "wait_for": null
+        },
+        "dev:web": {
+          "alias": null,
+          "confirm": null,
+          "depends": "install",
+          "depends_post": null,
+          "description": "Run the React frontend",
+          "dir": null,
+          "env": {},
+          "file": null,
+          "hide": false,
+          "interactive": false,
+          "output": null,
+          "outputs": null,
+          "quiet": false,
+          "raw": false,
+          "raw_args": false,
+          "run": "npm run dev --workspace web",
+          "run_windows": null,
+          "shell": null,
+          "silent": false,
+          "sources": null,
+          "tools": {},
+          "usage": null,
+          "wait_for": null
+        },
+        "install": {
+          "alias": null,
+          "confirm": null,
+          "depends": null,
+          "depends_post": null,
+          "description": "",
+          "dir": null,
+          "env": {},
+          "file": null,
+          "hide": false,
+          "interactive": false,
+          "output": null,
+          "outputs": null,
+          "quiet": false,
+          "raw": false,
+          "raw_args": false,
+          "run": "npm install",
+          "run_windows": null,
+          "shell": null,
+          "silent": false,
+          "sources": null,
+          "tools": {},
+          "usage": null,
+          "wait_for": null
+        },
+        "test": {
+          "alias": null,
+          "confirm": null,
+          "depends": null,
+          "depends_post": null,
+          "description": "Run all package tests",
+          "dir": null,
+          "env": {},
+          "file": null,
+          "hide": false,
+          "interactive": false,
+          "output": null,
+          "outputs": null,
+          "quiet": false,
+          "raw": false,
+          "raw_args": false,
+          "run": [
+            "npm test --workspace api",
+            "npm test --workspace web"
+          ],
+          "run_windows": null,
+          "shell": null,
+          "silent": false,
+          "sources": null,
+          "tools": {},
+          "usage": null,
+          "wait_for": null
+        }
+      },
+      "tools": {
+        "mongodb": "8",
+        "node": {
+          "depends": [],
+          "install_env": {},
+          "os": null,
+          "postinstall": "corepack enable",
+          "version": "22"
+        },
+        "redis": "7"
+      },
+      "variable_name": "mern_forge",
+      "vars": {
+        "api_port": 3001,
+        "web_port": 3000
+      }
+    }
+  ],
+  "diagrams": [
+    {
+      "name": "MERN Customer Path",
+      "variable_name": "mern_customer_path_diagram",
+      "manifests": [
+        {
+          "name": "React it all yo",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "public_ui",
+          "connections": [
+            "Express"
+          ],
+          "dependencies": null,
+          "forges": [
+            "MERN Forge"
+          ],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/example/mern-app",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🌐",
+          "info": {
+            "authType": "oauth2",
+            "deployment": "ec2",
+            "description": "This be a Billy Goat! A sample MERN-style application: MongoDB datastore, Express backend, React frontend. Boy Howdy",
+            "docs": [
+              "https://www.mongodb.com/docs/",
+              "https://expressjs.com/",
+              "https://reactjs.org/"
+            ],
+            "frameworks": [
+              "express",
+              "nextjs"
+            ],
+            "iacTool": "terraform",
+            "language": "javascript",
+            "links": [
+              {
+                "http_url": "https://www.example.com",
+                "site_name": "Example Site"
+              }
+            ],
+            "logAggregation": "cloudwatch",
+            "maxReplicas": 5,
+            "minReplicas": 2,
+            "monitoring": "datadog",
+            "ownerTeam": "Frontend Team",
+            "tracing": "datadog",
+            "version": "0.1.0-alpha.1"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "user_interface"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Express",
+          "cicd": null,
+          "classification": "internal_api",
+          "connections": [
+            "MongoDB"
+          ],
+          "dependencies": null,
+          "forges": [
+            "MERN Forge"
+          ],
+          "github": null,
+          "icon": "",
+          "info": {
+            "authType": "jwt",
+            "deployment": "amplify",
+            "description": "",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "cloudformation",
+            "language": "javascript",
+            "links": [],
+            "logAggregation": "elk_stack",
+            "maxReplicas": 3,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Backend Team",
+            "tracing": "jaeger",
+            "version": "0.1.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [],
+          "tests": null
+        },
+        {
+          "name": "MongoDB",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "database",
+          "connections": [
+            "Express",
+            "React"
+          ],
+          "dependencies": null,
+          "forges": [
+            "MERN Forge"
+          ],
+          "github": null,
+          "icon": "",
+          "info": {
+            "authType": "basic",
+            "deployment": "ec2",
+            "description": "",
+            "docs": [],
+            "frameworks": [
+              "nextjs"
+            ],
+            "iacTool": "terraform",
+            "language": "python",
+            "links": [],
+            "logAggregation": "cloudwatch",
+            "maxReplicas": 3,
+            "minReplicas": 1,
+            "monitoring": "cloudwatch",
+            "ownerTeam": "Data Team",
+            "tracing": "aws_xray",
+            "version": "0.1.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [],
+          "tests": null
+        }
+      ],
+      "description": "",
+      "line_number": 164,
+      "query": null
+    },
+    {
+      "name": "MERN",
+      "variable_name": "mern_diagram",
+      "manifests": [
+        {
+          "name": "React it all yo",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "public_ui",
+          "connections": [
+            "Express"
+          ],
+          "dependencies": null,
+          "forges": [
+            "MERN Forge"
+          ],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/example/mern-app",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🌐",
+          "info": {
+            "authType": "oauth2",
+            "deployment": "ec2",
+            "description": "This be a Billy Goat! A sample MERN-style application: MongoDB datastore, Express backend, React frontend. Boy Howdy",
+            "docs": [
+              "https://www.mongodb.com/docs/",
+              "https://expressjs.com/",
+              "https://reactjs.org/"
+            ],
+            "frameworks": [
+              "express",
+              "nextjs"
+            ],
+            "iacTool": "terraform",
+            "language": "javascript",
+            "links": [
+              {
+                "http_url": "https://www.example.com",
+                "site_name": "Example Site"
+              }
+            ],
+            "logAggregation": "cloudwatch",
+            "maxReplicas": 5,
+            "minReplicas": 2,
+            "monitoring": "datadog",
+            "ownerTeam": "Frontend Team",
+            "tracing": "datadog",
+            "version": "0.1.0-alpha.1"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "user_interface"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Redis Pub/Sub",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "gitlab_ci"
+          },
+          "classification": "queue",
+          "connections": [
+            "Express",
+            "React"
+          ],
+          "dependencies": null,
+          "forges": [
+            "MERN Forge"
+          ],
+          "github": null,
+          "icon": "",
+          "info": {
+            "authType": "api_key",
+            "deployment": "ec2",
+            "description": "Redis configured for real-time messaging and event streaming",
+            "docs": [
+              "https://redis.io/docs/latest/",
+              "https://redis.io/docs/latest/apis/"
+            ],
+            "frameworks": [],
+            "iacTool": "terraform",
+            "language": "c",
+            "links": [
+              {
+                "http_url": "https://redis.io/docs/manual/pubsub/",
+                "site_name": "Redis Pub/Sub Documentation"
+              }
+            ],
+            "logAggregation": "elk_stack",
+            "maxReplicas": 4,
+            "minReplicas": 2,
+            "monitoring": "prometheus",
+            "ownerTeam": "Events Team",
+            "tracing": "jaeger",
+            "version": "7.2.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "user_interface"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Express",
+          "cicd": null,
+          "classification": "internal_api",
+          "connections": [
+            "MongoDB"
+          ],
+          "dependencies": null,
+          "forges": [
+            "MERN Forge"
+          ],
+          "github": null,
+          "icon": "",
+          "info": {
+            "authType": "jwt",
+            "deployment": "amplify",
+            "description": "",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "cloudformation",
+            "language": "javascript",
+            "links": [],
+            "logAggregation": "elk_stack",
+            "maxReplicas": 3,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Backend Team",
+            "tracing": "jaeger",
+            "version": "0.1.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [],
+          "tests": null
+        },
+        {
+          "name": "MongoDB",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "database",
+          "connections": [
+            "Express",
+            "React"
+          ],
+          "dependencies": null,
+          "forges": [
+            "MERN Forge"
+          ],
+          "github": null,
+          "icon": "",
+          "info": {
+            "authType": "basic",
+            "deployment": "ec2",
+            "description": "",
+            "docs": [],
+            "frameworks": [
+              "nextjs"
+            ],
+            "iacTool": "terraform",
+            "language": "python",
+            "links": [],
+            "logAggregation": "cloudwatch",
+            "maxReplicas": 3,
+            "minReplicas": 1,
+            "monitoring": "cloudwatch",
+            "ownerTeam": "Data Team",
+            "tracing": "aws_xray",
+            "version": "0.1.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [],
+          "tests": null
+        },
+        {
+          "name": "AngularJS Admin Console",
+          "cicd": null,
+          "classification": "admin_ui",
+          "connections": [
+            "Express"
+          ],
+          "dependencies": null,
+          "forges": [
+            "MERN Forge"
+          ],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/example/angularjs-admin",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🛠️",
+          "info": {
+            "authType": "basic",
+            "deployment": "cloudfront",
+            "description": "Legacy AngularJS-based admin console for operational management",
+            "docs": [
+              "https://docs.angularjs.org/"
+            ],
+            "frameworks": [],
+            "iacTool": "cloudformation",
+            "language": "javascript",
+            "links": [
+              {
+                "http_url": "https://admin.example.com",
+                "site_name": "Admin Portal"
+              }
+            ],
+            "logAggregation": "elk_stack",
+            "maxReplicas": 2,
+            "minReplicas": 1,
+            "monitoring": "cloudwatch",
+            "ownerTeam": "Ops Team",
+            "tracing": "none",
+            "version": "1.7.9"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [],
+          "tests": null
+        }
+      ],
+      "description": "",
+      "line_number": 153,
+      "query": null
+    },
+    {
+      "name": "MERN Operability",
+      "variable_name": "mern_operability_diagram",
+      "manifests": [
+        {
+          "name": "AngularJS Admin Console",
+          "cicd": null,
+          "classification": "admin_ui",
+          "connections": [
+            "Express"
+          ],
+          "dependencies": null,
+          "forges": [
+            "MERN Forge"
+          ],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/example/angularjs-admin",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🛠️",
+          "info": {
+            "authType": "basic",
+            "deployment": "cloudfront",
+            "description": "Legacy AngularJS-based admin console for operational management",
+            "docs": [
+              "https://docs.angularjs.org/"
+            ],
+            "frameworks": [],
+            "iacTool": "cloudformation",
+            "language": "javascript",
+            "links": [
+              {
+                "http_url": "https://admin.example.com",
+                "site_name": "Admin Portal"
+              }
+            ],
+            "logAggregation": "elk_stack",
+            "maxReplicas": 2,
+            "minReplicas": 1,
+            "monitoring": "cloudwatch",
+            "ownerTeam": "Ops Team",
+            "tracing": "none",
+            "version": "1.7.9"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [],
+          "tests": null
+        },
+        {
+          "name": "Express",
+          "cicd": null,
+          "classification": "internal_api",
+          "connections": [
+            "MongoDB"
+          ],
+          "dependencies": null,
+          "forges": [
+            "MERN Forge"
+          ],
+          "github": null,
+          "icon": "",
+          "info": {
+            "authType": "jwt",
+            "deployment": "amplify",
+            "description": "",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "cloudformation",
+            "language": "javascript",
+            "links": [],
+            "logAggregation": "elk_stack",
+            "maxReplicas": 3,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Backend Team",
+            "tracing": "jaeger",
+            "version": "0.1.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [],
+          "tests": null
+        },
+        {
+          "name": "Redis Pub/Sub",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "gitlab_ci"
+          },
+          "classification": "queue",
+          "connections": [
+            "Express",
+            "React"
+          ],
+          "dependencies": null,
+          "forges": [
+            "MERN Forge"
+          ],
+          "github": null,
+          "icon": "",
+          "info": {
+            "authType": "api_key",
+            "deployment": "ec2",
+            "description": "Redis configured for real-time messaging and event streaming",
+            "docs": [
+              "https://redis.io/docs/latest/",
+              "https://redis.io/docs/latest/apis/"
+            ],
+            "frameworks": [],
+            "iacTool": "terraform",
+            "language": "c",
+            "links": [
+              {
+                "http_url": "https://redis.io/docs/manual/pubsub/",
+                "site_name": "Redis Pub/Sub Documentation"
+              }
+            ],
+            "logAggregation": "elk_stack",
+            "maxReplicas": 4,
+            "minReplicas": 2,
+            "monitoring": "prometheus",
+            "ownerTeam": "Events Team",
+            "tracing": "jaeger",
+            "version": "7.2.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "user_interface"
+          ],
+          "tests": null
+        }
+      ],
+      "description": "",
+      "line_number": 178,
+      "query": {
+        "where": {
+          "info.log_aggregation": "elk_stack"
+        }
+      }
+    },
+    {
+      "name": "MERN Terraform Managed",
+      "variable_name": "mern_terraform_managed_diagram",
+      "manifests": [
+        {
+          "name": "MongoDB",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "database",
+          "connections": [
+            "Express",
+            "React"
+          ],
+          "dependencies": null,
+          "forges": [
+            "MERN Forge"
+          ],
+          "github": null,
+          "icon": "",
+          "info": {
+            "authType": "basic",
+            "deployment": "ec2",
+            "description": "",
+            "docs": [],
+            "frameworks": [
+              "nextjs"
+            ],
+            "iacTool": "terraform",
+            "language": "python",
+            "links": [],
+            "logAggregation": "cloudwatch",
+            "maxReplicas": 3,
+            "minReplicas": 1,
+            "monitoring": "cloudwatch",
+            "ownerTeam": "Data Team",
+            "tracing": "aws_xray",
+            "version": "0.1.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [],
+          "tests": null
+        },
+        {
+          "name": "React it all yo",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "public_ui",
+          "connections": [
+            "Express"
+          ],
+          "dependencies": null,
+          "forges": [
+            "MERN Forge"
+          ],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/example/mern-app",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🌐",
+          "info": {
+            "authType": "oauth2",
+            "deployment": "ec2",
+            "description": "This be a Billy Goat! A sample MERN-style application: MongoDB datastore, Express backend, React frontend. Boy Howdy",
+            "docs": [
+              "https://www.mongodb.com/docs/",
+              "https://expressjs.com/",
+              "https://reactjs.org/"
+            ],
+            "frameworks": [
+              "express",
+              "nextjs"
+            ],
+            "iacTool": "terraform",
+            "language": "javascript",
+            "links": [
+              {
+                "http_url": "https://www.example.com",
+                "site_name": "Example Site"
+              }
+            ],
+            "logAggregation": "cloudwatch",
+            "maxReplicas": 5,
+            "minReplicas": 2,
+            "monitoring": "datadog",
+            "ownerTeam": "Frontend Team",
+            "tracing": "datadog",
+            "version": "0.1.0-alpha.1"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "user_interface"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Redis Pub/Sub",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "gitlab_ci"
+          },
+          "classification": "queue",
+          "connections": [
+            "Express",
+            "React"
+          ],
+          "dependencies": null,
+          "forges": [
+            "MERN Forge"
+          ],
+          "github": null,
+          "icon": "",
+          "info": {
+            "authType": "api_key",
+            "deployment": "ec2",
+            "description": "Redis configured for real-time messaging and event streaming",
+            "docs": [
+              "https://redis.io/docs/latest/",
+              "https://redis.io/docs/latest/apis/"
+            ],
+            "frameworks": [],
+            "iacTool": "terraform",
+            "language": "c",
+            "links": [
+              {
+                "http_url": "https://redis.io/docs/manual/pubsub/",
+                "site_name": "Redis Pub/Sub Documentation"
+              }
+            ],
+            "logAggregation": "elk_stack",
+            "maxReplicas": 4,
+            "minReplicas": 2,
+            "monitoring": "prometheus",
+            "ownerTeam": "Events Team",
+            "tracing": "jaeger",
+            "version": "7.2.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "user_interface"
+          ],
+          "tests": null
+        }
+      ],
+      "description": "",
+      "line_number": 173,
+      "query": {
+        "where": {
+          "info.iac_tool": "terraform"
+        }
+      }
+    }
+  ]
+}

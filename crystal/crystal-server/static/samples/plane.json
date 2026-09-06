@@ -1,0 +1,2251 @@
+{
+  "files": [
+    {
+      "path": "index.scry",
+      "content": "\"\"\"Plane project management platform manifest.\n\nOpen-source Jira / Linear alternative for tracking issues, sprints,\nmodules, roadmaps, pages, and analytics.\n\nArchitecture reference: https://github.com/makeplane/plane/blob/preview/docker-compose.yml\nSource: https://github.com/makeplane/plane\n\"\"\"\n\nfrom scryr.manifest import Diagram, Link, Manifest\nfrom scryr.saas import Classification\nfrom scryr.types import (\n    AuthType,\n    CICDToolType,\n    DeploymentTarget,\n    IaCToolType,\n    IncrementalVersion,\n    LogAggregationType,\n    MonitoringType,\n    ProgrammingLanguage,\n    TracingType,\n    Url,\n    WebFramework,\n    parse_version,\n)\n\n_SOURCE = Url(\"https://github.com/makeplane/plane\")\n_DOCS = Url(\"https://developers.plane.so/\")\n_DEPLOYMENT = DeploymentTarget.docker_swarm\n_CICD = CICDToolType.github_actions\n_IAC = IaCToolType.none\n_MONITOR = MonitoringType.none\n_LOGS = LogAggregationType.none\n_TRACING = TracingType.none\npostgres_block = Manifest(\n    name=\"PostgreSQL\",\n    icon=\"🐘\",\n    classification=Classification.database,\n    tags=[\"database\", \"sql\", \"infra\"],\n    connections=[],\n    description=\"Primary relational database (postgres:15-alpine) storing all Plane data: workspaces, projects, issues, cycles, modules, pages, and members.\",\n    version=parse_version(\"15.7.0\"),\n    language=ProgrammingLanguage.sql,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Platform\",\n    auth_type=AuthType.basic,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[Link(site_name=\"Plane Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nvalkey_block = Manifest(\n    name=\"Valkey\",\n    icon=\"🔴\",\n    classification=Classification.cache_store,\n    tags=[\"cache\", \"celery\", \"infra\"],\n    connections=[],\n    description=\"Valkey 7 (Redis-compatible) used as both a cache layer and the Celery task broker for background workers and beat scheduler.\",\n    version=parse_version(\"7.2.11\"),\n    language=ProgrammingLanguage.c,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Platform\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[Link(site_name=\"Plane Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nrabbitmq_block = Manifest(\n    name=\"RabbitMQ\",\n    icon=\"🐰\",\n    classification=Classification.queue,\n    tags=[\"messaging\", \"async\", \"infra\"],\n    connections=[],\n    description=\"RabbitMQ 3.13 AMQP message broker used to fan-out async tasks from the API to Celery workers, including webhook dispatch and notification delivery.\",\n    version=parse_version(\"3.13.6\"),\n    language=ProgrammingLanguage.erlang,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Platform\",\n    auth_type=AuthType.basic,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[Link(site_name=\"Plane Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nminio_block = Manifest(\n    name=\"MinIO\",\n    icon=\"🗄️\",\n    classification=Classification.object_storage,\n    tags=[\"storage\", \"s3\", \"infra\"],\n    connections=[],\n    description=\"S3-compatible object storage (MinIO) used for file and image attachments uploaded to issues, pages, and workspace assets.\",\n    version=IncrementalVersion.parse(\"1\"),\n    language=ProgrammingLanguage.go,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Platform\",\n    auth_type=AuthType.api_key,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[Link(site_name=\"MinIO Docs\", http_url=Url(\"https://min.io/docs/\"))],\n    repo_url=Url(\"https://github.com/minio/minio\"),\n    cicd_tool=_CICD,\n)\napi_block = Manifest(\n    name=\"API Server\",\n    icon=\"⚙️\",\n    classification=Classification.internal_api,\n    tags=[\"api\", \"django\", \"core\"],\n    connections=[\"PostgreSQL\", \"Valkey\", \"RabbitMQ\", \"MinIO\"],\n    description=\"Django REST Framework API server — the core backend of Plane. Handles authentication (magic-link, OAuth2, SAML), workspace and project management, issues, cycles, modules, views, analytics, webhooks, and Prisma-free direct PostgreSQL access via Django ORM.\",\n    version=parse_version(\"1.2.3\"),\n    language=ProgrammingLanguage.python,\n    frameworks=[WebFramework.django],\n    deployment=_DEPLOYMENT,\n    owner_team=\"Backend\",\n    auth_type=AuthType.jwt,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=4,\n    min_replicas=1,\n    links=[\n        Link(\n            site_name=\"API Reference\",\n            http_url=Url(\"https://developers.plane.so/api-reference/introduction\"),\n        )\n    ],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nworker_block = Manifest(\n    name=\"Background Worker\",\n    icon=\"⚡\",\n    classification=Classification.worker,\n    tags=[\"celery\", \"async\", \"worker\"],\n    connections=[\"API Server\", \"PostgreSQL\", \"Valkey\", \"RabbitMQ\"],\n    description=\"Celery worker process (same image as API Server) that consumes tasks from RabbitMQ/Valkey. Handles async webhook dispatch, email notifications, export jobs, and bulk issue operations.\",\n    version=parse_version(\"1.2.3\"),\n    language=ProgrammingLanguage.python,\n    frameworks=[WebFramework.django],\n    deployment=_DEPLOYMENT,\n    owner_team=\"Backend\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=3,\n    min_replicas=1,\n    links=[Link(site_name=\"Plane Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nbeat_worker_block = Manifest(\n    name=\"Beat Worker\",\n    icon=\"🕐\",\n    classification=Classification.scheduler,\n    tags=[\"celery\", \"cron\", \"scheduler\"],\n    connections=[\"API Server\", \"PostgreSQL\", \"Valkey\"],\n    description=\"Celery Beat scheduler process that triggers periodic tasks on a cron-like schedule: digest emails, stale issue cleanup, cycle auto-close, and analytics aggregation jobs.\",\n    version=parse_version(\"1.2.3\"),\n    language=ProgrammingLanguage.python,\n    frameworks=[WebFramework.django],\n    deployment=_DEPLOYMENT,\n    owner_team=\"Backend\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[Link(site_name=\"Plane Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nlive_block = Manifest(\n    name=\"Live Server\",\n    icon=\"✍️\",\n    classification=Classification.internal_api,\n    tags=[\"realtime\", \"collaboration\", \"pages\"],\n    connections=[\"API Server\"],\n    description=\"Node.js real-time collaboration server powering Plane Pages co-editing. Uses Hocuspocus (a Yjs CRDT server) over WebSocket so multiple users can edit the same document simultaneously without conflicts.\",\n    version=parse_version(\"1.2.3\"),\n    language=ProgrammingLanguage.typescript,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Product\",\n    auth_type=AuthType.jwt,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=2,\n    min_replicas=1,\n    links=[Link(site_name=\"Plane Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nweb_block = Manifest(\n    name=\"Web App\",\n    icon=\"🗂️\",\n    classification=Classification.public_ui,\n    tags=[\"frontend\", \"issues\", \"kanban\"],\n    connections=[\"API Server\", \"Live Server\"],\n    description=\"Main Plane web application built with React Router v7 (SSR) and TypeScript. Provides the full project management UI: issue tracker, Kanban/list/timeline views, cycles, modules, pages, analytics, and workspace settings.\",\n    version=parse_version(\"1.2.3\"),\n    language=ProgrammingLanguage.typescript,\n    frameworks=[WebFramework.remix],\n    deployment=_DEPLOYMENT,\n    owner_team=\"Frontend\",\n    auth_type=AuthType.jwt,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=3,\n    min_replicas=1,\n    links=[\n        Link(site_name=\"Plane\", http_url=Url(\"https://app.plane.so\")),\n        Link(site_name=\"Source\", http_url=_SOURCE),\n    ],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nadmin_block = Manifest(\n    name=\"Admin Panel\",\n    icon=\"🛡️\",\n    classification=Classification.admin_ui,\n    tags=[\"admin\", \"instance\", \"config\"],\n    connections=[\"API Server\", \"Web App\"],\n    description=\"God Mode admin panel (React Router v7 / TypeScript) for instance administrators. Manages global instance configuration, SSO/SAML setup, email settings, feature flags, and workspace-level oversight.\",\n    version=parse_version(\"1.2.3\"),\n    language=ProgrammingLanguage.typescript,\n    frameworks=[WebFramework.remix],\n    deployment=_DEPLOYMENT,\n    owner_team=\"Platform\",\n    auth_type=AuthType.jwt,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[\n        Link(\n            site_name=\"God Mode Docs\",\n            http_url=Url(\"https://developers.plane.so/self-hosting/govern/instance-admin\"),\n        )\n    ],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nspace_block = Manifest(\n    name=\"Spaces\",\n    icon=\"🌐\",\n    classification=Classification.public_ui,\n    tags=[\"public\", \"embed\", \"spaces\"],\n    connections=[\"API Server\", \"Web App\"],\n    description=\"Public-facing React Router v7 app that renders Plane issue boards as embeddable or publicly shareable 'spaces'. Allows external stakeholders to view and vote on issues without a Plane account.\",\n    version=parse_version(\"1.2.3\"),\n    language=ProgrammingLanguage.typescript,\n    frameworks=[WebFramework.remix],\n    deployment=_DEPLOYMENT,\n    owner_team=\"Product\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=2,\n    min_replicas=1,\n    links=[Link(site_name=\"Plane Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nproxy_block = Manifest(\n    name=\"Proxy\",\n    icon=\"🔀\",\n    classification=Classification.network_gateway,\n    tags=[\"proxy\", \"nginx\", \"infra\"],\n    connections=[\"Web App\", \"Admin Panel\", \"Spaces\", \"API Server\", \"Live Server\"],\n    description=\"Nginx reverse proxy that acts as the single ingress point for all Plane traffic. Routes requests to Web, Admin, Space, API, and Live services. Also handles file upload size limits and serves MinIO uploads.\",\n    version=parse_version(\"1.25.0\"),\n    language=ProgrammingLanguage.c,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Platform\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=2,\n    min_replicas=1,\n    links=[Link(site_name=\"Plane Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\n\nplane_diagram = Diagram(\n    name=\"Plane\",\n    manifests=[\n        postgres_block,\n        valkey_block,\n        rabbitmq_block,\n        minio_block,\n        api_block,\n        worker_block,\n        beat_worker_block,\n        live_block,\n        web_block,\n        admin_block,\n        space_block,\n        proxy_block,\n    ],\n)\n\nplane_issue_workflow_diagram = Diagram(\n    name=\"Plane Issue Workflow\",\n    manifests=[\n        web_block,\n        api_block,\n        postgres_block,\n        valkey_block,\n        live_block,\n        worker_block,\n        rabbitmq_block,\n    ],\n)\n"
+    }
+  ],
+  "manifests": [
+    {
+      "name": "Admin Panel",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "admin_ui",
+      "connections": [
+        "API Server",
+        "Web App"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/makeplane/plane",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🛡️",
+      "info": {
+        "authType": "jwt",
+        "deployment": "docker_swarm",
+        "description": "God Mode admin panel (React Router v7 / TypeScript) for instance administrators. Manages global instance configuration, SSO/SAML setup, email settings, feature flags, and workspace-level oversight.",
+        "docs": [],
+        "frameworks": [
+          "remix"
+        ],
+        "iacTool": "none",
+        "language": "typescript",
+        "links": [
+          {
+            "http_url": "https://developers.plane.so/self-hosting/govern/instance-admin",
+            "site_name": "God Mode Docs"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Platform",
+        "tracing": "none",
+        "version": "1.2.3"
+      },
+      "line_number": 245,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "admin",
+        "instance",
+        "config"
+      ],
+      "tests": null,
+      "variable_name": "admin_block"
+    },
+    {
+      "name": "API Server",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "internal_api",
+      "connections": [
+        "PostgreSQL",
+        "Valkey",
+        "RabbitMQ",
+        "MinIO"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/makeplane/plane",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "⚙️",
+      "info": {
+        "authType": "jwt",
+        "deployment": "docker_swarm",
+        "description": "Django REST Framework API server — the core backend of Plane. Handles authentication (magic-link, OAuth2, SAML), workspace and project management, issues, cycles, modules, views, analytics, webhooks, and Prisma-free direct PostgreSQL access via Django ORM.",
+        "docs": [],
+        "frameworks": [
+          "django"
+        ],
+        "iacTool": "none",
+        "language": "python",
+        "links": [
+          {
+            "http_url": "https://developers.plane.so/api-reference/introduction",
+            "site_name": "API Reference"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 4,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Backend",
+        "tracing": "none",
+        "version": "1.2.3"
+      },
+      "line_number": 123,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "api",
+        "django",
+        "core"
+      ],
+      "tests": null,
+      "variable_name": "api_block"
+    },
+    {
+      "name": "Beat Worker",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "scheduler",
+      "connections": [
+        "API Server",
+        "PostgreSQL",
+        "Valkey"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/makeplane/plane",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🕐",
+      "info": {
+        "authType": "none",
+        "deployment": "docker_swarm",
+        "description": "Celery Beat scheduler process that triggers periodic tasks on a cron-like schedule: digest emails, stale issue cleanup, cycle auto-close, and analytics aggregation jobs.",
+        "docs": [],
+        "frameworks": [
+          "django"
+        ],
+        "iacTool": "none",
+        "language": "python",
+        "links": [
+          {
+            "http_url": "https://developers.plane.so/",
+            "site_name": "Plane Docs"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Backend",
+        "tracing": "none",
+        "version": "1.2.3"
+      },
+      "line_number": 174,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "celery",
+        "cron",
+        "scheduler"
+      ],
+      "tests": null,
+      "variable_name": "beat_worker_block"
+    },
+    {
+      "name": "Live Server",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "internal_api",
+      "connections": [
+        "API Server"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/makeplane/plane",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "✍️",
+      "info": {
+        "authType": "jwt",
+        "deployment": "docker_swarm",
+        "description": "Node.js real-time collaboration server powering Plane Pages co-editing. Uses Hocuspocus (a Yjs CRDT server) over WebSocket so multiple users can edit the same document simultaneously without conflicts.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "none",
+        "language": "typescript",
+        "links": [
+          {
+            "http_url": "https://developers.plane.so/",
+            "site_name": "Plane Docs"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 2,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Product",
+        "tracing": "none",
+        "version": "1.2.3"
+      },
+      "line_number": 197,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "realtime",
+        "collaboration",
+        "pages"
+      ],
+      "tests": null,
+      "variable_name": "live_block"
+    },
+    {
+      "name": "MinIO",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "object_storage",
+      "connections": [],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/minio/minio",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🗄️",
+      "info": {
+        "authType": "api_key",
+        "deployment": "docker_swarm",
+        "description": "S3-compatible object storage (MinIO) used for file and image attachments uploaded to issues, pages, and workspace assets.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "none",
+        "language": "go",
+        "links": [
+          {
+            "http_url": "https://min.io/docs/",
+            "site_name": "MinIO Docs"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Platform",
+        "tracing": "none",
+        "version": "1"
+      },
+      "line_number": 101,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "storage",
+        "s3",
+        "infra"
+      ],
+      "tests": null,
+      "variable_name": "minio_block"
+    },
+    {
+      "name": "PostgreSQL",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "database",
+      "connections": [],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/makeplane/plane",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🐘",
+      "info": {
+        "authType": "basic",
+        "deployment": "docker_swarm",
+        "description": "Primary relational database (postgres:15-alpine) storing all Plane data: workspaces, projects, issues, cycles, modules, pages, and members.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "none",
+        "language": "sql",
+        "links": [
+          {
+            "http_url": "https://developers.plane.so/",
+            "site_name": "Plane Docs"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Platform",
+        "tracing": "none",
+        "version": "15.7.0"
+      },
+      "line_number": 35,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "database",
+        "sql",
+        "infra"
+      ],
+      "tests": null,
+      "variable_name": "postgres_block"
+    },
+    {
+      "name": "Proxy",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "network_router",
+      "connections": [
+        "Web App",
+        "Admin Panel",
+        "Spaces",
+        "API Server",
+        "Live Server"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/makeplane/plane",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🔀",
+      "info": {
+        "authType": "none",
+        "deployment": "docker_swarm",
+        "description": "Nginx reverse proxy that acts as the single ingress point for all Plane traffic. Routes requests to Web, Admin, Space, API, and Live services. Also handles file upload size limits and serves MinIO uploads.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "none",
+        "language": "c",
+        "links": [
+          {
+            "http_url": "https://developers.plane.so/",
+            "site_name": "Plane Docs"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 2,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Platform",
+        "tracing": "none",
+        "version": "1.25.0"
+      },
+      "line_number": 296,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "proxy",
+        "nginx",
+        "infra"
+      ],
+      "tests": null,
+      "variable_name": "proxy_block"
+    },
+    {
+      "name": "RabbitMQ",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "queue",
+      "connections": [],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/makeplane/plane",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🐰",
+      "info": {
+        "authType": "basic",
+        "deployment": "docker_swarm",
+        "description": "RabbitMQ 3.13 AMQP message broker used to fan-out async tasks from the API to Celery workers, including webhook dispatch and notification delivery.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "none",
+        "language": "erlang",
+        "links": [
+          {
+            "http_url": "https://developers.plane.so/",
+            "site_name": "Plane Docs"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Platform",
+        "tracing": "none",
+        "version": "3.13.6"
+      },
+      "line_number": 79,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "messaging",
+        "async",
+        "infra"
+      ],
+      "tests": null,
+      "variable_name": "rabbitmq_block"
+    },
+    {
+      "name": "Spaces",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "public_ui",
+      "connections": [
+        "API Server",
+        "Web App"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/makeplane/plane",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🌐",
+      "info": {
+        "authType": "none",
+        "deployment": "docker_swarm",
+        "description": "Public-facing React Router v7 app that renders Plane issue boards as embeddable or publicly shareable 'spaces'. Allows external stakeholders to view and vote on issues without a Plane account.",
+        "docs": [],
+        "frameworks": [
+          "remix"
+        ],
+        "iacTool": "none",
+        "language": "typescript",
+        "links": [
+          {
+            "http_url": "https://developers.plane.so/",
+            "site_name": "Plane Docs"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 2,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Product",
+        "tracing": "none",
+        "version": "1.2.3"
+      },
+      "line_number": 273,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "public",
+        "embed",
+        "spaces"
+      ],
+      "tests": null,
+      "variable_name": "space_block"
+    },
+    {
+      "name": "Valkey",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "cache_store",
+      "connections": [],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/makeplane/plane",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🔴",
+      "info": {
+        "authType": "none",
+        "deployment": "docker_swarm",
+        "description": "Valkey 7 (Redis-compatible) used as both a cache layer and the Celery task broker for background workers and beat scheduler.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "none",
+        "language": "c",
+        "links": [
+          {
+            "http_url": "https://developers.plane.so/",
+            "site_name": "Plane Docs"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Platform",
+        "tracing": "none",
+        "version": "7.2.11"
+      },
+      "line_number": 57,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "cache",
+        "celery",
+        "infra"
+      ],
+      "tests": null,
+      "variable_name": "valkey_block"
+    },
+    {
+      "name": "Web App",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "public_ui",
+      "connections": [
+        "API Server",
+        "Live Server"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/makeplane/plane",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🗂️",
+      "info": {
+        "authType": "jwt",
+        "deployment": "docker_swarm",
+        "description": "Main Plane web application built with React Router v7 (SSR) and TypeScript. Provides the full project management UI: issue tracker, Kanban/list/timeline views, cycles, modules, pages, analytics, and workspace settings.",
+        "docs": [],
+        "frameworks": [
+          "remix"
+        ],
+        "iacTool": "none",
+        "language": "typescript",
+        "links": [
+          {
+            "http_url": "https://app.plane.so",
+            "site_name": "Plane"
+          },
+          {
+            "http_url": "https://github.com/makeplane/plane",
+            "site_name": "Source"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 3,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Frontend",
+        "tracing": "none",
+        "version": "1.2.3"
+      },
+      "line_number": 219,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "frontend",
+        "issues",
+        "kanban"
+      ],
+      "tests": null,
+      "variable_name": "web_block"
+    },
+    {
+      "name": "Background Worker",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "worker",
+      "connections": [
+        "API Server",
+        "PostgreSQL",
+        "Valkey",
+        "RabbitMQ"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/makeplane/plane",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "⚡",
+      "info": {
+        "authType": "none",
+        "deployment": "docker_swarm",
+        "description": "Celery worker process (same image as API Server) that consumes tasks from RabbitMQ/Valkey. Handles async webhook dispatch, email notifications, export jobs, and bulk issue operations.",
+        "docs": [],
+        "frameworks": [
+          "django"
+        ],
+        "iacTool": "none",
+        "language": "python",
+        "links": [
+          {
+            "http_url": "https://developers.plane.so/",
+            "site_name": "Plane Docs"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 3,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Backend",
+        "tracing": "none",
+        "version": "1.2.3"
+      },
+      "line_number": 151,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "celery",
+        "async",
+        "worker"
+      ],
+      "tests": null,
+      "variable_name": "worker_block"
+    }
+  ],
+  "forges": [],
+  "diagrams": [
+    {
+      "name": "Plane",
+      "variable_name": "plane_diagram",
+      "manifests": [
+        {
+          "name": "PostgreSQL",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "database",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/makeplane/plane",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🐘",
+          "info": {
+            "authType": "basic",
+            "deployment": "docker_swarm",
+            "description": "Primary relational database (postgres:15-alpine) storing all Plane data: workspaces, projects, issues, cycles, modules, pages, and members.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "sql",
+            "links": [
+              {
+                "http_url": "https://developers.plane.so/",
+                "site_name": "Plane Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Platform",
+            "tracing": "none",
+            "version": "15.7.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "database",
+            "sql",
+            "infra"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Valkey",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "cache_store",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/makeplane/plane",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🔴",
+          "info": {
+            "authType": "none",
+            "deployment": "docker_swarm",
+            "description": "Valkey 7 (Redis-compatible) used as both a cache layer and the Celery task broker for background workers and beat scheduler.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "c",
+            "links": [
+              {
+                "http_url": "https://developers.plane.so/",
+                "site_name": "Plane Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Platform",
+            "tracing": "none",
+            "version": "7.2.11"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "cache",
+            "celery",
+            "infra"
+          ],
+          "tests": null
+        },
+        {
+          "name": "RabbitMQ",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "queue",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/makeplane/plane",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🐰",
+          "info": {
+            "authType": "basic",
+            "deployment": "docker_swarm",
+            "description": "RabbitMQ 3.13 AMQP message broker used to fan-out async tasks from the API to Celery workers, including webhook dispatch and notification delivery.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "erlang",
+            "links": [
+              {
+                "http_url": "https://developers.plane.so/",
+                "site_name": "Plane Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Platform",
+            "tracing": "none",
+            "version": "3.13.6"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "messaging",
+            "async",
+            "infra"
+          ],
+          "tests": null
+        },
+        {
+          "name": "MinIO",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "object_storage",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/minio/minio",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🗄️",
+          "info": {
+            "authType": "api_key",
+            "deployment": "docker_swarm",
+            "description": "S3-compatible object storage (MinIO) used for file and image attachments uploaded to issues, pages, and workspace assets.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "go",
+            "links": [
+              {
+                "http_url": "https://min.io/docs/",
+                "site_name": "MinIO Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Platform",
+            "tracing": "none",
+            "version": "1"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "storage",
+            "s3",
+            "infra"
+          ],
+          "tests": null
+        },
+        {
+          "name": "API Server",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "internal_api",
+          "connections": [
+            "PostgreSQL",
+            "Valkey",
+            "RabbitMQ",
+            "MinIO"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/makeplane/plane",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "⚙️",
+          "info": {
+            "authType": "jwt",
+            "deployment": "docker_swarm",
+            "description": "Django REST Framework API server — the core backend of Plane. Handles authentication (magic-link, OAuth2, SAML), workspace and project management, issues, cycles, modules, views, analytics, webhooks, and Prisma-free direct PostgreSQL access via Django ORM.",
+            "docs": [],
+            "frameworks": [
+              "django"
+            ],
+            "iacTool": "none",
+            "language": "python",
+            "links": [
+              {
+                "http_url": "https://developers.plane.so/api-reference/introduction",
+                "site_name": "API Reference"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 4,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Backend",
+            "tracing": "none",
+            "version": "1.2.3"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "api",
+            "django",
+            "core"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Background Worker",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "worker",
+          "connections": [
+            "API Server",
+            "PostgreSQL",
+            "Valkey",
+            "RabbitMQ"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/makeplane/plane",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "⚡",
+          "info": {
+            "authType": "none",
+            "deployment": "docker_swarm",
+            "description": "Celery worker process (same image as API Server) that consumes tasks from RabbitMQ/Valkey. Handles async webhook dispatch, email notifications, export jobs, and bulk issue operations.",
+            "docs": [],
+            "frameworks": [
+              "django"
+            ],
+            "iacTool": "none",
+            "language": "python",
+            "links": [
+              {
+                "http_url": "https://developers.plane.so/",
+                "site_name": "Plane Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 3,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Backend",
+            "tracing": "none",
+            "version": "1.2.3"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "celery",
+            "async",
+            "worker"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Beat Worker",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "scheduler",
+          "connections": [
+            "API Server",
+            "PostgreSQL",
+            "Valkey"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/makeplane/plane",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🕐",
+          "info": {
+            "authType": "none",
+            "deployment": "docker_swarm",
+            "description": "Celery Beat scheduler process that triggers periodic tasks on a cron-like schedule: digest emails, stale issue cleanup, cycle auto-close, and analytics aggregation jobs.",
+            "docs": [],
+            "frameworks": [
+              "django"
+            ],
+            "iacTool": "none",
+            "language": "python",
+            "links": [
+              {
+                "http_url": "https://developers.plane.so/",
+                "site_name": "Plane Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Backend",
+            "tracing": "none",
+            "version": "1.2.3"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "celery",
+            "cron",
+            "scheduler"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Live Server",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "internal_api",
+          "connections": [
+            "API Server"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/makeplane/plane",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "✍️",
+          "info": {
+            "authType": "jwt",
+            "deployment": "docker_swarm",
+            "description": "Node.js real-time collaboration server powering Plane Pages co-editing. Uses Hocuspocus (a Yjs CRDT server) over WebSocket so multiple users can edit the same document simultaneously without conflicts.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://developers.plane.so/",
+                "site_name": "Plane Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 2,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Product",
+            "tracing": "none",
+            "version": "1.2.3"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "realtime",
+            "collaboration",
+            "pages"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Web App",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "public_ui",
+          "connections": [
+            "API Server",
+            "Live Server"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/makeplane/plane",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🗂️",
+          "info": {
+            "authType": "jwt",
+            "deployment": "docker_swarm",
+            "description": "Main Plane web application built with React Router v7 (SSR) and TypeScript. Provides the full project management UI: issue tracker, Kanban/list/timeline views, cycles, modules, pages, analytics, and workspace settings.",
+            "docs": [],
+            "frameworks": [
+              "remix"
+            ],
+            "iacTool": "none",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://app.plane.so",
+                "site_name": "Plane"
+              },
+              {
+                "http_url": "https://github.com/makeplane/plane",
+                "site_name": "Source"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 3,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Frontend",
+            "tracing": "none",
+            "version": "1.2.3"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "frontend",
+            "issues",
+            "kanban"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Admin Panel",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "admin_ui",
+          "connections": [
+            "API Server",
+            "Web App"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/makeplane/plane",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🛡️",
+          "info": {
+            "authType": "jwt",
+            "deployment": "docker_swarm",
+            "description": "God Mode admin panel (React Router v7 / TypeScript) for instance administrators. Manages global instance configuration, SSO/SAML setup, email settings, feature flags, and workspace-level oversight.",
+            "docs": [],
+            "frameworks": [
+              "remix"
+            ],
+            "iacTool": "none",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://developers.plane.so/self-hosting/govern/instance-admin",
+                "site_name": "God Mode Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Platform",
+            "tracing": "none",
+            "version": "1.2.3"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "admin",
+            "instance",
+            "config"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Spaces",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "public_ui",
+          "connections": [
+            "API Server",
+            "Web App"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/makeplane/plane",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🌐",
+          "info": {
+            "authType": "none",
+            "deployment": "docker_swarm",
+            "description": "Public-facing React Router v7 app that renders Plane issue boards as embeddable or publicly shareable 'spaces'. Allows external stakeholders to view and vote on issues without a Plane account.",
+            "docs": [],
+            "frameworks": [
+              "remix"
+            ],
+            "iacTool": "none",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://developers.plane.so/",
+                "site_name": "Plane Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 2,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Product",
+            "tracing": "none",
+            "version": "1.2.3"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "public",
+            "embed",
+            "spaces"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Proxy",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "network_router",
+          "connections": [
+            "Web App",
+            "Admin Panel",
+            "Spaces",
+            "API Server",
+            "Live Server"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/makeplane/plane",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🔀",
+          "info": {
+            "authType": "none",
+            "deployment": "docker_swarm",
+            "description": "Nginx reverse proxy that acts as the single ingress point for all Plane traffic. Routes requests to Web, Admin, Space, API, and Live services. Also handles file upload size limits and serves MinIO uploads.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "c",
+            "links": [
+              {
+                "http_url": "https://developers.plane.so/",
+                "site_name": "Plane Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 2,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Platform",
+            "tracing": "none",
+            "version": "1.25.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "proxy",
+            "nginx",
+            "infra"
+          ],
+          "tests": null
+        }
+      ],
+      "description": "",
+      "line_number": 319,
+      "query": null
+    },
+    {
+      "name": "Plane Issue Workflow",
+      "variable_name": "plane_issue_workflow_diagram",
+      "manifests": [
+        {
+          "name": "Web App",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "public_ui",
+          "connections": [
+            "API Server",
+            "Live Server"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/makeplane/plane",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🗂️",
+          "info": {
+            "authType": "jwt",
+            "deployment": "docker_swarm",
+            "description": "Main Plane web application built with React Router v7 (SSR) and TypeScript. Provides the full project management UI: issue tracker, Kanban/list/timeline views, cycles, modules, pages, analytics, and workspace settings.",
+            "docs": [],
+            "frameworks": [
+              "remix"
+            ],
+            "iacTool": "none",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://app.plane.so",
+                "site_name": "Plane"
+              },
+              {
+                "http_url": "https://github.com/makeplane/plane",
+                "site_name": "Source"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 3,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Frontend",
+            "tracing": "none",
+            "version": "1.2.3"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "frontend",
+            "issues",
+            "kanban"
+          ],
+          "tests": null
+        },
+        {
+          "name": "API Server",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "internal_api",
+          "connections": [
+            "PostgreSQL",
+            "Valkey",
+            "RabbitMQ",
+            "MinIO"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/makeplane/plane",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "⚙️",
+          "info": {
+            "authType": "jwt",
+            "deployment": "docker_swarm",
+            "description": "Django REST Framework API server — the core backend of Plane. Handles authentication (magic-link, OAuth2, SAML), workspace and project management, issues, cycles, modules, views, analytics, webhooks, and Prisma-free direct PostgreSQL access via Django ORM.",
+            "docs": [],
+            "frameworks": [
+              "django"
+            ],
+            "iacTool": "none",
+            "language": "python",
+            "links": [
+              {
+                "http_url": "https://developers.plane.so/api-reference/introduction",
+                "site_name": "API Reference"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 4,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Backend",
+            "tracing": "none",
+            "version": "1.2.3"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "api",
+            "django",
+            "core"
+          ],
+          "tests": null
+        },
+        {
+          "name": "PostgreSQL",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "database",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/makeplane/plane",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🐘",
+          "info": {
+            "authType": "basic",
+            "deployment": "docker_swarm",
+            "description": "Primary relational database (postgres:15-alpine) storing all Plane data: workspaces, projects, issues, cycles, modules, pages, and members.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "sql",
+            "links": [
+              {
+                "http_url": "https://developers.plane.so/",
+                "site_name": "Plane Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Platform",
+            "tracing": "none",
+            "version": "15.7.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "database",
+            "sql",
+            "infra"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Valkey",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "cache_store",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/makeplane/plane",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🔴",
+          "info": {
+            "authType": "none",
+            "deployment": "docker_swarm",
+            "description": "Valkey 7 (Redis-compatible) used as both a cache layer and the Celery task broker for background workers and beat scheduler.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "c",
+            "links": [
+              {
+                "http_url": "https://developers.plane.so/",
+                "site_name": "Plane Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Platform",
+            "tracing": "none",
+            "version": "7.2.11"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "cache",
+            "celery",
+            "infra"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Live Server",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "internal_api",
+          "connections": [
+            "API Server"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/makeplane/plane",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "✍️",
+          "info": {
+            "authType": "jwt",
+            "deployment": "docker_swarm",
+            "description": "Node.js real-time collaboration server powering Plane Pages co-editing. Uses Hocuspocus (a Yjs CRDT server) over WebSocket so multiple users can edit the same document simultaneously without conflicts.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://developers.plane.so/",
+                "site_name": "Plane Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 2,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Product",
+            "tracing": "none",
+            "version": "1.2.3"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "realtime",
+            "collaboration",
+            "pages"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Background Worker",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "worker",
+          "connections": [
+            "API Server",
+            "PostgreSQL",
+            "Valkey",
+            "RabbitMQ"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/makeplane/plane",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "⚡",
+          "info": {
+            "authType": "none",
+            "deployment": "docker_swarm",
+            "description": "Celery worker process (same image as API Server) that consumes tasks from RabbitMQ/Valkey. Handles async webhook dispatch, email notifications, export jobs, and bulk issue operations.",
+            "docs": [],
+            "frameworks": [
+              "django"
+            ],
+            "iacTool": "none",
+            "language": "python",
+            "links": [
+              {
+                "http_url": "https://developers.plane.so/",
+                "site_name": "Plane Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 3,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Backend",
+            "tracing": "none",
+            "version": "1.2.3"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "celery",
+            "async",
+            "worker"
+          ],
+          "tests": null
+        },
+        {
+          "name": "RabbitMQ",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "queue",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/makeplane/plane",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🐰",
+          "info": {
+            "authType": "basic",
+            "deployment": "docker_swarm",
+            "description": "RabbitMQ 3.13 AMQP message broker used to fan-out async tasks from the API to Celery workers, including webhook dispatch and notification delivery.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "erlang",
+            "links": [
+              {
+                "http_url": "https://developers.plane.so/",
+                "site_name": "Plane Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Platform",
+            "tracing": "none",
+            "version": "3.13.6"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "messaging",
+            "async",
+            "infra"
+          ],
+          "tests": null
+        }
+      ],
+      "description": "",
+      "line_number": 337,
+      "query": null
+    }
+  ]
+}

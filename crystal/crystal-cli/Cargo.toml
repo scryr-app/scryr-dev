@@ -1,0 +1,38 @@
+[package]
+name = "crystal-cli"
+version = "0.2.0"
+edition = "2024"
+autobins = false
+description = "CLI for generating Scryr manifest schema artifacts."
+readme = "README.md"
+license = "MIT"
+repository = "https://github.com/lawrencec/scryr"
+keywords = ["cli", "manifest", "graphql", "architecture", "scryr"]
+categories = ["command-line-utilities", "development-tools"]
+include = ["Cargo.toml", "README.md", "build.rs", "src/**", "static/scryr-sdk/**", "tests/**"]
+
+[[bin]]
+name = "scryr"
+path = "src/main.rs"
+
+[dependencies]
+base64 = { workspace = true }
+clap = { workspace = true }
+rand = { workspace = true }
+reqwest = { workspace = true }
+crystal-core = { workspace = true }
+crystal-server = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+tokio = { workspace = true }
+url = { workspace = true }
+
+[dev-dependencies]
+actix-web = { workspace = true }
+assert_cmd = { workspace = true }
+predicates = { workspace = true }
+tempfile = { workspace = true }
+
+[lints]
+workspace = true

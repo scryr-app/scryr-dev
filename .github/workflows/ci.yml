@@ -1,0 +1,123 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  manifest:
+    name: Python manifest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: jdx/mise-action@v4
+      - name: Install dependencies
+        run: mise run install:python
+      - name: Format check
+        run: mise run format:check:python
+      - name: Lint
+        run: mise run lint:python
+      - name: Type check
+        run: mise run type-check:python
+      - name: Unit tests
+        run: mise run test:unit:python
+      - name: Integration tests
+        run: mise run test:integration:python
+
+  crystal:
+    name: Rust server and CLI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: jdx/mise-action@v4
+      - name: Install dependencies
+        run: mise run install:rust
+      - name: Format check
+        run: mise run format:check:rust
+      - name: Lint
+        run: mise run lint:rust
+      - name: Type check
+        run: mise run type-check:rust
+      - name: Unit tests
+        run: mise run test:unit:rust
+      - name: Integration tests
+        run: mise run test:integration:rust
+
+  map:
+    name: Frontend map
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: jdx/mise-action@v4
+      - name: Install dependencies
+        run: mise run install:map
+      - name: Format check
+        run: mise run format:check:map
+      - name: Lint
+        run: mise run lint:map
+      - name: Type check
+        run: mise run type-check:map
+      - name: Unit tests
+        run: mise run test:unit:map
+      - name: Build
+        run: mise run build:map
+
+  release-cli:
+    name: Release CLI smoke
+    runs-on: ubuntu-latest
+    needs: [manifest, crystal, map]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: jdx/mise-action@v4
+      - name: Build release CLI
+        run: mise run build:oss
+      - name: Smoke test release CLI
+        run: |
+          set -euxo pipefail
+
+          ./crystal/target/release/scryr --version
+          ./crystal/target/release/scryr generate schema \
+            --path samples/mern/index.scry \
+            --manifest-dir manifest \
+            --scryr-dir .cache/scryr-release > "$RUNNER_TEMP/schema.json"
+          test -s "$RUNNER_TEMP/schema.json"
+
+          SCRYR_SQLITE_PATH="$RUNNER_TEMP/scryr-release.db" \
+            ./crystal/target/release/scryr serve \
+              --host 127.0.0.1 \
+              --port 18080 \
+              > "$RUNNER_TEMP/scryr-release.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true; cat "$RUNNER_TEMP/scryr-release.log"' EXIT
+
+          curl --silent --show-error --fail \
+            --retry 40 \
+            --retry-all-errors \
+            --retry-connrefused \
+            --retry-delay 1 \
+            http://127.0.0.1:18080/health
+
+          curl --silent --show-error --fail \
+            http://127.0.0.1:18080/ > "$RUNNER_TEMP/index.html"
+          test -s "$RUNNER_TEMP/index.html"
+
+          ./crystal/target/release/scryr generate upload \
+            --path samples/mern/index.scry \
+            --manifest-dir manifest \
+            --scryr-dir .cache/scryr-release \
+            --graphql-url http://127.0.0.1:18080/graphql
+
+          curl --silent --show-error --fail \
+            -H "content-type: application/json" \
+            --data '{"query":"query { scryrMaps { key name } }"}' \
+            http://127.0.0.1:18080/graphql > "$RUNNER_TEMP/maps.json"
+          grep -F '"mern"' "$RUNNER_TEMP/maps.json"

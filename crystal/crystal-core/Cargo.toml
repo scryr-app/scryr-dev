@@ -1,0 +1,27 @@
+[package]
+name = "crystal-core"
+version = "0.2.0"
+edition = "2024"
+description = "Shared models, artifact generation, and persistence for Scryr generated manifests."
+readme = "../README.md"
+license = "MIT"
+repository = "https://github.com/lawrencec/scryr"
+keywords = ["manifest", "graphql", "architecture", "scryr"]
+categories = ["development-tools"]
+include = ["Cargo.toml", "README.md", "src/**"]
+
+[dependencies]
+async-graphql = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+libsql = { workspace = true }
+sqlx = { workspace = true }
+tokio = { workspace = true }
+uuid = { workspace = true }
+
+[lib]
+name = "crystal_core"
+path = "src/lib.rs"
+
+[lints]
+workspace = true

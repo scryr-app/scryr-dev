@@ -1,0 +1,12 @@
+.DS_Store
+
+# Rust build output
+/target/
+
+# Local tooling and editor state
+.vscode/
+
+# Environment and local overrides
+.env
+.env.*
+mise.local.toml

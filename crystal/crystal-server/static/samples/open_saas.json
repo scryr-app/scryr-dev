@@ -1,0 +1,1872 @@
+{
+  "files": [
+    {
+      "path": "index.scry",
+      "content": "\"\"\"Open SaaS starter kit manifest.\n\nA 100% free, open-source SaaS boilerplate built on the Wasp full-stack\nframework. Ships with auth, payments, background jobs, analytics, file\nuploads, email sending, and an admin dashboard.\n\nArchitecture reference: https://docs.opensaas.sh/start/guided-tour/\nSource: https://github.com/wasp-lang/open-saas\n\"\"\"\n\nfrom scryr.manifest import Diagram, Link, Manifest, ManifestQuery\nfrom scryr.saas import Classification\nfrom scryr.types import (\n    AuthType,\n    CICDToolType,\n    DeploymentTarget,\n    IaCToolType,\n    IncrementalVersion,\n    LogAggregationType,\n    MonitoringType,\n    ProgrammingLanguage,\n    TracingType,\n    Url,\n    WebFramework,\n    parse_version,\n)\n\n_SOURCE = Url(\"https://github.com/wasp-lang/open-saas\")\n_DOCS = Url(\"https://docs.opensaas.sh/\")\n_CICD = CICDToolType.github_actions\n_IAC = IaCToolType.none\n_MONITOR = MonitoringType.none\n_LOGS = LogAggregationType.none\n_TRACING = TracingType.none\n_DEPLOYMENT = DeploymentTarget.railway\npostgres_block = Manifest(\n    name=\"PostgreSQL\",\n    icon=\"🐘\",\n    classification=Classification.database,\n    tags=[\"database\", \"sql\", \"infra\"],\n    connections=[],\n    description=\"Primary Prisma-managed PostgreSQL database. Stores all app data: users, sessions, subscriptions, daily stats, file records, and page view sources. Also hosts pg-boss job queue tables used by Wasp background jobs.\",\n    version=parse_version(\"15.0.0\"),\n    language=ProgrammingLanguage.sql,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Platform\",\n    auth_type=AuthType.basic,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[Link(site_name=\"Open SaaS Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nserver_block = Manifest(\n    name=\"Wasp Server\",\n    icon=\"⚙️\",\n    classification=Classification.internal_api,\n    tags=[\"wasp\", \"server\", \"auth\"],\n    connections=[\"PostgreSQL\", \"Email\", \"AWS S3\", \"Stripe\"],\n    description=\"Wasp-generated Node.js/Express backend. Handles all type-safe server operations (Queries &amp; Actions via RPC), multi-method auth (email + Google + GitHub + Discord), payment webhook processing (Stripe / Polar.sh / Lemon Squeezy), and pg-boss background jobs (e.g. hourly `dailyStatsJob` for analytics aggregation).\",\n    version=parse_version(\"0.22.0\"),\n    language=ProgrammingLanguage.typescript,\n    frameworks=[WebFramework.express],\n    deployment=_DEPLOYMENT,\n    owner_team=\"Product\",\n    auth_type=AuthType.oauth2,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=2,\n    min_replicas=1,\n    links=[\n        Link(site_name=\"Wasp Docs\", http_url=Url(\"https://wasp.sh/docs\")),\n        Link(site_name=\"Open SaaS Docs\", http_url=_DOCS),\n    ],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nclient_block = Manifest(\n    name=\"Wasp Client\",\n    icon=\"🖥️\",\n    classification=Classification.public_ui,\n    tags=[\"react\", \"spa\", \"wasp\"],\n    connections=[\"Wasp Server\", \"Analytics\"],\n    description=\"Wasp-generated React SPA (Vite build) with TailwindCSS and ShadCN UI components. Includes landing page, user dashboard, subscription management, admin dashboard, AI demo app, and file upload UI. Communicates with the Wasp Server exclusively via type-safe Wasp Operations.\",\n    version=parse_version(\"0.22.0\"),\n    language=ProgrammingLanguage.typescript,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Product\",\n    auth_type=AuthType.oauth2,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=2,\n    min_replicas=1,\n    links=[Link(site_name=\"Open SaaS Live Demo\", http_url=Url(\"https://opensaas.sh\"))],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nblog_block = Manifest(\n    name=\"Blog & Docs\",\n    icon=\"📚\",\n    classification=Classification.public_ui,\n    tags=[\"astro\", \"blog\", \"docs\"],\n    connections=[],\n    description=\"Astro Starlight static site serving the product marketing blog and documentation. Deployed independently from the main app. Supports MDX content, code highlighting, and full-text search out of the box.\",\n    version=parse_version(\"4.0.0\"),\n    language=ProgrammingLanguage.typescript,\n    frameworks=[WebFramework.astro],\n    deployment=_DEPLOYMENT,\n    owner_team=\"Product\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[Link(site_name=\"Open SaaS Docs\", http_url=_DOCS)],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nstripe_block = Manifest(\n    name=\"Stripe\",\n    icon=\"💳\",\n    classification=Classification.public_api,\n    tags=[\"payments\", \"billing\", \"stripe\"],\n    connections=[],\n    description=\"Stripe payment integration for subscription billing. The Wasp Server creates Checkout sessions and listens to Stripe webhook events (checkout.session.completed, customer.subscription.updated, etc.) to update user subscription tiers in PostgreSQL. Polar.sh and Lemon Squeezy are also supported as drop-in alternatives.\",\n    version=IncrementalVersion.parse(\"1\"),\n    language=ProgrammingLanguage.typescript,\n    deployment=DeploymentTarget.unknown,\n    owner_team=\"Product\",\n    auth_type=AuthType.api_key,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[\n        Link(site_name=\"Stripe Docs\", http_url=Url(\"https://stripe.com/docs\")),\n        Link(\n            site_name=\"Payment Guide\",\n            http_url=Url(\"https://docs.opensaas.sh/guides/payment-integrations/stripe/\"),\n        ),\n    ],\n    repo_url=Url(\"https://github.com/stripe/stripe-node\"),\n    cicd_tool=CICDToolType.none,\n)\nemail_block = Manifest(\n    name=\"Email\",\n    icon=\"✉️\",\n    classification=Classification.public_api,\n    tags=[\"email\", \"transactional\", \"auth\"],\n    connections=[],\n    description=\"Transactional email service (SendGrid or Mailgun, configurable via Wasp `emailSender`). Sends email verification links on sign-up, password reset emails, and any custom workflow emails triggered by server actions.\",\n    version=parse_version(\"1.0.0\"),\n    language=ProgrammingLanguage.typescript,\n    deployment=DeploymentTarget.unknown,\n    owner_team=\"Product\",\n    auth_type=AuthType.api_key,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[\n        Link(\n            site_name=\"Email Guide\", http_url=Url(\"https://docs.opensaas.sh/guides/email-sending/\")\n        )\n    ],\n    repo_url=_SOURCE,\n    cicd_tool=CICDToolType.none,\n)\ns3_block = Manifest(\n    name=\"AWS S3\",\n    icon=\"🗄️\",\n    classification=Classification.object_storage,\n    tags=[\"storage\", \"s3\", \"aws\"],\n    connections=[],\n    description=\"AWS S3 bucket for user file uploads. The Wasp Server generates pre-signed S3 upload URLs; the client uploads directly to S3. File metadata is tracked in PostgreSQL.\",\n    version=IncrementalVersion.parse(\"1\"),\n    language=ProgrammingLanguage.typescript,\n    deployment=DeploymentTarget.amplify,\n    owner_team=\"Product\",\n    auth_type=AuthType.api_key,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[\n        Link(\n            site_name=\"File Upload Guide\",\n            http_url=Url(\"https://docs.opensaas.sh/guides/file-uploading/\"),\n        )\n    ],\n    repo_url=_SOURCE,\n    cicd_tool=CICDToolType.none,\n)\nanalytics_block = Manifest(\n    name=\"Analytics\",\n    icon=\"📈\",\n    classification=Classification.public_api,\n    tags=[\"analytics\", \"stats\", \"admin\"],\n    connections=[],\n    description=\"Web analytics integration — either Plausible Analytics or Google Analytics. The Wasp Client sends pageview events; the Wasp Server's hourly `dailyStatsJob` pulls aggregated stats via the provider's API and stores them in PostgreSQL for display on the Admin Dashboard.\",\n    version=IncrementalVersion.parse(\"1\"),\n    language=ProgrammingLanguage.typescript,\n    deployment=DeploymentTarget.unknown,\n    owner_team=\"Product\",\n    auth_type=AuthType.api_key,\n    monitoring=MonitoringType.none,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[\n        Link(\n            site_name=\"Analytics Guide\", http_url=Url(\"https://docs.opensaas.sh/guides/analytics/\")\n        )\n    ],\n    repo_url=_SOURCE,\n    cicd_tool=CICDToolType.none,\n)\n\nopen_saas_diagram = Diagram(\n    name=\"OpenSaaS\",\n    manifests=[\n        postgres_block,\n        server_block,\n        client_block,\n        blog_block,\n        stripe_block,\n        email_block,\n        s3_block,\n        analytics_block,\n    ],\n)\n\nopen_saas_product_surface_diagram = Diagram(\n    name=\"OpenSaaS Product Surface\",\n    query=ManifestQuery(owner_team=\"Product\", language=ProgrammingLanguage.typescript),\n)\n\nopen_saas_external_integrations_diagram = Diagram(\n    name=\"OpenSaaS External Integrations\",\n    query=ManifestQuery(\n        classification=Classification.public_api,\n        auth_type=AuthType.api_key,\n    ),\n)\n"
+    }
+  ],
+  "manifests": [
+    {
+      "name": "Analytics",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "none"
+      },
+      "classification": "public_api",
+      "connections": [],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/wasp-lang/open-saas",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "📈",
+      "info": {
+        "authType": "api_key",
+        "deployment": "unknown",
+        "description": "Web analytics integration — either Plausible Analytics or Google Analytics. The Wasp Client sends pageview events; the Wasp Server's hourly `dailyStatsJob` pulls aggregated stats via the provider's API and stores them in PostgreSQL for display on the Admin Dashboard.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "none",
+        "language": "typescript",
+        "links": [
+          {
+            "http_url": "https://docs.opensaas.sh/guides/analytics/",
+            "site_name": "Analytics Guide"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Product",
+        "tracing": "none",
+        "version": "1"
+      },
+      "line_number": 210,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "analytics",
+        "stats",
+        "admin"
+      ],
+      "tests": null,
+      "variable_name": "analytics_block"
+    },
+    {
+      "name": "Blog & Docs",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "public_ui",
+      "connections": [],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/wasp-lang/open-saas",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "📚",
+      "info": {
+        "authType": "none",
+        "deployment": "railway",
+        "description": "Astro Starlight static site serving the product marketing blog and documentation. Deployed independently from the main app. Supports MDX content, code highlighting, and full-text search out of the box.",
+        "docs": [],
+        "frameworks": [
+          "astro"
+        ],
+        "iacTool": "none",
+        "language": "typescript",
+        "links": [
+          {
+            "http_url": "https://docs.opensaas.sh/",
+            "site_name": "Open SaaS Docs"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Product",
+        "tracing": "none",
+        "version": "4.0.0"
+      },
+      "line_number": 106,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "astro",
+        "blog",
+        "docs"
+      ],
+      "tests": null,
+      "variable_name": "blog_block"
+    },
+    {
+      "name": "Wasp Client",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "public_ui",
+      "connections": [
+        "Wasp Server",
+        "Analytics"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/wasp-lang/open-saas",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🖥️",
+      "info": {
+        "authType": "oauth2",
+        "deployment": "railway",
+        "description": "Wasp-generated React SPA (Vite build) with TailwindCSS and ShadCN UI components. Includes landing page, user dashboard, subscription management, admin dashboard, AI demo app, and file upload UI. Communicates with the Wasp Server exclusively via type-safe Wasp Operations.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "none",
+        "language": "typescript",
+        "links": [
+          {
+            "http_url": "https://opensaas.sh",
+            "site_name": "Open SaaS Live Demo"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 2,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Product",
+        "tracing": "none",
+        "version": "0.22.0"
+      },
+      "line_number": 84,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "react",
+        "spa",
+        "wasp"
+      ],
+      "tests": null,
+      "variable_name": "client_block"
+    },
+    {
+      "name": "Email",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "none"
+      },
+      "classification": "public_api",
+      "connections": [],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/wasp-lang/open-saas",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "✉️",
+      "info": {
+        "authType": "api_key",
+        "deployment": "unknown",
+        "description": "Transactional email service (SendGrid or Mailgun, configurable via Wasp `emailSender`). Sends email verification links on sign-up, password reset emails, and any custom workflow emails triggered by server actions.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "none",
+        "language": "typescript",
+        "links": [
+          {
+            "http_url": "https://docs.opensaas.sh/guides/email-sending/",
+            "site_name": "Email Guide"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Product",
+        "tracing": "none",
+        "version": "1.0.0"
+      },
+      "line_number": 157,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "email",
+        "transactional",
+        "auth"
+      ],
+      "tests": null,
+      "variable_name": "email_block"
+    },
+    {
+      "name": "PostgreSQL",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "database",
+      "connections": [],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/wasp-lang/open-saas",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🐘",
+      "info": {
+        "authType": "basic",
+        "deployment": "railway",
+        "description": "Primary Prisma-managed PostgreSQL database. Stores all app data: users, sessions, subscriptions, daily stats, file records, and page view sources. Also hosts pg-boss job queue tables used by Wasp background jobs.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "none",
+        "language": "sql",
+        "links": [
+          {
+            "http_url": "https://docs.opensaas.sh/",
+            "site_name": "Open SaaS Docs"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Platform",
+        "tracing": "none",
+        "version": "15.0.0"
+      },
+      "line_number": 36,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "database",
+        "sql",
+        "infra"
+      ],
+      "tests": null,
+      "variable_name": "postgres_block"
+    },
+    {
+      "name": "AWS S3",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "none"
+      },
+      "classification": "object_storage",
+      "connections": [],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/wasp-lang/open-saas",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🗄️",
+      "info": {
+        "authType": "api_key",
+        "deployment": "amplify",
+        "description": "AWS S3 bucket for user file uploads. The Wasp Server generates pre-signed S3 upload URLs; the client uploads directly to S3. File metadata is tracked in PostgreSQL.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "none",
+        "language": "typescript",
+        "links": [
+          {
+            "http_url": "https://docs.opensaas.sh/guides/file-uploading/",
+            "site_name": "File Upload Guide"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Product",
+        "tracing": "none",
+        "version": "1"
+      },
+      "line_number": 183,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "storage",
+        "s3",
+        "aws"
+      ],
+      "tests": null,
+      "variable_name": "s3_block"
+    },
+    {
+      "name": "Wasp Server",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "internal_api",
+      "connections": [
+        "PostgreSQL",
+        "Email",
+        "AWS S3",
+        "Stripe"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/wasp-lang/open-saas",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "⚙️",
+      "info": {
+        "authType": "oauth2",
+        "deployment": "railway",
+        "description": "Wasp-generated Node.js/Express backend. Handles all type-safe server operations (Queries &amp; Actions via RPC), multi-method auth (email + Google + GitHub + Discord), payment webhook processing (Stripe / Polar.sh / Lemon Squeezy), and pg-boss background jobs (e.g. hourly `dailyStatsJob` for analytics aggregation).",
+        "docs": [],
+        "frameworks": [
+          "express"
+        ],
+        "iacTool": "none",
+        "language": "typescript",
+        "links": [
+          {
+            "http_url": "https://wasp.sh/docs",
+            "site_name": "Wasp Docs"
+          },
+          {
+            "http_url": "https://docs.opensaas.sh/",
+            "site_name": "Open SaaS Docs"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 2,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Product",
+        "tracing": "none",
+        "version": "0.22.0"
+      },
+      "line_number": 58,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "wasp",
+        "server",
+        "auth"
+      ],
+      "tests": null,
+      "variable_name": "server_block"
+    },
+    {
+      "name": "Stripe",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "none"
+      },
+      "classification": "public_api",
+      "connections": [],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/stripe/stripe-node",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "💳",
+      "info": {
+        "authType": "api_key",
+        "deployment": "unknown",
+        "description": "Stripe payment integration for subscription billing. The Wasp Server creates Checkout sessions and listens to Stripe webhook events (checkout.session.completed, customer.subscription.updated, etc.) to update user subscription tiers in PostgreSQL. Polar.sh and Lemon Squeezy are also supported as drop-in alternatives.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "none",
+        "language": "typescript",
+        "links": [
+          {
+            "http_url": "https://stripe.com/docs",
+            "site_name": "Stripe Docs"
+          },
+          {
+            "http_url": "https://docs.opensaas.sh/guides/payment-integrations/stripe/",
+            "site_name": "Payment Guide"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Product",
+        "tracing": "none",
+        "version": "1"
+      },
+      "line_number": 129,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "payments",
+        "billing",
+        "stripe"
+      ],
+      "tests": null,
+      "variable_name": "stripe_block"
+    }
+  ],
+  "forges": [],
+  "diagrams": [
+    {
+      "name": "OpenSaaS",
+      "variable_name": "open_saas_diagram",
+      "manifests": [
+        {
+          "name": "PostgreSQL",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "database",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/wasp-lang/open-saas",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🐘",
+          "info": {
+            "authType": "basic",
+            "deployment": "railway",
+            "description": "Primary Prisma-managed PostgreSQL database. Stores all app data: users, sessions, subscriptions, daily stats, file records, and page view sources. Also hosts pg-boss job queue tables used by Wasp background jobs.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "sql",
+            "links": [
+              {
+                "http_url": "https://docs.opensaas.sh/",
+                "site_name": "Open SaaS Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Platform",
+            "tracing": "none",
+            "version": "15.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "database",
+            "sql",
+            "infra"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Wasp Server",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "internal_api",
+          "connections": [
+            "PostgreSQL",
+            "Email",
+            "AWS S3",
+            "Stripe"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/wasp-lang/open-saas",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "⚙️",
+          "info": {
+            "authType": "oauth2",
+            "deployment": "railway",
+            "description": "Wasp-generated Node.js/Express backend. Handles all type-safe server operations (Queries &amp; Actions via RPC), multi-method auth (email + Google + GitHub + Discord), payment webhook processing (Stripe / Polar.sh / Lemon Squeezy), and pg-boss background jobs (e.g. hourly `dailyStatsJob` for analytics aggregation).",
+            "docs": [],
+            "frameworks": [
+              "express"
+            ],
+            "iacTool": "none",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://wasp.sh/docs",
+                "site_name": "Wasp Docs"
+              },
+              {
+                "http_url": "https://docs.opensaas.sh/",
+                "site_name": "Open SaaS Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 2,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Product",
+            "tracing": "none",
+            "version": "0.22.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "wasp",
+            "server",
+            "auth"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Wasp Client",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "public_ui",
+          "connections": [
+            "Wasp Server",
+            "Analytics"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/wasp-lang/open-saas",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🖥️",
+          "info": {
+            "authType": "oauth2",
+            "deployment": "railway",
+            "description": "Wasp-generated React SPA (Vite build) with TailwindCSS and ShadCN UI components. Includes landing page, user dashboard, subscription management, admin dashboard, AI demo app, and file upload UI. Communicates with the Wasp Server exclusively via type-safe Wasp Operations.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://opensaas.sh",
+                "site_name": "Open SaaS Live Demo"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 2,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Product",
+            "tracing": "none",
+            "version": "0.22.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "react",
+            "spa",
+            "wasp"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Blog & Docs",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "public_ui",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/wasp-lang/open-saas",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "📚",
+          "info": {
+            "authType": "none",
+            "deployment": "railway",
+            "description": "Astro Starlight static site serving the product marketing blog and documentation. Deployed independently from the main app. Supports MDX content, code highlighting, and full-text search out of the box.",
+            "docs": [],
+            "frameworks": [
+              "astro"
+            ],
+            "iacTool": "none",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://docs.opensaas.sh/",
+                "site_name": "Open SaaS Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Product",
+            "tracing": "none",
+            "version": "4.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "astro",
+            "blog",
+            "docs"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Stripe",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "none"
+          },
+          "classification": "public_api",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/stripe/stripe-node",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "💳",
+          "info": {
+            "authType": "api_key",
+            "deployment": "unknown",
+            "description": "Stripe payment integration for subscription billing. The Wasp Server creates Checkout sessions and listens to Stripe webhook events (checkout.session.completed, customer.subscription.updated, etc.) to update user subscription tiers in PostgreSQL. Polar.sh and Lemon Squeezy are also supported as drop-in alternatives.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://stripe.com/docs",
+                "site_name": "Stripe Docs"
+              },
+              {
+                "http_url": "https://docs.opensaas.sh/guides/payment-integrations/stripe/",
+                "site_name": "Payment Guide"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Product",
+            "tracing": "none",
+            "version": "1"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "payments",
+            "billing",
+            "stripe"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Email",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "none"
+          },
+          "classification": "public_api",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/wasp-lang/open-saas",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "✉️",
+          "info": {
+            "authType": "api_key",
+            "deployment": "unknown",
+            "description": "Transactional email service (SendGrid or Mailgun, configurable via Wasp `emailSender`). Sends email verification links on sign-up, password reset emails, and any custom workflow emails triggered by server actions.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://docs.opensaas.sh/guides/email-sending/",
+                "site_name": "Email Guide"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Product",
+            "tracing": "none",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "email",
+            "transactional",
+            "auth"
+          ],
+          "tests": null
+        },
+        {
+          "name": "AWS S3",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "none"
+          },
+          "classification": "object_storage",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/wasp-lang/open-saas",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🗄️",
+          "info": {
+            "authType": "api_key",
+            "deployment": "amplify",
+            "description": "AWS S3 bucket for user file uploads. The Wasp Server generates pre-signed S3 upload URLs; the client uploads directly to S3. File metadata is tracked in PostgreSQL.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://docs.opensaas.sh/guides/file-uploading/",
+                "site_name": "File Upload Guide"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Product",
+            "tracing": "none",
+            "version": "1"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "storage",
+            "s3",
+            "aws"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Analytics",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "none"
+          },
+          "classification": "public_api",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/wasp-lang/open-saas",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "📈",
+          "info": {
+            "authType": "api_key",
+            "deployment": "unknown",
+            "description": "Web analytics integration — either Plausible Analytics or Google Analytics. The Wasp Client sends pageview events; the Wasp Server's hourly `dailyStatsJob` pulls aggregated stats via the provider's API and stores them in PostgreSQL for display on the Admin Dashboard.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://docs.opensaas.sh/guides/analytics/",
+                "site_name": "Analytics Guide"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Product",
+            "tracing": "none",
+            "version": "1"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "analytics",
+            "stats",
+            "admin"
+          ],
+          "tests": null
+        }
+      ],
+      "description": "",
+      "line_number": 237,
+      "query": null
+    },
+    {
+      "name": "OpenSaaS External Integrations",
+      "variable_name": "open_saas_external_integrations_diagram",
+      "manifests": [
+        {
+          "name": "Analytics",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "none"
+          },
+          "classification": "public_api",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/wasp-lang/open-saas",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "📈",
+          "info": {
+            "authType": "api_key",
+            "deployment": "unknown",
+            "description": "Web analytics integration — either Plausible Analytics or Google Analytics. The Wasp Client sends pageview events; the Wasp Server's hourly `dailyStatsJob` pulls aggregated stats via the provider's API and stores them in PostgreSQL for display on the Admin Dashboard.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://docs.opensaas.sh/guides/analytics/",
+                "site_name": "Analytics Guide"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Product",
+            "tracing": "none",
+            "version": "1"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "analytics",
+            "stats",
+            "admin"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Email",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "none"
+          },
+          "classification": "public_api",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/wasp-lang/open-saas",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "✉️",
+          "info": {
+            "authType": "api_key",
+            "deployment": "unknown",
+            "description": "Transactional email service (SendGrid or Mailgun, configurable via Wasp `emailSender`). Sends email verification links on sign-up, password reset emails, and any custom workflow emails triggered by server actions.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://docs.opensaas.sh/guides/email-sending/",
+                "site_name": "Email Guide"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Product",
+            "tracing": "none",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "email",
+            "transactional",
+            "auth"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Stripe",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "none"
+          },
+          "classification": "public_api",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/stripe/stripe-node",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "💳",
+          "info": {
+            "authType": "api_key",
+            "deployment": "unknown",
+            "description": "Stripe payment integration for subscription billing. The Wasp Server creates Checkout sessions and listens to Stripe webhook events (checkout.session.completed, customer.subscription.updated, etc.) to update user subscription tiers in PostgreSQL. Polar.sh and Lemon Squeezy are also supported as drop-in alternatives.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://stripe.com/docs",
+                "site_name": "Stripe Docs"
+              },
+              {
+                "http_url": "https://docs.opensaas.sh/guides/payment-integrations/stripe/",
+                "site_name": "Payment Guide"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Product",
+            "tracing": "none",
+            "version": "1"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "payments",
+            "billing",
+            "stripe"
+          ],
+          "tests": null
+        }
+      ],
+      "description": "",
+      "line_number": 256,
+      "query": {
+        "where": {
+          "classification": "public_api",
+          "info.auth_type": "api_key"
+        }
+      }
+    },
+    {
+      "name": "OpenSaaS Product Surface",
+      "variable_name": "open_saas_product_surface_diagram",
+      "manifests": [
+        {
+          "name": "Analytics",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "none"
+          },
+          "classification": "public_api",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/wasp-lang/open-saas",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "📈",
+          "info": {
+            "authType": "api_key",
+            "deployment": "unknown",
+            "description": "Web analytics integration — either Plausible Analytics or Google Analytics. The Wasp Client sends pageview events; the Wasp Server's hourly `dailyStatsJob` pulls aggregated stats via the provider's API and stores them in PostgreSQL for display on the Admin Dashboard.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://docs.opensaas.sh/guides/analytics/",
+                "site_name": "Analytics Guide"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Product",
+            "tracing": "none",
+            "version": "1"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "analytics",
+            "stats",
+            "admin"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Blog & Docs",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "public_ui",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/wasp-lang/open-saas",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "📚",
+          "info": {
+            "authType": "none",
+            "deployment": "railway",
+            "description": "Astro Starlight static site serving the product marketing blog and documentation. Deployed independently from the main app. Supports MDX content, code highlighting, and full-text search out of the box.",
+            "docs": [],
+            "frameworks": [
+              "astro"
+            ],
+            "iacTool": "none",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://docs.opensaas.sh/",
+                "site_name": "Open SaaS Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Product",
+            "tracing": "none",
+            "version": "4.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "astro",
+            "blog",
+            "docs"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Wasp Client",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "public_ui",
+          "connections": [
+            "Wasp Server",
+            "Analytics"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/wasp-lang/open-saas",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🖥️",
+          "info": {
+            "authType": "oauth2",
+            "deployment": "railway",
+            "description": "Wasp-generated React SPA (Vite build) with TailwindCSS and ShadCN UI components. Includes landing page, user dashboard, subscription management, admin dashboard, AI demo app, and file upload UI. Communicates with the Wasp Server exclusively via type-safe Wasp Operations.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://opensaas.sh",
+                "site_name": "Open SaaS Live Demo"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 2,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Product",
+            "tracing": "none",
+            "version": "0.22.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "react",
+            "spa",
+            "wasp"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Email",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "none"
+          },
+          "classification": "public_api",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/wasp-lang/open-saas",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "✉️",
+          "info": {
+            "authType": "api_key",
+            "deployment": "unknown",
+            "description": "Transactional email service (SendGrid or Mailgun, configurable via Wasp `emailSender`). Sends email verification links on sign-up, password reset emails, and any custom workflow emails triggered by server actions.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://docs.opensaas.sh/guides/email-sending/",
+                "site_name": "Email Guide"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Product",
+            "tracing": "none",
+            "version": "1.0.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "email",
+            "transactional",
+            "auth"
+          ],
+          "tests": null
+        },
+        {
+          "name": "AWS S3",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "none"
+          },
+          "classification": "object_storage",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/wasp-lang/open-saas",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🗄️",
+          "info": {
+            "authType": "api_key",
+            "deployment": "amplify",
+            "description": "AWS S3 bucket for user file uploads. The Wasp Server generates pre-signed S3 upload URLs; the client uploads directly to S3. File metadata is tracked in PostgreSQL.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://docs.opensaas.sh/guides/file-uploading/",
+                "site_name": "File Upload Guide"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Product",
+            "tracing": "none",
+            "version": "1"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "storage",
+            "s3",
+            "aws"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Wasp Server",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "internal_api",
+          "connections": [
+            "PostgreSQL",
+            "Email",
+            "AWS S3",
+            "Stripe"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/wasp-lang/open-saas",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "⚙️",
+          "info": {
+            "authType": "oauth2",
+            "deployment": "railway",
+            "description": "Wasp-generated Node.js/Express backend. Handles all type-safe server operations (Queries &amp; Actions via RPC), multi-method auth (email + Google + GitHub + Discord), payment webhook processing (Stripe / Polar.sh / Lemon Squeezy), and pg-boss background jobs (e.g. hourly `dailyStatsJob` for analytics aggregation).",
+            "docs": [],
+            "frameworks": [
+              "express"
+            ],
+            "iacTool": "none",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://wasp.sh/docs",
+                "site_name": "Wasp Docs"
+              },
+              {
+                "http_url": "https://docs.opensaas.sh/",
+                "site_name": "Open SaaS Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 2,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Product",
+            "tracing": "none",
+            "version": "0.22.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "wasp",
+            "server",
+            "auth"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Stripe",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "none"
+          },
+          "classification": "public_api",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/stripe/stripe-node",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "💳",
+          "info": {
+            "authType": "api_key",
+            "deployment": "unknown",
+            "description": "Stripe payment integration for subscription billing. The Wasp Server creates Checkout sessions and listens to Stripe webhook events (checkout.session.completed, customer.subscription.updated, etc.) to update user subscription tiers in PostgreSQL. Polar.sh and Lemon Squeezy are also supported as drop-in alternatives.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "typescript",
+            "links": [
+              {
+                "http_url": "https://stripe.com/docs",
+                "site_name": "Stripe Docs"
+              },
+              {
+                "http_url": "https://docs.opensaas.sh/guides/payment-integrations/stripe/",
+                "site_name": "Payment Guide"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Product",
+            "tracing": "none",
+            "version": "1"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "payments",
+            "billing",
+            "stripe"
+          ],
+          "tests": null
+        }
+      ],
+      "description": "",
+      "line_number": 251,
+      "query": {
+        "where": {
+          "info.language": "typescript",
+          "info.owner_team": "Product"
+        }
+      }
+    }
+  ]
+}

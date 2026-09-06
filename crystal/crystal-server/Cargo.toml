@@ -1,0 +1,38 @@
+[package]
+name = "crystal-server"
+version = "0.2.0"
+edition = "2024"
+description = "GraphQL server for the Scryr architecture map."
+readme = "../README.md"
+license = "MIT"
+repository = "https://github.com/lawrencec/scryr"
+keywords = ["graphql", "actix", "manifest", "architecture", "scryr"]
+categories = ["web-programming", "development-tools"]
+include = ["Cargo.toml", "README.md", "build.rs", "src/**", "static/**"]
+
+[dependencies]
+actix-cors = { workspace = true }
+actix-web = { workspace = true }
+async-graphql = { workspace = true }
+async-graphql-actix-web = { workspace = true }
+chrono = { workspace = true }
+clap = { workspace = true }
+clerk-rs = { workspace = true }
+futures-util = { workspace = true }
+libsql = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+crystal-core = { workspace = true }
+sqlx = { workspace = true }
+tokio = { workspace = true }
+tokio-stream = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+uuid = { workspace = true }
+
+[lib]
+name = "crystal_server"
+path = "src/lib.rs"
+
+[lints]
+workspace = true

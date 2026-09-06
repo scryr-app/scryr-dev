@@ -1,0 +1,181 @@
+from scryr.manifest import Diagram, Forge, ForgeTask, ForgeTool, Link, Manifest, ManifestQuery
+from scryr.saas import Classification
+from scryr.types import (
+    AuthType,
+    CICDToolType,
+    DeploymentTarget,
+    IaCToolType,
+    LogAggregationType,
+    MonitoringType,
+    ProgrammingLanguage,
+    SemVer,
+    TracingType,
+    Url,
+    WebFramework,
+)
+
+mern_forge = Forge(
+    name="MERN Forge",
+    description="Node.js toolchain, environment, and common developer tasks for the MERN sample.",
+    tools={
+        "node": ForgeTool(version="22", postinstall="corepack enable"),
+        "mongodb": "8",
+        "redis": "7",
+    },
+    env={
+        "NODE_ENV": "development",
+        "MONGO_URL": "mongodb://localhost:27017/mern",
+        "REDIS_URL": "redis://localhost:6379",
+    },
+    vars={"api_port": 3001, "web_port": 3000},
+    tasks={
+        "install": ForgeTask(run="npm install"),
+        "dev:web": ForgeTask(
+            description="Run the React frontend",
+            run="npm run dev --workspace web",
+            depends="install",
+        ),
+        "dev:api": ForgeTask(
+            description="Run the Express API", run="npm run dev --workspace api", depends="install"
+        ),
+        "test": ForgeTask(
+            description="Run all package tests",
+            run=["npm test --workspace api", "npm test --workspace web"],
+        ),
+    },
+)
+react_block = Manifest(
+    name="React it all yo",
+    icon="🌐",
+    classification=Classification.public_ui,
+    tags=["user_interface"],
+    forges=[mern_forge.name],
+    connections=["Express"],
+    description="This be a Billy Goat! A sample MERN-style application: MongoDB datastore, Express backend, React frontend. Boy Howdy",
+    version=SemVer("0.1.0-alpha.1"),
+    language=ProgrammingLanguage.javascript,
+    frameworks=[WebFramework.express, WebFramework.nextjs],
+    deployment=DeploymentTarget.ec2,
+    owner_team="Frontend Team",
+    auth_type=AuthType.oauth2,
+    monitoring=MonitoringType.datadog,
+    log_aggregation=LogAggregationType.cloudwatch,
+    tracing=TracingType.datadog,
+    iac_tool=IaCToolType.terraform,
+    max_replicas=5,
+    min_replicas=2,
+    links=[Link(site_name="Example Site", http_url=Url("https://www.example.com"))],
+    docs=["https://www.mongodb.com/docs/", "https://expressjs.com/", "https://reactjs.org/"],
+    repo_url=Url("https://github.com/example/mern-app"),
+    cicd_tool=CICDToolType.github_actions,
+)
+redis_pubsub_block = Manifest(
+    name="Redis Pub/Sub",
+    classification=Classification.queue,
+    tags=["user_interface"],
+    forges=[mern_forge.name],
+    connections=["Express", "React"],
+    description="Redis configured for real-time messaging and event streaming",
+    version=SemVer("7.2.0"),
+    language=ProgrammingLanguage.c,
+    deployment=DeploymentTarget.ec2,
+    owner_team="Events Team",
+    auth_type=AuthType.api_key,
+    monitoring=MonitoringType.prometheus,
+    log_aggregation=LogAggregationType.elk_stack,
+    tracing=TracingType.jaeger,
+    iac_tool=IaCToolType.terraform,
+    max_replicas=4,
+    min_replicas=2,
+    links=[
+        Link(
+            site_name="Redis Pub/Sub Documentation",
+            http_url=Url("https://redis.io/docs/manual/pubsub/"),
+        )
+    ],
+    docs=["https://redis.io/docs/latest/", "https://redis.io/docs/latest/apis/"],
+    cicd_tool=CICDToolType.gitlab_ci,
+)
+express_block = Manifest(
+    name="Express",
+    classification=Classification.internal_api,
+    connections=["MongoDB"],
+    forges=[mern_forge.name],
+    language=ProgrammingLanguage.javascript,
+    deployment=DeploymentTarget.amplify,
+    owner_team="Backend Team",
+    auth_type=AuthType.jwt,
+    log_aggregation=LogAggregationType.elk_stack,
+    tracing=TracingType.jaeger,
+    iac_tool=IaCToolType.cloudformation,
+    max_replicas=3,
+    min_replicas=1,
+)
+mongo_block = Manifest(
+    name="MongoDB",
+    classification=Classification.database,
+    connections=["Express", "React"],
+    forges=[mern_forge.name],
+    frameworks=[WebFramework.nextjs],
+    owner_team="Data Team",
+    auth_type=AuthType.basic,
+    monitoring=MonitoringType.cloudwatch,
+    log_aggregation=LogAggregationType.cloudwatch,
+    tracing=TracingType.aws_xray,
+    iac_tool=IaCToolType.terraform,
+    max_replicas=3,
+    min_replicas=1,
+    cicd_tool=CICDToolType.github_actions,
+)
+angularjs_admin_block = Manifest(
+    name="AngularJS Admin Console",
+    icon="🛠️",
+    classification=Classification.admin_ui,
+    forges=[mern_forge.name],
+    connections=["Express"],
+    description="Legacy AngularJS-based admin console for operational management",
+    version=SemVer("1.7.9"),
+    language=ProgrammingLanguage.javascript,
+    deployment=DeploymentTarget.cloudfront,
+    owner_team="Ops Team",
+    auth_type=AuthType.basic,
+    monitoring=MonitoringType.cloudwatch,
+    log_aggregation=LogAggregationType.elk_stack,
+    tracing=TracingType.none,
+    iac_tool=IaCToolType.cloudformation,
+    max_replicas=2,
+    min_replicas=1,
+    links=[Link(site_name="Admin Portal", http_url=Url("https://admin.example.com"))],
+    docs=["https://docs.angularjs.org/"],
+    repo_url=Url("https://github.com/example/angularjs-admin"),
+)
+
+mern_diagram = Diagram(
+    name="MERN",
+    manifests=[
+        react_block,
+        redis_pubsub_block,
+        express_block,
+        mongo_block,
+        angularjs_admin_block,
+    ],
+)
+
+mern_customer_path_diagram = Diagram(
+    name="MERN Customer Path",
+    manifests=[
+        react_block,
+        express_block,
+        mongo_block,
+    ],
+)
+
+mern_terraform_managed_diagram = Diagram(
+    name="MERN Terraform Managed",
+    query=ManifestQuery(iac_tool=IaCToolType.terraform),
+)
+
+mern_operability_diagram = Diagram(
+    name="MERN Operability",
+    query=ManifestQuery(where={"info": {"logAggregation": LogAggregationType.elk_stack}}),
+)

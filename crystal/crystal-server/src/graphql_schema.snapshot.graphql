@@ -1,0 +1,291 @@
+"""
+Logical kind for a generated artifact persisted to storage.
+"""
+enum ArtifactKind {
+	"""
+	Generated instance/value output.
+	"""
+	value
+	"""
+	Generated schema or type-definition output.
+	"""
+	schema
+}
+
+type Block {
+	"""
+	Display name for the component (used as the block label).
+	"""
+	name: String
+	"""
+	Emoji or small icon string for the component.
+	"""
+	icon: String
+	"""
+	Repository or source URL (also used by `GithubCard`).
+	"""
+	sourceCodeUrl: String
+	"""
+	Short description of the component.
+	"""
+	description: String
+	"""
+	Semver-like version string (e.g. "1.2.3").
+	"""
+	version: String
+	"""
+	1-based line number of the manifest assignment in the source file.
+	"""
+	lineNumber: Int
+	"""
+	Service classification (e.g. `public_api`, `worker`, `database`).
+	"""
+	consumerType: String
+	"""
+	Primary programming language.
+	"""
+	language: String
+	"""
+	Web frameworks in use.
+	"""
+	frameworks: [String!]!
+	"""
+	Primary deployment target identifier.
+	"""
+	deployment: String
+	"""
+	Cloud provider extracted from the deployment tuple.
+	"""
+	deploymentProvider: String
+	"""
+	Team responsible for this service.
+	"""
+	ownerTeam: String
+	"""
+	Primary authentication mechanism.
+	"""
+	authType: String
+	"""
+	Arbitrary tags for categorization and filtering.
+	"""
+	tags: [String!]!
+	"""
+	Monitoring and metrics platform.
+	"""
+	monitoring: String
+	"""
+	Log aggregation and analysis platform.
+	"""
+	logAggregation: String
+	"""
+	Distributed tracing and APM platform.
+	"""
+	tracing: String
+	"""
+	Documentation URLs.
+	"""
+	docs: [String!]!
+	"""
+	Helpful external links with display name and URL.
+	"""
+	links: [Link!]!
+	"""
+	Returns the raw JSON as a string for debugging.
+	"""
+	rawJsonString: String!
+	"""
+	CI/CD pipeline platform (`github_actions`, `jenkins`, `circleci`, etc.).
+	"""
+	cicdTool: String
+	"""
+	Named connections to other components in the graph.
+	"""
+	connections: [String!]!
+	"""
+	Infrastructure as Code tooling (terraform, pulumi, cdk, etc.).
+	"""
+	iacTool: String
+	"""
+	Maximum number of service replicas.
+	"""
+	maxReplicas: Int
+	"""
+	Minimum number of service replicas.
+	"""
+	minReplicas: Int
+}
+
+type GeneratedManifestMutationRoot {
+	"""
+	Upsert a generated manifest artifact into storage.
+	"""
+	upsertGeneratedManifest(input: UpsertGeneratedManifestInput!): UpsertGeneratedManifestPayload!
+}
+
+"""
+Health check result exposed over GraphQL and HTTP.
+"""
+type HealthStatus {
+	"""
+	Overall service status.
+	"""
+	status: String!
+	"""
+	Whether the database query succeeded.
+	"""
+	databaseOk: Boolean!
+	"""
+	Details about the database health check result.
+	"""
+	databaseMessage: String!
+}
+
+"""
+External reference associated with a block (e.g., repo, docs, dashboard).
+"""
+type Link {
+	"""
+	Human-readable name for the link target.
+	"""
+	siteName: String
+	"""
+	URL of the target resource.
+	"""
+	httpUrl: String
+}
+
+type QueryRoot {
+	health: HealthStatus!
+	"""
+	Lists persisted Scryr maps available in the configured database.
+	"""
+	scryrMaps: [ScryrMap!]!
+	"""
+	Loads and returns blocks from generated manifest artifacts in the configured database.
+	Pass `scry_identifier` to load an exact Scryr map, or `sample` for legacy lookup.
+	"""
+	blocks(scryIdentifier: String, sample: String): [Block!]!
+}
+
+"""
+A persisted Scryr map artifact available in storage.
+"""
+type ScryrMap {
+	"""
+	Public map identifier used by the UI.
+	"""
+	id: String!
+	"""
+	Artifact key used by legacy sample-based lookups.
+	"""
+	key: String!
+	"""
+	Stable Scryr identifier, normally the top-level Diagram variable name.
+	"""
+	scryIdentifier: String!
+	"""
+	Human-readable map name from the declared Diagram.
+	"""
+	name: String!
+	"""
+	Clerk organization id that owns the uploaded manifest.
+	"""
+	clerkOrgId: String!
+	"""
+	Clerk organization slug cached from the uploader's active session.
+	"""
+	orgSlug: String
+	"""
+	Folder path containing the uploaded manifest file.
+	"""
+	folderPath: String!
+	"""
+	Uploaded manifest file name.
+	"""
+	fileName: String!
+	"""
+	Git commit SHA associated with the upload, when supplied.
+	"""
+	gitCommitSha: String
+	"""
+	Last update timestamp rendered by the database.
+	"""
+	updatedAt: String!
+}
+
+"""
+A UUID is a unique 128-bit number, stored as 16 octets. UUIDs are parsed as
+Strings within GraphQL. UUIDs are used to assign unique identifiers to
+entities without requiring a central allocating authority.
+
+# References
+
+* [Wikipedia: Universally Unique Identifier](http://en.wikipedia.org/wiki/Universally_unique_identifier)
+* [RFC4122: A Universally Unique Identifier (UUID) URN Namespace](http://tools.ietf.org/html/rfc4122)
+"""
+scalar UUID
+
+"""
+Input payload for upserting a generated manifest artifact.
+"""
+input UpsertGeneratedManifestInput {
+	"""
+	Logical artifact kind.
+	"""
+	artifactKind: ArtifactKind!
+	"""
+	Persisted manifest artifact key.
+	"""
+	artifactKey: String!
+	"""
+	Folder path containing the uploaded manifest file.
+	"""
+	folderPath: String
+	"""
+	Uploaded manifest file name.
+	"""
+	fileName: String
+	"""
+	Stable Scryr identifier, normally the top-level Diagram variable name.
+	"""
+	scryIdentifier: String
+	"""
+	Human-readable map name from the declared Diagram.
+	"""
+	name: String
+	"""
+	Git commit SHA associated with the upload, when supplied by the caller.
+	"""
+	gitCommitSha: String
+	"""
+	Full generated artifact content.
+	"""
+	content: String!
+}
+
+"""
+Payload returned after upserting a generated manifest artifact.
+"""
+type UpsertGeneratedManifestPayload {
+	"""
+	Persisted row identifier.
+	"""
+	id: UUID!
+}
+
+"""
+Directs the executor to include this field or fragment only when the `if` argument is true.
+"""
+directive @include(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
+"""
+Directs the executor to skip this field or fragment when the `if` argument is true.
+"""
+directive @skip(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
+"""
+Provides a scalar specification URL for specifying the behavior of custom scalar types.
+"""
+directive @specifiedBy(url: String!) on SCALAR
+schema {
+	query: QueryRoot
+	mutation: GeneratedManifestMutationRoot
+}

@@ -1,0 +1,1312 @@
+{
+  "files": [
+    {
+      "path": "index.scry",
+      "content": "\"\"\"Dokku PaaS platform manifest.\n\nDokku is a Docker-powered, self-hosted mini-Heroku PaaS that runs on a single\nLinux server. Developers push code via `git push` over SSH; Dokku auto-detects\nthe language via Heroku Buildpacks (or a Dockerfile / Nixpacks / Railpack),\nbuilds a container image, and routes HTTP(S) traffic through Nginx.\n\nArchitecture reference: https://dokku.com/docs/development/architecture/\nSource: https://github.com/dokku/dokku\n\"\"\"\n\nfrom scryr.manifest import Diagram, Link, Manifest\nfrom scryr.saas import Classification\nfrom scryr.types import (\n    AuthType,\n    CICDToolType,\n    DeploymentTarget,\n    IaCToolType,\n    LogAggregationType,\n    MonitoringType,\n    ProgrammingLanguage,\n    TracingType,\n    Url,\n    WebFramework,\n    parse_version,\n)\n\n_SOURCE = Url(\"https://github.com/dokku/dokku\")\n_DOCS = Url(\"https://dokku.com/docs/\")\n_DEPLOYMENT = DeploymentTarget.bare_metal\n_CICD = CICDToolType.github_actions\n_IAC = IaCToolType.none\n_MONITOR = MonitoringType.none\n_LOGS = LogAggregationType.none\n_TRACING = TracingType.none\ndokku_core_block = Manifest(\n    name=\"Dokku Core\",\n    icon=\"🚀\",\n    classification=Classification.cli,\n    tags=[\"paas\", \"cli\", \"core\"],\n    connections=[\"SSH Gateway\", \"Git Server\", \"Docker Scheduler\", \"Nginx Proxy\"],\n    description=\"Central PaaS engine (Go + Shell, v0.37.7). Provides the `dokku` CLI, the plugin trigger dispatcher, app lifecycle management (create / deploy / scale / destroy / run), environment config, and the admin HTTP API used by CI integrations and the Dokku Pro dashboard.\",\n    version=parse_version(\"0.37.7\"),\n    language=ProgrammingLanguage.go,\n    frameworks=[WebFramework.chi],\n    deployment=_DEPLOYMENT,\n    owner_team=\"Platform\",\n    auth_type=AuthType.api_key,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[\n        Link(site_name=\"Dokku Docs\", http_url=_DOCS),\n        Link(site_name=\"Source\", http_url=_SOURCE),\n    ],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nssh_gateway_block = Manifest(\n    name=\"SSH Gateway\",\n    icon=\"🔑\",\n    classification=Classification.network_gateway,\n    tags=[\"ssh\", \"auth\", \"access-control\"],\n    connections=[\"Git Server\"],\n    description=\"SSH server layer built on `sshcommand`. Authenticates incoming connections using stored public keys (`dokku ssh-keys:add`), then translates the git push command into a dokku deploy trigger — without granting shell access to the server.\",\n    version=parse_version(\"0.37.7\"),\n    language=ProgrammingLanguage.bash,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Platform\",\n    auth_type=AuthType.api_key,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[\n        Link(\n            site_name=\"User Mgmt Docs\",\n            http_url=Url(\"https://dokku.com/docs/deployment/user-management/\"),\n        )\n    ],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\ngit_server_block = Manifest(\n    name=\"Git Server\",\n    icon=\"📦\",\n    classification=Classification.internal_api,\n    tags=[\"git\", \"vcs\", \"deploy-trigger\"],\n    connections=[\"App Builder\"],\n    description=\"Bare git repository manager (Go plugin). Maintains one bare repo per app under `/var/lib/dokku/`. On `git push`, the post-receive hook fires and passes the source archive to the build pipeline.\",\n    version=parse_version(\"0.37.7\"),\n    language=ProgrammingLanguage.go,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Platform\",\n    auth_type=AuthType.api_key,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[\n        Link(\n            site_name=\"Git Deploy Docs\",\n            http_url=Url(\"https://dokku.com/docs/deployment/methods/git/\"),\n        )\n    ],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\napp_builder_block = Manifest(\n    name=\"App Builder\",\n    icon=\"🔨\",\n    classification=Classification.job_processor,\n    tags=[\"buildpack\", \"docker\", \"image-build\"],\n    connections=[\"Docker Scheduler\"],\n    description=\"Pluggable build subsystem. Default builder is Herokuish — auto-detects language via official Heroku Buildpacks and compiles a Docker image. Alternatives include Dockerfile, Cloud Native Buildpacks (pack), Nixpacks, and Railpack. Outputs a tagged Docker image pushed to the local daemon.\",\n    version=parse_version(\"0.37.7\"),\n    language=ProgrammingLanguage.go,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Platform\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[\n        Link(\n            site_name=\"Builders Docs\",\n            http_url=Url(\"https://dokku.com/docs/deployment/builders/builder-management/\"),\n        ),\n        Link(site_name=\"Herokuish\", http_url=Url(\"https://github.com/gliderlabs/herokuish\")),\n    ],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\ndocker_scheduler_block = Manifest(\n    name=\"Docker Scheduler\",\n    icon=\"🐳\",\n    classification=Classification.scheduler,\n    tags=[\"scheduler\", \"containers\", \"runtime\"],\n    connections=[\"Nginx Proxy\"],\n    description=\"Default container scheduler (`scheduler-docker-local`). Runs app processes defined in `Procfile` as Docker containers on the local daemon, enforces resource limits, performs zero-downtime deploy checks, and manages persistent storage mounts.\",\n    version=parse_version(\"0.37.7\"),\n    language=ProgrammingLanguage.go,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Platform\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[\n        Link(\n            site_name=\"Scheduler Docs\",\n            http_url=Url(\"https://dokku.com/docs/deployment/schedulers/docker-local/\"),\n        )\n    ],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\ncron_scheduler_block = Manifest(\n    name=\"Cron Scheduler\",\n    icon=\"⏰\",\n    classification=Classification.scheduler,\n    tags=[\"cron\", \"tasks\", \"scheduler\"],\n    connections=[\"Docker Scheduler\"],\n    description=\"Manages scheduled one-off tasks declared in `app.json` (cron section). Writes systemd crontab entries per app and fires `dokku run` containers on schedule, with full log capture.\",\n    version=parse_version(\"0.37.7\"),\n    language=ProgrammingLanguage.go,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Platform\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[\n        Link(\n            site_name=\"Cron Docs\",\n            http_url=Url(\"https://dokku.com/docs/processes/scheduled-cron-tasks/\"),\n        )\n    ],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nnginx_proxy_block = Manifest(\n    name=\"Nginx Proxy\",\n    icon=\"⚙️\",\n    classification=Classification.network_gateway,\n    tags=[\"proxy\", \"routing\", \"tls\"],\n    connections=[],\n    description=\"Default HTTP/HTTPS reverse proxy (`nginx-vhosts` plugin). Renders per-app nginx vhost configs on every deploy, routes `$APP.domain.tld` to the running container port, upgrades WebSocket connections, and terminates TLS. Caddy, Traefik, HAProxy, and OpenResty are plug-in alternatives.\",\n    version=parse_version(\"1.27.0\"),\n    language=ProgrammingLanguage.c,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Platform\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[\n        Link(\n            site_name=\"Proxy Docs\", http_url=Url(\"https://dokku.com/docs/networking/proxies/nginx/\")\n        )\n    ],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\ncerts_plugin_block = Manifest(\n    name=\"Certs Plugin\",\n    icon=\"🔒\",\n    classification=Classification.worker,\n    tags=[\"tls\", \"certs\", \"security\"],\n    connections=[\"Nginx Proxy\"],\n    description=\"TLS certificate manager. Stores and applies per-app or wildcard certs (`dokku certs:add`). Integrates with the community `dokku-letsencrypt` plugin for automatic ACME certificate issuance and renewal via the Nginx HTTP-01 challenge.\",\n    version=parse_version(\"0.37.7\"),\n    language=ProgrammingLanguage.go,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Platform\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[Link(site_name=\"SSL Docs\", http_url=Url(\"https://dokku.com/docs/configuration/ssl/\"))],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\nplugin_system_block = Manifest(\n    name=\"Plugin System\",\n    icon=\"🧩\",\n    classification=Classification.sdk,\n    tags=[\"plugins\", \"extensibility\", \"hooks\"],\n    connections=[\"Dokku Core\"],\n    description=\"Bash-based plugin trigger and lifecycle system. Installs community plugins from git URLs (`dokku plugin:install`), manages plugin updates, and dispatches named trigger hooks (50+ built-in triggers) to all registered plugins in priority order, enabling the full plugin ecosystem.\",\n    version=parse_version(\"0.37.7\"),\n    language=ProgrammingLanguage.bash,\n    deployment=_DEPLOYMENT,\n    owner_team=\"Platform\",\n    auth_type=AuthType.none,\n    monitoring=_MONITOR,\n    log_aggregation=_LOGS,\n    tracing=_TRACING,\n    iac_tool=_IAC,\n    max_replicas=1,\n    min_replicas=1,\n    links=[\n        Link(\n            site_name=\"Plugin Docs\",\n            http_url=Url(\"https://dokku.com/docs/advanced-usage/plugin-management/\"),\n        ),\n        Link(\n            site_name=\"Plugin Triggers\",\n            http_url=Url(\"https://dokku.com/docs/development/plugin-triggers/\"),\n        ),\n    ],\n    repo_url=_SOURCE,\n    cicd_tool=_CICD,\n)\n\ndokku_diagram = Diagram(\n    name=\"Dokku\",\n    manifests=[\n        dokku_core_block,\n        ssh_gateway_block,\n        git_server_block,\n        app_builder_block,\n        docker_scheduler_block,\n        cron_scheduler_block,\n        nginx_proxy_block,\n        certs_plugin_block,\n        plugin_system_block,\n    ],\n)\n"
+    }
+  ],
+  "manifests": [
+    {
+      "name": "App Builder",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "job_processor",
+      "connections": [
+        "Docker Scheduler"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/dokku/dokku",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🔨",
+      "info": {
+        "authType": "none",
+        "deployment": "bare_metal",
+        "description": "Pluggable build subsystem. Default builder is Herokuish — auto-detects language via official Heroku Buildpacks and compiles a Docker image. Alternatives include Dockerfile, Cloud Native Buildpacks (pack), Nixpacks, and Railpack. Outputs a tagged Docker image pushed to the local daemon.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "none",
+        "language": "go",
+        "links": [
+          {
+            "http_url": "https://dokku.com/docs/deployment/builders/builder-management/",
+            "site_name": "Builders Docs"
+          },
+          {
+            "http_url": "https://github.com/gliderlabs/herokuish",
+            "site_name": "Herokuish"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Platform",
+        "tracing": "none",
+        "version": "0.37.7"
+      },
+      "line_number": 116,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "buildpack",
+        "docker",
+        "image-build"
+      ],
+      "tests": null,
+      "variable_name": "app_builder_block"
+    },
+    {
+      "name": "Certs Plugin",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "worker",
+      "connections": [
+        "Nginx Proxy"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/dokku/dokku",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🔒",
+      "info": {
+        "authType": "none",
+        "deployment": "bare_metal",
+        "description": "TLS certificate manager. Stores and applies per-app or wildcard certs (`dokku certs:add`). Integrates with the community `dokku-letsencrypt` plugin for automatic ACME certificate issuance and renewal via the Nginx HTTP-01 challenge.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "none",
+        "language": "go",
+        "links": [
+          {
+            "http_url": "https://dokku.com/docs/configuration/ssl/",
+            "site_name": "SSL Docs"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Platform",
+        "tracing": "none",
+        "version": "0.37.7"
+      },
+      "line_number": 224,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "tls",
+        "certs",
+        "security"
+      ],
+      "tests": null,
+      "variable_name": "certs_plugin_block"
+    },
+    {
+      "name": "Cron Scheduler",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "scheduler",
+      "connections": [
+        "Docker Scheduler"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/dokku/dokku",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "⏰",
+      "info": {
+        "authType": "none",
+        "deployment": "bare_metal",
+        "description": "Manages scheduled one-off tasks declared in `app.json` (cron section). Writes systemd crontab entries per app and fires `dokku run` containers on schedule, with full log capture.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "none",
+        "language": "go",
+        "links": [
+          {
+            "http_url": "https://dokku.com/docs/processes/scheduled-cron-tasks/",
+            "site_name": "Cron Docs"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Platform",
+        "tracing": "none",
+        "version": "0.37.7"
+      },
+      "line_number": 171,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "cron",
+        "tasks",
+        "scheduler"
+      ],
+      "tests": null,
+      "variable_name": "cron_scheduler_block"
+    },
+    {
+      "name": "Docker Scheduler",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "scheduler",
+      "connections": [
+        "Nginx Proxy"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/dokku/dokku",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🐳",
+      "info": {
+        "authType": "none",
+        "deployment": "bare_metal",
+        "description": "Default container scheduler (`scheduler-docker-local`). Runs app processes defined in `Procfile` as Docker containers on the local daemon, enforces resource limits, performs zero-downtime deploy checks, and manages persistent storage mounts.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "none",
+        "language": "go",
+        "links": [
+          {
+            "http_url": "https://dokku.com/docs/deployment/schedulers/docker-local/",
+            "site_name": "Scheduler Docs"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Platform",
+        "tracing": "none",
+        "version": "0.37.7"
+      },
+      "line_number": 144,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "scheduler",
+        "containers",
+        "runtime"
+      ],
+      "tests": null,
+      "variable_name": "docker_scheduler_block"
+    },
+    {
+      "name": "Dokku Core",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "cli",
+      "connections": [
+        "SSH Gateway",
+        "Git Server",
+        "Docker Scheduler",
+        "Nginx Proxy"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/dokku/dokku",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🚀",
+      "info": {
+        "authType": "api_key",
+        "deployment": "bare_metal",
+        "description": "Central PaaS engine (Go + Shell, v0.37.7). Provides the `dokku` CLI, the plugin trigger dispatcher, app lifecycle management (create / deploy / scale / destroy / run), environment config, and the admin HTTP API used by CI integrations and the Dokku Pro dashboard.",
+        "docs": [],
+        "frameworks": [
+          "chi"
+        ],
+        "iacTool": "none",
+        "language": "go",
+        "links": [
+          {
+            "http_url": "https://dokku.com/docs/",
+            "site_name": "Dokku Docs"
+          },
+          {
+            "http_url": "https://github.com/dokku/dokku",
+            "site_name": "Source"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Platform",
+        "tracing": "none",
+        "version": "0.37.7"
+      },
+      "line_number": 36,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "paas",
+        "cli",
+        "core"
+      ],
+      "tests": null,
+      "variable_name": "dokku_core_block"
+    },
+    {
+      "name": "Git Server",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "internal_api",
+      "connections": [
+        "App Builder"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/dokku/dokku",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "📦",
+      "info": {
+        "authType": "api_key",
+        "deployment": "bare_metal",
+        "description": "Bare git repository manager (Go plugin). Maintains one bare repo per app under `/var/lib/dokku/`. On `git push`, the post-receive hook fires and passes the source archive to the build pipeline.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "none",
+        "language": "go",
+        "links": [
+          {
+            "http_url": "https://dokku.com/docs/deployment/methods/git/",
+            "site_name": "Git Deploy Docs"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Platform",
+        "tracing": "none",
+        "version": "0.37.7"
+      },
+      "line_number": 89,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "git",
+        "vcs",
+        "deploy-trigger"
+      ],
+      "tests": null,
+      "variable_name": "git_server_block"
+    },
+    {
+      "name": "Nginx Proxy",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "network_router",
+      "connections": [],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/dokku/dokku",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "⚙️",
+      "info": {
+        "authType": "none",
+        "deployment": "bare_metal",
+        "description": "Default HTTP/HTTPS reverse proxy (`nginx-vhosts` plugin). Renders per-app nginx vhost configs on every deploy, routes `$APP.domain.tld` to the running container port, upgrades WebSocket connections, and terminates TLS. Caddy, Traefik, HAProxy, and OpenResty are plug-in alternatives.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "none",
+        "language": "c",
+        "links": [
+          {
+            "http_url": "https://dokku.com/docs/networking/proxies/nginx/",
+            "site_name": "Proxy Docs"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Platform",
+        "tracing": "none",
+        "version": "1.27.0"
+      },
+      "line_number": 198,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "proxy",
+        "routing",
+        "tls"
+      ],
+      "tests": null,
+      "variable_name": "nginx_proxy_block"
+    },
+    {
+      "name": "Plugin System",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "sdk",
+      "connections": [
+        "Dokku Core"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/dokku/dokku",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🧩",
+      "info": {
+        "authType": "none",
+        "deployment": "bare_metal",
+        "description": "Bash-based plugin trigger and lifecycle system. Installs community plugins from git URLs (`dokku plugin:install`), manages plugin updates, and dispatches named trigger hooks (50+ built-in triggers) to all registered plugins in priority order, enabling the full plugin ecosystem.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "none",
+        "language": "bash",
+        "links": [
+          {
+            "http_url": "https://dokku.com/docs/advanced-usage/plugin-management/",
+            "site_name": "Plugin Docs"
+          },
+          {
+            "http_url": "https://dokku.com/docs/development/plugin-triggers/",
+            "site_name": "Plugin Triggers"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Platform",
+        "tracing": "none",
+        "version": "0.37.7"
+      },
+      "line_number": 246,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "plugins",
+        "extensibility",
+        "hooks"
+      ],
+      "tests": null,
+      "variable_name": "plugin_system_block"
+    },
+    {
+      "name": "SSH Gateway",
+      "cicd": {
+        "buildStatus": null,
+        "deployFrequency": null,
+        "deployStatusProd": null,
+        "deployStatusStaging": null,
+        "failedBuilds": null,
+        "lastBuild": null,
+        "pipelineDuration": null,
+        "platform": "github_actions"
+      },
+      "classification": "network_router",
+      "connections": [
+        "Git Server"
+      ],
+      "dependencies": null,
+      "forges": [],
+      "github": {
+        "activeContributors": null,
+        "buildStatus": null,
+        "coverage": null,
+        "enabled": null,
+        "forks": null,
+        "lastCommit": null,
+        "latestRelease": null,
+        "license": null,
+        "linesOfCode": null,
+        "openIssues": null,
+        "openPRs": null,
+        "outdatedDeps": null,
+        "primaryLanguage": null,
+        "repoUrl": "https://github.com/dokku/dokku",
+        "stars": null,
+        "vulnerabilities": null
+      },
+      "icon": "🔑",
+      "info": {
+        "authType": "api_key",
+        "deployment": "bare_metal",
+        "description": "SSH server layer built on `sshcommand`. Authenticates incoming connections using stored public keys (`dokku ssh-keys:add`), then translates the git push command into a dokku deploy trigger — without granting shell access to the server.",
+        "docs": [],
+        "frameworks": [],
+        "iacTool": "none",
+        "language": "bash",
+        "links": [
+          {
+            "http_url": "https://dokku.com/docs/deployment/user-management/",
+            "site_name": "User Mgmt Docs"
+          }
+        ],
+        "logAggregation": "none",
+        "maxReplicas": 1,
+        "minReplicas": 1,
+        "monitoring": "none",
+        "ownerTeam": "Platform",
+        "tracing": "none",
+        "version": "0.37.7"
+      },
+      "line_number": 62,
+      "metrics": null,
+      "otherDiagram": null,
+      "performance": null,
+      "tags": [
+        "ssh",
+        "auth",
+        "access-control"
+      ],
+      "tests": null,
+      "variable_name": "ssh_gateway_block"
+    }
+  ],
+  "forges": [],
+  "diagrams": [
+    {
+      "name": "Dokku",
+      "variable_name": "dokku_diagram",
+      "manifests": [
+        {
+          "name": "Dokku Core",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "cli",
+          "connections": [
+            "SSH Gateway",
+            "Git Server",
+            "Docker Scheduler",
+            "Nginx Proxy"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/dokku/dokku",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🚀",
+          "info": {
+            "authType": "api_key",
+            "deployment": "bare_metal",
+            "description": "Central PaaS engine (Go + Shell, v0.37.7). Provides the `dokku` CLI, the plugin trigger dispatcher, app lifecycle management (create / deploy / scale / destroy / run), environment config, and the admin HTTP API used by CI integrations and the Dokku Pro dashboard.",
+            "docs": [],
+            "frameworks": [
+              "chi"
+            ],
+            "iacTool": "none",
+            "language": "go",
+            "links": [
+              {
+                "http_url": "https://dokku.com/docs/",
+                "site_name": "Dokku Docs"
+              },
+              {
+                "http_url": "https://github.com/dokku/dokku",
+                "site_name": "Source"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Platform",
+            "tracing": "none",
+            "version": "0.37.7"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "paas",
+            "cli",
+            "core"
+          ],
+          "tests": null
+        },
+        {
+          "name": "SSH Gateway",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "network_router",
+          "connections": [
+            "Git Server"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/dokku/dokku",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🔑",
+          "info": {
+            "authType": "api_key",
+            "deployment": "bare_metal",
+            "description": "SSH server layer built on `sshcommand`. Authenticates incoming connections using stored public keys (`dokku ssh-keys:add`), then translates the git push command into a dokku deploy trigger — without granting shell access to the server.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "bash",
+            "links": [
+              {
+                "http_url": "https://dokku.com/docs/deployment/user-management/",
+                "site_name": "User Mgmt Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Platform",
+            "tracing": "none",
+            "version": "0.37.7"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "ssh",
+            "auth",
+            "access-control"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Git Server",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "internal_api",
+          "connections": [
+            "App Builder"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/dokku/dokku",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "📦",
+          "info": {
+            "authType": "api_key",
+            "deployment": "bare_metal",
+            "description": "Bare git repository manager (Go plugin). Maintains one bare repo per app under `/var/lib/dokku/`. On `git push`, the post-receive hook fires and passes the source archive to the build pipeline.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "go",
+            "links": [
+              {
+                "http_url": "https://dokku.com/docs/deployment/methods/git/",
+                "site_name": "Git Deploy Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Platform",
+            "tracing": "none",
+            "version": "0.37.7"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "git",
+            "vcs",
+            "deploy-trigger"
+          ],
+          "tests": null
+        },
+        {
+          "name": "App Builder",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "job_processor",
+          "connections": [
+            "Docker Scheduler"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/dokku/dokku",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🔨",
+          "info": {
+            "authType": "none",
+            "deployment": "bare_metal",
+            "description": "Pluggable build subsystem. Default builder is Herokuish — auto-detects language via official Heroku Buildpacks and compiles a Docker image. Alternatives include Dockerfile, Cloud Native Buildpacks (pack), Nixpacks, and Railpack. Outputs a tagged Docker image pushed to the local daemon.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "go",
+            "links": [
+              {
+                "http_url": "https://dokku.com/docs/deployment/builders/builder-management/",
+                "site_name": "Builders Docs"
+              },
+              {
+                "http_url": "https://github.com/gliderlabs/herokuish",
+                "site_name": "Herokuish"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Platform",
+            "tracing": "none",
+            "version": "0.37.7"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "buildpack",
+            "docker",
+            "image-build"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Docker Scheduler",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "scheduler",
+          "connections": [
+            "Nginx Proxy"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/dokku/dokku",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🐳",
+          "info": {
+            "authType": "none",
+            "deployment": "bare_metal",
+            "description": "Default container scheduler (`scheduler-docker-local`). Runs app processes defined in `Procfile` as Docker containers on the local daemon, enforces resource limits, performs zero-downtime deploy checks, and manages persistent storage mounts.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "go",
+            "links": [
+              {
+                "http_url": "https://dokku.com/docs/deployment/schedulers/docker-local/",
+                "site_name": "Scheduler Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Platform",
+            "tracing": "none",
+            "version": "0.37.7"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "scheduler",
+            "containers",
+            "runtime"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Cron Scheduler",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "scheduler",
+          "connections": [
+            "Docker Scheduler"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/dokku/dokku",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "⏰",
+          "info": {
+            "authType": "none",
+            "deployment": "bare_metal",
+            "description": "Manages scheduled one-off tasks declared in `app.json` (cron section). Writes systemd crontab entries per app and fires `dokku run` containers on schedule, with full log capture.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "go",
+            "links": [
+              {
+                "http_url": "https://dokku.com/docs/processes/scheduled-cron-tasks/",
+                "site_name": "Cron Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Platform",
+            "tracing": "none",
+            "version": "0.37.7"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "cron",
+            "tasks",
+            "scheduler"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Nginx Proxy",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "network_router",
+          "connections": [],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/dokku/dokku",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "⚙️",
+          "info": {
+            "authType": "none",
+            "deployment": "bare_metal",
+            "description": "Default HTTP/HTTPS reverse proxy (`nginx-vhosts` plugin). Renders per-app nginx vhost configs on every deploy, routes `$APP.domain.tld` to the running container port, upgrades WebSocket connections, and terminates TLS. Caddy, Traefik, HAProxy, and OpenResty are plug-in alternatives.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "c",
+            "links": [
+              {
+                "http_url": "https://dokku.com/docs/networking/proxies/nginx/",
+                "site_name": "Proxy Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Platform",
+            "tracing": "none",
+            "version": "1.27.0"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "proxy",
+            "routing",
+            "tls"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Certs Plugin",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "worker",
+          "connections": [
+            "Nginx Proxy"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/dokku/dokku",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🔒",
+          "info": {
+            "authType": "none",
+            "deployment": "bare_metal",
+            "description": "TLS certificate manager. Stores and applies per-app or wildcard certs (`dokku certs:add`). Integrates with the community `dokku-letsencrypt` plugin for automatic ACME certificate issuance and renewal via the Nginx HTTP-01 challenge.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "go",
+            "links": [
+              {
+                "http_url": "https://dokku.com/docs/configuration/ssl/",
+                "site_name": "SSL Docs"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Platform",
+            "tracing": "none",
+            "version": "0.37.7"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "tls",
+            "certs",
+            "security"
+          ],
+          "tests": null
+        },
+        {
+          "name": "Plugin System",
+          "cicd": {
+            "buildStatus": null,
+            "deployFrequency": null,
+            "deployStatusProd": null,
+            "deployStatusStaging": null,
+            "failedBuilds": null,
+            "lastBuild": null,
+            "pipelineDuration": null,
+            "platform": "github_actions"
+          },
+          "classification": "sdk",
+          "connections": [
+            "Dokku Core"
+          ],
+          "dependencies": null,
+          "forges": [],
+          "github": {
+            "activeContributors": null,
+            "buildStatus": null,
+            "coverage": null,
+            "enabled": null,
+            "forks": null,
+            "lastCommit": null,
+            "latestRelease": null,
+            "license": null,
+            "linesOfCode": null,
+            "openIssues": null,
+            "openPRs": null,
+            "outdatedDeps": null,
+            "primaryLanguage": null,
+            "repoUrl": "https://github.com/dokku/dokku",
+            "stars": null,
+            "vulnerabilities": null
+          },
+          "icon": "🧩",
+          "info": {
+            "authType": "none",
+            "deployment": "bare_metal",
+            "description": "Bash-based plugin trigger and lifecycle system. Installs community plugins from git URLs (`dokku plugin:install`), manages plugin updates, and dispatches named trigger hooks (50+ built-in triggers) to all registered plugins in priority order, enabling the full plugin ecosystem.",
+            "docs": [],
+            "frameworks": [],
+            "iacTool": "none",
+            "language": "bash",
+            "links": [
+              {
+                "http_url": "https://dokku.com/docs/advanced-usage/plugin-management/",
+                "site_name": "Plugin Docs"
+              },
+              {
+                "http_url": "https://dokku.com/docs/development/plugin-triggers/",
+                "site_name": "Plugin Triggers"
+              }
+            ],
+            "logAggregation": "none",
+            "maxReplicas": 1,
+            "minReplicas": 1,
+            "monitoring": "none",
+            "ownerTeam": "Platform",
+            "tracing": "none",
+            "version": "0.37.7"
+          },
+          "metrics": null,
+          "otherDiagram": null,
+          "performance": null,
+          "tags": [
+            "plugins",
+            "extensibility",
+            "hooks"
+          ],
+          "tests": null
+        }
+      ],
+      "description": "",
+      "line_number": 278,
+      "query": null
+    }
+  ]
+}
