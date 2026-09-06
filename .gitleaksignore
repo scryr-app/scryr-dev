@@ -1,0 +1,4 @@
+# Reviewed test fixture: unsigned alg=none JWT with synthetic user_123 payload.
+020cc5096412fb28adb3a90ba018c0c6bce3fc84:crystal/crystal-cli/src/auth/jwt.rs:jwt:51
+# Reviewed RFC 6455 example WebSocket nonce, not an API credential.
+020cc5096412fb28adb3a90ba018c0c6bce3fc84:crystal/crystal-server/src/server.rs:generic-api-key:231

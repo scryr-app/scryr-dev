@@ -1,21 +1,69 @@
 version: 2
+# Version PRs are weekly. Enable alerts and security updates separately in
+# repository settings; the version-update schedule does not delay alerts.
 updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      github-actions-minor-patch:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: [minor, patch]
 
   - package-ecosystem: npm
     directory: /map
     schedule:
       interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor-patch:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: [minor, patch]
+      npm-security:
+        applies-to: security-updates
+        patterns: ["*"]
 
   - package-ecosystem: cargo
     directory: /crystal
     schedule:
       interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      cargo-minor-patch:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: [minor, patch]
+      cargo-security:
+        applies-to: security-updates
+        patterns: ["*"]
 
-  - package-ecosystem: pip
+  # The uv workspace shares one lockfile. Regenerate the embedded SDK from
+  # manifest/scryr instead of treating the copied SDK as an independent package.
+  - package-ecosystem: uv
     directory: /manifest
     schedule:
       interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      uv-minor-patch:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: [minor, patch]
+      uv-security:
+        applies-to: security-updates
+        patterns: ["*"]
+
+  - package-ecosystem: docker
+    directory: /crystal
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5

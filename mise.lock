@@ -245,7 +245,11 @@ provenance = "github-attestations"
 [[tools.rust]]
 version = "1.96.0"
 backend = "core:rust"
-specifiers = ["latest"]
+specifiers = ["1.96.0"]
+
+[tools.rust.options]
+components = "clippy,rustfmt"
+profile = "minimal"
 
 [[tools.uv]]
 version = "0.11.12"

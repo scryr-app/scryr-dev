@@ -43,7 +43,7 @@ Project-specific checks are available when you want a narrower loop:
 ```bash
 mise run format:check:rust
 mise run lint:python
-mise run type-check:map
+mise run type-check:typescript
 ```
 
 Auto-fix what the tools can safely fix:
@@ -74,7 +74,7 @@ mise run test:unit:rust
 mise run test:integration:rust
 mise run test:unit:python
 mise run test:integration:python
-mise run test:unit:map
+mise run test:unit:ui
 ```
 
 ## Development And Deployment Modes
@@ -85,7 +85,7 @@ behavior, embedded release assets, or Fly deployment packaging.
 
 | Mode                           | Purpose                                                                                        | Services                                                                                      | Primary Commands                                                                          |
 | ------------------------------ | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Local no-cloud development     | Default contributor workflow for backend, frontend, SDK, and sample work.                      | Local Rust server, SQLite under `.cache/scryr`, local token auth, Vite dev server.            | `mise run setup:dev:local`, then `mise run run:server:local` and `mise run run:ui:local` |
+| Local no-cloud development     | Default contributor workflow for backend, frontend, SDK, and sample work.                      | Local Rust server, SQLite under `.cache/scryr`, shared local development identity, Vite dev server.            | `mise run setup:dev:local`, then `mise run run:server:local` and `mise run run:ui:local` |
 | Local cloud-backed development | Test Clerk auth and Turso from a local checkout.                                               | Local Rust server, configured Turso, Clerk auth, Vite dev server with Clerk enabled.          | `mise run dev:cloud`, then `mise run run:server:cloud` and `mise run run:ui:cloud`       |
 | Self-contained OSS CLI         | Build or install the release-style CLI with embedded map UI, sample artifacts, and Python SDK. | Single local `scryr` binary; runtime state is provisioned under Scryr-managed local state.    | `mise run build:oss`, `mise run install:oss`                                              |
 | Hosted cloud deployment        | Build Clerk-enabled embedded assets and deploy the server app.                                 | Fly app from `crystal/fly.toml`, Clerk auth, Turso storage.                                  | `mise run deploy:secrets`, `mise run deploy:cloud`                                        |
@@ -93,7 +93,7 @@ behavior, embedded release assets, or Fly deployment packaging.
 
 ## Local Development Without Cloud Services
 
-This is the default contributor workflow. It uses local SQLite, local auth, and
+This is the default contributor workflow. It uses local SQLite, a shared writable local identity, and
 no Clerk or cloud database credentials.
 
 Prepare the stack:
@@ -245,3 +245,18 @@ Regenerate it with:
 ```bash
 mise run codegen-graphql-requests
 ```
+
+## Pull requests and automation
+
+Open a pull request against `main`. CI checks all three projects, scans for secrets,
+and smoke-tests a release build on standard GitHub-hosted Ubuntu runners. No cloud
+credentials are needed. External contributors may need a maintainer to approve
+the first workflow run. Required checks and code-owner review protect `main`.
+
+Use `mise run test` for the complete suite. The CLI tests provision their own uv
+and Python environment and need network access on the first run. Dependency
+updates use the checked-in npm, Cargo, uv, and mise lockfiles. Regenerate the
+embedded Python SDK with `mise run sync:embedded-sdk` after SDK changes.
+
+See [repository maintenance](docs/maintenance.md) for security notices, free-tier
+CI settings, and release procedures.

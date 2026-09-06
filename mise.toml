@@ -1,7 +1,7 @@
 # Tool versions used by local development, CI-style checks, packaging, and
 # deployment tasks.
 [tools]
-rust = "latest"
+rust = { version = "1.96.0", profile = "minimal", components = ["rustfmt", "clippy"] }
 python = "3.14.6"
 uv = "latest"
 node = "26"
@@ -54,13 +54,13 @@ run = "cargo fetch --manifest-path crystal/Cargo.toml"
 description = "Install Python workspace dependencies"
 dir = "{{config_root}}"
 hide = true
-run = "cd manifest && uv sync"
+run = "cd manifest && uv sync --locked --all-packages"
 
 [tasks."typescript:install-dependencies"]
 description = "Install TypeScript frontend dependencies"
 dir = "{{config_root}}"
 hide = true
-run = "npm --prefix map install"
+run = "npm --prefix map ci"
 
 [tasks.setup]
 description = "Prepare the default no-cloud local development environment"
@@ -251,13 +251,13 @@ run = "cargo test --manifest-path crystal/Cargo.toml --workspace --lib --bins"
 description = "Run Python unit tests"
 dir = "{{config_root}}"
 hide = true
-run = "cd manifest && uv run pytest tests --ignore=tests/test_sample_mern_integration.py"
+run = "cd manifest && uv run --locked python -m pytest tests --ignore=tests/test_sample_mern_integration.py"
 
 [tasks."test:unit:ui"]
 description = "Run frontend unit tests"
 dir = "{{config_root}}"
 hide = true
-run = "npm --prefix map run test -- --passWithNoTests"
+run = "npm --prefix map run test"
 
 [tasks."test:integration"]
 description = "Run integration test suites"
@@ -274,7 +274,7 @@ run = "cargo test --manifest-path crystal/Cargo.toml -p crystal-cli --test cli"
 description = "Run Python sample integration tests"
 dir = "{{config_root}}"
 hide = true
-run = "cd manifest && uv run pytest tests/test_sample_mern_integration.py"
+run = "cd manifest && uv run --locked python -m pytest tests/test_sample_mern_integration.py"
 
 [tasks."test:rust"]
 description = "Run all Rust tests"
@@ -354,7 +354,7 @@ run = [
 description = "Build the release scryr binary"
 dir = "{{config_root}}"
 hide = true
-run = "cargo build --manifest-path crystal/Cargo.toml -p crystal-cli --release"
+run = "cargo build --manifest-path crystal/Cargo.toml --locked -p crystal-cli --release"
 
 # Run
 #
@@ -719,7 +719,7 @@ rm -rf crystal/crystal-server/static/samples
 mkdir -p crystal/crystal-server/static/samples
 for sample_path in manifest/samples/*/index.scry; do
   sample_name="$(basename "$(dirname "$sample_path")")"
-  cargo run --manifest-path crystal/Cargo.toml --quiet -p crystal-cli -- generate artifact-json \
+  cargo run --manifest-path crystal/Cargo.toml --locked --quiet -p crystal-cli -- generate artifact-json \
     --path "samples/${sample_name}/index.scry" \
     --manifest-dir manifest \
     --scryr-dir .cache/scryr \
