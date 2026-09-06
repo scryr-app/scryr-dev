@@ -7,7 +7,8 @@ a release branch is explicitly announced.
 
 ## Reporting a Vulnerability
 
-If you find a vulnerability, please open an issue and be sure to include:
+Report vulnerabilities through [private vulnerability reporting](https://github.com/scryr-app/scryr-dev/security/advisories/new).
+Do not post exploit details or credentials in public issues. Include:
 
 - Affected component: `manifest`, `crystal`, `map`, or deployment tooling.
 - A clear description of the issue and impact.
@@ -21,3 +22,16 @@ or mitigations before public disclosure when practical.
 
 Do not commit local `.env`, `mise.local.toml`, deployment secrets, Clerk secret
 keys, database URLs, OAuth tokens, or CLI auth state.
+
+## Local development mode
+
+`AUTH_MODE=local` grants all requests a shared writable development identity.
+Bind local development servers to loopback. Use authenticated mode for shared
+instances. `.scry` manifests are executable Python: run only trusted manifests.
+
+## Dependency alerts
+
+Dependabot alerts and security updates are enabled. Maintainers review new
+critical/high alerts promptly and other alerts weekly. Upstream advisories that
+have no compatible fix remain open and visible until resolved; do not dismiss
+them merely to make the dashboard green.

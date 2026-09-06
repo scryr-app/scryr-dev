@@ -1,0 +1,37 @@
+name: Python dependency graph
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - manifest/uv.lock
+      - .github/scripts/python-dependency-snapshot.py
+      - .github/workflows/dependency-graph.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: python-dependency-graph
+  cancel-in-progress: false
+
+jobs:
+  submit:
+    if: github.ref == 'refs/heads/main'
+    name: Submit locked Python dependencies
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Read lockfile without installing dependencies
+        run: python3 .github/scripts/python-dependency-snapshot.py > "$RUNNER_TEMP/dependencies.json"
+      - name: Submit dependency snapshot
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh api --method POST "repos/$GH_REPO/dependency-graph/snapshots" --input "$RUNNER_TEMP/dependencies.json"

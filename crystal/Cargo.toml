@@ -15,7 +15,9 @@ clerk-rs = { version = "0.4.2", features = ["actix"] }
 crystal-core = { version = "0.2.0", path = "crystal-core" }
 crystal-server = { version = "0.2.0", path = "crystal-server" }
 futures-util = "0.3"
-libsql = "0.10.0-pre.4"
+# Local SQLite is provided by sqlx. Enabling libsql's default embedded engine
+# links a second SQLite implementation and causes duplicate symbols on Linux.
+libsql = { version = "0.10.0-pre.4", default-features = false, features = ["remote", "tls"] }
 predicates = "3.1"
 rand = "0.9"
 reqwest = { version = "0.12", default-features = false, features = ["blocking", "json", "rustls-tls"] }

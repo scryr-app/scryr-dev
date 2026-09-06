@@ -1,0 +1,78 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate release tag
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require a versioned commit on main
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          git merge-base --is-ancestor HEAD origin/main
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          import tomllib
+          from pathlib import Path
+
+          tag = os.environ["RELEASE_TAG"]
+          assert re.fullmatch(r"v\d+\.\d+\.\d+", tag), "Use a vX.Y.Z release tag"
+          version = tag[1:]
+          manifests = list(Path("crystal").glob("*/Cargo.toml"))
+          manifests += list(Path("manifest").glob("*/pyproject.toml"))
+          manifests += [Path("manifest/pyproject.toml")]
+          for path in manifests:
+              data = tomllib.loads(path.read_text())
+              actual = data.get("package", data.get("project", {})).get("version")
+              assert actual == version, f"{path}: {actual} != {version}"
+          assert json.loads(Path("map/package.json").read_text())["version"] == version
+          PY
+
+  checks:
+    needs: validate
+    uses: ./.github/workflows/ci.yml
+    with:
+      package-release: true
+
+  draft:
+    name: Create draft release
+    needs: checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: scryr-release-linux-x86_64
+          path: release
+      - name: Verify and attach tested binary
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          cd release
+          sha256sum --check SHA256SUMS
+          gh release create "$RELEASE_TAG" \
+            scryr-linux-x86_64.tar.gz SHA256SUMS \
+            --verify-tag --draft --generate-notes \
+            --title "Scryr $RELEASE_TAG"

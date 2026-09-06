@@ -1,6 +1,12 @@
 name: CI
 
 on:
+  workflow_call:
+    inputs:
+      package-release:
+        type: boolean
+        default: false
+  workflow_dispatch:
   pull_request:
   push:
     branches:
@@ -9,19 +15,44 @@ on:
 permissions:
   contents: read
 
+env:
+  # Install tool subsets explicitly in each job, including nested mise tasks.
+  MISE_AUTO_INSTALL: "false"
+  CARGO_PROFILE_DEV_DEBUG: "0"
+  CARGO_PROFILE_TEST_DEBUG: "0"
+
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  manifest:
-    name: Python manifest
-    runs-on: ubuntu-latest
+  quality:
+    name: Workflow and secret checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v6
-      - uses: jdx/mise-action@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Validate workflows and scan history
+        run: bash .github/scripts/check-workflows.sh
+
+  manifest:
+    env:
+      UV_LOCKED: "true"
+    name: Python manifest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        with:
+          install_args: python uv
       - name: Install dependencies
-        run: mise run install:python
+        run: uv sync --project manifest --locked --all-packages
       - name: Format check
         run: mise run format:check:python
       - name: Lint
@@ -35,61 +66,101 @@ jobs:
 
   crystal:
     name: Rust server and CLI
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v6
-      - uses: jdx/mise-action@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        with:
+          install_args: rust python uv
+      - name: Select locked Rust toolchain
+        run: echo "RUSTUP_TOOLCHAIN=$(mise current rust)" >> "$GITHUB_ENV"
+      - name: Install Rust check components
+        run: rustup component add rustfmt clippy --toolchain "$(mise current rust)"
       - name: Install dependencies
-        run: mise run install:rust
+        run: cargo fetch --manifest-path crystal/Cargo.toml --locked
+      - name: Refresh embedded SDK from the workspace
+        run: mise run sync:embedded-sdk
       - name: Format check
         run: mise run format:check:rust
       - name: Lint
-        run: mise run lint:rust
+        run: cargo clippy --manifest-path crystal/Cargo.toml --locked --workspace --all-targets -- -D warnings
       - name: Type check
-        run: mise run type-check:rust
+        run: cargo check --manifest-path crystal/Cargo.toml --locked --workspace
       - name: Unit tests
-        run: mise run test:unit:rust
+        run: cargo test --manifest-path crystal/Cargo.toml --locked --workspace --lib --bins
       - name: Integration tests
-        run: mise run test:integration:rust
+        run: cargo test --manifest-path crystal/Cargo.toml --locked -p crystal-cli --test cli
 
   map:
     name: Frontend map
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v6
-      - uses: jdx/mise-action@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        with:
+          install_args: node
       - name: Install dependencies
-        run: mise run install:map
+        run: npm --prefix map ci
       - name: Format check
-        run: mise run format:check:map
+        run: mise run format:check:typescript
       - name: Lint
-        run: mise run lint:map
+        run: mise run lint:typescript
       - name: Type check
-        run: mise run type-check:map
+        run: mise run type-check:typescript
       - name: Unit tests
-        run: mise run test:unit:map
+        run: npm --prefix map test
       - name: Build
-        run: mise run build:map
+        run: mise run build:ui
 
   release-cli:
     name: Release CLI smoke
-    runs-on: ubuntu-latest
-    needs: [manifest, crystal, map]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    needs: [quality, manifest, crystal, map]
     steps:
-      - uses: actions/checkout@v6
-      - uses: jdx/mise-action@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        with:
+          install_args: rust python uv node
+      - name: Select locked Rust toolchain
+        run: echo "RUSTUP_TOOLCHAIN=$(mise current rust)" >> "$GITHUB_ENV"
+      - name: Install locked dependencies
+        run: |
+          cargo fetch --manifest-path crystal/Cargo.toml --locked
+          uv sync --project manifest --locked --all-packages
       - name: Build release CLI
         run: mise run build:oss
       - name: Smoke test release CLI
         run: |
-          set -euxo pipefail
+          set -euo pipefail
+          unset DATABASE_URL TURSO_DATABASE_URL TURSO_AUTH_TOKEN LIBSQL_AUTH_TOKEN CLERK_SECRET_KEY
+          export AUTH_MODE=local
+          export SCRYR_DIR="$RUNNER_TEMP/scryr-release"
 
           ./crystal/target/release/scryr --version
           ./crystal/target/release/scryr generate schema \
             --path samples/mern/index.scry \
             --manifest-dir manifest \
             --scryr-dir .cache/scryr-release > "$RUNNER_TEMP/schema.json"
-          test -s "$RUNNER_TEMP/schema.json"
+          python3 -m json.tool "$RUNNER_TEMP/schema.json" >/dev/null
+
+          # Exercise the embedded SDK outside the source workspace.
+          mkdir -p "$RUNNER_TEMP/standalone/sample"
+          cp ./crystal/target/release/scryr "$RUNNER_TEMP/standalone/scryr"
+          cp manifest/samples/mern/index.scry "$RUNNER_TEMP/standalone/sample/index.scry"
+          "$RUNNER_TEMP/standalone/scryr" generate schema \
+            --path index.scry \
+            --manifest-dir "$RUNNER_TEMP/standalone/sample" \
+            --scryr-dir "$RUNNER_TEMP/standalone/state" > "$RUNNER_TEMP/standalone-schema.json"
+          python3 -m json.tool "$RUNNER_TEMP/standalone-schema.json" >/dev/null
 
           SCRYR_SQLITE_PATH="$RUNNER_TEMP/scryr-release.db" \
             ./crystal/target/release/scryr serve \
@@ -107,6 +178,9 @@ jobs:
             http://127.0.0.1:18080/health
 
           curl --silent --show-error --fail \
+            http://127.0.0.1:18080/ready
+
+          curl --silent --show-error --fail \
             http://127.0.0.1:18080/ > "$RUNNER_TEMP/index.html"
           test -s "$RUNNER_TEMP/index.html"
 
@@ -120,4 +194,28 @@ jobs:
             -H "content-type: application/json" \
             --data '{"query":"query { scryrMaps { key name } }"}' \
             http://127.0.0.1:18080/graphql > "$RUNNER_TEMP/maps.json"
-          grep -F '"mern"' "$RUNNER_TEMP/maps.json"
+          python3 - "$RUNNER_TEMP/maps.json" <<'PYTHON'
+          import json
+          import sys
+          with open(sys.argv[1]) as stream:
+              response = json.load(stream)
+          assert not response.get("errors"), response
+          assert any(item["key"] == "mern" for item in response["data"]["scryrMaps"]), response
+          PYTHON
+      - name: Package tested Linux CLI
+        if: inputs.package-release == true
+        run: |
+          mkdir -p "$RUNNER_TEMP/release"
+          tar -czf "$RUNNER_TEMP/release/scryr-linux-x86_64.tar.gz" \
+            LICENSE THIRD_PARTY_NOTICES.md \
+            -C crystal/target/release scryr
+          cd "$RUNNER_TEMP/release"
+          sha256sum scryr-linux-x86_64.tar.gz > SHA256SUMS
+      - name: Upload release handoff
+        if: inputs.package-release == true
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: scryr-release-linux-x86_64
+          path: ${{ runner.temp }}/release/*
+          if-no-files-found: error
+          retention-days: 1
