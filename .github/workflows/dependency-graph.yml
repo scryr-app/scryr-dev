@@ -5,8 +5,9 @@ on:
     branches: [main]
     paths:
       - manifest/uv.lock
-      - .github/scripts/python-dependency-snapshot.py
       - .github/workflows/dependency-graph.yml
+      - mise.toml
+      - mise.lock
   workflow_dispatch:
 
 permissions:
@@ -28,10 +29,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Read lockfile without installing dependencies
-        run: python3 .github/scripts/python-dependency-snapshot.py > "$RUNNER_TEMP/dependencies.json"
-      - name: Submit dependency snapshot
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        with:
+          install_args: python
+      - run: mise run ci:dependencies
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-        run: gh api --method POST "repos/$GH_REPO/dependency-graph/snapshots" --input "$RUNNER_TEMP/dependencies.json"

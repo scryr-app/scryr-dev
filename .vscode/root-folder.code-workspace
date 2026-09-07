@@ -1,14 +1,8 @@
 {
-	"folders": [
-		{
-			"path": ".."
-		}
-	],
-	"settings": {
-		"files.associations": {
-			"*.scry": "python"
-		},
-		"workbench.colorTheme": "Bearded Theme Aquarelle Lilac",
-		"window.autoDetectColorScheme": false
-	}
+  "folders": [
+    {
+      "path": "..",
+      "name": "Scryr"
+    }
+  ]
 }

@@ -15,7 +15,6 @@ Install [mise](https://mise.jdx.dev/getting-started.html) and Git, then:
 git clone https://github.com/scryr-app/scryr-dev.git
 cd scryr-dev
 mise install rust python uv node
-export MISE_AUTO_INSTALL=false
 mise run install-dependencies
 mise run build:oss
 ./crystal/target/release/scryr serve
@@ -36,10 +35,10 @@ To generate an artifact from a bundled sample:
   --path samples/mern/index.scry --manifest-dir manifest
 ```
 
-Release automation produces Linux x86_64 archives with SHA-256 checksums as draft
-GitHub Releases. Maintainers review and publish them; see available builds on the
-[releases page](https://github.com/scryr-app/scryr-dev/releases). Source development
-is also supported on macOS. Other binary platforms are not yet release-tested.
+Release automation builds Linux and macOS archives for x86_64 and ARM64, with
+SHA-256 checksums, as draft GitHub Releases. Maintainers review and publish them;
+see available builds on the [releases page](https://github.com/scryr-app/scryr-dev/releases).
+The distribution workflow supports npm, Homebrew, and crates.io.
 
 ## Develop and contribute
 
@@ -48,6 +47,8 @@ is also supported on macOS. Other binary platforms are not yet release-tested.
 - `map`: React/Three.js frontend.
 
 ```bash
+mise run dev:oss # Rust reload + Vite HMR, local SQLite
+# mise run dev:cloud # local reload + remote Turso/Clerk
 mise run static
 mise run test
 ```

@@ -12,6 +12,7 @@ dockerfile = "Dockerfile"
 # CORS_ALLOWED_ORIGINS lists the exact frontend origins for the deployed map app.
 # The current production frontend origin is `https://scryr-map.vercel.app`.
 [env]
+AUTH_MODE = "clerk"
 HOST = "0.0.0.0"
 PORT = "8000"
 CORS_ALLOWED_ORIGINS = "https://scryr.app,https://scryr-map.vercel.app"

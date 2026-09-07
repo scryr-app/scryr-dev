@@ -722,3 +722,24 @@ fn scryr_project_requires_its_own_python_metadata() -> Result<(), Box<dyn Error>
     assert!(!log.contains("python install"), "{log}");
     Ok(())
 }
+
+/// Migration is a one-shot, repeatable command and does not require an HTTP server.
+#[test]
+fn migrate_creates_schema_and_is_repeatable() -> Result<(), Box<dyn Error>> {
+    let directory = tempfile::tempdir()?;
+    let database = directory.path().join("migrate.db");
+    for _ in 0..2 {
+        cli_command()?
+            .env_remove("DATABASE_URL")
+            .env_remove("TURSO_DATABASE_URL")
+            .env_remove("TURSO_AUTH_TOKEN")
+            .env_remove("LIBSQL_AUTH_TOKEN")
+            .env("SCRYR_SQLITE_PATH", &database)
+            .arg("migrate")
+            .assert()
+            .success()
+            .stdout(predicate::str::contains("Database schema is up to date"));
+    }
+    assert!(fs::metadata(database)?.len() > 0);
+    Ok(())
+}

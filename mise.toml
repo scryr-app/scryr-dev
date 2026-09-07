@@ -1,40 +1,85 @@
-# Tool versions used by local development, CI-style checks, packaging, and
-# deployment tasks.
+# Shared toolchain and task entrypoints for contributors and GitHub Actions.
+# Put cloud credentials in ignored mise.local.toml (see mise.local.toml.example).
 [tools]
 rust = { version = "1.96.0", profile = "minimal", components = ["rustfmt", "clippy"] }
 python = "3.14.6"
-uv = "latest"
-node = "26"
-"npm:quicktype" = "latest"
-"cargo:sqlx-cli" = { version = "latest", features = "sqlite,rustls", no-default-features = true }
-docker-cli = "29.4.3"
-flyctl = "latest"
-gh = "latest"
+uv = "0.11.12"
+node = "26.1.0"
+watchexec = "2.5.1"
 
 [settings]
 python.uv_venv_auto = "create|source"
 
-# Defaults for the no-cloud local stack. Cloud workflows validate their required
-# settings in the private check:cloud-env helper instead of relying on defaults.
 [env]
-HOST = "127.0.0.1"
-PORT = "8000"
-AUTH_MODE = "local"
-SCRYR_API_TOKEN = "windrunner"
-SCRYR_DIR = "{{config_root}}/.cache/scryr"
-SCRYR_SQLITE_PATH = "{{config_root}}/.cache/scryr/scryr.db"
-SCRYR_GRAPHQL_URL = "http://127.0.0.1:8000/graphql"
-VITE_GRAPHQL_ENDPOINT = "http://localhost:8000/graphql"
-VITE_DEBUG = "false"
-VITE_SCRYR_AUTH_MODE = "local"
 UV_CACHE_DIR = "{{config_root}}/.cache/uv"
 
-# Setup and dependency installation
-#
-# Public entrypoints:
-# - install-dependencies: fetch all Rust, Python, and TypeScript dependencies
-# - setup/dev: prepare the default local development stack
-# - dev:cloud: prepare a local stack backed by Clerk and Turso
+# All task implementations live here. Runtime defaults are scoped to the
+# contributor modes so they cannot leak into cloud deployment.
+
+# Contributor entrypoints
+
+[tasks."setup"]
+description = "Install contributor dependencies"
+run = "mise run install-dependencies"
+dir = "{{config_root}}"
+
+[tasks."dev:oss"]
+description = "Contribute with Rust restart, Vite HMR, local SQLite and local auth"
+depends = ["dev:server:oss", "dev:ui:oss"]
+dir = "{{config_root}}"
+
+[tasks."dev:cloud"]
+description = "Contribute with Rust restart, Vite HMR, Turso and Clerk"
+depends = ["dev:server:cloud", "dev:ui:cloud"]
+dir = "{{config_root}}"
+
+[tasks."dev:server:oss"]
+description = "Watch and restart the oss Rust server"
+run = "mise run dev:process oss watch"
+dir = "{{config_root}}"
+
+[tasks."dev:ui:oss"]
+description = "Run Vite HMR with oss configuration"
+run = "mise run dev:process oss ui"
+dir = "{{config_root}}"
+
+[tasks."run:server:local"]
+description = "Run the oss Rust server once"
+run = "mise run dev:process oss server"
+dir = "{{config_root}}"
+
+[tasks."debug:oss"]
+description = "Build Rust with symbols and prepare the VS Code environment"
+run = "mise run dev:process oss debug"
+dir = "{{config_root}}"
+
+[tasks."dev:server:cloud"]
+description = "Watch and restart the cloud Rust server"
+run = "mise run dev:process cloud watch"
+dir = "{{config_root}}"
+
+[tasks."dev:ui:cloud"]
+description = "Run Vite HMR with cloud configuration"
+run = "mise run dev:process cloud ui"
+dir = "{{config_root}}"
+
+[tasks."run:server:cloud"]
+description = "Run the cloud Rust server once"
+run = "mise run dev:process cloud server"
+dir = "{{config_root}}"
+
+[tasks."debug:cloud"]
+description = "Build Rust with symbols and prepare the VS Code environment"
+run = "mise run dev:process cloud debug"
+dir = "{{config_root}}"
+
+[tasks."dev:cloud:remote"]
+description = "Run Vite HMR against the deployed Fly API"
+run = "mise run dev:process cloud remote"
+dir = "{{config_root}}"
+
+# Dependency installation
+
 [tasks."install-dependencies"]
 description = "Install all local development dependencies"
 dir = "{{config_root}}"
@@ -48,7 +93,7 @@ run = [
 description = "Fetch Rust dependencies"
 dir = "{{config_root}}"
 hide = true
-run = "cargo fetch --manifest-path crystal/Cargo.toml"
+run = "cargo fetch --locked --manifest-path crystal/Cargo.toml"
 
 [tasks."python:install-dependencies"]
 description = "Install Python workspace dependencies"
@@ -62,48 +107,31 @@ dir = "{{config_root}}"
 hide = true
 run = "npm --prefix map ci"
 
-[tasks.setup]
-description = "Prepare the default no-cloud local development environment"
-alias = ["dev"]
-dir = "{{config_root}}"
-run = "mise run setup:dev:local"
+# Formatting, lint and types
 
-[tasks."setup:dev:local"]
-description = "Install dependencies and build the no-cloud local development stack"
-dir = "{{config_root}}"
-hide = true
-run = ["mise run install-dependencies", "mise run build"]
-
-[tasks."dev:cloud"]
-description = "Install dependencies and build the Clerk/cloud-backed local development stack"
-dir = "{{config_root}}"
-run = [
-  "mise run check:cloud-env",
-  "mise run install-dependencies",
-  "mise run build:cloud",
-]
-
-# Static analysis
-#
-# Public entrypoints:
-# - static: full formatting, lint, and type pass
-# - fix/lint:fix: apply formatters and auto-fixable lint fixes
-# - lint, format:check, type-check: aggregate check groups
-[tasks.static]
+[tasks."static"]
 description = "Run formatting checks, linters, and type checks"
 dir = "{{config_root}}"
-run = ["mise run format:check", "mise run lint", "mise run type-check"]
+run = [
+  "mise run format:check",
+  "mise run lint",
+  "mise run type-check",
+]
 
-[tasks.lint]
+[tasks."lint"]
 description = "Run all linters"
 dir = "{{config_root}}"
-run = ["mise run lint:rust", "mise run lint:python", "mise run lint:typescript"]
+run = [
+  "mise run lint:rust",
+  "mise run lint:python",
+  "mise run lint:typescript",
+]
 
 [tasks."lint:rust"]
 description = "Run Rust clippy across the workspace"
 dir = "{{config_root}}"
 hide = true
-run = "cargo clippy --manifest-path crystal/Cargo.toml --workspace -- -D warnings"
+run = "cargo clippy --manifest-path crystal/Cargo.toml --locked --workspace --all-targets -- -D warnings"
 
 [tasks."lint:python"]
 description = "Run Ruff against the Python SDK and sample manifests"
@@ -119,7 +147,6 @@ run = "npm --prefix map run lint"
 
 [tasks."lint:fix"]
 description = "Fix auto-fixable Python and TypeScript lint issues"
-alias = ["lint-fix"]
 dir = "{{config_root}}"
 run = ["mise run lint:fix:python", "mise run lint:fix:typescript"]
 
@@ -135,7 +162,7 @@ dir = "{{config_root}}"
 hide = true
 run = "cd map && npm exec biome -- check --write --unsafe ."
 
-[tasks.format]
+[tasks."format"]
 description = "Format Rust, Python, and TypeScript code"
 dir = "{{config_root}}"
 run = [
@@ -164,7 +191,6 @@ run = "cd map && npm exec biome -- format --write ."
 
 [tasks."format:check"]
 description = "Check Rust, Python, and TypeScript formatting"
-alias = ["format-check"]
 dir = "{{config_root}}"
 run = [
   "mise run format:check:rust",
@@ -203,7 +229,7 @@ run = [
 description = "Run Rust compile checks"
 dir = "{{config_root}}"
 hide = true
-run = "cargo check --manifest-path crystal/Cargo.toml --workspace"
+run = "cargo check --locked --manifest-path crystal/Cargo.toml --workspace"
 
 [tasks."type-check:python"]
 description = "Run Python static type checks"
@@ -217,17 +243,14 @@ dir = "{{config_root}}"
 hide = true
 run = "cd map && npm exec tsc -- --noEmit"
 
-[tasks.fix]
+[tasks."fix"]
 description = "Apply formatting and auto-fixable lint fixes"
 dir = "{{config_root}}"
 run = ["mise run format", "mise run lint:fix"]
 
 # Tests
-#
-# Public entrypoints:
-# - test: all unit and integration suites
-# - test:unit/test:integration: suite groups
-[tasks.test]
+
+[tasks."test"]
 description = "Run unit tests first, then integration tests"
 dir = "{{config_root}}"
 run = ["mise run test:unit", "mise run test:integration"]
@@ -245,7 +268,7 @@ run = [
 description = "Run Rust unit tests"
 dir = "{{config_root}}"
 hide = true
-run = "cargo test --manifest-path crystal/Cargo.toml --workspace --lib --bins"
+run = "cargo test --locked --manifest-path crystal/Cargo.toml --workspace --lib --bins"
 
 [tasks."test:unit:python"]
 description = "Run Python unit tests"
@@ -268,7 +291,7 @@ run = ["mise run test:integration:rust", "mise run test:integration:python"]
 description = "Run Rust integration tests"
 dir = "{{config_root}}"
 hide = true
-run = "cargo test --manifest-path crystal/Cargo.toml -p crystal-cli --test cli"
+run = "cargo test --locked --manifest-path crystal/Cargo.toml -p crystal-cli --test cli"
 
 [tasks."test:integration:python"]
 description = "Run Python sample integration tests"
@@ -294,22 +317,22 @@ dir = "{{config_root}}"
 hide = true
 run = "mise run test:unit:ui"
 
-# Build
-#
-# Public entrypoints:
-# - build: local development build
-# - build:oss/install:oss: self-contained CLI packaging
-# - build:docker: server image packaging
-[tasks.build]
+# Build and embedded assets
+
+[tasks."build"]
 description = "Build Rust, Python, and frontend artifacts for local development"
 dir = "{{config_root}}"
-run = ["mise run build:rust", "mise run build:python", "mise run build:ui"]
+run = [
+  "mise run build:ui",
+  "mise run build:python",
+  "mise run build:rust",
+]
 
 [tasks."build:rust"]
 description = "Build the Rust workspace"
 dir = "{{config_root}}"
 hide = true
-run = "cargo build --manifest-path crystal/Cargo.toml --workspace"
+run = "cargo build --locked --manifest-path crystal/Cargo.toml --workspace"
 
 [tasks."build:python"]
 description = "Build the Python SDK distribution"
@@ -323,27 +346,11 @@ dir = "{{config_root}}"
 hide = true
 run = "npm --prefix map run build"
 
-[tasks."build:cloud"]
-description = "Build the embedded app with Clerk/cloud frontend settings"
-dir = "{{config_root}}"
-hide = true
-run = [
-  "mise run check:cloud-env",
-  "mise run sync:embedded-sdk",
-  "mise run embed:ui:cloud",
-  "mise run embed:samples",
-  "mise run build:rust:release",
-]
-
-[tasks."build:docker"]
-description = "Build the Fly/server Docker image from the Crystal context"
-dir = "{{config_root}}"
-run = "docker build -f crystal/Dockerfile -t scryr-server crystal"
-
 [tasks."build:oss"]
 description = "Build the self-contained open-source scryr CLI with embedded SDK, UI, and sample artifacts"
 dir = "{{config_root}}"
 run = [
+  "mise run python:install-dependencies",
   "mise run sync:embedded-sdk",
   "mise run embed:ui:local",
   "mise run embed:samples",
@@ -356,75 +363,17 @@ dir = "{{config_root}}"
 hide = true
 run = "cargo build --manifest-path crystal/Cargo.toml --locked -p crystal-cli --release"
 
-# Run
-#
-# Public entrypoints:
-# - run/run:local: start the default local server and UI together
-# - run:cloud: start the cloud-backed server and UI together
-# - run:server:* and run:ui:*: start one side of either stack
-# - run:cli:samples: seed local sample data through the CLI
-[tasks.run]
-description = "Run the no-cloud local development stack"
-alias = ["run:local"]
-dir = "{{config_root}}"
-depends = ["run:server:local", "run:ui:local"]
-
-[tasks."run:server:local"]
-description = "Run the GraphQL server with SQLite and local auth"
-dir = "{{config_root}}"
-run = '''
-set -eu
-mkdir -p .cache/scryr
-unset DATABASE_URL
-unset TURSO_DATABASE_URL
-unset TURSO_AUTH_TOKEN
-unset LIBSQL_AUTH_TOKEN
-AUTH_MODE=local cargo run --manifest-path crystal/Cargo.toml -p crystal-cli -- serve \
-  --host "${HOST:-127.0.0.1}" \
-  --port "${PORT:-8000}"
-'''
-
-[tasks."run:ui:local"]
-description = "Run the UI frontend against the local no-cloud server"
-dir = "{{config_root}}"
-run = '''
-set -eu
-VITE_GRAPHQL_ENDPOINT="${VITE_GRAPHQL_ENDPOINT:-http://localhost:8000/graphql}" \
-VITE_SCRYR_AUTH_MODE=local \
-npm --prefix map run dev
-'''
-
-[tasks."run:cloud"]
-description = "Run the local development stack against cloud services"
-dir = "{{config_root}}"
-depends = ["run:server:cloud", "run:ui:cloud"]
-
-[tasks."run:server:cloud"]
-description = "Run the GraphQL server locally with Clerk and cloud database settings"
-dir = "{{config_root}}"
-run = '''
-set -eu
-mise run check:cloud-env
-AUTH_MODE=clerk cargo run --manifest-path crystal/Cargo.toml -p crystal-cli -- serve \
-  --host "${HOST:-127.0.0.1}" \
-  --port "${PORT:-8000}"
-'''
-
-[tasks."run:ui:cloud"]
-description = "Run the UI frontend locally with Clerk enabled"
-dir = "{{config_root}}"
-run = '''
-set -eu
-mise run check:cloud-env
-VITE_SCRYR_AUTH_MODE=clerk npm --prefix map run dev
-'''
+# Local utilities
 
 [tasks."run:cli:samples"]
 description = "Upload every sample manifest to the local GraphQL API and SQLite database"
 dir = "{{config_root}}"
 run = '''
+#!/usr/bin/env bash
 set -eu
-port="${PORT:-8000}"
+export SCRYR_GRAPHQL_URL="http://127.0.0.1:8000/graphql"
+export SCRYR_API_TOKEN=windrunner
+port=8000
 health_url="http://127.0.0.1:${port}/health"
 server_log="${TMPDIR:-/tmp}/scryr-sample-upload-server-${port}.log"
 
@@ -448,23 +397,18 @@ fi
 
 for sample in manifest/samples/*/index.scry; do
   sample_name="$(basename "$(dirname "$sample")")"
-  cargo run --manifest-path crystal/Cargo.toml -p crystal-cli -- generate upload \
+  cargo run --locked --manifest-path crystal/Cargo.toml -p crystal-cli -- generate upload \
     --path "samples/${sample_name}/index.scry" \
     --manifest-dir manifest \
     --scryr-dir "${SCRYR_DIR:-.cache/scryr}"
 done
 '''
 
-# Code generation
-#
-# Public entrypoints:
-# - codegen-graphql-requests: generate frontend GraphQL types, starting a local
-#   server when needed
-# - codegen:manifest-types: generate Scryr manifest field metadata
 [tasks."codegen-graphql-requests"]
 description = "Generate frontend GraphQL types from the local server"
 dir = "{{config_root}}"
 run = '''
+#!/usr/bin/env bash
 set -eu
 token="${SCRYR_API_TOKEN:-windrunner}"
 
@@ -502,14 +446,13 @@ run = "npm --prefix map run codegen"
 [tasks."codegen:manifest-types"]
 description = "Generate manifest field type metadata via the Scryr CLI"
 dir = "{{config_root}}"
-run = "cargo run --manifest-path crystal/Cargo.toml -p crystal-cli -- generate types --path samples/open_saas/index.scry --manifest-dir manifest --scryr-dir .cache/scryr"
+run = "cargo run --locked --manifest-path crystal/Cargo.toml -p crystal-cli -- generate types --path samples/open_saas/index.scry --manifest-dir manifest --scryr-dir .cache/scryr"
 
-# Self-contained CLI install
 [tasks."install:oss"]
 description = "Build and install the self-contained scryr CLI on PATH"
-alias = ["scryr-cli:setup"]
 dir = "{{config_root}}"
 run = '''
+#!/usr/bin/env bash
 set -eu
 
 mise run build:oss
@@ -567,98 +510,21 @@ echo "Installed $( "$install_dir/scryr" --version ) at $install_dir/scryr"
 echo "Restart your shell or run: export PATH=\"$install_dir:\$PATH\""
 '''
 
-# Deployment
-#
-# Public entrypoints:
-# - deploy:secrets: push Clerk/Turso secrets to Fly
-# - deploy:cloud: build cloud assets and deploy the Fly app
-[tasks."deploy:cloud"]
-description = "Build Clerk-enabled assets and deploy the Fly GraphQL/server app"
-dir = "{{config_root}}"
-run = '''
-set -eu
-
-mise run build:cloud
-
-if [ -n "${CLERK_SECRET_KEY:-}" ]; then
-  flyctl secrets set CLERK_SECRET_KEY="$CLERK_SECRET_KEY" --config crystal/fly.toml
-fi
-
-if [ -n "${TURSO_DATABASE_URL:-}" ]; then
-  flyctl secrets set TURSO_DATABASE_URL="$TURSO_DATABASE_URL" --config crystal/fly.toml
-fi
-
-if [ -n "${TURSO_AUTH_TOKEN:-}" ]; then
-  flyctl secrets set TURSO_AUTH_TOKEN="$TURSO_AUTH_TOKEN" --config crystal/fly.toml
-fi
-
-flyctl deploy --config crystal/fly.toml
-'''
-
-[tasks."deploy:secrets"]
-description = "Push Clerk and Turso secrets to the Fly app"
-dir = "{{config_root}}"
-run = '''
-set -eu
-: "${CLERK_SECRET_KEY:?Set CLERK_SECRET_KEY before running deploy:secrets}"
-: "${TURSO_DATABASE_URL:?Set TURSO_DATABASE_URL before running deploy:secrets}"
-: "${TURSO_AUTH_TOKEN:?Set TURSO_AUTH_TOKEN before running deploy:secrets}"
-flyctl secrets set CLERK_SECRET_KEY="$CLERK_SECRET_KEY" --config crystal/fly.toml
-flyctl secrets set TURSO_DATABASE_URL="$TURSO_DATABASE_URL" --config crystal/fly.toml
-flyctl secrets set TURSO_AUTH_TOKEN="$TURSO_AUTH_TOKEN" --config crystal/fly.toml
-'''
-
-# Utility aliases
-[tasks.crystal]
-description = "Build or prepare the Rust workspace"
-dir = "{{config_root}}"
-hide = true
-run = "mise run build:rust"
-
-[tasks.manifest]
-description = "Build or prepare the Python SDK"
-dir = "{{config_root}}"
-hide = true
-run = "mise run build:python"
-
-[tasks.ui]
-description = "Build or prepare the UI"
-dir = "{{config_root}}"
-hide = true
-run = "mise run build:ui"
-
 [tasks."pre-commit"]
 description = "Run fixers, static analysis, unit tests, and integration tests"
 dir = "{{config_root}}"
-run = ["mise run fix", "mise run static", "mise run test"]
-
-# Private orchestration helpers
-[tasks."check:cloud-env"]
-description = "Validate local cloud-service development environment variables"
-dir = "{{config_root}}"
-hide = true
-run = '''
-set -eu
-missing=""
-for name in TURSO_DATABASE_URL TURSO_AUTH_TOKEN CLERK_SECRET_KEY VITE_CLERK_PUBLISHABLE_KEY; do
-  eval "value=\${$name:-}"
-  if [ -z "$value" ]; then
-    missing="$missing $name"
-  fi
-done
-
-if [ -n "$missing" ]; then
-  echo "Missing required cloud development environment variables:$missing" >&2
-  echo "Set them in your shell or in untracked mise.local.toml." >&2
-  exit 1
-fi
-'''
+run = [
+  "mise run fix",
+  "mise run static",
+  "mise run test",
+]
 
 [tasks."sync:embedded-sdk"]
 description = "Refresh the crate-local Python SDK copy embedded in crystal-cli packages"
 dir = "{{config_root}}"
 hide = true
 run = '''
+#!/usr/bin/env bash
 set -eu
 
 rm -rf crystal/crystal-cli/static/scryr-sdk
@@ -675,31 +541,11 @@ description = "Build and copy the local-auth UI into Rust embedded assets"
 dir = "{{config_root}}"
 hide = true
 run = '''
+#!/usr/bin/env bash
 set -eu
 
 npm --prefix map ci
-VITE_GRAPHQL_ENDPOINT=/graphql VITE_SCRYR_AUTH_MODE=local npm --prefix map run build
-
-rm -rf crystal/crystal-server/static/map
-mkdir -p crystal/crystal-server/static/map
-cp -R map/dist/. crystal/crystal-server/static/map/
-find crystal/crystal-server/static/map -name .DS_Store -delete
-test -f crystal/crystal-server/static/map/index.html
-'''
-
-[tasks."embed:ui:cloud"]
-description = "Build and copy the Clerk-enabled UI into Rust embedded assets"
-dir = "{{config_root}}"
-hide = true
-run = '''
-set -eu
-: "${VITE_CLERK_PUBLISHABLE_KEY:?Set VITE_CLERK_PUBLISHABLE_KEY before building cloud assets}"
-
-npm --prefix map ci
-VITE_GRAPHQL_ENDPOINT="${VITE_GRAPHQL_ENDPOINT:-/graphql}" \
-VITE_SCRYR_AUTH_MODE=clerk \
-VITE_CLERK_PUBLISHABLE_KEY="$VITE_CLERK_PUBLISHABLE_KEY" \
-npm --prefix map run build
+VITE_DEBUG=false VITE_GRAPHQL_ENDPOINT=/graphql VITE_SCRYR_AUTH_MODE=local npm --prefix map run build
 
 rm -rf crystal/crystal-server/static/map
 mkdir -p crystal/crystal-server/static/map
@@ -713,7 +559,9 @@ description = "Generate bundled sample artifacts for the embedded server"
 dir = "{{config_root}}"
 hide = true
 run = '''
+#!/usr/bin/env bash
 set -eu
+unset SCRYR_SPRITE SCRYR_SPRITE_ORG SCRYR_SPRITE_BIN
 
 rm -rf crystal/crystal-server/static/samples
 mkdir -p crystal/crystal-server/static/samples
@@ -727,4 +575,1275 @@ for sample_path in manifest/samples/*/index.scry; do
 done
 
 test -f crystal/crystal-server/static/samples/mern.json
+'''
+
+# Cloud builds and deployment
+
+[tasks."build:docker"]
+description = "Build the prepared OSS server image"
+run = ["mise run build:oss", "mise run cloud:process docker"]
+tools = { "docker-cli" = "29.4.3" }
+dir = "{{config_root}}"
+
+[tasks."build:cloud"]
+description = "Build the Clerk UI for Vercel and prepare the Fly CLI"
+run = [
+  "mise run python:install-dependencies",
+  "mise run sync:embedded-sdk",
+  "mise run embed:ui:cloud",
+  "mise run embed:samples",
+  "mise run build:rust:release",
+  "mise run build:ui:cloud",
+]
+dir = "{{config_root}}"
+
+[tasks."build:ui:cloud"]
+description = "Build Vite for the deployed Fly API"
+run = "mise run cloud:process ui"
+dir = "{{config_root}}"
+
+[tasks."deploy:cloud"]
+description = "Migrate Turso, deploy Fly, then deploy Vercel"
+run = "mise run cloud:process deploy"
+tools = { "flyctl" = "0.4.95", "npm:vercel" = "59.11.7" }
+dir = "{{config_root}}"
+
+[tasks."deploy:turso"]
+description = "Apply the Rust schema migrations to the configured Turso database"
+run = "mise run cloud:process turso"
+dir = "{{config_root}}"
+
+[tasks."deploy:fly"]
+description = "Deploy the prepared CLI image to Fly"
+run = "mise run cloud:process fly"
+tools = { "flyctl" = "0.4.95" }
+dir = "{{config_root}}"
+
+[tasks."deploy:vercel"]
+description = "Deploy the frontend to Vercel production"
+run = "mise run cloud:process vercel"
+tools = { "npm:vercel" = "59.11.7" }
+dir = "{{config_root}}"
+
+[tasks."deploy:secrets"]
+description = "Stage Clerk and Turso secrets for the next Fly deployment"
+run = "mise run cloud:process secrets"
+tools = { "flyctl" = "0.4.95" }
+dir = "{{config_root}}"
+
+# GitHub Actions entrypoints
+
+[tasks."ci:quality"]
+description = "Validate workflow structure and scan Git history"
+run = [
+  "mise run check:automation",
+  "mise run test:automation",
+  "actionlint",
+  "gitleaks git --redact --no-banner --log-opts=--all .",
+]
+tools = { "actionlint" = "1.7.12", "gitleaks" = "8.30.1" }
+dir = "{{config_root}}"
+
+[tasks."ci:python"]
+description = "Run all python CI checks"
+run = [
+  "mise run python:install-dependencies",
+  "mise run format:check:python",
+  "mise run lint:python",
+  "mise run type-check:python",
+  "mise run test:python",
+]
+dir = "{{config_root}}"
+
+[tasks."ci:rust"]
+description = "Run all rust CI checks"
+run = [
+  "mise run rust:install-dependencies",
+  "mise run sync:embedded-sdk",
+  "mise run format:check:rust",
+  "mise run lint:rust",
+  "mise run type-check:rust",
+  "mise run test:rust",
+]
+dir = "{{config_root}}"
+
+[tasks."ci:ui"]
+description = "Run all ui CI checks"
+run = [
+  "mise run typescript:install-dependencies",
+  "mise run format:check:typescript",
+  "mise run lint:typescript",
+  "mise run type-check:typescript",
+  "mise run test:ui",
+  "mise run build:ui",
+]
+dir = "{{config_root}}"
+
+[tasks."ci:release"]
+description = "Build and smoke-test the standalone CLI"
+run = ["mise run build:oss", "mise run release:smoke"]
+dir = "{{config_root}}"
+
+[tasks."ci:dependencies"]
+description = "Submit the locked Python dependency graph"
+run = '''
+python - <<'PYTHON'
+"""Describe every third-party package in uv.lock for GitHub's dependency graph.
+
+No dependency code is installed or executed. Include all locked platforms and
+both development and runtime packages so transitive vulnerabilities are visible.
+"""
+
+import datetime
+import json
+import os
+import subprocess
+import tomllib
+from pathlib import Path
+from urllib.parse import quote
+
+lock = tomllib.loads(Path("manifest/uv.lock").read_text())
+resolved = {}
+for package in lock["package"]:
+    if "registry" not in package["source"]:
+        continue  # Workspace members are first-party code, not PyPI packages.
+    name = package["name"].lower().replace("_", "-")
+    purl = f"pkg:pypi/{quote(name, safe='-')}@{quote(package['version'], safe='')}"
+    resolved[purl] = {"package_url": purl}
+
+snapshot = {
+    "version": 0,
+    "sha": os.environ["GITHUB_SHA"],
+    "ref": os.environ["GITHUB_REF"],
+    "job": {"id": os.environ["GITHUB_RUN_ID"], "correlator": "scryr-uv-lock"},
+    "detector": {
+        "name": "scryr-uv-lock",
+        "version": "1.0.0",
+        "url": "https://github.com/scryr-app/scryr-dev",
+    },
+    "scanned": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+    "manifests": {
+        "manifest/uv.lock": {
+            "name": "manifest/uv.lock",
+            "file": {"source_location": "manifest/uv.lock"},
+            "resolved": resolved,
+        },
+    },
+}
+
+subprocess.run(
+    [
+        "gh", "api", "--method", "POST",
+        f"repos/{os.environ['GH_REPO']}/dependency-graph/snapshots",
+        "--input", "-",
+    ],
+    input=json.dumps(snapshot),
+    text=True,
+    check=True,
+)
+PYTHON
+'''
+tools = { "gh" = "2.92.0" }
+dir = "{{config_root}}"
+
+# Releases and distribution
+
+[tasks."release:validate"]
+description = "Validate the release tag, main ancestry and versions"
+run = "mise run release:process validate"
+dir = "{{config_root}}"
+
+[tasks."release:smoke"]
+description = "Exercise the standalone binary outside the checkout"
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+export RUNNER_TEMP="$(mktemp -d)"
+trap 'rm -rf "$RUNNER_TEMP"' EXIT
+unset SCRYR_SPRITE SCRYR_SPRITE_ORG SCRYR_SPRITE_BIN
+unset DATABASE_URL TURSO_DATABASE_URL TURSO_AUTH_TOKEN LIBSQL_AUTH_TOKEN CLERK_SECRET_KEY
+export AUTH_MODE=local
+export SCRYR_API_TOKEN=windrunner
+export SCRYR_DIR="$RUNNER_TEMP/scryr-release"
+
+./crystal/target/release/scryr --version
+./crystal/target/release/scryr generate schema \
+  --path samples/mern/index.scry \
+  --manifest-dir manifest \
+  --scryr-dir .cache/scryr-release > "$RUNNER_TEMP/schema.json"
+python3 -m json.tool "$RUNNER_TEMP/schema.json" >/dev/null
+
+# Exercise the embedded SDK outside the source workspace.
+mkdir -p "$RUNNER_TEMP/standalone/sample"
+cp ./crystal/target/release/scryr "$RUNNER_TEMP/standalone/scryr"
+cp manifest/samples/mern/index.scry "$RUNNER_TEMP/standalone/sample/index.scry"
+(cd "$RUNNER_TEMP/standalone" && ./scryr generate schema \
+  --path index.scry \
+  --manifest-dir "$RUNNER_TEMP/standalone/sample" \
+  --scryr-dir "$RUNNER_TEMP/standalone/state" > "$RUNNER_TEMP/standalone-schema.json")
+python3 -m json.tool "$RUNNER_TEMP/standalone-schema.json" >/dev/null
+
+SCRYR_SQLITE_PATH="$RUNNER_TEMP/scryr-release.db" \
+  ./crystal/target/release/scryr serve \
+    --host 127.0.0.1 \
+    --port 18080 \
+    > "$RUNNER_TEMP/scryr-release.log" 2>&1 &
+server_pid=$!
+trap 'kill "$server_pid" 2>/dev/null || true; cat "$RUNNER_TEMP/scryr-release.log"; rm -rf "$RUNNER_TEMP"' EXIT
+
+curl --silent --show-error --fail \
+  --retry 40 \
+  --retry-all-errors \
+  --retry-connrefused \
+  --retry-delay 1 \
+  http://127.0.0.1:18080/health
+
+curl --silent --show-error --fail \
+  http://127.0.0.1:18080/ready
+
+curl --silent --show-error --fail \
+  http://127.0.0.1:18080/ > "$RUNNER_TEMP/index.html"
+test -s "$RUNNER_TEMP/index.html"
+
+./crystal/target/release/scryr generate upload \
+  --path samples/mern/index.scry \
+  --manifest-dir manifest \
+  --scryr-dir .cache/scryr-release \
+  --graphql-url http://127.0.0.1:18080/graphql
+
+curl --silent --show-error --fail \
+  -H "content-type: application/json" \
+  --data '{"query":"query { scryrMaps { key name } }"}' \
+  http://127.0.0.1:18080/graphql > "$RUNNER_TEMP/maps.json"
+python3 - "$RUNNER_TEMP/maps.json" <<'PYTHON'
+import json
+import sys
+with open(sys.argv[1]) as stream:
+    response = json.load(stream)
+assert not response.get("errors"), response
+assert any(item["key"] == "mern" for item in response["data"]["scryrMaps"]), response
+PYTHON
+'''
+dir = "{{config_root}}"
+
+[tasks."release:package"]
+description = "Archive the tested native binary and notices"
+run = "mise run release:process package"
+dir = "{{config_root}}"
+
+[tasks."release:draft"]
+description = "Verify artifacts and create a draft GitHub Release"
+run = "mise run release:process draft"
+tools = { "gh" = "2.92.0" }
+dir = "{{config_root}}"
+
+[tasks."release:prepare"]
+description = "Verify published release artifacts and prepare publisher packages"
+run = "mise run release:process prepare"
+tools = { "gh" = "2.92.0" }
+dir = "{{config_root}}"
+
+[tasks."distribute:oss"]
+description = "Distribute the published standalone release to npm, Homebrew and crates.io"
+run = [
+  "mise run check:publish-env",
+  "mise run release:prepare",
+  "mise run distribute:npm",
+  "mise run distribute:homebrew",
+  "mise run distribute:crates",
+]
+dir = "{{config_root}}"
+
+[tasks."distribute:npm"]
+description = "Publish the prepared npm distribution"
+run = "mise run release:process npm"
+dir = "{{config_root}}"
+
+[tasks."distribute:homebrew"]
+description = "Publish the prepared homebrew distribution"
+run = "mise run release:process homebrew"
+tools = { "gh" = "2.92.0" }
+dir = "{{config_root}}"
+
+[tasks."distribute:crates"]
+description = "Publish the prepared crates distribution"
+run = "mise run release:process crates"
+dir = "{{config_root}}"
+
+[tasks."embed:ui:cloud"]
+description = "Embed a Clerk-enabled UI for the Fly server"
+hide = true
+dir = "{{config_root}}"
+run = "mise run cloud:process embed"
+
+[tasks."check:publish-env"]
+description = "Validate all distribution settings before publishing"
+hide = true
+dir = "{{config_root}}"
+run = "mise run release:process preflight"
+
+# Shared inline implementation: contributor modes
+
+[tasks."dev:process"]
+description = "Shared contributor runtime and debugger configuration"
+hide = true
+dir = "{{config_root}}"
+usage = '''
+arg "<mode>" { choices "oss" "cloud" }
+arg "<action>" { choices "watch" "server" "ui" "remote" "debug" }
+'''
+run = '''
+python - "$usage_mode" "$usage_action" <<'PYTHON'
+"""Runtime modes shared by terminals, file watchers, and VS Code."""
+
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path.cwd()
+CLOUD_KEYS = (
+    "DATABASE_URL",
+    "TURSO_DATABASE_URL",
+    "TURSO_AUTH_TOKEN",
+    "LIBSQL_AUTH_TOKEN",
+    "CLERK_SECRET_KEY",
+    "VITE_CLERK_PUBLISHABLE_KEY",
+)
+
+
+def require(*keys):
+    missing = [key for key in keys if not os.environ.get(key, "").strip()]
+    if missing:
+        raise SystemExit(
+            "Set these values in mise.local.toml or your environment: "
+            + ", ".join(missing)
+        )
+
+
+def environment(mode):
+    env = os.environ.copy()
+    env.update(
+        HOST="127.0.0.1",
+        PORT="8000",
+        SCRYR_DIR=str(ROOT / ".cache" / mode),
+        SCRYR_SQLITE_PATH=str(ROOT / ".cache" / mode / "scryr.db"),
+        SCRYR_GRAPHQL_URL="http://127.0.0.1:8000/graphql",
+        VITE_GRAPHQL_ENDPOINT="http://127.0.0.1:8000/graphql",
+        VITE_DEBUG="true",
+        RUST_BACKTRACE="1",
+        CORS_ALLOWED_ORIGINS="http://127.0.0.1:3000,http://localhost:3000",
+    )
+    if mode == "oss":
+        for key in CLOUD_KEYS:
+            env.pop(key, None)
+        env.update(
+            AUTH_MODE="local",
+            VITE_SCRYR_AUTH_MODE="local",
+            SCRYR_API_TOKEN="windrunner",
+        )
+    else:
+        require(
+            "TURSO_DATABASE_URL",
+            "TURSO_AUTH_TOKEN",
+            "CLERK_SECRET_KEY",
+            "VITE_CLERK_PUBLISHABLE_KEY",
+        )
+        env.update(AUTH_MODE="clerk", VITE_SCRYR_AUTH_MODE="clerk")
+        env.pop("SCRYR_API_TOKEN", None)
+    return env
+
+
+def main():
+    mode, action = sys.argv[1:]
+    env = environment(mode)
+    cargo = [
+        "cargo",
+        "run",
+        "--locked",
+        "--manifest-path",
+        "crystal/Cargo.toml",
+        "-p",
+        "crystal-cli",
+        "--",
+        "serve",
+    ]
+    if action == "debug":
+        subprocess.run(
+            [
+                "cargo",
+                "build",
+                "--locked",
+                "--manifest-path",
+                "crystal/Cargo.toml",
+                "-p",
+                "crystal-cli",
+            ],
+            cwd=ROOT,
+            env={**env, "CARGO_PROFILE_DEV_DEBUG": "2"},
+            check=True,
+        )
+        path = ROOT / ".cache" / f"debug-{mode}.env"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        # Only debugger runtime values, never a dump of unrelated shell secrets.
+        keys = {
+            *CLOUD_KEYS,
+            "HOST",
+            "PORT",
+            "AUTH_MODE",
+            "CORS_ALLOWED_ORIGINS",
+            "SCRYR_API_TOKEN",
+            "SCRYR_DIR",
+            "SCRYR_SQLITE_PATH",
+            "RUST_BACKTRACE",
+            "PATH",
+        }
+        with open(
+            path, "w", opener=lambda p, flags: os.open(p, flags, 0o600)
+        ) as stream:
+            stream.writelines(
+                f"{key}={json.dumps(env.get(key, ''))}\n" for key in sorted(keys)
+            )
+        path.chmod(0o600)
+        return
+    if action in ("ui", "remote"):
+        if action == "remote":
+            require("CLOUD_GRAPHQL_URL")
+            env["VITE_GRAPHQL_ENDPOINT"] = os.environ["CLOUD_GRAPHQL_URL"]
+        cmd = [
+            "npm",
+            "--prefix",
+            "map",
+            "run",
+            "dev",
+            "--",
+            "--host",
+            "127.0.0.1",
+            "--strictPort",
+        ]
+    elif action == "watch":
+        # Watch sources explicitly: regenerating embedded assets must not
+        # trigger another restart while a build is still preparing those assets.
+        watched = [
+            "crystal/Cargo.toml",
+            "crystal/Cargo.lock",
+            "manifest/scryr/src",
+            "manifest/scryr/pyproject.toml",
+        ]
+        for crate in sorted((ROOT / "crystal").glob("crystal-*")):
+            for name in ["src", "Cargo.toml", "build.rs"]:
+                if (crate / name).exists():
+                    watched.append(str((crate / name).relative_to(ROOT)))
+        cmd = ["watchexec", "--restart", "--debounce", "300ms"]
+        for path in watched:
+            cmd.extend(["--watch", path])
+        cmd.extend(
+            [
+                "--",
+                "mise",
+                "run",
+                "run:server:" + ("local" if mode == "oss" else "cloud"),
+            ]
+        )
+
+    else:
+        # Changes to the SDK are reflected in the next Rust restart too.
+        subprocess.run(["mise", "run", "sync:embedded-sdk"], cwd=ROOT, check=True)
+        cmd = cargo
+    os.chdir(ROOT)
+    os.execvpe(cmd[0], cmd, env)
+
+
+if __name__ == "__main__":
+    main()
+PYTHON
+'''
+
+# Shared inline implementation: cloud providers
+
+[tasks."cloud:process"]
+description = "Shared provider operations and deployment preflight"
+hide = true
+dir = "{{config_root}}"
+usage = "arg \"<action>\" { choices \"docker\" \"ui\" \"embed\" \"secrets\" \"turso\" \"fly\" \"vercel\" \"deploy\" }"
+run = '''
+python - "$usage_action" <<'PYTHON'
+"""Cloud deployment uses the same Rust schema as local SQLite."""
+
+import os
+import shutil
+import subprocess
+import sys
+from urllib.parse import urlparse
+
+import tomllib
+from pathlib import Path
+
+ROOT = Path.cwd()
+
+def require(*keys):
+    missing = [key for key in keys if not os.environ.get(key, "").strip()]
+    if missing:
+        raise SystemExit(
+            "Set these values in mise.local.toml or your environment: "
+            + ", ".join(missing)
+        )
+
+
+def run(*args, **kwargs):
+    try:
+        subprocess.run(args, cwd=ROOT, check=True, **kwargs)
+    except subprocess.CalledProcessError as error:
+        # Vercel takes its token as an argument. Never echo the command on failure.
+        raise SystemExit(
+            f"{args[0]} {args[1]} failed (exit {error.returncode})"
+        ) from None
+
+
+def cloud_ui_env():
+    require("CLOUD_GRAPHQL_URL", "VITE_CLERK_PUBLISHABLE_KEY")
+    if urlparse(os.environ["CLOUD_GRAPHQL_URL"]).scheme != "https":
+        raise SystemExit("CLOUD_GRAPHQL_URL must be the public HTTPS Fly GraphQL URL")
+    return {
+        **os.environ,
+        "VITE_GRAPHQL_ENDPOINT": os.environ["CLOUD_GRAPHQL_URL"],
+        "VITE_SCRYR_AUTH_MODE": "clerk",
+        "VITE_DEBUG": "false",
+    }
+
+
+def secrets():
+    require(
+        "FLY_APP",
+        "CLERK_SECRET_KEY",
+        "TURSO_DATABASE_URL",
+        "TURSO_AUTH_TOKEN",
+        "CORS_ALLOWED_ORIGINS",
+    )
+    # stdin keeps credential values out of command lines and task logs.
+    keys = [
+        "CLERK_SECRET_KEY",
+        "TURSO_DATABASE_URL",
+        "TURSO_AUTH_TOKEN",
+        "CORS_ALLOWED_ORIGINS",
+    ]
+    if any("\n" in os.environ[key] for key in keys):
+        raise SystemExit("Fly secret values must be single-line")
+    run(
+        "flyctl",
+        "secrets",
+        "import",
+        "--stage",
+        "--app",
+        os.environ["FLY_APP"],
+        input="".join(f"{key}={os.environ[key]}\n" for key in keys),
+        text=True,
+    )
+
+
+def main(action):
+    rust = tomllib.loads((ROOT / "mise.toml").read_text())["tools"]["rust"]["version"]
+    if action == "docker":
+        run(
+            "docker",
+            "build",
+            "--build-arg",
+            f"RUST_VERSION={rust}",
+            "-t",
+            "scryr-server",
+            "crystal",
+        )
+    elif action in ("ui", "embed"):
+        env = cloud_ui_env()
+        if action == "embed":
+            env["VITE_GRAPHQL_ENDPOINT"] = "/graphql"
+        run("npm", "--prefix", "map", "ci")
+        run("npm", "--prefix", "map", "run", "build", env=env)
+        if action == "embed":
+            destination = ROOT / "crystal/crystal-server/static/map"
+            shutil.rmtree(destination)
+            shutil.copytree(ROOT / "map/dist", destination)
+    elif action == "secrets":
+        secrets()
+    elif action == "turso":
+        require("TURSO_DATABASE_URL", "TURSO_AUTH_TOKEN")
+        if urlparse(os.environ["TURSO_DATABASE_URL"]).scheme not in ("libsql", "https"):
+            raise SystemExit("TURSO_DATABASE_URL must name a remote Turso database")
+        run(
+            "cargo",
+            "run",
+            "--locked",
+            "--manifest-path",
+            "crystal/Cargo.toml",
+            "-p",
+            "crystal-cli",
+            "--",
+            "migrate",
+        )
+    elif action == "fly":
+        secrets()
+        run(
+            "flyctl",
+            "deploy",
+            "crystal",
+            "--app",
+            os.environ["FLY_APP"],
+            "--remote-only",
+            "--build-arg",
+            f"RUST_VERSION={rust}",
+        )
+    elif action == "vercel":
+        require("VERCEL_TOKEN", "VERCEL_ORG_ID", "VERCEL_PROJECT_ID")
+        env = cloud_ui_env()
+        token = os.environ["VERCEL_TOKEN"]
+        run(
+            "vercel",
+            "pull",
+            "--cwd",
+            "map",
+            "--yes",
+            "--environment=production",
+            "--token",
+            token,
+            env=env,
+        )
+        run("vercel", "build", "--cwd", "map", "--prod", "--token", token, env=env)
+        run(
+            "vercel",
+            "deploy",
+            "--cwd",
+            "map",
+            "--prebuilt",
+            "--prod",
+            "--token",
+            token,
+            env=env,
+        )
+    elif action == "deploy":
+        # Validate everything before the first remote write.
+        require(
+            "FLY_API_TOKEN",
+            "FLY_APP",
+            "TURSO_DATABASE_URL",
+            "TURSO_AUTH_TOKEN",
+            "CLERK_SECRET_KEY",
+            "CORS_ALLOWED_ORIGINS",
+            "VERCEL_TOKEN",
+            "VERCEL_ORG_ID",
+            "VERCEL_PROJECT_ID",
+        )
+        cloud_ui_env()
+        run("mise", "run", "build:cloud")
+        main("turso")
+        main("fly")
+        main("vercel")
+    else:
+        raise SystemExit(f"Unknown cloud action: {action}")
+
+
+if __name__ == "__main__":
+    main(sys.argv[1])
+PYTHON
+'''
+
+# Shared inline implementation: release packaging
+
+[tasks."release:process"]
+description = "Shared release validation, packaging and publisher operations"
+hide = true
+dir = "{{config_root}}"
+usage = "arg \"<action>\" { choices \"validate\" \"package\" \"draft\" \"prepare\" \"npm\" \"homebrew\" \"crates\" \"preflight\" }"
+run = '''
+python - "$usage_action" <<'PYTHON'
+"""Build handoff and distribution of tested, versioned standalone binaries."""
+
+import hashlib
+import json
+import os
+import platform
+import re
+import shutil
+import subprocess
+import sys
+import tarfile
+import tempfile
+from pathlib import Path
+
+import tomllib
+
+ROOT = Path.cwd()
+OUT = ROOT / "dist" / "release"
+PLATFORMS = {
+    "linux-x86_64": ("linux", "x64"),
+    "linux-aarch64": ("linux", "arm64"),
+    "darwin-x86_64": ("darwin", "x64"),
+    "darwin-aarch64": ("darwin", "arm64"),
+}
+
+
+def run(*args, **kwargs):
+    return subprocess.run(args, check=True, cwd=ROOT, **kwargs)
+
+
+def require(key):
+    value = os.environ.get(key, "")
+    if not value:
+        raise SystemExit(f"Set {key} before publishing")
+    return value
+
+
+def tag_version():
+    tag = require("RELEASE_TAG")
+    if not re.fullmatch(r"v\d+\.\d+\.\d+", tag):
+        raise SystemExit("Use a vX.Y.Z release tag")
+    return tag, tag[1:]
+
+
+def validate():
+    tag, version = tag_version()
+    run("git", "merge-base", "--is-ancestor", "HEAD", "origin/main")
+    head = run(
+        "git", "rev-parse", "HEAD", capture_output=True, text=True
+    ).stdout.strip()
+    tagged = run(
+        "git", "rev-parse", tag + "^{commit}", capture_output=True, text=True
+    ).stdout.strip()
+    if head != tagged:
+        raise SystemExit("Checkout must match RELEASE_TAG")
+    paths = list((ROOT / "crystal").glob("*/Cargo.toml"))
+    paths += list((ROOT / "manifest").glob("*/pyproject.toml"))
+    paths += [ROOT / "manifest/pyproject.toml"]
+    for path in paths:
+        data = tomllib.loads(path.read_text())
+        actual = data.get("package", data.get("project", {})).get("version")
+        if actual != version:
+            raise SystemExit(f"{path.relative_to(ROOT)}: {actual} != {version}")
+    for file in ["map/package.json", "map/package-lock.json"]:
+        if json.loads((ROOT / file).read_text())["version"] != version:
+            raise SystemExit(f"{file} must have version {version}")
+
+
+
+
+
+def package():
+    os_name = platform.system().lower()
+    arch = {"arm64": "aarch64", "AMD64": "x86_64"}.get(
+        platform.machine(), platform.machine()
+    )
+    target = f"{os_name}-{arch}"
+    if target not in PLATFORMS:
+        raise SystemExit(f"Unsupported release platform: {target}")
+    OUT.mkdir(parents=True, exist_ok=True)
+    archive = OUT / f"scryr-{target}.tar.gz"
+    with tarfile.open(archive, "w:gz") as tar:
+        for path in [
+            ROOT / "crystal/target/release/scryr",
+            ROOT / "LICENSE",
+            ROOT / "THIRD_PARTY_NOTICES.md",
+        ]:
+            tar.add(path, arcname=path.name)
+    (OUT / f"{archive.name}.sha256").write_text(
+        f"{hashlib.sha256(archive.read_bytes()).hexdigest()}  {archive.name}\n"
+    )
+
+
+def verify():
+    sums = []
+    for target in PLATFORMS:
+        name = f"scryr-{target}.tar.gz"
+        archive = OUT / name
+        digest = hashlib.sha256(archive.read_bytes()).hexdigest()
+        if (OUT / f"{name}.sha256").read_text().strip() != f"{digest}  {name}":
+            raise SystemExit(f"Checksum mismatch: {name}")
+        sums.append(f"{digest}  {name}\n")
+    (OUT / "SHA256SUMS").write_text("".join(sums))
+
+
+def draft():
+    tag, _ = tag_version()
+    verify()
+    assets = sorted(str(path) for path in OUT.glob("*.tar.gz*")) + [
+        str(OUT / "SHA256SUMS")
+    ]
+    run(
+        "gh",
+        "release",
+        "create",
+        tag,
+        *assets,
+        "--verify-tag",
+        "--draft",
+        "--generate-notes",
+        "--title",
+        f"Scryr {tag}",
+    )
+
+
+def prepare():
+    tag, version = tag_version()
+    repo = require("GH_REPO")
+    npm_name = require("NPM_PACKAGE_NAME")
+    if not re.fullmatch(r"@[a-z0-9_-]+/[a-z0-9_-]+", npm_name):
+        raise SystemExit(
+            "NPM_PACKAGE_NAME must be a scoped npm name, for example @scryr/cli"
+        )
+    release = json.loads(
+        run(
+            "gh",
+            "release",
+            "view",
+            tag,
+            "--json",
+            "isDraft,isPrerelease",
+            capture_output=True,
+            text=True,
+        ).stdout
+    )
+    if release["isDraft"] or release["isPrerelease"]:
+        raise SystemExit("Publish the stable GitHub Release before distribution")
+    OUT.mkdir(parents=True, exist_ok=True)
+    run(
+        "gh",
+        "release",
+        "download",
+        tag,
+        "--dir",
+        str(OUT),
+        "--pattern",
+        "scryr-*.tar.gz*",
+        "--clobber",
+    )
+    verify()
+    packages = OUT / "npm"
+    packages.mkdir(exist_ok=True)
+    optional = {}
+    for target, (os_name, cpu) in PLATFORMS.items():
+        name = f"{npm_name}-{os_name}-{cpu}"
+        optional[name] = version
+        dest = packages / target
+        dest.mkdir(exist_ok=True)
+        with tarfile.open(OUT / f"scryr-{target}.tar.gz") as tar:
+            tar.extractall(dest, filter="data")
+        (dest / "scryr").chmod(0o755)
+        (dest / "package.json").write_text(
+            json.dumps(
+                {
+                    "name": name,
+                    "version": version,
+                    "description": "Scryr standalone native CLI",
+                    "license": "MIT",
+                    "os": [os_name],
+                    "cpu": [cpu],
+                    "files": ["scryr", "LICENSE", "THIRD_PARTY_NOTICES.md"],
+                    "repository": f"https://github.com/{repo}",
+                },
+                indent=2,
+            )
+            + "\n"
+        )
+    wrapper = packages / "cli"
+    wrapper.mkdir(exist_ok=True)
+    (wrapper / "package.json").write_text(
+        json.dumps(
+            {
+                "name": npm_name,
+                "version": version,
+                "description": "Scryr CLI with embedded UI and SDK",
+                "license": "MIT",
+                "bin": {"scryr": "scryr.cjs"},
+                "files": ["scryr.cjs", "LICENSE", "THIRD_PARTY_NOTICES.md"],
+                "optionalDependencies": optional,
+                "repository": f"https://github.com/{repo}",
+            },
+            indent=2,
+        )
+        + "\n"
+    )
+    (wrapper / "scryr.cjs").write_text(
+        """#!/usr/bin/env node
+const { spawnSync } = require('node:child_process');
+const name = __PACKAGE_NAME__ + '-' + process.platform + '-' + process.arch;
+let binary;
+try { binary = require.resolve(name + '/scryr'); }
+catch { console.error('No Scryr binary for ' + process.platform + '/' + process.arch + '. Install optional dependencies.'); process.exit(1); }
+const result = spawnSync(binary, process.argv.slice(2), {stdio: 'inherit'});
+if (result.error) { console.error(result.error.message); process.exit(1); }
+if (result.signal) process.kill(process.pid, result.signal);
+else process.exit(result.status ?? 1);
+""".replace("__PACKAGE_NAME__", json.dumps(npm_name))
+    )
+    (wrapper / "scryr.cjs").chmod(0o755)
+    for file in ["LICENSE", "THIRD_PARTY_NOTICES.md"]:
+        shutil.copy2(ROOT / file, wrapper / file)
+    formula = [
+        "class Scryr < Formula",
+        '  desc "Architecture maps and manifest CLI"',
+        f'  homepage "https://github.com/{repo}"',
+        f'  version "{version}"',
+        '  license "MIT"',
+    ]
+    for os_name in ["darwin", "linux"]:
+        formula.append("  on_" + ("macos" if os_name == "darwin" else "linux") + " do")
+        for arch, condition in [("aarch64", "on_arm"), ("x86_64", "on_intel")]:
+            name = f"scryr-{os_name}-{arch}.tar.gz"
+            sha = hashlib.sha256((OUT / name).read_bytes()).hexdigest()
+            formula += [
+                f"    {condition} do",
+                f'      url "https://github.com/{repo}/releases/download/{tag}/{name}"',
+                f'      sha256 "{sha}"',
+                "    end",
+            ]
+        formula.append("  end")
+    formula += [
+        "  def install",
+        '    bin.install "scryr"',
+        "  end",
+        "  test do",
+        '    assert_match version.to_s, shell_output("#{bin}/scryr --version")',
+        "  end",
+        "end",
+    ]
+    (OUT / "scryr.rb").write_text("\n".join(formula) + "\n")
+
+
+def npm():
+    require("NPM_TOKEN")
+    # A temporary npm config keeps registry credentials out of the workspace.
+    with tempfile.TemporaryDirectory() as scratch:
+        config = Path(scratch) / "npmrc"
+        config.write_text("//registry.npmjs.org/:_authToken=${NPM_TOKEN}\n")
+        config.chmod(0o600)
+        for directory in [
+            *(OUT / "npm" / target for target in PLATFORMS),
+            OUT / "npm/cli",
+        ]:
+            data = json.loads((directory / "package.json").read_text())
+            spec = f"{data['name']}@{data['version']}"
+            # Allow a retry after a partially successful publication.
+            exists = subprocess.run(
+                ["npm", "view", spec, "version"],
+                cwd=ROOT,
+                capture_output=True,
+                check=False,
+                env={**os.environ, "NPM_CONFIG_USERCONFIG": str(config)},
+            )
+            if exists.returncode == 0:
+                continue
+            if b"E404" not in exists.stderr:
+                raise SystemExit("Could not check npm version; publication stopped")
+            run(
+                "npm",
+                "publish",
+                str(directory),
+                "--access",
+                "public",
+                env={**os.environ, "NPM_CONFIG_USERCONFIG": str(config)},
+            )
+
+
+def homebrew():
+    tap = require("HOMEBREW_TAP")
+    if not re.fullmatch(r"[\w.-]+/[\w.-]+", tap):
+        raise SystemExit("HOMEBREW_TAP must be owner/repository")
+    token = require("HOMEBREW_TAP_TOKEN")
+    tag, _ = tag_version()
+    import base64
+
+    env = {**os.environ, "GH_TOKEN": token}
+    endpoint = f"repos/{tap}/contents/Formula/scryr.rb"
+    existing = subprocess.run(
+        ["gh", "api", endpoint],
+        cwd=ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    payload = {
+        "message": f"Release Scryr {tag}",
+        "content": base64.b64encode((OUT / "scryr.rb").read_bytes()).decode(),
+    }
+    if existing.returncode == 0:
+        payload["sha"] = json.loads(existing.stdout)["sha"]
+    if existing.returncode != 0 and "HTTP 404" not in existing.stderr:
+        raise SystemExit("Could not read the Homebrew formula; publication stopped")
+    run(
+        "gh",
+        "api",
+        "--method",
+        "PUT",
+        endpoint,
+        "--input",
+        "-",
+        input=json.dumps(payload),
+        text=True,
+        env=env,
+    )
+
+
+def preflight():
+    tag_version()
+    for key in [
+        "GH_REPO",
+        "NPM_PACKAGE_NAME",
+        "NPM_TOKEN",
+        "HOMEBREW_TAP",
+        "HOMEBREW_TAP_TOKEN",
+        "CARGO_REGISTRY_TOKEN",
+    ]:
+        require(key)
+
+
+def crates():
+    require("CARGO_REGISTRY_TOKEN")
+    validate()
+    # Generated assets must be in each published crate. Cargo verifies packages;
+    # workspace order ensures dependencies reach the registry before dependants.
+    run("mise", "run", "build:oss")
+    for crate in ["crystal-core", "crystal-server", "crystal-cli"]:
+        run(
+            "cargo",
+            "publish",
+            "--locked",
+            "--allow-dirty",
+            "--manifest-path",
+            f"crystal/{crate}/Cargo.toml",
+        )
+
+
+if __name__ == "__main__":
+    actions = {
+        fn.__name__: fn
+        for fn in [
+            validate,
+            package,
+            draft,
+            prepare,
+            npm,
+            homebrew,
+            crates,
+            preflight,
+        ]
+    }
+    actions[sys.argv[1]]()
+PYTHON
+'''
+
+# Automation regression checks
+
+[tasks."test:automation"]
+description = "Test runtime isolation, migration order and release packaging"
+hide = true
+dir = "{{config_root}}"
+run = '''
+python - <<'PYTHON'
+"""Regression checks for credential isolation and release/deployment boundaries."""
+
+import hashlib
+import io
+import json
+import os
+import tarfile
+import tempfile
+import unittest
+from pathlib import Path
+from unittest.mock import patch
+
+import sys
+import tomllib
+import types
+
+
+def task_module(name):
+    config = tomllib.loads(Path("mise.toml").read_text())
+    command = config["tasks"][name + ":process"]["run"]
+    body = command.split("<<'PYTHON'\n", 1)[1].rsplit("\nPYTHON", 1)[0]
+    module = types.ModuleType(name)
+    sys.modules[name] = module
+    exec(compile(body, "mise.toml:" + name, "exec"), module.__dict__)
+    return module
+
+
+dev, cloud, release = (task_module(name) for name in ("dev", "cloud", "release"))
+
+
+class AutomationTests(unittest.TestCase):
+    def test_oss_discards_ambient_cloud_credentials(self):
+        with patch.dict(
+            os.environ, {key: "ambient-cloud-value" for key in dev.CLOUD_KEYS}
+        ):
+            env = dev.environment("oss")
+        self.assertTrue(all(key not in env for key in dev.CLOUD_KEYS))
+        self.assertEqual(env["AUTH_MODE"], "local")
+        self.assertEqual(env["VITE_GRAPHQL_ENDPOINT"], "http://127.0.0.1:8000/graphql")
+
+    def test_debug_writes_private_runtime_environment(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with (
+                patch.object(dev, "ROOT", Path(directory)),
+                patch.object(dev.subprocess, "run"),
+                patch.object(dev.sys, "argv", ["dev.py", "oss", "debug"]),
+            ):
+                dev.main()
+            path = Path(directory) / ".cache/debug-oss.env"
+            self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+            self.assertIn('AUTH_MODE="local"', path.read_text())
+            self.assertIn('TURSO_DATABASE_URL=""', path.read_text())
+
+    def test_cloud_requires_credentials(self):
+        with patch.dict(os.environ, {}, clear=True), self.assertRaises(SystemExit):
+            dev.environment("cloud")
+
+    def test_cloud_uses_clerk_and_remote_storage(self):
+        values = {key: "cloud-value" for key in dev.CLOUD_KEYS}
+        with patch.dict(os.environ, values):
+            env = dev.environment("cloud")
+        self.assertEqual(env["AUTH_MODE"], "clerk")
+        self.assertEqual(env["VITE_SCRYR_AUTH_MODE"], "clerk")
+        self.assertEqual(env["TURSO_DATABASE_URL"], values["TURSO_DATABASE_URL"])
+        self.assertNotIn("SCRYR_API_TOKEN", env)
+
+    def test_deployment_error_does_not_echo_token(self):
+        with (
+            patch.object(
+                cloud.subprocess,
+                "run",
+                side_effect=cloud.subprocess.CalledProcessError(
+                    1, ["vercel", "deploy", "--token", "private-value"]
+                ),
+            ),
+            self.assertRaises(SystemExit) as error,
+        ):
+            cloud.run("vercel", "deploy", "--token", "private-value")
+        self.assertNotIn("private-value", str(error.exception))
+
+    def test_cloud_preflight_stops_before_any_remote_call(self):
+        with patch.dict(os.environ, {}, clear=True), patch.object(cloud, "run") as run:
+            with self.assertRaises(SystemExit):
+                cloud.main("deploy")
+            run.assert_not_called()
+
+    def test_cloud_deploy_migrates_before_fly_and_vercel(self):
+        keys = [
+            "FLY_API_TOKEN",
+            "FLY_APP",
+            "TURSO_DATABASE_URL",
+            "TURSO_AUTH_TOKEN",
+            "CLERK_SECRET_KEY",
+            "CORS_ALLOWED_ORIGINS",
+            "VERCEL_TOKEN",
+            "VERCEL_ORG_ID",
+            "VERCEL_PROJECT_ID",
+            "VITE_CLERK_PUBLISHABLE_KEY",
+        ]
+        values = {key: "configured" for key in keys}
+        values.update(
+            CLOUD_GRAPHQL_URL="https://example.fly.dev/graphql",
+            TURSO_DATABASE_URL="libsql://example.turso.io",
+        )
+        with patch.dict(os.environ, values), patch.object(cloud, "run") as run:
+            cloud.main("deploy")
+        calls = [call.args for call in run.call_args_list]
+        self.assertEqual(calls[0], ("mise", "run", "build:cloud"))
+        migrate = next(i for i, call in enumerate(calls) if call[-1] == "migrate")
+        fly = next(
+            i for i, call in enumerate(calls) if call[:2] == ("flyctl", "deploy")
+        )
+        vercel = next(
+            i for i, call in enumerate(calls) if call[:2] == ("vercel", "deploy")
+        )
+        self.assertLess(migrate, fly)
+        self.assertLess(fly, vercel)
+
+    def test_release_checksums_reject_corruption(self):
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            patch.object(release, "OUT", Path(directory)),
+        ):
+            for target in release.PLATFORMS:
+                name = f"scryr-{target}.tar.gz"
+                path = Path(directory) / name
+                path.write_bytes(b"binary")
+                (Path(directory) / f"{name}.sha256").write_text(
+                    f"{hashlib.sha256(path.read_bytes()).hexdigest()}  {name}\n"
+                )
+            release.verify()
+            path.write_bytes(b"corrupted")
+            with self.assertRaises(SystemExit):
+                release.verify()
+
+    def test_publisher_packages_embed_verified_binary(self):
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            patch.object(release, "OUT", Path(directory)),
+        ):
+            for target in release.PLATFORMS:
+                name = f"scryr-{target}.tar.gz"
+                path = Path(directory) / name
+                with tarfile.open(path, "w:gz") as archive:
+                    data = b"#!/bin/sh\necho scryr 1.2.3\n"
+                    member = tarfile.TarInfo("scryr")
+                    member.size = len(data)
+                    member.mode = 0o755
+                    archive.addfile(member, io.BytesIO(data))
+                (Path(directory) / f"{name}.sha256").write_text(
+                    f"{hashlib.sha256(path.read_bytes()).hexdigest()}  {name}\n"
+                )
+            with (
+                patch.dict(
+                    os.environ,
+                    {
+                        "RELEASE_TAG": "v1.2.3",
+                        "GH_REPO": "example/scryr",
+                        "NPM_PACKAGE_NAME": "@example/cli",
+                    },
+                ),
+                patch.object(release, "run") as run,
+            ):
+                run.return_value.stdout = '{"isDraft": false, "isPrerelease": false}'
+                release.prepare()
+            wrapper = json.loads((Path(directory) / "npm/cli/package.json").read_text())
+            self.assertEqual(len(wrapper["optionalDependencies"]), 4)
+            for target in release.PLATFORMS:
+                self.assertTrue((Path(directory) / "npm" / target / "scryr").is_file())
+            formula = (Path(directory) / "scryr.rb").read_text()
+            self.assertEqual(formula.count("sha256"), 4)
+            self.assertIn("/releases/download/v1.2.3/", formula)
+
+
+if __name__ == "__main__":
+    unittest.main()
+PYTHON
+'''
+
+[tasks."check:automation"]
+description = "Require direct mise workflow calls and self-contained tasks"
+hide = true
+dir = "{{config_root}}"
+run = '''
+python - <<'PYTHON'
+"""Keep workflow run steps as single calls to tasks declared in mise.toml."""
+
+import re
+from pathlib import Path
+
+import tomllib
+
+config = tomllib.loads(Path("mise.toml").read_text())
+tasks = config["tasks"]
+for path in Path(".github/workflows").glob("*.yml"):
+    for number, line in enumerate(path.read_text().splitlines(), 1):
+        if re.match(r"\s*(?:- )?run:", line):
+            match = re.fullmatch(r"\s*(?:- )?run: mise run ([\w:-]+)\s*", line)
+            if not match or match[1] not in tasks:
+                raise SystemExit(
+                    f"{path}:{number}: run must directly call a declared mise task"
+                )
+print("All workflow commands directly call declared mise tasks")
+
+assert all("alias" not in task for task in tasks.values()), "Task aliases are not supported"
+assert not Path("scripts").exists(), "Keep task implementations inside mise.toml"
+PYTHON
 '''

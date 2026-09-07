@@ -1,23 +1,20 @@
 {
-	"folders": [
-		{
-			"path": "../manifest",
-			"name": "🎫 Manifest"
-
-		},
-		{
-			"path": "../map",
-			"name": "🗺️ Map"
-		},
-		{
-			"path": "../crystal",
-			"name": "💎 Crystal"
-		}
-	],
-	"settings": {
-		"files.associations": {
-			"*.scry": "python"
-		},
-		"workbench.colorTheme": "Bearded Theme Coffee Cream"
-	}
+  "folders": [
+    {
+      "path": "..",
+      "name": "Scryr"
+    },
+    {
+      "path": "../manifest",
+      "name": "Manifest"
+    },
+    {
+      "path": "../map",
+      "name": "Map"
+    },
+    {
+      "path": "../crystal",
+      "name": "Crystal"
+    }
+  ]
 }

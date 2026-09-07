@@ -1,0 +1,19 @@
+# Copy to mise.local.toml. Use separate development cloud resources.
+[env]
+TURSO_DATABASE_URL = "libsql://your-dev-database.turso.io"
+TURSO_AUTH_TOKEN = ""
+CLERK_SECRET_KEY = ""
+VITE_CLERK_PUBLISHABLE_KEY = ""
+CLOUD_GRAPHQL_URL = "https://your-fly-app.fly.dev/graphql"
+FLY_APP = "your-fly-app"
+FLY_API_TOKEN = ""
+CORS_ALLOWED_ORIGINS = "http://127.0.0.1:3000,https://your-project.vercel.app"
+VERCEL_TOKEN = ""
+VERCEL_ORG_ID = ""
+VERCEL_PROJECT_ID = ""
+# Distribution (only needed by maintainers):
+NPM_PACKAGE_NAME = "@scryr/cli"
+NPM_TOKEN = ""
+HOMEBREW_TAP = "scryr-app/homebrew-tap"
+HOMEBREW_TAP_TOKEN = ""
+CARGO_REGISTRY_TOKEN = ""

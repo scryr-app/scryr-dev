@@ -1,0 +1,90 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Rust: OSS",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/crystal/target/debug/scryr",
+      "args": [
+        "serve",
+        "--auth-mode",
+        "local"
+      ],
+      "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/.cache/debug-oss.env",
+      "preLaunchTask": "mise debug:oss"
+    },
+    {
+      "name": "Vite: OSS",
+      "type": "pwa-chrome",
+      "request": "launch",
+      "url": "http://127.0.0.1:3000",
+      "webRoot": "${workspaceFolder}/map",
+      "preLaunchTask": "mise dev:ui:oss",
+      "sourceMaps": true
+    },
+    {
+      "name": "Rust: CLOUD",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/crystal/target/debug/scryr",
+      "args": [
+        "serve",
+        "--auth-mode",
+        "clerk"
+      ],
+      "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/.cache/debug-cloud.env",
+      "preLaunchTask": "mise debug:cloud"
+    },
+    {
+      "name": "Vite: CLOUD",
+      "type": "pwa-chrome",
+      "request": "launch",
+      "url": "http://127.0.0.1:3000",
+      "webRoot": "${workspaceFolder}/map",
+      "preLaunchTask": "mise dev:ui:cloud",
+      "sourceMaps": true
+    },
+    {
+      "name": "Browser: hosted Vercel",
+      "type": "pwa-chrome",
+      "request": "launch",
+      "url": "${input:vercelUrl}",
+      "webRoot": "${workspaceFolder}/map"
+    },
+    {
+      "name": "Rust: attach to running server",
+      "type": "lldb",
+      "request": "attach",
+      "pid": "${command:pickMyProcess}"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Debug OSS",
+      "configurations": [
+        "Rust: OSS",
+        "Vite: OSS"
+      ],
+      "stopAll": true
+    },
+    {
+      "name": "Debug CLOUD",
+      "configurations": [
+        "Rust: CLOUD",
+        "Vite: CLOUD"
+      ],
+      "stopAll": true
+    }
+  ],
+  "inputs": [
+    {
+      "id": "vercelUrl",
+      "type": "promptString",
+      "description": "Vercel deployment URL",
+      "default": "https://scryr-map.vercel.app"
+    }
+  ]
+}
