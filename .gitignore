@@ -98,3 +98,6 @@ htmlcov/
 
 # Byte-compiled cache
 *.pyc
+
+# Vercel local project/build state
+.vercel/

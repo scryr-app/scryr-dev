@@ -31,6 +31,8 @@ pub(crate) struct Args {
 pub(crate) enum Command {
     /// Run the Scryr GraphQL server.
     Serve(ServerArgs),
+    /// Apply database schema migrations without starting the HTTP server.
+    Migrate,
     /// Generate manifest artifacts and persist them through GraphQL.
     Generate(Box<GenerateArgs>),
     /// Interactive Clerk authentication helpers.
@@ -42,6 +44,8 @@ pub(crate) enum Command {
 pub(crate) enum ResolvedCommand {
     /// Run the Scryr GraphQL server.
     Serve(ServerArgs),
+    /// Apply database schema migrations without starting the HTTP server.
+    Migrate,
     /// Generate manifest artifacts or render one generated artifact.
     Generate(GenerateRequest),
     /// Interactive Clerk authentication helpers.
@@ -53,13 +57,17 @@ impl Args {
     pub(crate) fn resolved_command(&self) -> Result<ResolvedCommand, String> {
         if let Some(command) = &self.command {
             return Ok(match command.clone() {
+                Command::Migrate => ResolvedCommand::Migrate,
                 Command::Serve(args) => ResolvedCommand::Serve(args),
                 Command::Generate(args) => ResolvedCommand::Generate((*args).into_request()),
                 Command::Auth(args) => ResolvedCommand::Auth(args),
             });
         }
 
-        Err("missing command: use `serve`, `generate <target>`, or `auth <subcommand>`".to_string())
+        Err(
+            "missing command: use `serve`, `migrate`, `generate <target>`, or `auth <subcommand>`"
+                .to_string(),
+        )
     }
 }
 

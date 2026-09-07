@@ -2,13 +2,34 @@
 
 lockfile_version = 1
 
-[[tools."cargo:sqlx-cli"]]
-version = "0.9.0"
-backend = "cargo:sqlx-cli"
-specifiers = ["latest"]
+[[tools.actionlint]]
+version = "1.7.12"
+backend = "aqua:rhysd/actionlint"
+specifiers = ["1.7.12"]
 
-[tools."cargo:sqlx-cli".options]
-features = "sqlite,rustls"
+[tools.actionlint."platforms.linux-arm64"]
+checksum = "sha256:325e971b6ba9bfa504672e29be93c24981eeb1c07576d730e9f7c8805afff0c6"
+url = "https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/rhysd/actionlint/releases/assets/384924897"
+provenance = "github-attestations"
+
+[tools.actionlint."platforms.linux-x64"]
+checksum = "sha256:8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8"
+url = "https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/rhysd/actionlint/releases/assets/384924896"
+provenance = "github-attestations"
+
+[tools.actionlint."platforms.macos-arm64"]
+checksum = "sha256:aba9ced2dee8d27fecca3dc7feb1a7f9a52caefa1eb46f3271ea66b6e0e6953f"
+url = "https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_darwin_arm64.tar.gz"
+url_api = "https://api.github.com/repos/rhysd/actionlint/releases/assets/384924893"
+provenance = "github-attestations"
+
+[tools.actionlint."platforms.macos-x64"]
+checksum = "sha256:5b44c3bc2255115c9b69e30efc0fecdf498fdb63c5d58e17084fd5f16324c644"
+url = "https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_darwin_amd64.tar.gz"
+url_api = "https://api.github.com/repos/rhysd/actionlint/releases/assets/384924880"
+provenance = "github-attestations"
 
 [[tools.docker-cli]]
 version = "29.4.3"
@@ -40,7 +61,10 @@ url = "https://download.docker.com/win/static/stable/x86_64/docker-29.4.3.zip"
 [[tools.flyctl]]
 version = "0.4.95"
 backend = "aqua:superfly/flyctl"
-specifiers = ["latest"]
+specifiers = [
+    "0.4.95",
+    "latest",
+]
 
 [tools.flyctl."platforms.linux-arm64"]
 checksum = "sha256:e241ab2e7d572700903599204d7f3676f762efff50e7484dec90f2aa6504a475"
@@ -80,7 +104,10 @@ url_api = "https://api.github.com/repos/superfly/flyctl/releases/assets/53294946
 [[tools.gh]]
 version = "2.92.0"
 backend = "aqua:cli/cli"
-specifiers = ["latest"]
+specifiers = [
+    "2.92.0",
+    "latest",
+]
 
 [tools.gh."platforms.linux-arm64"]
 checksum = "sha256:c2248526dd0160c08d3fccca2332c3c1a07c15a78b23978e77735f1b5a18cfee"
@@ -124,50 +151,38 @@ url = "https://github.com/cli/cli/releases/download/v2.92.0/gh_2.92.0_windows_am
 url_api = "https://api.github.com/repos/cli/cli/releases/assets/407353546"
 provenance = "github-attestations"
 
-[[tools.neonctl]]
-version = "2.22.0"
-backend = "aqua:neondatabase/neonctl"
-specifiers = ["latest"]
+[[tools.gitleaks]]
+version = "8.30.1"
+backend = "aqua:gitleaks/gitleaks"
+specifiers = ["8.30.1"]
 
-[tools.neonctl."platforms.linux-arm64"]
-checksum = "sha256:52201462796b8643e5bf91f75253d50b650af684d8704edc5c87e96802c1f73e"
-url = "https://github.com/neondatabase/neonctl/releases/download/v2.22.0/neonctl-linux-arm64"
-url_api = "https://api.github.com/repos/neondatabase/neonctl/releases/assets/375179285"
+[tools.gitleaks."platforms.linux-arm64"]
+checksum = "sha256:e4a487ee7ccd7d3a7f7ec08657610aa3606637dab924210b3aee62570fb4b080"
+url = "https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/gitleaks/gitleaks/releases/assets/378332057"
 
-[tools.neonctl."platforms.linux-arm64-musl"]
-checksum = "sha256:52201462796b8643e5bf91f75253d50b650af684d8704edc5c87e96802c1f73e"
-url = "https://github.com/neondatabase/neonctl/releases/download/v2.22.0/neonctl-linux-arm64"
-url_api = "https://api.github.com/repos/neondatabase/neonctl/releases/assets/375179285"
+[tools.gitleaks."platforms.linux-x64"]
+checksum = "sha256:551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+url = "https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz"
+url_api = "https://api.github.com/repos/gitleaks/gitleaks/releases/assets/378332058"
 
-[tools.neonctl."platforms.linux-x64"]
-checksum = "sha256:f4810da6ea3e35534cdfc1433caebcf50a70f004f8dc8293a576548d2517c343"
-url = "https://github.com/neondatabase/neonctl/releases/download/v2.22.0/neonctl-linux-x64"
-url_api = "https://api.github.com/repos/neondatabase/neonctl/releases/assets/375179293"
+[tools.gitleaks."platforms.macos-arm64"]
+checksum = "sha256:b40ab0ae55c505963e365f271a8d3846efbc170aa17f2607f13df610a9aeb6a5"
+url = "https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_darwin_arm64.tar.gz"
+url_api = "https://api.github.com/repos/gitleaks/gitleaks/releases/assets/378332059"
 
-[tools.neonctl."platforms.linux-x64-musl"]
-checksum = "sha256:f4810da6ea3e35534cdfc1433caebcf50a70f004f8dc8293a576548d2517c343"
-url = "https://github.com/neondatabase/neonctl/releases/download/v2.22.0/neonctl-linux-x64"
-url_api = "https://api.github.com/repos/neondatabase/neonctl/releases/assets/375179293"
-
-[tools.neonctl."platforms.macos-arm64"]
-checksum = "sha256:2043a38cdd01707c586900fffa51d4fa90806127d2920385f6c435603d69d1e2"
-url = "https://github.com/neondatabase/neonctl/releases/download/v2.22.0/neonctl-macos-x64"
-url_api = "https://api.github.com/repos/neondatabase/neonctl/releases/assets/375179290"
-
-[tools.neonctl."platforms.macos-x64"]
-checksum = "sha256:2043a38cdd01707c586900fffa51d4fa90806127d2920385f6c435603d69d1e2"
-url = "https://github.com/neondatabase/neonctl/releases/download/v2.22.0/neonctl-macos-x64"
-url_api = "https://api.github.com/repos/neondatabase/neonctl/releases/assets/375179290"
-
-[tools.neonctl."platforms.windows-x64"]
-checksum = "sha256:3aa619adba505fb3bf1658ff014fc1ea5737ba4bdec09d98ca3e205783917b5f"
-url = "https://github.com/neondatabase/neonctl/releases/download/v2.22.0/neonctl-win-x64.exe"
-url_api = "https://api.github.com/repos/neondatabase/neonctl/releases/assets/375179281"
+[tools.gitleaks."platforms.macos-x64"]
+checksum = "sha256:dfe101a4db2255fc85120ac7f3d25e4342c3c20cf749f2c20a18081af1952709"
+url = "https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_darwin_x64.tar.gz"
+url_api = "https://api.github.com/repos/gitleaks/gitleaks/releases/assets/378332053"
 
 [[tools.node]]
 version = "26.1.0"
 backend = "core:node"
-specifiers = ["26"]
+specifiers = [
+    "26",
+    "26.1.0",
+]
 
 [tools.node."platforms.linux-arm64"]
 checksum = "sha256:fcb4c339eef70c909cae72091008a6497278e2d0fcd221c0653068cf4ea4f0c7"
@@ -197,10 +212,13 @@ url = "https://nodejs.org/dist/v26.1.0/node-v26.1.0-darwin-x64.tar.gz"
 checksum = "sha256:089a02c4c687451c9f0b7f1bfd252dae85a7ba27df0295a14096bdcc956fdc92"
 url = "https://nodejs.org/dist/v26.1.0/node-v26.1.0-win-x64.zip"
 
-[[tools."npm:quicktype"]]
-version = "23.2.6"
-backend = "npm:quicktype"
-specifiers = ["latest"]
+[[tools."npm:vercel"]]
+version = "59.11.7"
+backend = "npm:vercel"
+specifiers = [
+    "59.11.7",
+    "latest",
+]
 
 [[tools.python]]
 version = "3.14.6"
@@ -254,7 +272,10 @@ profile = "minimal"
 [[tools.uv]]
 version = "0.11.12"
 backend = "aqua:astral-sh/uv"
-specifiers = ["latest"]
+specifiers = [
+    "0.11.12",
+    "latest",
+]
 
 [tools.uv."platforms.linux-arm64"]
 checksum = "sha256:d6e3e5183e71bbd40400da3d2913743cefb98835d8312a5e7908c33865597515"
@@ -297,3 +318,43 @@ checksum = "sha256:e46956a6b088a0382101c797eef945c1b03826e629e968d434cf838d42d85
 url = "https://github.com/astral-sh/uv/releases/download/0.11.12/uv-x86_64-pc-windows-msvc.zip"
 url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/415611484"
 provenance = "github-attestations"
+
+[[tools.watchexec]]
+version = "2.5.1"
+backend = "aqua:watchexec/watchexec"
+specifiers = ["2.5.1"]
+
+[tools.watchexec."platforms.linux-arm64"]
+checksum = "sha256:217e564946fec9911279c455e174e938d497480792a342c28712e50346cc0140"
+url = "https://github.com/watchexec/watchexec/releases/download/v2.5.1/watchexec-2.5.1-aarch64-unknown-linux-gnu.tar.xz"
+url_api = "https://api.github.com/repos/watchexec/watchexec/releases/assets/384489957"
+
+[tools.watchexec."platforms.linux-arm64-musl"]
+checksum = "sha256:c073887583d502fa0b393a8b847bb4460a111b3b0a199d1f70dafd5d89e71a2f"
+url = "https://github.com/watchexec/watchexec/releases/download/v2.5.1/watchexec-2.5.1-aarch64-unknown-linux-musl.tar.xz"
+url_api = "https://api.github.com/repos/watchexec/watchexec/releases/assets/384489962"
+
+[tools.watchexec."platforms.linux-x64"]
+checksum = "sha256:cafc381f74e95f8e93e796ef590c7cbbf3409dda6d56cf3dee6109c10e5188ee"
+url = "https://github.com/watchexec/watchexec/releases/download/v2.5.1/watchexec-2.5.1-x86_64-unknown-linux-gnu.tar.xz"
+url_api = "https://api.github.com/repos/watchexec/watchexec/releases/assets/384489923"
+
+[tools.watchexec."platforms.linux-x64-musl"]
+checksum = "sha256:9efabd08de720c1ee7e57b487fe11904f0966828e76146e2b5ea5deee90626be"
+url = "https://github.com/watchexec/watchexec/releases/download/v2.5.1/watchexec-2.5.1-x86_64-unknown-linux-musl.tar.xz"
+url_api = "https://api.github.com/repos/watchexec/watchexec/releases/assets/384489936"
+
+[tools.watchexec."platforms.macos-arm64"]
+checksum = "sha256:c5e405dd1109940b2510398d2182990c1be59063b94e11d7ace9c7b435cb1df1"
+url = "https://github.com/watchexec/watchexec/releases/download/v2.5.1/watchexec-2.5.1-aarch64-apple-darwin.tar.xz"
+url_api = "https://api.github.com/repos/watchexec/watchexec/releases/assets/384489930"
+
+[tools.watchexec."platforms.macos-x64"]
+checksum = "sha256:bb74bf33286ff7f31dd8e763e017fbc0418360d88baefd35bc57d662d28394e2"
+url = "https://github.com/watchexec/watchexec/releases/download/v2.5.1/watchexec-2.5.1-x86_64-apple-darwin.tar.xz"
+url_api = "https://api.github.com/repos/watchexec/watchexec/releases/assets/384489931"
+
+[tools.watchexec."platforms.windows-x64"]
+checksum = "sha256:aa448c2704ca1a37ce0f1fc75381d9a411946dd293cf6236293f549426a577f7"
+url = "https://github.com/watchexec/watchexec/releases/download/v2.5.1/watchexec-2.5.1-x86_64-pc-windows-msvc.zip"
+url_api = "https://api.github.com/repos/watchexec/watchexec/releases/assets/384489949"

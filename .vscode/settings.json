@@ -1,5 +1,17 @@
 {
-	"files.associations": {
-		"*.scry": "python"
-	}
+  "files.associations": {
+    "*.scry": "python"
+  },
+  "rust-analyzer.linkedProjects": [
+    "crystal/Cargo.toml"
+  ],
+  "python.defaultInterpreterPath": "${workspaceFolder}/manifest/.venv/bin/python",
+  "files.watcherExclude": {
+    "**/target/**": true,
+    "**/.cache/**": true
+  },
+  "search.exclude": {
+    "**/target": true,
+    "**/.cache": true
+  }
 }

@@ -11,68 +11,77 @@ concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 
+env:
+  RELEASE_TAG: ${{ github.ref_name }}
+
 jobs:
   validate:
     name: Validate release tag
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
           persist-credentials: false
-      - name: Require a versioned commit on main
-        env:
-          RELEASE_TAG: ${{ github.ref_name }}
-        run: |
-          git merge-base --is-ancestor HEAD origin/main
-          python3 - <<'PY'
-          import json
-          import os
-          import re
-          import tomllib
-          from pathlib import Path
-
-          tag = os.environ["RELEASE_TAG"]
-          assert re.fullmatch(r"v\d+\.\d+\.\d+", tag), "Use a vX.Y.Z release tag"
-          version = tag[1:]
-          manifests = list(Path("crystal").glob("*/Cargo.toml"))
-          manifests += list(Path("manifest").glob("*/pyproject.toml"))
-          manifests += [Path("manifest/pyproject.toml")]
-          for path in manifests:
-              data = tomllib.loads(path.read_text())
-              actual = data.get("package", data.get("project", {})).get("version")
-              assert actual == version, f"{path}: {actual} != {version}"
-          assert json.loads(Path("map/package.json").read_text())["version"] == version
-          PY
+          fetch-depth: 0
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        with:
+          install_args: python
+      - run: mise run release:validate
 
   checks:
     needs: validate
     uses: ./.github/workflows/ci.yml
-    with:
-      package-release: true
+
+  package:
+    name: Package ${{ matrix.platform }}
+    needs: checks
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {runner: ubuntu-24.04, platform: linux-x86_64}
+          - {runner: ubuntu-24.04-arm, platform: linux-aarch64}
+          - {runner: macos-15-intel, platform: darwin-x86_64}
+          - {runner: macos-15, platform: darwin-aarch64}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        with:
+          install_args: rust python uv node
+      - run: mise run ci:release
+      - run: mise run release:package
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: scryr-release-${{ matrix.platform }}
+          path: dist/release/*
+          if-no-files-found: error
+          retention-days: 1
 
   draft:
     name: Create draft release
-    needs: checks
+    needs: package
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 10
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        with:
+          install_args: python
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
-          name: scryr-release-linux-x86_64
-          path: release
-      - name: Verify and attach tested binary
+          pattern: scryr-release-*
+          merge-multiple: true
+          path: dist/release
+      - run: mise run release:draft
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ github.ref_name }}
-        run: |
-          cd release
-          sha256sum --check SHA256SUMS
-          gh release create "$RELEASE_TAG" \
-            scryr-linux-x86_64.tar.gz SHA256SUMS \
-            --verify-tag --draft --generate-notes \
-            --title "Scryr $RELEASE_TAG"

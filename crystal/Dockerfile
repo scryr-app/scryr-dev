@@ -1,7 +1,8 @@
 # syntax=docker/dockerfile:1
 
 # --- Build stage ---
-FROM rust:1.98-bookworm AS builder
+ARG RUST_VERSION
+FROM rust:${RUST_VERSION}-bookworm AS builder
 
 WORKDIR /app
 
@@ -18,13 +19,13 @@ RUN mkdir -p crystal-core/src crystal-server/src crystal-cli/src \
     && printf 'fn main() {}\n' > crystal-server/src/main.rs \
     && printf 'pub fn placeholder() {}\n' > crystal-server/src/lib.rs \
     && printf 'fn main() {}\n' > crystal-cli/src/main.rs
-RUN cargo fetch
+RUN cargo fetch --locked
 
 # Build the CLI release binary from the workspace. The server runs as `scryr serve`.
 COPY crystal-core ./crystal-core
 COPY crystal-server ./crystal-server
 COPY crystal-cli ./crystal-cli
-RUN cargo build --release -p crystal-cli --bin scryr
+RUN cargo build --locked --release -p crystal-cli --bin scryr
 
 # --- Runtime stage ---
 FROM ubuntu:26.04
