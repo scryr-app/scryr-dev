@@ -142,7 +142,7 @@ mod tests {
     #[test]
     fn sample_manifest_emits_expected_blocks() -> Result<(), String> {
         let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../manifest");
-        let manifest_file = manifest_dir.join("samples/open_saas/index.scry");
+        let manifest_file = manifest_dir.join("tests/samples/open_saas/index.scry");
         let environment = test_python_environment()?;
         prepare_manifest_python_environment(&manifest_dir, &environment)?;
 
@@ -177,7 +177,7 @@ mod tests {
     #[test]
     fn sample_manifest_emits_forges() -> Result<(), String> {
         let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../manifest");
-        let manifest_file = manifest_dir.join("samples/mern/index.scry");
+        let manifest_file = manifest_dir.join("tests/samples/mern/index.scry");
         let environment = test_python_environment()?;
         prepare_manifest_python_environment(&manifest_dir, &environment)?;
 
@@ -212,7 +212,7 @@ mod tests {
     #[test]
     fn sample_manifest_emits_diagrams() -> Result<(), String> {
         let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../manifest");
-        let manifest_file = manifest_dir.join("samples/mern/index.scry");
+        let manifest_file = manifest_dir.join("tests/samples/mern/index.scry");
         let environment = test_python_environment()?;
         prepare_manifest_python_environment(&manifest_dir, &environment)?;
 

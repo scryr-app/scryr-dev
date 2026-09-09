@@ -23,7 +23,7 @@ fn manifest_dir() -> Result<PathBuf, Box<dyn Error>> {
 
 /// Return a stable sample manifest path that exercises the real Python adapter.
 const fn sample_manifest() -> &'static str {
-    "samples/open_saas/index.scry"
+    "tests/samples/open_saas/index.scry"
 }
 
 /// Resolve the repo-local Scryr state directory used by CLI tests.
@@ -338,7 +338,7 @@ fn generate_mise_toml_emits_sample_forge() -> Result<(), Box<dyn Error>> {
             "generate",
             "mise",
             "--path",
-            "samples/mern/index.scry",
+            "tests/samples/mern/index.scry",
             "--manifest-dir",
             &manifest_dir.to_string_lossy(),
             "--scryr-dir",
@@ -375,7 +375,7 @@ fn generate_compose_emits_sample_forge_services() -> Result<(), Box<dyn Error>> 
             "generate",
             "compose",
             "--path",
-            "samples/mern/index.scry",
+            "tests/samples/mern/index.scry",
             "--manifest-dir",
             &manifest_dir.to_string_lossy(),
             "--scryr-dir",
@@ -413,7 +413,7 @@ fn generate_devcontainer_emits_sample_forge_json() -> Result<(), Box<dyn Error>>
             "generate",
             "devcontainer",
             "--path",
-            "samples/mern/index.scry",
+            "tests/samples/mern/index.scry",
             "--manifest-dir",
             &manifest_dir.to_string_lossy(),
             "--scryr-dir",

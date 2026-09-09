@@ -255,16 +255,16 @@ scryr auth logout
 Run against the MERN sample:
 
 ```bash
-cargo run -p crystal-cli -- generate types --path ../manifest/samples/mern/index.scry --manifest-dir ../manifest
-cargo run -p crystal-cli -- generate mise --path ../manifest/samples/mern/index.scry --manifest-dir ../manifest --forge "MERN Forge"
-cargo run -p crystal-cli -- generate compose --path ../manifest/samples/mern/index.scry --manifest-dir ../manifest --forge "MERN Forge"
-cargo run -p crystal-cli -- generate devcontainer --path ../manifest/samples/mern/index.scry --manifest-dir ../manifest --forge "MERN Forge"
+cargo run -p crystal-cli -- generate types --path ../manifest/tests/samples/mern/index.scry --manifest-dir ../manifest
+cargo run -p crystal-cli -- generate mise --path ../manifest/tests/samples/mern/index.scry --manifest-dir ../manifest --forge "MERN Forge"
+cargo run -p crystal-cli -- generate compose --path ../manifest/tests/samples/mern/index.scry --manifest-dir ../manifest --forge "MERN Forge"
+cargo run -p crystal-cli -- generate devcontainer --path ../manifest/tests/samples/mern/index.scry --manifest-dir ../manifest --forge "MERN Forge"
 ```
 
 Upload a sample to a local GraphQL server:
 
 ```bash
-cargo run -p crystal-cli -- generate upload --path ../manifest/samples/mern/index.scry --manifest-dir ../manifest
+cargo run -p crystal-cli -- generate upload --path ../manifest/tests/samples/mern/index.scry --manifest-dir ../manifest
 ```
 
 ## Report GitHub Actions status

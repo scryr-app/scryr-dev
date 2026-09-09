@@ -29,7 +29,7 @@ For local development:
 mise run install:python
 mise run test:python
 cd manifest
-uv run python -m scryr.cli samples/open_saas/index.scry --json
+uv run python -m scryr.cli tests/samples/open_saas/index.scry --json
 ```
 
 Manifest files may also use the `.scry` extension. A `.scry` file is Python
@@ -63,7 +63,7 @@ Python workspace and its locked dependencies. Other directories use the CLI's
 embedded SDK unless they also contain `scryr.toml`; `pyproject.toml` alone does
 not enable project mode.
 
-The [GitHub Actions sample](samples/github_actions/index.scry) demonstrates short
+The [GitHub Actions sample](tests/samples/github_actions/index.scry) demonstrates short
 section names (`Info`, `Github`, `CICD`), a stable `manifest_id`, and an attached
 workflow status timeline. See the [SDK guide](scryr/README.md#github-actions-history)
 for durable storage and polling.

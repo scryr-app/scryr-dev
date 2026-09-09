@@ -111,7 +111,7 @@ mod tests {
     #[test]
     fn manifest_line_numbers_include_public_manifest_variables() -> Result<(), String> {
         let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../manifest");
-        let manifest_file = manifest_dir.join("samples/open_saas/index.scry");
+        let manifest_file = manifest_dir.join("tests/samples/open_saas/index.scry");
 
         let line_numbers = manifest_line_numbers(&manifest_file)?;
 

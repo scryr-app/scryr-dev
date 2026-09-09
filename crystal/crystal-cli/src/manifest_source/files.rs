@@ -116,7 +116,7 @@ mod tests {
     #[test]
     fn sample_manifest_file_collection_uses_sample_directory() -> Result<(), String> {
         let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../manifest");
-        let manifest_file = manifest_dir.join("samples/open_saas/index.scry");
+        let manifest_file = manifest_dir.join("tests/samples/open_saas/index.scry");
 
         let files = collect_manifest_source_files(&manifest_file)?;
 

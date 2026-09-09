@@ -292,7 +292,7 @@ mod tests {
     #[test]
     fn sprite_execution_plan_bundles_sdk_and_manifest_sources() -> Result<(), String> {
         let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../manifest");
-        let manifest_file = manifest_dir.join("samples/open_saas/index.scry");
+        let manifest_file = manifest_dir.join("tests/samples/open_saas/index.scry");
 
         let plan = SpriteExecutionPlan::build(&manifest_dir, &manifest_file)?;
 

@@ -74,9 +74,9 @@ mod tests {
     fn resolve_manifest_file_accepts_relative_python_paths() -> Result<(), String> {
         let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../manifest");
         let resolved =
-            resolve_manifest_file(&manifest_dir, Path::new("samples/open_saas/index.scry"))?;
+            resolve_manifest_file(&manifest_dir, Path::new("tests/samples/open_saas/index.scry"))?;
 
-        assert!(resolved.ends_with("samples/open_saas/index.scry"));
+        assert!(resolved.ends_with("tests/samples/open_saas/index.scry"));
         Ok(())
     }
 
@@ -102,7 +102,7 @@ mod tests {
     #[test]
     fn derive_manifest_artifact_key_uses_sample_directory_name() {
         let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../manifest");
-        let manifest_file = manifest_dir.join("samples/open_saas/index.scry");
+        let manifest_file = manifest_dir.join("tests/samples/open_saas/index.scry");
 
         let key = derive_manifest_artifact_key(&manifest_dir, &manifest_file);
 

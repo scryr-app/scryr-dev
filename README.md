@@ -32,7 +32,7 @@ To generate an artifact from a bundled sample:
 
 ```bash
 ./crystal/target/release/scryr generate schema \
-  --path samples/mern/index.scry --manifest-dir manifest
+  --path tests/samples/mern/index.scry --manifest-dir manifest
 ```
 
 Release automation builds Linux and macOS archives for x86_64 and ARM64, with

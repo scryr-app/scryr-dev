@@ -82,7 +82,7 @@ mod tests {
     fn upload_metadata_falls_back_to_legacy_artifact_key() {
         let input = UpsertGeneratedManifestInput {
             artifact_kind: ArtifactKind::Value,
-            artifact_key: "samples/open_saas".to_string(),
+            artifact_key: "tests/samples/open_saas".to_string(),
             folder_path: None,
             file_name: None,
             scry_identifier: None,
