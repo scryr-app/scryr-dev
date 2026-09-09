@@ -28,7 +28,7 @@ fn observation(event: &Value) -> Result<GithubActionRun, String> {
 }
 
 /// Restrict credential-bearing requests to TLS or loopback development servers.
-fn endpoint(value: &str) -> Result<url::Url, String> {
+pub(super) fn endpoint(value: &str) -> Result<url::Url, String> {
     let url = url::Url::parse(value).map_err(|error| error.to_string())?;
     if !url.username().is_empty()
         || url.password().is_some()
@@ -90,6 +90,7 @@ async fn branch(
 
 /// Send one observation through Crystal's authenticated history mutation.
 pub(crate) async fn run(args: &ReportArgs) -> Result<(), String> {
+    crystal_core::reports::validate_manifest_id(&args.manifest_id)?;
     let event: Value = serde_json::from_slice(
         &std::fs::read(&args.event_file).map_err(|error| error.to_string())?,
     )
@@ -113,11 +114,18 @@ pub(crate) async fn run(args: &ReportArgs) -> Result<(), String> {
         println!("Skipped run outside selected branch {selected}");
         return Ok(());
     }
+    if args.dry_run {
+        println!(
+            "{}",
+            json!({"manifestId":args.manifest_id,"run":observation})
+        );
+        return Ok(());
+    }
     let mut request = client.post(endpoint(&args.endpoint)?).json(&json!({
         "query": "mutation Record($manifestId: String!, $run: JSON!, $source: String!) { recordActionRun(manifestId: $manifestId, run: $run, source: $source) }",
         "variables": {"manifestId": args.manifest_id, "run": observation, "source": "webhook"}
     }));
-    if let Ok(token) = std::env::var("SCRYR_TOKEN") {
+    if let Some(token) = reporting_token(&args.endpoint).await? {
         request = request.bearer_auth(token);
     }
     if let Some(org) = &args.clerk_org_id {
@@ -135,11 +143,35 @@ pub(crate) async fn run(args: &ReportArgs) -> Result<(), String> {
         return Err("Crystal rejected the action observation".into());
     }
     match body["data"]["recordActionRun"].as_bool() {
-        Some(true) => println!("Recorded action status"),
-        Some(false) => println!("Action status already recorded"),
+        Some(true) => {
+            if args.json {
+                println!("{}", json!({"recorded":true}));
+            } else {
+                println!("Recorded action status");
+            }
+        }
+        Some(false) => {
+            if args.json {
+                println!("{}", json!({"recorded":false}));
+            } else {
+                println!("Action status already recorded");
+            }
+        }
         None => return Err("Crystal returned an invalid reporting response".into()),
     }
     Ok(())
+}
+
+/// Share environment credentials and cached CLI login across reporters.
+pub(super) async fn reporting_token(target: &str) -> Result<Option<String>, String> {
+    if let Ok(token) = std::env::var("SCRYR_TOKEN") {
+        return Ok(Some(token));
+    }
+    let url = endpoint(target)?;
+    if matches!(url.host_str(), Some("localhost" | "127.0.0.1" | "[::1]")) {
+        return Ok(None);
+    }
+    crate::auth::access_token().await.map(Some)
 }
 
 #[cfg(test)]

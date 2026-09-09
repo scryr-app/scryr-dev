@@ -182,3 +182,21 @@ class ScryrClient:
             query, {"manifestId": manifest_id, "limit": limit, "offset": offset}
         )
         return GithubActionsLog.model_validate(payload["actionHistory"])
+
+    def record_report(self, manifest_id: str, report: dict[str, Any]) -> bool:
+        """Append a versioned operational report; Crystal validates the payload."""
+        return self._execute(
+            "mutation Report($manifestId: String!, $report: JSON!) { "
+            "recordReport(manifestId: $manifestId, report: $report) }",
+            {"manifestId": manifest_id, "report": report},
+        )["recordReport"]
+
+    def report_history(
+        self, manifest_id: str, *, limit: int = 100, offset: int = 0
+    ) -> list[dict[str, Any]]:
+        """Read a page of operational observations, newest first."""
+        return self._execute(
+            "query Reports($manifestId: String!, $limit: Int!, $offset: Int!) { "
+            "reportHistory(manifestId: $manifestId, limit: $limit, offset: $offset) }",
+            {"manifestId": manifest_id, "limit": limit, "offset": offset},
+        )["reportHistory"]

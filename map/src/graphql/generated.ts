@@ -2,29 +2,9 @@
 type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 /** Internal type. DO NOT USE DIRECTLY. */
 export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
-import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
-import type { DocumentTypeDecoration } from '@graphql-typed-document-node/core';
 import { graphqlFetcher } from './client';
-
-export class TypedDocumentString<TResult, TVariables>
-  extends String
-  implements DocumentTypeDecoration<TResult, TVariables>
-{
-  __apiType?: NonNullable<DocumentTypeDecoration<TResult, TVariables>['__apiType']>;
-  private value: string;
-  public __meta__?: Record<string, unknown> | undefined;
-
-  constructor(value: string, __meta__?: Record<string, unknown> | undefined) {
-    super(value);
-    this.value = value;
-    this.__meta__ = __meta__;
-  }
-
-  override toString(): string & DocumentTypeDecoration<TResult, TVariables> {
-    return this.value as string & DocumentTypeDecoration<TResult, TVariables>;
-  }
-}
-
+import type { DocumentTypeDecoration } from '@graphql-typed-document-node/core';
+import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 /** All built-in and custom scalars, mapped to their actual values */
@@ -34,11 +14,22 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
-  DateTime: { input: unknown; output: unknown; }
+  /** A scalar that can represent any JSON value. */
+  JSON: { input: unknown; output: unknown; }
+  /**
+   * A UUID is a unique 128-bit number, stored as 16 octets. UUIDs are parsed as
+   * Strings within GraphQL. UUIDs are used to assign unique identifiers to
+   * entities without requiring a central allocating authority.
+   *
+   * # References
+   *
+   * * [Wikipedia: Universally Unique Identifier](http://en.wikipedia.org/wiki/Universally_unique_identifier)
+   * * [RFC4122: A Universally Unique Identifier (UUID) URN Namespace](http://tools.ietf.org/html/rfc4122)
+   */
   UUID: { input: unknown; output: unknown; }
 };
 
-/** Logical kind for a generated artifact persisted to Postgres. */
+/** Logical kind for a generated artifact persisted to storage. */
 export enum ArtifactKind {
   /** Generated schema or type-definition output. */
   Schema = 'schema',
@@ -66,6 +57,8 @@ export type Block = {
   docs: Array<Scalars['String']['output']>;
   /** Web frameworks in use. */
   frameworks: Array<Scalars['String']['output']>;
+  /** Recent GitHub workflow runs and their observed status history. */
+  githubActions?: Maybe<Scalars['JSON']['output']>;
   /** Infrastructure as Code tooling (terraform, pulumi, cdk, etc.). */
   iacTool?: Maybe<Scalars['String']['output']>;
   /** Emoji or small icon string for the component. */
@@ -78,6 +71,8 @@ export type Block = {
   links: Array<Link>;
   /** Log aggregation and analysis platform. */
   logAggregation?: Maybe<Scalars['String']['output']>;
+  /** Stable Manifest identity used to attach operational history. */
+  manifestId?: Maybe<Scalars['String']['output']>;
   /** Maximum number of service replicas. */
   maxReplicas?: Maybe<Scalars['Int']['output']>;
   /** Minimum number of service replicas. */
@@ -100,26 +95,33 @@ export type Block = {
   version?: Maybe<Scalars['String']['output']>;
 };
 
-export type CreatePostInput = {
-  authorId: Scalars['UUID']['input'];
-  body: Scalars['String']['input'];
-  title: Scalars['String']['input'];
-  url?: InputMaybe<Scalars['String']['input']>;
+export type GeneratedManifestMutationRoot = {
+  __typename?: 'GeneratedManifestMutationRoot';
+  /** Record one GitHub Actions observation without rewriting a generated Manifest. */
+  recordActionRun: Scalars['Boolean']['output'];
+  /** Append a typed operational observation for the active organization. */
+  recordReport: Scalars['Boolean']['output'];
+  /** Upsert a generated manifest artifact into storage. */
+  upsertGeneratedManifest: UpsertGeneratedManifestPayload;
 };
 
-export type CreatePostPayload = {
-  __typename?: 'CreatePostPayload';
-  post?: Maybe<Post>;
+
+export type GeneratedManifestMutationRootRecordActionRunArgs = {
+  eventId?: InputMaybe<Scalars['String']['input']>;
+  manifestId: Scalars['String']['input'];
+  run: Scalars['JSON']['input'];
+  source?: Scalars['String']['input'];
 };
 
-export type CreateUserInput = {
-  displayName?: InputMaybe<Scalars['String']['input']>;
-  username: Scalars['String']['input'];
+
+export type GeneratedManifestMutationRootRecordReportArgs = {
+  manifestId: Scalars['String']['input'];
+  report: Scalars['JSON']['input'];
 };
 
-export type CreateUserPayload = {
-  __typename?: 'CreateUserPayload';
-  user?: Maybe<User>;
+
+export type GeneratedManifestMutationRootUpsertGeneratedManifestArgs = {
+  input: UpsertGeneratedManifestInput;
 };
 
 /** Health check result exposed over GraphQL and HTTP. */
@@ -142,76 +144,27 @@ export type Link = {
   siteName?: Maybe<Scalars['String']['output']>;
 };
 
-/** Root mutation type for GraphQL schema. */
-export type MutationRoot = {
-  __typename?: 'MutationRoot';
-  createPost: CreatePostPayload;
-  createUser: CreateUserPayload;
-  /** Upsert a generated manifest artifact into Postgres. */
-  upsertGeneratedManifest: UpsertGeneratedManifestPayload;
-};
-
-
-/** Root mutation type for GraphQL schema. */
-export type MutationRootCreatePostArgs = {
-  input: CreatePostInput;
-};
-
-
-/** Root mutation type for GraphQL schema. */
-export type MutationRootCreateUserArgs = {
-  input: CreateUserInput;
-};
-
-
-/** Root mutation type for GraphQL schema. */
-export type MutationRootUpsertGeneratedManifestArgs = {
-  input: UpsertGeneratedManifestInput;
-};
-
-/** Pagination information for a connection. */
-export type PageInfo = {
-  __typename?: 'PageInfo';
-  /** Cursor for the last edge in this page. */
-  endCursor?: Maybe<Scalars['String']['output']>;
-  /** Whether there are more pages after the current page. */
-  hasNextPage: Scalars['Boolean']['output'];
-  /** Whether there are pages before the current page. */
-  hasPreviousPage: Scalars['Boolean']['output'];
-  /** Cursor for the first edge in this page. */
-  startCursor?: Maybe<Scalars['String']['output']>;
-};
-
-/** Represents a post in the system. */
-export type Post = {
-  __typename?: 'Post';
-  /** Author of the post. */
-  author: User;
-  /** Post content. */
-  body: Scalars['String']['output'];
-  /** Timestamp when the post was created. */
-  createdAt: Scalars['DateTime']['output'];
-  /** Unique identifier for the post. */
-  id: Scalars['UUID']['output'];
-  /** Post title. */
-  title: Scalars['String']['output'];
-  /** Optional URL associated with the post. */
-  url?: Maybe<Scalars['String']['output']>;
-};
-
 export type QueryRoot = {
   __typename?: 'QueryRoot';
+  /** Read complete workflow attempts, newest first, scoped to the active organization. */
+  actionHistory: Scalars['JSON']['output'];
   /**
-   * Loads and returns blocks from generated manifest artifacts in Postgres.
-   * Pass `sample` to override which sample is served (e.g. `"calcom"`).
+   * Loads and returns blocks from generated manifest artifacts in the configured database.
+   * Pass `scry_identifier` to load an exact Scryr map, or `sample` for legacy lookup.
    */
   blocks: Array<Block>;
   health: HealthStatus;
-  node?: Maybe<User>;
-  posts: Array<Post>;
-  /** Lists persisted Scryr maps available in Postgres. */
+  /** Read operational observations for the active organization. */
+  reportHistory: Scalars['JSON']['output'];
+  /** Lists persisted Scryr maps available in the configured database. */
   scryrMaps: Array<ScryrMap>;
-  users: UserConnection;
+};
+
+
+export type QueryRootActionHistoryArgs = {
+  limit?: Scalars['Int']['input'];
+  manifestId: Scalars['String']['input'];
+  offset?: Scalars['Int']['input'];
 };
 
 
@@ -221,31 +174,13 @@ export type QueryRootBlocksArgs = {
 };
 
 
-export type QueryRootNodeArgs = {
-  id: Scalars['UUID']['input'];
+export type QueryRootReportHistoryArgs = {
+  limit?: Scalars['Int']['input'];
+  manifestId: Scalars['String']['input'];
+  offset?: Scalars['Int']['input'];
 };
 
-
-export type QueryRootPostsArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
-export type QueryRootUsersArgs = {
-  after?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  order?: InputMaybe<SortOrder>;
-};
-
-/** Sort order for query results. */
-export enum SortOrder {
-  /** Ascending order. */
-  Asc = 'ASC',
-  /** Descending order. */
-  Desc = 'DESC'
-}
-
-/** A persisted Scryr map artifact available in Postgres. */
+/** A persisted Scryr map artifact available in storage. */
 export type ScryrMap = {
   __typename?: 'ScryrMap';
   /** Clerk organization id that owns the uploaded manifest. */
@@ -256,7 +191,7 @@ export type ScryrMap = {
   folderPath: Scalars['String']['output'];
   /** Git commit SHA associated with the upload, when supplied. */
   gitCommitSha?: Maybe<Scalars['String']['output']>;
-  /** Persisted row identifier. */
+  /** Public map identifier used by the UI. */
   id: Scalars['String']['output'];
   /** Artifact key used by legacy sample-based lookups. */
   key: Scalars['String']['output'];
@@ -266,13 +201,8 @@ export type ScryrMap = {
   orgSlug?: Maybe<Scalars['String']['output']>;
   /** Stable Scryr identifier, normally the top-level Diagram variable name. */
   scryIdentifier: Scalars['String']['output'];
-  /** Last update timestamp rendered by Postgres. */
+  /** Last update timestamp rendered by the database. */
   updatedAt: Scalars['String']['output'];
-};
-
-export type SubscriptionRoot = {
-  __typename?: 'SubscriptionRoot';
-  postCreated: Post;
 };
 
 /** Input payload for upserting a generated manifest artifact. */
@@ -302,37 +232,6 @@ export type UpsertGeneratedManifestPayload = {
   id: Scalars['UUID']['output'];
 };
 
-/** Represents a user in the system. */
-export type User = {
-  __typename?: 'User';
-  /** User's display name. */
-  displayName?: Maybe<Scalars['String']['output']>;
-  /** Unique identifier for the user. */
-  id: Scalars['UUID']['output'];
-  /** Timestamp when the user joined. */
-  joinedAt: Scalars['DateTime']['output'];
-  /** User's login name. */
-  username: Scalars['String']['output'];
-};
-
-/** Connection of users with pagination support. */
-export type UserConnection = {
-  __typename?: 'UserConnection';
-  /** List of user edges. */
-  edges: Array<UserEdge>;
-  /** Pagination metadata. */
-  pageInfo: PageInfo;
-};
-
-/** Edge in a user connection, containing a user and cursor. */
-export type UserEdge = {
-  __typename?: 'UserEdge';
-  /** Cursor for pagination. */
-  cursor: Scalars['String']['output'];
-  /** The user data. */
-  node: User;
-};
-
 export type HealthCheckQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -344,14 +243,32 @@ export type GetScryrMapsQueryVariables = Exact<{ [key: string]: never; }>;
 export type GetScryrMapsQuery = { scryrMaps: Array<{ id: string, key: string, scryIdentifier: string, name: string, clerkOrgId: string, orgSlug: string | null, folderPath: string, fileName: string, gitCommitSha: string | null, updatedAt: string }> };
 
 export type GetBlocksQueryVariables = Exact<{
-  sample?: string | null | undefined;
   scryIdentifier?: string | null | undefined;
+  sample?: string | null | undefined;
 }>;
 
 
 export type GetBlocksQuery = { blocks: Array<{ name: string | null, description: string | null, version: string | null, lineNumber: number | null, consumerType: string | null, icon: string | null, language: string | null, frameworks: Array<string>, deployment: string | null, deploymentProvider: string | null, sourceCodeUrl: string | null, connections: Array<string>, docs: Array<string>, ownerTeam: string | null, tags: Array<string>, authType: string | null, monitoring: string | null, logAggregation: string | null, tracing: string | null, iacTool: string | null, cicdTool: string | null, maxReplicas: number | null, minReplicas: number | null, rawJsonString: string, links: Array<{ siteName: string | null, httpUrl: string | null }> }> };
 
 
+export class TypedDocumentString<TResult, TVariables>
+  extends String
+  implements DocumentTypeDecoration<TResult, TVariables>
+{
+  __apiType?: NonNullable<DocumentTypeDecoration<TResult, TVariables>['__apiType']>;
+  private value: string;
+  public __meta__?: Record<string, any> | undefined;
+
+  constructor(value: string, __meta__?: Record<string, any> | undefined) {
+    super(value);
+    this.value = value;
+    this.__meta__ = __meta__;
+  }
+
+  override toString(): string & DocumentTypeDecoration<TResult, TVariables> {
+    return this.value;
+  }
+}
 
 export const HealthCheckDocument = new TypedDocumentString(`
     query HealthCheck {

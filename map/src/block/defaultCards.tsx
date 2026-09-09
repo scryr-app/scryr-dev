@@ -8,6 +8,7 @@ import {
 	TestsCard,
 } from "@/cards";
 import type { BlockCardData } from "@/cards/blockCardData";
+import { ReportCard } from "../cards/ReportCard";
 
 export type BlockCardGroup = Array<{ components: ReactNode[] }>;
 
@@ -125,15 +126,32 @@ export function createBlockDataCards(cardData: BlockCardData): BlockCardGroup {
 			components: [<MetricsCard key="metrics-card" {...cardData.metrics} />],
 		},
 		{
-			components: [<CICDCard key="cicd-card" {...cardData.cicd} />],
-		},
-		{
-			components: [<TestsCard key="tests-card" {...cardData.tests} />],
-		},
-		{
 			components: [
-				<DependenciesCard key="deps-card" {...cardData.dependencies} />,
+				<CICDCard key="cicd-card" {...cardData.cicd} />,
+				...cardData.reports
+					.filter((r) => r.data.kind === "deployment")
+					.map((r) => <ReportCard key={r.scope} report={r} />),
 			],
+		},
+		{
+			components: cardData.reports.some(
+				(r) => r.data.kind === "tests" || r.data.kind === "coverage",
+			)
+				? cardData.reports
+						.filter(
+							(r) => r.data.kind === "tests" || r.data.kind === "coverage",
+						)
+						.map((r) => (
+							<ReportCard key={`${r.data.kind}:${r.scope}`} report={r} />
+						))
+				: [<TestsCard key="tests-card" {...cardData.tests} />],
+		},
+		{
+			components: cardData.reports.some((r) => r.data.kind === "dependencies")
+				? cardData.reports
+						.filter((r) => r.data.kind === "dependencies")
+						.map((r) => <ReportCard key={r.scope} report={r} />)
+				: [<DependenciesCard key="deps-card" {...cardData.dependencies} />],
 		},
 		{
 			components: [

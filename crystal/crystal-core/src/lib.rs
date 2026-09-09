@@ -3,6 +3,8 @@
 
 /// GitHub Actions run and status history models.
 pub mod action_history;
+/// Typed operational report observations.
+pub mod reports;
 
 mod error;
 pub use error::Error;

@@ -155,3 +155,56 @@ async fn action_history_graphql_contract() -> Result<(), Box<dyn std::error::Err
     sqlite.close().await;
     Ok(())
 }
+
+#[tokio::test]
+async fn operational_report_graphql_contract() -> Result<(), Box<dyn std::error::Error>> {
+    let sqlite = sqlx::sqlite::SqlitePoolOptions::new()
+        .max_connections(1)
+        .connect("sqlite::memory:")
+        .await?;
+    let schema = Schema::build(QueryRoot, GeneratedManifestMutationRoot, EmptySubscription)
+        .data(DatabasePool::Sqlite(sqlite))
+        .finish();
+    let report = serde_json::json!({"schemaVersion":1,"source":"junit","scope":"unit","runId":"1","attempt":1,"observedAt":"2026-09-08T10:00:00Z","data":{"kind":"tests","passing":2,"failing":1,"errors":0,"skipped":0,"duration":2.0}});
+    let request = || {
+        Request::new("mutation Report($report: JSON!) { recordReport(manifestId: \"services/api\", report:$report) }").variables(Variables::from_json(serde_json::json!({"report":report})))
+    };
+    assert!(!schema.execute(request()).await.errors.is_empty());
+    let mut principal = ManifestRequestContext {
+        clerk_user_id: "u".into(),
+        clerk_org_id: "org".into(),
+        clerk_org_slug: None,
+        clerk_org_role: Some("org:admin".into()),
+        clerk_org_permissions: vec![],
+    };
+    let result = schema.execute(request().data(principal.clone())).await;
+    assert!(result.errors.is_empty(), "{:?}", result.errors);
+    assert_eq!(result.data.into_json()?["recordReport"], true);
+    assert_eq!(
+        schema
+            .execute(request().data(principal.clone()))
+            .await
+            .data
+            .into_json()?["recordReport"],
+        false
+    );
+    let history = || Request::new("{ reportHistory(manifestId: \"services/api\") }");
+    assert_eq!(
+        schema
+            .execute(history().data(principal.clone()))
+            .await
+            .data
+            .into_json()?["reportHistory"][0]["data"]["passing"],
+        2
+    );
+    principal.clerk_org_id = "other".into();
+    assert_eq!(
+        schema
+            .execute(history().data(principal))
+            .await
+            .data
+            .into_json()?["reportHistory"],
+        serde_json::json!([])
+    );
+    Ok(())
+}

@@ -125,6 +125,10 @@ type Block {
 
 type GeneratedManifestMutationRoot {
 	"""
+	Append a typed operational observation for the active organization.
+	"""
+	recordReport(manifestId: String!, report: JSON!): Boolean!
+	"""
 	Record one GitHub Actions observation without rewriting a generated Manifest.
 	"""
 	recordActionRun(manifestId: String!, run: JSON!, eventId: String, source: String! = "api"): Boolean!
@@ -172,6 +176,10 @@ type Link {
 }
 
 type QueryRoot {
+	"""
+	Read operational observations for the active organization.
+	"""
+	reportHistory(manifestId: String!, limit: Int! = 100, offset: Int! = 0): JSON!
 	"""
 	Read complete workflow attempts, newest first, scoped to the active organization.
 	"""

@@ -16,6 +16,7 @@ name = "scryr"
 path = "src/main.rs"
 
 [dependencies]
+roxmltree = { workspace = true }
 base64 = { workspace = true }
 clap = { workspace = true }
 rand = { workspace = true }

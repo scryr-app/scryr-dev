@@ -6,10 +6,18 @@ use std::path::PathBuf;
 #[derive(Args, Debug, Clone)]
 pub(crate) struct ReportArgs {
     #[arg(long)]
+    pub dry_run: bool,
+    #[arg(long)]
+    pub json: bool,
+    #[arg(long)]
     pub manifest_id: String,
     #[arg(long, env = "GITHUB_EVENT_PATH")]
     pub event_file: PathBuf,
-    #[arg(long, env = "SCRYR_ENDPOINT")]
+    #[arg(
+        long,
+        env = "SCRYR_ENDPOINT",
+        default_value = "http://127.0.0.1:8000/graphql"
+    )]
     pub endpoint: String,
     #[arg(long, env = "SCRYR_CLERK_ORG_ID")]
     pub clerk_org_id: Option<String>,

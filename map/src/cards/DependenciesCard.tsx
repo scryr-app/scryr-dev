@@ -109,6 +109,11 @@ export function DependenciesCard({
 			gap={5}
 			alignItems="stretch"
 		>
+			{totalDeps === undefined && vulnerableDeps === undefined && (
+				<Text fontSize={10} color="#b8c2ce">
+					No dependency results reported
+				</Text>
+			)}
 			{/* Header */}
 			<Container flexDirection="row" alignItems="center" gap={4}>
 				<Package width={12} height={12} color={c} />

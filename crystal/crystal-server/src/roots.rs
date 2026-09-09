@@ -13,6 +13,22 @@ pub(crate) struct QueryRoot;
 
 #[Object]
 impl QueryRoot {
+    /// Read operational observations for the active organization.
+    async fn report_history(
+        &self,
+        ctx: &async_graphql::Context<'_>,
+        manifest_id: String,
+        #[graphql(default = 100)] limit: u32,
+        #[graphql(default = 0)] offset: u32,
+    ) -> async_graphql::Result<async_graphql::Json<Vec<crystal_core::reports::Report>>> {
+        let context = ctx.data::<crystal_core::manifest::ManifestRequestContext>()?;
+        let pool = ctx.data::<persistence::DatabasePool>()?;
+        persistence::read_reports(pool, &context.clerk_org_id, &manifest_id, limit, offset)
+            .await
+            .map(async_graphql::Json)
+            .map_err(async_graphql::Error::new)
+    }
+
     /// Read complete workflow attempts, newest first, scoped to the active organization.
     async fn action_history(
         &self,
