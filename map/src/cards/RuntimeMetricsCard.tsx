@@ -68,7 +68,7 @@ export function RuntimeMetricsCard({
 			<Text
 				fontSize={10}
 				color={snapshot.status === "ready" ? "#b8c2ce" : "#f59e0b"}
-			>{`${snapshot.environment ?? ""} · ${{ loading: "Loading", ready: "Snapshot", partial: "Partial data", no_data: "No data", stale: "Stale snapshot", error: "Unavailable" }[snapshot.status]}`}</Text>
+			>{`${snapshot.environment ?? ""} - ${{ loading: "Loading", ready: "Snapshot", partial: "Partial data", no_data: "No data", stale: "Stale snapshot", error: "Unavailable" }[snapshot.status]}`}</Text>
 			{snapshot.status === "loading" ? (
 				<Text fontSize={11} color="#b8c2ce">
 					{analytics ? "Loading from PostHog…" : "Loading from Grafana…"}

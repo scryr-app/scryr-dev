@@ -18,6 +18,7 @@ node_modules/
 dist/
 .vite/
 .cache/
+crystal/crystal-server/static/
 # Deno
 .deno/
 
