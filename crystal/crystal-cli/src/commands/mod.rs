@@ -2,6 +2,7 @@
 
 mod auth;
 mod generate;
+mod migrate;
 mod observations;
 mod report;
 mod serve;
@@ -13,12 +14,7 @@ pub(crate) async fn run(command: ResolvedCommand) -> Result<(), String> {
     match command {
         ResolvedCommand::Report(args) => observations::run(&args).await,
         ResolvedCommand::ReportActionStatus(args) => report::run(&args).await,
-        ResolvedCommand::Migrate => {
-            let pool = crystal_core::persistence::connect_from_env().await?;
-            crystal_core::persistence::ensure_table(&pool).await?;
-            println!("Database schema is up to date");
-            Ok(())
-        }
+        ResolvedCommand::Migrate => migrate::run().await,
         ResolvedCommand::Serve(args) => serve::run(&args).await,
         ResolvedCommand::Generate(args) => generate::run(&args).await,
         ResolvedCommand::Auth(args) => auth::run(&args).await,

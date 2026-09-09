@@ -347,13 +347,12 @@ hide = true
 run = "npm --prefix map run build"
 
 [tasks."build:oss"]
-description = "Build the self-contained open-source scryr CLI with embedded SDK, UI, and sample artifacts"
+description = "Build the self-contained open-source scryr CLI with embedded SDK and UI"
 dir = "{{config_root}}"
 run = [
   "mise run python:install-dependencies",
   "mise run sync:embedded-sdk",
   "mise run embed:ui:local",
-  "mise run embed:samples",
   "mise run build:rust:release",
 ]
 
@@ -554,29 +553,6 @@ find crystal/crystal-server/static/map -name .DS_Store -delete
 test -f crystal/crystal-server/static/map/index.html
 '''
 
-[tasks."embed:samples"]
-description = "Generate bundled sample artifacts for the embedded server"
-dir = "{{config_root}}"
-hide = true
-run = '''
-#!/usr/bin/env bash
-set -eu
-unset SCRYR_SPRITE SCRYR_SPRITE_ORG SCRYR_SPRITE_BIN
-
-rm -rf crystal/crystal-server/static/samples
-mkdir -p crystal/crystal-server/static/samples
-for sample_path in manifest/tests/samples/*/index.scry; do
-  sample_name="$(basename "$(dirname "$sample_path")")"
-  cargo run --manifest-path crystal/Cargo.toml --locked --quiet -p crystal-cli -- generate artifact-json \
-    --path "tests/samples/${sample_name}/index.scry" \
-    --manifest-dir manifest \
-    --scryr-dir .cache/scryr \
-    > "crystal/crystal-server/static/samples/${sample_name}.json"
-done
-
-test -f crystal/crystal-server/static/samples/mern.json
-'''
-
 # Cloud builds and deployment
 
 [tasks."build:docker"]
@@ -591,7 +567,6 @@ run = [
   "mise run python:install-dependencies",
   "mise run sync:embedded-sdk",
   "mise run embed:ui:cloud",
-  "mise run embed:samples",
   "mise run build:rust:release",
   "mise run build:ui:cloud",
 ]
@@ -760,7 +735,6 @@ run = '''
 set -euo pipefail
 export RUNNER_TEMP="$(mktemp -d)"
 trap 'rm -rf "$RUNNER_TEMP"' EXIT
-unset SCRYR_SPRITE SCRYR_SPRITE_ORG SCRYR_SPRITE_BIN
 unset DATABASE_URL TURSO_DATABASE_URL TURSO_AUTH_TOKEN LIBSQL_AUTH_TOKEN CLERK_SECRET_KEY
 export AUTH_MODE=local
 export SCRYR_API_TOKEN=windrunner

@@ -186,27 +186,4 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn generate_command_accepts_command_local_sprite_options() -> Result<(), String> {
-        let args = Args::parse_from([
-            "scryr",
-            "generate",
-            "types",
-            "--path",
-            "sample.py",
-            "--sprite",
-            "manifest-sandbox",
-            "--sprite-org",
-            "test-org",
-        ]);
-
-        let ResolvedCommand::Generate(generate_args) = args.resolved_command()? else {
-            return Err("expected generate command".to_string());
-        };
-
-        assert_eq!(generate_args.sprite, Some("manifest-sandbox".to_string()));
-        assert_eq!(generate_args.sprite_org, Some("test-org".to_string()));
-        assert_eq!(generate_args.output, GenerateOutput::Types);
-        Ok(())
-    }
 }

@@ -126,7 +126,6 @@ cargo run -p crystal-cli -- generate compose --path ../manifest/tests/samples/me
 cargo run -p crystal-cli -- auth whoami
 ```
 
-See [crystal-cli/README.md](crystal-cli/README.md) for every subcommand and option.
 
 Fly deployment health checks use `/ready`, while `/health` remains a lightweight
 process liveness endpoint.

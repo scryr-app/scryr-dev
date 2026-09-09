@@ -55,15 +55,6 @@ pub(crate) struct GenerateCommonArgs {
     /// Git commit SHA to associate with generated manifest uploads.
     #[arg(long, env = "SCRYR_GIT_COMMIT_SHA")]
     pub(crate) git_commit_sha: Option<String>,
-    /// sprites.dev Sprite name used to execute manifest code remotely.
-    #[arg(long, env = "SCRYR_SPRITE")]
-    pub(crate) sprite: Option<String>,
-    /// sprites.dev organization used with `--sprite`.
-    #[arg(long, env = "SCRYR_SPRITE_ORG")]
-    pub(crate) sprite_org: Option<String>,
-    /// Path to the sprites.dev CLI executable.
-    #[arg(long, env = "SCRYR_SPRITE_BIN", default_value = "sprite")]
-    pub(crate) sprite_bin: PathBuf,
 }
 
 /// Shared arguments for Forge-backed generate subcommands.
@@ -114,12 +105,6 @@ pub(crate) struct GenerateRequest {
     pub(crate) clerk_org_id: Option<String>,
     /// Git commit SHA to associate with generated manifest uploads.
     pub(crate) git_commit_sha: Option<String>,
-    /// sprites.dev Sprite name used to execute manifest code remotely.
-    pub(crate) sprite: Option<String>,
-    /// sprites.dev organization used with `--sprite`.
-    pub(crate) sprite_org: Option<String>,
-    /// Path to the sprites.dev CLI executable.
-    pub(crate) sprite_bin: PathBuf,
 }
 
 impl GenerateArgs {
@@ -166,8 +151,5 @@ fn resolve_generate_request(
         graphql_url: common.graphql_url,
         clerk_org_id: common.clerk_org_id,
         git_commit_sha: common.git_commit_sha,
-        sprite: common.sprite,
-        sprite_org: common.sprite_org,
-        sprite_bin: common.sprite_bin,
     }
 }

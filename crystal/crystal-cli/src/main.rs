@@ -16,8 +16,6 @@ mod manifest_paths;
 mod manifest_python;
 /// Manifest source discovery and source metadata helpers.
 mod manifest_source;
-/// sprites.dev execution helpers for untrusted manifest generation.
-mod manifest_sprite;
 /// Scryr state directory resolution helpers.
 mod scryr_dir;
 /// uv executable installation and resolution helpers.

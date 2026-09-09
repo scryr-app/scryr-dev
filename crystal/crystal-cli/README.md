@@ -61,9 +61,6 @@ These options are accepted by all `generate` targets:
 --path <file>          Manifest file to execute. Defaults to index.scry.
 --manifest-dir <dir>   Manifest project root. Defaults to the current directory.
 --scryr-dir <dir>      Scryr-managed local state directory.
---sprite <name>        Execute the manifest remotely through sprites.dev.
---sprite-org <org>     sprites.dev organization for remote execution.
---sprite-bin <path>    sprites.dev CLI executable. Defaults to sprite.
 ```
 
 For local execution, Scryr manages the Python runtime itself. On first use it
@@ -83,6 +80,15 @@ and an up-to-date `uv.lock`, because uv uses those files for
 `uv sync --no-dev --locked`. `scryr.toml` selects this mode; it does not replace
 uv's dependency metadata. Without it, Scryr runs its embedded adapter using
 `uv run --no-project` and a dedicated script environment.
+
+### Embedded Python SDK
+
+The standalone OSS CLI packages the Python SDK from `manifest/scryr`. Before
+the Rust CLI is compiled, `mise run sync:embedded-sdk` refreshes the crate-local
+copy at `crystal/crystal-cli/static/scryr-sdk`, removing build and cache files.
+`crystal/crystal-cli/build.rs` validates that copy and generates the embedded
+asset list used by the binary. Changes to `manifest/scryr` therefore require
+running the sync step before rebuilding the CLI.
 
 Forge-backed targets also accept:
 
