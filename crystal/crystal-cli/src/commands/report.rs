@@ -1,4 +1,4 @@
-//! Native workflow_run event reporting. No Python runtime is needed.
+//! Native `workflow_run` event reporting. No Python runtime is needed.
 use crate::args::ReportArgs;
 use crystal_core::action_history::GithubActionRun;
 use serde_json::{Value, json};
@@ -85,7 +85,7 @@ async fn branch(
     event["repository"]["default_branch"]
         .as_str()
         .map(str::to_owned)
-        .ok_or("missing repository default branch".into())
+        .ok_or_else(|| "missing repository default branch".into())
 }
 
 /// Send one observation through Crystal's authenticated history mutation.
