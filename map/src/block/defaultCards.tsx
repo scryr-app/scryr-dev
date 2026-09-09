@@ -27,7 +27,17 @@ export function createDefaultCards(cicdTool?: string): BlockCardGroup {
 export function createBlockDataCards(cardData: BlockCardData): BlockCardGroup {
 	return [
 		{
-			components: [<GithubCard key="github-card" {...cardData.github} />],
+			components: [
+				<GithubCard key="github-card" {...cardData.github} />,
+				...(cardData.runtimeAnalytics
+					? [
+							<RuntimeMetricsCard
+								key="analytics-card"
+								snapshot={cardData.runtimeAnalytics}
+							/>,
+						]
+					: []),
+			],
 		},
 		{
 			components: cardData.runtimeMetrics

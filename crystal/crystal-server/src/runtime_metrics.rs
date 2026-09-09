@@ -12,6 +12,10 @@ use tokio::sync::Mutex;
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct Source {
     kind: String,
+    #[serde(default, alias = "project_id")]
+    project_id: Option<u64>,
+    #[serde(default)]
+    labels: BTreeMap<String, String>,
     #[serde(alias = "query_endpoint")]
     query_endpoint: Option<String>,
     credentials: CredentialRef,
@@ -38,7 +42,10 @@ struct CredentialRef {
 #[serde(deny_unknown_fields)]
 struct Connection {
     endpoint: String,
+    #[serde(default)]
     username: String,
+    #[serde(default, alias = "projectId")]
+    project_id: Option<u64>,
     token: String,
 }
 #[derive(Default)]
@@ -78,11 +85,36 @@ impl RuntimeMetrics {
         if let Some(manifests) = manifests.as_array() {
             let futures = manifests.iter().filter_map(|manifest| {
                 let id = manifest.get("manifestId")?.as_str()?;
-                let config = manifest.get("metrics")?.get("provider")?;
-                if config.is_null() {
+                let metrics = manifest
+                    .get("metrics")
+                    .and_then(|m| m.get("provider"))
+                    .filter(|v| !v.is_null());
+                let analytics = manifest.get("analytics").filter(|v| !v.is_null());
+                if metrics.is_none() && analytics.is_none() {
                     return None;
                 }
-                Some(async move { (id.to_owned(), self.snapshot(org, id, config).await) })
+                Some(async move {
+                    let (mut snapshot, analytics) = tokio::join!(
+                        async {
+                            if let Some(config) = metrics {
+                                self.snapshot(org, id, config).await
+                            } else {
+                                json!({})
+                            }
+                        },
+                        async {
+                            if let Some(config) = analytics {
+                                Some(self.snapshot(org, id, config).await)
+                            } else {
+                                None
+                            }
+                        }
+                    );
+                    if let Some(analytics) = analytics {
+                        snapshot["analytics"] = analytics;
+                    }
+                    (id.to_owned(), snapshot)
+                })
             });
             for (id, snapshot) in futures_util::future::join_all(futures).await {
                 result.insert(id, snapshot);
@@ -140,6 +172,7 @@ impl RuntimeMetrics {
         };
         entry.result.clone()
     }
+    #[allow(clippy::literal_string_with_formatting_args)] // These are documented HogQL template tokens.
     async fn collect(&self, org: &str, source: &Source) -> Result<Value, &'static str> {
         let connection = self
             .connections
@@ -150,20 +183,16 @@ impl RuntimeMetrics {
         let end = chrono::Utc::now().timestamp() - i64::from(source.ingestion_delay);
         let start = end - i64::from(source.window);
         let futures = source.queries.iter().map(|(name, expression)| async {
-            let mut response = self
-                .client
-                .get(endpoint.clone())
-                .basic_auth(&connection.username, Some(&connection.token))
-                .query(&[
-                    ("query", expression.clone()),
-                    ("start", start.to_string()),
-                    ("end", end.to_string()),
-                    ("step", source.step.to_string()),
-                    ("timeout", "5s".into()),
-                ])
-                .send()
-                .await
-                .map_err(|_| "Metrics request failed or timed out")?;
+            let request = if source.kind == "posthog" {
+                let environment = format!("'{}'", source.environment.replace('\\', "\\\\").replace('\'', "\\'"));
+                let query = expression.replace("{start}", &start.to_string()).replace("{end}", &end.to_string()).replace("{environment}", &environment);
+                self.client.post(endpoint.clone()).bearer_auth(&connection.token)
+                    .json(&json!({"query":{"kind":"HogQLQuery","query":query},"refresh":"force_blocking","name":"Scryr diagram analytics"}))
+            } else {
+                self.client.get(endpoint.clone()).basic_auth(&connection.username, Some(&connection.token))
+                    .query(&[("query", expression.clone()), ("start", start.to_string()), ("end", end.to_string()), ("step", source.step.to_string()), ("timeout", "5s".into())])
+            };
+            let mut response = request.send().await.map_err(|_| "Metrics request failed or timed out")?;
             if !response.status().is_success() {
                 return Err("Metrics backend rejected the request");
             }
@@ -180,14 +209,14 @@ impl RuntimeMetrics {
             }
             let body: Value =
                 serde_json::from_slice(&bytes).map_err(|_| "Invalid metric response")?;
-            let series = parse_series(&body, start, end, source.step)?;
+            let series = if source.kind == "posthog" { parse_aggregate(&body, end)? } else { parse_series(&body, start, end, source.step)? };
             Ok((name.clone(), series))
         });
         let mut values = serde_json::Map::new();
         let mut missing = Vec::new();
         for (name, series) in futures_util::future::try_join_all(futures).await? {
             if let Some(last) = series.last() {
-                values.insert(name.clone(),json!({"value":last.1,"evaluatedAt":last.0,"unit":source.units.get(&name),"samples":series}));
+                values.insert(name.clone(),json!({"value":last.1,"evaluatedAt":last.0,"unit":source.units.get(&name),"samples":series,"label":source.labels.get(&name)}));
             } else {
                 missing.push(name);
             }
@@ -205,13 +234,15 @@ impl RuntimeMetrics {
             .and_then(|s| url::Url::parse(s).ok())
             .filter(|u| u.scheme() == "https")
             .map(|mut u| {
-                u.query_pairs_mut()
-                    .append_pair("from", &(start * 1000).to_string())
-                    .append_pair("to", &(end * 1000).to_string());
+                if source.kind == "prometheus" {
+                    u.query_pairs_mut()
+                        .append_pair("from", &(start * 1000).to_string())
+                        .append_pair("to", &(end * 1000).to_string());
+                }
                 u.to_string()
             });
         Ok(
-            json!({"status":status,"values":values,"missing":missing,"fetchedAt":chrono::Utc::now(),"windowStart":start,"windowEnd":end,"environment":source.environment,"dashboardUrl":dashboard,"source":"prometheus"}),
+            json!({"status":status,"values":values,"missing":missing,"fetchedAt":chrono::Utc::now(),"windowStart":start,"windowEnd":end,"environment":source.environment,"dashboardUrl":dashboard,"source":source.kind}),
         )
     }
 }
@@ -220,7 +251,18 @@ fn unavailable(message: &str) -> Value {
 }
 impl Source {
     fn validate(&self) -> Result<(), &'static str> {
-        if self.kind != "prometheus"
+        if !matches!(self.kind.as_str(), "prometheus" | "posthog")
+            || self.project_id == Some(0)
+            || self
+                .labels
+                .iter()
+                .any(|(k, v)| !self.queries.contains_key(k) || v.trim().is_empty() || v.len() > 80)
+            || (self.kind == "posthog"
+                && self.queries.values().any(|q| {
+                    !["{start}", "{end}", "{environment}"]
+                        .iter()
+                        .all(|token| q.contains(token))
+                }))
             || self.refresh != "on_diagram_load"
             || !(60..=86400).contains(&self.window)
             || !(15..=3600).contains(&self.step)
@@ -260,9 +302,50 @@ fn approved_endpoint(connection: &Connection, source: &Source) -> Result<url::Ur
     {
         return Err("Manifest metric endpoint is not approved for this connection");
     }
-    let path = format!("{}/api/v1/query_range", url.path().trim_end_matches('/'));
+    let path = if source.kind == "posthog" {
+        let project = connection
+            .project_id
+            .filter(|id| *id > 0)
+            .ok_or("PostHog project is not configured for this connection")?;
+        if source.project_id.is_some_and(|id| id != project) {
+            return Err("PostHog project is not approved for this connection");
+        }
+        format!(
+            "{}/api/projects/{project}/query/",
+            url.path().trim_end_matches('/')
+        )
+    } else {
+        format!("{}/api/v1/query_range", url.path().trim_end_matches('/'))
+    };
     url.set_path(&path);
     Ok(url)
+}
+fn parse_aggregate(body: &Value, end: i64) -> Result<Vec<(f64, f64)>, &'static str> {
+    if body.get("error").is_some_and(|v| !v.is_null())
+        || body["is_cached"] == true
+        || body["query_status"]["complete"] == false
+        || body["hasMore"] == true
+    {
+        return Err("PostHog returned an incomplete or cached result");
+    }
+    let rows = body["results"]
+        .as_array()
+        .ok_or("Missing PostHog results")?;
+    if rows.is_empty() {
+        return Ok(Vec::new());
+    }
+    if rows.len() != 1 || rows[0].as_array().is_none_or(|r| r.len() != 1) {
+        return Err("PostHog query must return one numeric cell");
+    }
+    if rows[0][0].is_null() {
+        return Ok(Vec::new());
+    }
+    let value = rows[0][0]
+        .as_f64()
+        .filter(|v| v.is_finite())
+        .ok_or("Invalid PostHog aggregate")?;
+    #[allow(clippy::cast_precision_loss)]
+    Ok(vec![(end as f64, value)])
 }
 fn parse_series(
     body: &Value,
@@ -367,6 +450,7 @@ mod tests {
                     Connection {
                         endpoint: format!("http://{address}"),
                         username: "user".into(),
+                        project_id: None,
                         token: "secret".into(),
                     },
                 )]),
@@ -412,6 +496,98 @@ mod tests {
         );
         handle.stop(true).await;
         Ok(())
+    }
+    #[actix_web::test]
+    async fn posthog_aggregates_are_authenticated_cached_and_isolated()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let calls = Arc::new(AtomicUsize::new(0));
+        let observed = Arc::clone(&calls);
+        let listener = std::net::TcpListener::bind("127.0.0.1:0")?;
+        let address = listener.local_addr()?;
+        let server = actix_web::HttpServer::new(move || {
+            let calls = Arc::clone(&observed);
+            actix_web::App::new().route(
+                "/api/projects/42/query/",
+                actix_web::web::post().to(
+                    move |request: actix_web::HttpRequest, body: actix_web::web::Json<Value>| {
+                        let calls = Arc::clone(&calls);
+                        async move {
+                            calls.fetch_add(1, Ordering::SeqCst);
+                            assert_eq!(
+                                request
+                                    .headers()
+                                    .get("authorization")
+                                    .and_then(|h| h.to_str().ok()),
+                                Some("Bearer secret")
+                            );
+                            assert_eq!(body["refresh"], "force_blocking");
+                            assert_eq!(body["query"]["kind"], "HogQLQuery");
+                            let query = body["query"]["query"].as_str().unwrap_or_default();
+                            assert!(query.contains("'production'"));
+                            assert!(!query.contains("{start}"));
+                            actix_web::HttpResponse::Ok()
+                                .json(json!({"results":[[0]],"is_cached":false}))
+                        }
+                    },
+                ),
+            )
+        })
+        .listen(listener)?
+        .run();
+        let handle = server.handle();
+        actix_web::rt::spawn(server);
+        let runtime = RuntimeMetrics {
+            connections: BTreeMap::from([(
+                "org".into(),
+                BTreeMap::from([(
+                    "posthog".into(),
+                    Connection {
+                        endpoint: format!("http://{address}"),
+                        username: String::new(),
+                        project_id: Some(42),
+                        token: "secret".into(),
+                    },
+                )]),
+            )]),
+            cache: Mutex::default(),
+            client: reqwest::Client::new(),
+        };
+        let source = json!({"kind":"posthog","credentials":{"name":"posthog"},"projectId":42,"environment":"production","refresh":"on_diagram_load","window":86400,"step":60,"cacheTtl":60,"ingestionDelay":120,"queries":{"views":"SELECT count() FROM events WHERE timestamp >= toDateTime({start}) AND timestamp < toDateTime({end}) AND properties.environment = {environment}"},"labels":{"views":"Catalog views"}});
+        let manifests = json!([{"manifestId":"web","analytics":source, "metrics":{"provider":{"invalid":true}}}]);
+        let (a, b) = tokio::join!(
+            runtime.load("org", &manifests),
+            runtime.load("org", &manifests)
+        );
+        assert_eq!(a, b);
+        assert_eq!(a["web"]["status"], "error");
+        assert_eq!(a["web"]["analytics"]["status"], "ready");
+        assert_eq!(a["web"]["analytics"]["values"]["views"]["value"], 0.0);
+        assert_eq!(calls.load(Ordering::SeqCst), 1);
+        assert_eq!(
+            runtime.load("other", &manifests).await["web"]["analytics"]["status"],
+            "error"
+        );
+        let mut denied = manifests.clone();
+        denied[0]["analytics"]["projectId"] = json!(99);
+        assert_eq!(
+            runtime.load("org", &denied).await["web"]["analytics"]["status"],
+            "error"
+        );
+        assert_eq!(calls.load(Ordering::SeqCst), 1);
+        handle.stop(true).await;
+        Ok(())
+    }
+    #[test]
+    fn posthog_rejects_partial_cached_and_nonaggregate_results() {
+        assert!(parse_aggregate(&json!({"results":[]}), 100).is_ok_and(|v| v.is_empty()));
+        for body in [
+            json!({"results":[[1],[2]]}),
+            json!({"results":[["1"]]}),
+            json!({"results":[[1]],"is_cached":true}),
+            json!({"results":[[1]],"query_status":{"complete":false}}),
+        ] {
+            assert!(parse_aggregate(&body, 100).is_err());
+        }
     }
     #[test]
     fn rejects_ambiguous_series_and_ignores_nonfinite_samples() -> Result<(), &'static str> {

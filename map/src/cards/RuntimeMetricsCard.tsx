@@ -6,6 +6,14 @@ export function runtimeMetricLines(
 	snapshot: RuntimeMetricSnapshot,
 	performance: boolean,
 ): string[] {
+	if (snapshot.source === "posthog") {
+		return Object.entries(snapshot.values)
+			.map(
+				([name, point]) =>
+					`${point.label ?? name}: ${Number.isFinite(point.value) ? `${point.value} ${point.unit ?? ""}` : "unavailable"}`,
+			)
+			.concat((snapshot.missing ?? []).map((name) => `${name}: unavailable`));
+	}
 	const fields = performance
 		? ["cpuCurrent", "cpuAvg", "cpuPeak", "memoryUsage"]
 		: [
@@ -40,6 +48,7 @@ export function RuntimeMetricsCard({
 	snapshot: RuntimeMetricSnapshot;
 	performance?: boolean;
 }) {
+	const analytics = snapshot.source === "posthog";
 	const url =
 		snapshot.dashboardUrl && /^https:\/\//.test(snapshot.dashboardUrl)
 			? snapshot.dashboardUrl
@@ -54,7 +63,7 @@ export function RuntimeMetricsCard({
 			gap={3}
 		>
 			<Text fontSize={16} color={currentTheme.cardTextColor}>
-				{performance ? "PERFORMANCE" : "METRICS"}
+				{analytics ? "ANALYTICS" : performance ? "PERFORMANCE" : "METRICS"}
 			</Text>
 			<Text
 				fontSize={10}
@@ -62,7 +71,7 @@ export function RuntimeMetricsCard({
 			>{`${snapshot.environment ?? ""} · ${{ loading: "Loading", ready: "Snapshot", partial: "Partial data", no_data: "No data", stale: "Stale snapshot", error: "Unavailable" }[snapshot.status]}`}</Text>
 			{snapshot.status === "loading" ? (
 				<Text fontSize={11} color="#b8c2ce">
-					Loading from Grafana…
+					{analytics ? "Loading from PostHog…" : "Loading from Grafana…"}
 				</Text>
 			) : (
 				runtimeMetricLines(snapshot, performance).map((line) => (
@@ -71,6 +80,14 @@ export function RuntimeMetricsCard({
 					</Text>
 				))
 			)}
+			{analytics &&
+				snapshot.windowStart !== undefined &&
+				snapshot.windowEnd !== undefined && (
+					<Text
+						fontSize={8}
+						color="#b8c2ce"
+					>{`${new Date(snapshot.windowStart * 1000).toISOString()} – ${new Date(snapshot.windowEnd * 1000).toISOString()}`}</Text>
+				)}
 			{snapshot.error && (
 				<Text fontSize={8} color="#f59e0b">
 					{snapshot.error}
@@ -87,7 +104,7 @@ export function RuntimeMetricsCard({
 					onClick={() => window.open(url, "_blank", "noopener,noreferrer")}
 				>
 					<Text fontSize={10} color="#60a5fa">
-						Open Grafana for this window
+						{analytics ? "Open PostHog" : "Open Grafana for this window"}
 					</Text>
 				</Container>
 			)}

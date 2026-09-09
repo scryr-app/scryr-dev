@@ -3,6 +3,7 @@ import http.server,json,threading,subprocess,os,time,urllib.request
 from pathlib import Path
 root=Path(__file__).resolve().parents[2]; output=root/'.scryr/runtime-metrics-verification'; output.mkdir(parents=True,exist_ok=True)
 calls=[]
+analytics_calls=[]
 class Handler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         from urllib.parse import urlparse,parse_qs
@@ -11,11 +12,21 @@ class Handler(http.server.BaseHTTPRequestHandler):
         expr=p['query'][0];value='120' if 'histogram_quantile' in expr else '2'
         body=json.dumps({'status':'success','data':{'resultType':'matrix','result':[{'values':[[int(p['end'][0]),value]]}]}}).encode()
         self.send_response(200);self.send_header('Content-Type','application/json');self.send_header('Content-Length',str(len(body)));self.end_headers();self.wfile.write(body)
+    def do_POST(self):
+        assert self.path == '/api/projects/42/query/'
+        assert self.headers['Authorization'] == 'Bearer demo'
+        request = json.loads(self.rfile.read(int(self.headers['Content-Length'])))
+        assert request['query']['kind'] == 'HogQLQuery'
+        assert "properties.environment = 'production'" in request['query']['query']
+        assert '{start}' not in request['query']['query']
+        analytics_calls.append(request)
+        body = json.dumps({'results': [[0]], 'is_cached': False}).encode()
+        self.send_response(200);self.send_header('Content-Type','application/json');self.send_header('Content-Length',str(len(body)));self.end_headers();self.wfile.write(body)
     def log_message(self,*args): pass
 backend=http.server.ThreadingHTTPServer(('127.0.0.1',0),Handler)
 threading.Thread(target=backend.serve_forever,daemon=True).start()
 connections=output/'mock-connections.json'
-connections.write_text(json.dumps({'local-dev-org':{'northwind-grafana-read':{'endpoint':f'http://127.0.0.1:{backend.server_port}','username':'demo','token':'demo'}}}))
+connections.write_text(json.dumps({'local-dev-org':{'northwind-grafana-read':{'endpoint':f'http://127.0.0.1:{backend.server_port}','username':'demo','token':'demo'},'northwind-posthog-read':{'endpoint':f'http://127.0.0.1:{backend.server_port}','project_id':42,'token':'demo'}}}))
 endpoint='http://127.0.0.1:8002/graphql'
 env=dict(os.environ,SCRYR_SQLITE_PATH=str(output/'scryr.db'),SCRYR_METRICS_CONNECTIONS_FILE=str(connections))
 cli=str(root/'crystal/target/debug/scryr'); log=(output/'server.log').open('w')
@@ -33,9 +44,15 @@ try:
     subprocess.run([cli,'generate','upload','--path',str(project/'index.scry'),'--manifest-dir',str(project),'--scryr-dir',str(root/'.scryr')],cwd=root,env=dict(env,SCRYR_GRAPHQL_URL=endpoint),check=True)
     blocks='{ blocks(scryIdentifier:"northwind_commerce_diagram") { name rawJsonString } }'
     for _ in range(3):query(blocks)
-    assert len(calls)==0, 'ordinary block reads fetched metrics'
+    assert len(calls)==0 and len(analytics_calls)==0, 'ordinary block reads fetched observations'
     metrics='{ diagramMetrics(scryIdentifier:"northwind_commerce_diagram") }'
-    snapshot=query(metrics)['diagramMetrics']['northwind-commerce/api']
+    response=query(metrics)['diagramMetrics']
+    snapshot=response['northwind-commerce/api']
+    analytics=response['northwind-commerce/web']['analytics']
+    assert analytics['status']=='ready',analytics
+    assert len(analytics['values'])==6
+    assert all(p['value']==0 for p in analytics['values'].values())
+    assert len(analytics_calls)==6
     assert snapshot['status']=='ready',snapshot
     assert len(calls)==5,len(calls)
     assert snapshot['values']['responseTimeP95']['value']==120
@@ -43,9 +60,9 @@ try:
     assert 'cpuCurrent' not in snapshot['values']
     query(metrics)
     for _ in range(3):query(blocks)
-    assert len(calls)==5,'cache or polling contract broken'
+    assert len(calls)==5 and len(analytics_calls)==6,'cache or polling contract broken'
     assert 'demo' not in json.dumps(snapshot)
     (output/'snapshot.json').write_text(json.dumps(snapshot,indent=2))
-    print(json.dumps({'ordinaryBlockReadFetches':0,'diagramLoadQueries':5,'afterCachedLoadAndMorePolling':len(calls),'manifest':'northwind-commerce/api','status':snapshot['status'],'backend':'local mock, not live Grafana'},indent=2))
+    print(json.dumps({'ordinaryBlockReadFetches':0,'diagramLoadQueries':5,'afterCachedLoadAndMorePolling':len(calls),'manifest':'northwind-commerce/api','status':snapshot['status'],'posthogQueries':len(analytics_calls),'backend':'isolated fixtures, not live Grafana or PostHog'},indent=2))
 finally:
     server.terminate();server.wait(timeout=15);backend.shutdown();log.close()

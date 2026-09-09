@@ -1023,6 +1023,12 @@ class PrometheusSource:
         return self.values.copy()
 
 
+class PostHogSource(PrometheusSource):
+    def __init__(self, *, project_id=None, labels=None, window=86400, **kwargs):
+        super().__init__(window=window, **kwargs)
+        self.values.update(kind="posthog", projectId=project_id, labels=labels or {})
+
+
 class Metrics(_Section):
     """Manifest section for Metrics data."""
 
@@ -1163,6 +1169,7 @@ class Manifest:
         consumer_type: Any = None,
         info: Info | None = None,
         github: Github | None = None,
+        analytics: PostHogSource | None = None,
         metrics: Metrics | None = None,
         cicd: CICD | None = None,
         tests: Tests | None = None,
@@ -1223,6 +1230,7 @@ class Manifest:
             if repo_url is not None
             else github
         )
+        self.analytics = analytics
         self.metrics = metrics
         self.cicd = (
             CICD(**{**getattr(cicd, "values", {}), "platform": cicd_tool})
@@ -1250,6 +1258,7 @@ class Manifest:
             data["classification"] = getattr(self.classification, "value", self.classification)
         sections = {
             "github": self.github,
+            "analytics": self.analytics,
             "metrics": self.metrics,
             "cicd": self.cicd,
             "tests": self.tests,
@@ -1336,6 +1345,7 @@ from .manifest import (
     CICD,
     CredentialRef,
     PrometheusSource,
+    PostHogSource,
     Dependencies,
     Diagram,
     Github,
@@ -1376,6 +1386,7 @@ __all__ = [
     "CICD",
     "CredentialRef",
     "PrometheusSource",
+    "PostHogSource",
     "CICDToolType",
     "CalendarVersion",
     "Dependencies",

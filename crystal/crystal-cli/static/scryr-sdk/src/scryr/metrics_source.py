@@ -45,3 +45,32 @@ class PrometheusSource(BaseModel):
             msg = "Units must refer to configured queries"
             raise ValueError(msg)
         return self
+
+
+class PostHogSource(PrometheusSource):
+    """Bounded HogQL aggregate queries resolved only when opening a diagram.
+
+    Queries return one numeric cell. {start} and {end} are Unix seconds;
+    {environment} is a server-escaped SQL string literal.
+    """
+
+    kind: Literal["posthog"] = "posthog"
+    project_id: int | None = Field(default=None, alias="projectId", gt=0)
+    window: int = Field(default=86400, ge=60, le=86400)
+    labels: dict[str, str] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def validate_analytics(self) -> PostHogSource:
+        """Keep query labels bounded and every aggregate scoped to its window."""
+        if not self.labels.keys() <= self.queries.keys() or any(
+            not value.strip() or len(value) > 80 for value in self.labels.values()
+        ):
+            msg = "Labels must name configured queries and contain 1..80 characters"
+            raise ValueError(msg)
+        if any(
+            not all(token in query for token in ("{start}", "{end}", "{environment}"))
+            for query in self.queries.values()
+        ):
+            msg = "PostHog queries require start, end, and environment placeholders"
+            raise ValueError(msg)
+        return self

@@ -17,7 +17,7 @@ from pydantic import (
 )
 
 from .github import GithubActionsLog  # noqa: TC001 - Pydantic resolves this at runtime.
-from .metrics_source import PrometheusSource  # noqa: TC001
+from .metrics_source import PostHogSource, PrometheusSource  # noqa: TC001
 from .types import (
     AuthType,
     CalendarVersion,
@@ -864,6 +864,7 @@ class Manifest(BaseModel):
     # domain-level Manifest section models rather than UI component references.
     info: Info = Field(default_factory=Info)
     github: Github | None = Field(default=None)
+    analytics: PostHogSource | None = Field(default=None)
     metrics: Metrics | None = Field(default=None)
     cicd: CICD | None = Field(default=None)
     tests: Tests | None = Field(default=None)
@@ -887,6 +888,7 @@ class Manifest(BaseModel):
         forges: list[Label | str] | None = None,
         info: Info | None = None,
         github: Github | None = None,
+        analytics: PostHogSource | None = None,
         metrics: Metrics | None = None,
         cicd: CICD | None = None,
         tests: Tests | None = None,
@@ -924,6 +926,7 @@ class Manifest(BaseModel):
             "tags": tags,
             "connections": connections,
             "forges": forges,
+            "analytics": analytics,
             "metrics": metrics,
             "tests": tests,
             "dependencies": dependencies,

@@ -235,12 +235,10 @@ export function useBlocksData(variables?: GetBlocksQueryVariables) {
 		() => normalizeBlocksData(query.data),
 		[query.data],
 	);
-	const configured = normalized.some((block) =>
-		Boolean(
-			parseRawJsonString(block.rawJsonString)?.metrics &&
-				asRecord(parseRawJsonString(block.rawJsonString)?.metrics)?.provider,
-		),
-	);
+	const configured = normalized.some((block) => {
+		const raw = parseRawJsonString(block.rawJsonString);
+		return Boolean(asRecord(raw?.metrics)?.provider || raw?.analytics);
+	});
 	const runtime = useDiagramMetrics(
 		variables,
 		runtimePreviewBlocks === null && configured,
@@ -249,20 +247,37 @@ export function useBlocksData(variables?: GetBlocksQueryVariables) {
 		() =>
 			normalized.map((block) => {
 				const raw = parseRawJsonString(block.rawJsonString);
-				if (!raw || !asRecord(raw.metrics)?.provider) return block;
+				if (!raw || (!asRecord(raw.metrics)?.provider && !raw.analytics))
+					return block;
 				const id = typeof raw.manifestId === "string" ? raw.manifestId : "";
-				const snapshot = runtime.data?.diagramMetrics[id] ?? {
+				const unavailable = {
 					status: runtime.error
 						? "error"
 						: runtime.isFetching
 							? "loading"
 							: "no_data",
-					error: runtime.error ? "Unable to fetch runtime metrics" : undefined,
+					error: runtime.error
+						? "Unable to fetch diagram observations"
+						: undefined,
 					values: {},
 				};
+				const snapshot = runtime.data?.diagramMetrics[id];
 				return {
 					...block,
-					rawJsonString: JSON.stringify({ ...raw, runtimeMetrics: snapshot }),
+					rawJsonString: JSON.stringify({
+						...raw,
+						...(asRecord(raw.metrics)?.provider
+							? { runtimeMetrics: snapshot ?? unavailable }
+							: {}),
+						...(raw.analytics
+							? {
+									runtimeAnalytics: {
+										...(snapshot?.analytics ?? unavailable),
+										source: "posthog",
+									},
+								}
+							: {}),
+					}),
 				};
 			}),
 		[normalized, runtime.data, runtime.error, runtime.isFetching],

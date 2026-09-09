@@ -18,3 +18,31 @@ it("shows real latency but leaves absent CPU and memory unavailable", () => {
 		"Memory usage: unavailable",
 	]);
 });
+
+it("renders PostHog aggregate labels and real zeroes without fabricating missing counts", () => {
+	expect(
+		runtimeMetricLines(
+			{
+				source: "posthog",
+				status: "partial",
+				missing: ["checkoutFailures"],
+				values: {
+					views: {
+						label: "Catalog views",
+						value: 0,
+						unit: "events",
+						evaluatedAt: 10,
+						samples: [],
+					},
+				},
+			},
+			false,
+		),
+	).toEqual(["Catalog views: 0 events", "checkoutFailures: unavailable"]);
+	expect(
+		runtimeMetricLines(
+			{ source: "posthog", status: "error", values: {} },
+			false,
+		),
+	).toEqual([]);
+});

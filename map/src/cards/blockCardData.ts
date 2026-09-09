@@ -121,6 +121,7 @@ function inferBuildStatus(
 }
 
 export interface BlockCardData {
+	runtimeAnalytics?: RuntimeMetricSnapshot;
 	runtimeMetrics?: RuntimeMetricSnapshot;
 	reports: OperationalReport[];
 	github: GithubCardProps;
@@ -146,6 +147,9 @@ export function getBlockCardData(block: Block): BlockCardData {
 	const cpuHistory = getValue(raw, ["performance", "cpuHistory"]);
 
 	return {
+		runtimeAnalytics: raw?.runtimeAnalytics as
+			| RuntimeMetricSnapshot
+			| undefined,
 		runtimeMetrics: raw?.runtimeMetrics as RuntimeMetricSnapshot | undefined,
 		reports: ["tests", "dependencies", "cicd"].flatMap((section) => {
 			const value = raw?.[section];

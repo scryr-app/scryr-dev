@@ -3,6 +3,10 @@ import { graphqlFetcher } from "./client";
 import type { GetBlocksQueryVariables } from "./generated";
 
 export interface RuntimeMetricSnapshot {
+	analytics?: RuntimeMetricSnapshot;
+	source?: string;
+	windowStart?: number;
+	windowEnd?: number;
 	status: "loading" | "ready" | "partial" | "no_data" | "stale" | "error";
 	error?: string;
 	fetchedAt?: string;
@@ -11,6 +15,7 @@ export interface RuntimeMetricSnapshot {
 	values: Record<
 		string,
 		{
+			label?: string;
 			value: number;
 			unit?: string;
 			evaluatedAt: number;
