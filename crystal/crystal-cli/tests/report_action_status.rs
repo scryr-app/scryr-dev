@@ -35,7 +35,7 @@ fn reporter_prefers_main_then_master_and_posts_to_crystal() -> Result<(), Box<dy
                             if error.kind() == std::io::ErrorKind::WouldBlock
                                 && std::time::Instant::now() < deadline =>
                         {
-                            std::thread::sleep(std::time::Duration::from_millis(10))
+                            std::thread::sleep(std::time::Duration::from_millis(10));
                         }
                         Err(error) => return Err(error.to_string()),
                     }
