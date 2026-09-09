@@ -66,4 +66,4 @@ not enable project mode.
 The [GitHub Actions sample](samples/github_actions/index.scry) demonstrates short
 section names (`Info`, `Github`, `CICD`), a stable `manifest_id`, and an attached
 workflow status timeline. See the [SDK guide](scryr/README.md#github-actions-history)
-for durable storage, polling, and the [completion reporter example](examples/report-action-status.yml).
+for durable storage and polling.

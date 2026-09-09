@@ -13,22 +13,21 @@ import { RuntimeMetricsCard } from "../cards/RuntimeMetricsCard";
 
 export type BlockCardGroup = Array<{ components: ReactNode[] }>;
 
-export function createDefaultCards(cicdTool?: string): BlockCardGroup {
-	return [
-		{ components: [<GithubCard key="github-card" />] },
-		{ components: [<MetricsCard key="metrics-card" />] },
-		{ components: [<CICDCard key="cicd-card" platform={cicdTool} />] },
-		{ components: [<TestsCard key="tests-card" />] },
-		{ components: [<DependenciesCard key="deps-card" />] },
-		{ components: [<PerformanceCard key="performance-card" />] },
-	];
+function hasData(props: object): boolean {
+	return Object.values(props).some((value) =>
+		Array.isArray(value)
+			? value.length > 0
+			: value !== undefined && value !== null && value !== "",
+	);
 }
 
 export function createBlockDataCards(cardData: BlockCardData): BlockCardGroup {
 	return [
 		{
 			components: [
-				<GithubCard key="github-card" {...cardData.github} />,
+				...(hasData(cardData.github)
+					? [<GithubCard key="github-card" {...cardData.github} />]
+					: []),
 				...(cardData.runtimeAnalytics
 					? [
 							<RuntimeMetricsCard
@@ -47,11 +46,15 @@ export function createBlockDataCards(cardData: BlockCardData): BlockCardGroup {
 							snapshot={cardData.runtimeMetrics}
 						/>,
 					]
-				: [<MetricsCard key="metrics-card" {...cardData.metrics} />],
+				: hasData(cardData.metrics)
+					? [<MetricsCard key="metrics-card" {...cardData.metrics} />]
+					: [],
 		},
 		{
 			components: [
-				<CICDCard key="cicd-card" {...cardData.cicd} />,
+				...(hasData(cardData.cicd)
+					? [<CICDCard key="cicd-card" {...cardData.cicd} />]
+					: []),
 				...cardData.reports
 					.filter((r) => r.data.kind === "deployment")
 					.map((r) => <ReportCard key={r.scope} report={r} />),
@@ -68,27 +71,37 @@ export function createBlockDataCards(cardData: BlockCardData): BlockCardGroup {
 						.map((r) => (
 							<ReportCard key={`${r.data.kind}:${r.scope}`} report={r} />
 						))
-				: [<TestsCard key="tests-card" {...cardData.tests} />],
+				: hasData(cardData.tests)
+					? [<TestsCard key="tests-card" {...cardData.tests} />]
+					: [],
 		},
 		{
 			components: cardData.reports.some((r) => r.data.kind === "dependencies")
 				? cardData.reports
 						.filter((r) => r.data.kind === "dependencies")
 						.map((r) => <ReportCard key={r.scope} report={r} />)
-				: [<DependenciesCard key="deps-card" {...cardData.dependencies} />],
+				: hasData(cardData.dependencies)
+					? [<DependenciesCard key="deps-card" {...cardData.dependencies} />]
+					: [],
 		},
 		{
-			components: [
-				cardData.runtimeMetrics ? (
-					<RuntimeMetricsCard
-						key="performance-card"
-						snapshot={cardData.runtimeMetrics}
-						performance
-					/>
-				) : (
-					<PerformanceCard key="performance-card" {...cardData.performance} />
-				),
-			],
+			components:
+				cardData.runtimeMetrics || hasData(cardData.performance)
+					? [
+							cardData.runtimeMetrics ? (
+								<RuntimeMetricsCard
+									key="performance-card"
+									snapshot={cardData.runtimeMetrics}
+									performance
+								/>
+							) : (
+								<PerformanceCard
+									key="performance-card"
+									{...cardData.performance}
+								/>
+							),
+						]
+					: [],
 		},
 	];
 }

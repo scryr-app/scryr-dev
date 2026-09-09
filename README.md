@@ -54,8 +54,7 @@ mise run test
 ```
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) for local development and pull requests,
-[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for community expectations, and
-[repository maintenance](docs/maintenance.md) for CI, security notices, and releases.
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for community expectations.
 Report bugs through the [issue templates](https://github.com/scryr-app/scryr-dev/issues/new/choose).
 Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
 See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for redistributed materials.

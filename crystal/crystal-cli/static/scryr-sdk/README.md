@@ -124,12 +124,6 @@ GitHub branch lookups. `--workflow-id` optionally narrows reporting; by default 
 observed workflows are eligible. Offline SDK summaries use the observations supplied
 and do not query GitHub to discover branches.
 
-Copy `manifest/examples/report-action-status.yml` into the observed repository.
-The example checks out scryr-app/scryr-dev and builds its native Rust CLI.
-Pin that checkout to a reviewed Scryr commit before enabling in production.
-Alternatively install a reviewed Scryr CLI build and invoke the same command.
-Configure the workflow names and `manifest_id`. No Python is used by the reporter.
-The completion event reports the observed workflow's result, even when it failed.
 History survives regeneration, duplicate deliveries are ignored, and older deliveries
 do not replace a newer build. Open maps refresh their server data every 30 seconds to display the derived status.
 

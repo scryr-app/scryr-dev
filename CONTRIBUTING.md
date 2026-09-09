@@ -132,9 +132,6 @@ for targeted maintenance. Build first with `build:cloud` before standalone
 logic; it does not create databases or seed sample data. A failure stops subsequent
 deployment steps. Deployments across providers are sequential, not atomic.
 
-See [repository maintenance](docs/maintenance.md) for GitHub environments,
-publishing credentials, and the tag-to-release process.
-
 ## Checks and pull requests
 
 ```bash

@@ -306,68 +306,28 @@ impl Block {
     }
 }
 
-fn classification_icon(classification: &str) -> Option<String> {
-    Some(
-        match classification {
-            "public_api" => "🌍",
-            "internal_api" => "🔌",
-            "network_router" => "🛡️",
-            "public_ui" => "🖥️",
-            "internal_ui" => "🧰",
-            "mobile_app" => "📱",
-            "admin_ui" | "job_processor" => "⚙️",
-            "cli" => "⌨️",
-            "sdk" => "🧩",
-            "datastore" => "🗃️",
-            "database" => "🗄️",
-            "object_storage" => "🪣",
-            "document_store" => "📄",
-            "vector_store" => "🧠",
-            "columnar_store" => "📚",
-            "cache_store" => "⚡",
-            "search_store" => "🔎",
-            "queue" => "📬",
-            "source" => "📥",
-            "sink" => "📤",
-            "worker" => "👷",
-            "scheduler" => "⏰",
-            _ => return None,
-        }
-        .to_string(),
-    )
-}
-
 fn block_icon(raw_json: &Value) -> Option<String> {
-    let icon = raw_json
+    raw_json
         .get("icon")
         .and_then(Value::as_str)
         .filter(|icon| !icon.trim().is_empty())
-        .map(std::string::ToString::to_string);
-    if icon.is_some() {
-        return icon;
-    }
-
-    raw_json
-        .get("classification")
-        .or_else(|| raw_json.get("consumer_type"))
-        .and_then(Value::as_str)
-        .and_then(classification_icon)
+        .map(str::to_owned)
 }
 
 #[cfg(test)]
 mod tests {
     use serde_json::json;
 
-    use super::{block_icon, classification_icon};
+    use super::block_icon;
 
     #[test]
-    fn block_icon_falls_back_to_classification_icon() {
+    fn block_icon_does_not_invent_classification_icon() {
         let block = json!({
             "icon": "",
             "classification": "database"
         });
 
-        assert_eq!(block_icon(&block).as_deref(), Some("🗄️"));
+        assert_eq!(block_icon(&block), None);
     }
 
     #[test]
@@ -381,7 +341,7 @@ mod tests {
     }
 
     #[test]
-    fn classification_icon_returns_none_for_unknown_values() {
-        assert_eq!(classification_icon("unknown"), None);
+    fn missing_icon_stays_absent() {
+        assert_eq!(block_icon(&json!({"name": "API"})), None);
     }
 }

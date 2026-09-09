@@ -4,7 +4,6 @@ use super::{DatabasePool, schema};
 use crate::action_history::{ActionStatusEvent, GithubActionRun, GithubActionsLog};
 use crate::manifest::ManifestRequestContext;
 use chrono::{SecondsFormat, Utc};
-use serde_json::Value;
 use sha2::{Digest, Sha256};
 use std::fmt::Write as _;
 
@@ -211,52 +210,6 @@ pub async fn read_action_history(
         log.merge(serde_json::from_str(&content).map_err(|error| error.to_string())?);
     }
     Ok(log)
-}
-
-/// Attach recent durable history when reading generated Manifest values.
-pub(super) async fn attach_history(
-    pool: &DatabasePool,
-    clerk_org_id: &str,
-    mut value: Value,
-) -> Result<Value, String> {
-    if let Some(manifests) = value.as_array_mut() {
-        for manifest in manifests {
-            let Some(id) = manifest.get("manifestId").and_then(Value::as_str) else {
-                continue;
-            };
-            let id = id.to_owned();
-            super::reports::attach(pool, clerk_org_id, &id, manifest).await?;
-            let durable = read_action_history(pool, clerk_org_id, &id, 100, 0).await?;
-            if durable.runs.is_empty() {
-                continue;
-            }
-            if manifest.get("cicd").is_none_or(Value::is_null) {
-                manifest["cicd"] = serde_json::json!({});
-            }
-            let mut log: GithubActionsLog = manifest["cicd"]
-                .get("githubActions")
-                .filter(|value| !value.is_null())
-                .cloned()
-                .map(serde_json::from_value)
-                .transpose()
-                .map_err(|error| error.to_string())?
-                .unwrap_or_default();
-            for run in durable.runs {
-                log.merge(run);
-            }
-            manifest["cicd"]["buildStatus"] = serde_json::json!(log.build_status());
-            if let Some(latest) = log
-                .runs
-                .iter()
-                .max_by_key(|run| (run.created_at, run.run_id, run.run_attempt))
-            {
-                manifest["cicd"]["lastBuild"] = serde_json::json!(latest.updated_at);
-            }
-            manifest["cicd"]["githubActions"] =
-                serde_json::to_value(log).map_err(|error| error.to_string())?;
-        }
-    }
-    Ok(value)
 }
 
 #[cfg(test)]
