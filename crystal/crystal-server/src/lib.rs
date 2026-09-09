@@ -7,7 +7,7 @@ mod generated_manifest_graphql;
 mod health;
 mod http_handlers;
 mod roots;
-mod sample_seed;
+mod runtime_metrics;
 /// GraphQL HTTP server bootstrap.
 pub mod server;
 /// Shared server state and configuration.

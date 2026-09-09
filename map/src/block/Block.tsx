@@ -83,7 +83,7 @@ export function Block({
 	logAggregation,
 	docs = [],
 	links = [],
-	diagrams = ["Core Platform", "Data Pipeline", "Auth Services"],
+	diagrams = [],
 	blockData,
 }: BlockProps) {
 	const hw = width / 2;

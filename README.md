@@ -20,9 +20,9 @@ mise run build:oss
 ./crystal/target/release/scryr serve
 ```
 
-Open `http://127.0.0.1:8000`. The binary embeds the map UI, Python SDK, and sample
-architectures. Local startup seeds the bundled samples into SQLite. This workflow
-needs no Clerk, Turso, Fly, or other cloud account. The build and first manifest
+Open `http://127.0.0.1:8000`. The binary embeds the map UI and Python SDK.
+Local startup serves only uploaded maps; it does not seed bundled samples.
+This workflow needs no Clerk, Turso, Fly, or other cloud account. The build and first manifest
 execution need internet access to download dependencies and managed Python.
 
 Local mode grants requests a shared writable identity. Keep it bound to loopback.

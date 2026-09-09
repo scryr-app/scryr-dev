@@ -3,6 +3,7 @@
 from . import manifest as _manifest
 from .action_client import GithubActionsClient, ScryrClient
 from .github import ActionStatusEvent, GithubActionRun, GithubActionsLog
+from .metrics_source import CredentialRef, PostHogSource, PrometheusSource
 from .runtime import (
     emit_diagram_values,
     emit_forge_values,
@@ -66,6 +67,7 @@ __all__ = [
     "CICDToolType",
     "CalendarVersion",
     "Classification",
+    "CredentialRef",
     "Dependencies",
     "DeploymentTarget",
     "Diagram",
@@ -95,7 +97,9 @@ __all__ = [
     "MonitoringType",
     "OtherDiagram",
     "Performance",
+    "PostHogSource",
     "ProgrammingLanguage",
+    "PrometheusSource",
     "ScryrClient",
     "SemVer",
     "Tests",

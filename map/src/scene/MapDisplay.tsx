@@ -210,7 +210,7 @@ export function MapDisplay() {
 	const { blocks, error, isLoading } = useBlocksData(
 		selectedMap.id
 			? { scryIdentifier: selectedMap.id }
-			: { sample: selectedMap.key },
+			: { sample: selectedMap.key || undefined },
 	);
 	const { layout, layoutError } = useMapLayout(blocks);
 

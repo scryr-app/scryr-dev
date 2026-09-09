@@ -3,7 +3,6 @@
 use crate::health::{health_handler, readiness_handler};
 use crate::http_handlers::{graphql_handler, graphql_ws, map_ui_handler, playground_handler};
 use crate::roots::{MutationRoot, QueryRoot};
-use crate::sample_seed::seed_missing_local_samples;
 use crate::state::{AppState, AuthMode, ServerArgs};
 use actix_cors::Cors;
 use actix_web::{App, HttpServer, guard, web};
@@ -30,11 +29,6 @@ pub async fn run(args: ServerArgs) -> std::io::Result<()> {
     let host = args.host;
     let port = args.port;
     let auth_mode = AuthMode::resolve(args.auth_mode, &host);
-    if auth_mode == AuthMode::Local {
-        seed_missing_local_samples(&db_pool)
-            .await
-            .map_err(std::io::Error::other)?;
-    }
 
     let clerk_client = env::var("CLERK_SECRET_KEY")
         .ok()
@@ -55,6 +49,7 @@ pub async fn run(args: ServerArgs) -> std::io::Result<()> {
     let schema = Schema::build(QueryRoot, MutationRoot::default(), EmptySubscription)
         .data(app_state.clone())
         .data(app_state.db_pool.clone())
+        .data(crate::runtime_metrics::RuntimeMetrics::from_env()?)
         .finish();
 
     let schema_data = web::Data::new(schema);

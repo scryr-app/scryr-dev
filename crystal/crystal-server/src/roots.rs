@@ -13,6 +13,39 @@ pub(crate) struct QueryRoot;
 
 #[Object]
 impl QueryRoot {
+    /// Fetch configured runtime metrics once when opening a diagram. Block polling never calls this.
+    async fn diagram_metrics(
+        &self,
+        ctx: &async_graphql::Context<'_>,
+        scry_identifier: Option<String>,
+        sample: Option<String>,
+    ) -> Result<async_graphql::Json<serde_json::Value>, String> {
+        let auth = require_authenticated_request(ctx).map_err(|error| error.message)?;
+        let context = auth.manifest_request_context()?;
+        let state = ctx.data::<AppState>().map_err(|e| e.message)?;
+        let manifests = if let Some(id) = scry_identifier.as_deref().filter(|s| !s.is_empty()) {
+            persistence::read_generated_manifest_json_by_scry_identifier(
+                &state.db_pool,
+                &context.clerk_org_id,
+                id,
+            )
+            .await?
+        } else {
+            persistence::read_generated_manifest_json(
+                &state.db_pool,
+                &context.clerk_org_id,
+                sample.as_deref().or(state.sample.as_deref()),
+            )
+            .await?
+        };
+        let metrics = ctx
+            .data::<crate::runtime_metrics::RuntimeMetrics>()
+            .map_err(|e| e.message)?;
+        Ok(async_graphql::Json(
+            metrics.load(&context.clerk_org_id, &manifests).await,
+        ))
+    }
+
     /// Read operational observations for the active organization.
     async fn report_history(
         &self,

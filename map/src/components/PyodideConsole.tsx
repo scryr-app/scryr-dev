@@ -1,13 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-	LoaderCircle,
-	LocateFixed,
-	Moon,
-	PencilLine,
-	Play,
-	Sun,
-	X,
-} from "lucide-react";
+import { LoaderCircle, LocateFixed, Moon, Play, Sun, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useMapTray } from "@/cards/MapTrayContext";
 import {
@@ -27,7 +19,6 @@ import {
 import { clearRuntimePreviewBlocks } from "@/graphql/runtimePreviewStore";
 import { mapSelectionStore, useSample } from "@/graphql/sampleStore";
 import { runPythonSample } from "@/pyodide/pyodideRuntime";
-import { sampleMernPython } from "@/pyodide/sdkSources";
 
 const MIN_PANEL_WIDTH = 320;
 const SCHEMA_ARTIFACT_KEY = "";
@@ -46,27 +37,6 @@ interface PyodideConsoleProps {
 	onPanelWidthChange: (width: number) => void;
 }
 
-interface TerminalLauncherButtonProps {
-	isOpen: boolean;
-	onToggle: () => void;
-}
-
-export function TerminalLauncherButton({
-	isOpen,
-	onToggle,
-}: TerminalLauncherButtonProps) {
-	return (
-		<button
-			type="button"
-			aria-label={isOpen ? "Hide terminal panel" : "Show terminal panel"}
-			onClick={onToggle}
-			className="rounded-full border border-white/12 bg-white/6 p-1.5 text-white/55 transition hover:bg-white/10 hover:text-white/85"
-		>
-			<PencilLine size={13} strokeWidth={2.2} />
-		</button>
-	);
-}
-
 export function PyodideConsole({
 	isOpen,
 	panelWidth,
@@ -75,7 +45,7 @@ export function PyodideConsole({
 }: PyodideConsoleProps) {
 	const sample = useSample();
 	const queryClient = useQueryClient();
-	const [code, setCode] = useState(sampleMernPython);
+	const [code, setCode] = useState("");
 	const [_status, setStatus] = useState("Idle");
 	const [isRunning, setIsRunning] = useState(false);
 	const [, setOutput] = useState("");
@@ -114,36 +84,6 @@ export function PyodideConsole({
 			>(UPSERT_GENERATED_MANIFEST_MUTATION, { input })();
 		},
 	});
-
-	useEffect(() => {
-		let cancelled = false;
-
-		const boot = async () => {
-			setStatus("Loading Pyodide runtime");
-			try {
-				const result = await runPythonSample(sampleMernPython);
-				if (cancelled) {
-					return;
-				}
-				setStatus(
-					`Loaded ${result.manifests.length} manifests from mern/index.scry`,
-				);
-				setOutput(result.stdout || JSON.stringify(result.manifests, null, 2));
-			} catch (error) {
-				if (cancelled) {
-					return;
-				}
-				setStatus("Pyodide bootstrap failed");
-				setOutput(error instanceof Error ? error.message : String(error));
-			}
-		};
-
-		void boot();
-
-		return () => {
-			cancelled = true;
-		};
-	}, []);
 
 	const runCode = async () => {
 		setIsRunning(true);

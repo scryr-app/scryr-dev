@@ -11,6 +11,8 @@ categories = ["web-programming", "development-tools"]
 include = ["Cargo.toml", "README.md", "build.rs", "src/**", "static/**"]
 
 [dependencies]
+reqwest = { workspace = true }
+url = { workspace = true }
 actix-cors = { workspace = true }
 actix-web = { workspace = true }
 async-graphql = { workspace = true }

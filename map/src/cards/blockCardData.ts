@@ -1,4 +1,5 @@
 import type { Block } from "@/graphql/generated";
+import type { RuntimeMetricSnapshot } from "../graphql/useDiagramMetrics";
 import type { CICDCardProps } from "./CICDCard";
 import type { DependenciesCardProps } from "./DependenciesCard";
 import type { GithubCardProps } from "./GithubCard";
@@ -8,31 +9,6 @@ import { isOperationalReport, type OperationalReport } from "./ReportCard";
 import type { TestsCardProps } from "./TestsCard";
 
 type RawRecord = Record<string, unknown>;
-
-function clamp(value: number, min: number, max: number): number {
-	return Math.min(max, Math.max(min, value));
-}
-
-function hashString(value: string): number {
-	let hash = 2166136261;
-
-	for (let index = 0; index < value.length; index += 1) {
-		hash ^= value.charCodeAt(index);
-		hash = Math.imul(hash, 16777619);
-	}
-
-	return Math.abs(hash >>> 0);
-}
-
-function seededInt(
-	seed: string,
-	slot: string,
-	min: number,
-	max: number,
-): number {
-	const hash = hashString(`${seed}:${slot}`);
-	return min + (hash % (max - min + 1));
-}
 
 function asRecord(value: unknown): RawRecord | undefined {
 	return value && typeof value === "object" && !Array.isArray(value)
@@ -96,20 +72,6 @@ function firstNumber(
 	return undefined;
 }
 
-function firstStringArray(
-	source: RawRecord | undefined,
-	paths: string[][],
-): string[] | undefined {
-	for (const path of paths) {
-		const value = getValue(source, path);
-		if (Array.isArray(value)) {
-			return value.filter((item): item is string => typeof item === "string");
-		}
-	}
-
-	return undefined;
-}
-
 function firstBoolean(
 	source: RawRecord | undefined,
 	paths: string[][],
@@ -158,18 +120,9 @@ function inferBuildStatus(
 	return undefined;
 }
 
-function inferDeployStatus(isProd = true): "deployed" | "deploying" {
-	return isProd ? "deployed" : "deploying";
-}
-
-function buildCpuHistory(seed: string, current: number): number[] {
-	return Array.from({ length: 20 }, (_, index) => {
-		const drift = seededInt(seed, `cpu-history-${index}`, -12, 14);
-		return clamp(current + drift, 10, 95);
-	});
-}
-
 export interface BlockCardData {
+	runtimeAnalytics?: RuntimeMetricSnapshot;
+	runtimeMetrics?: RuntimeMetricSnapshot;
 	reports: OperationalReport[];
 	github: GithubCardProps;
 	metrics: MetricsCardProps;
@@ -181,105 +134,23 @@ export interface BlockCardData {
 
 export function getBlockCardData(block: Block): BlockCardData {
 	const raw = parseRawJsonString(block.rawJsonString);
-	const seed = block.rawJsonString || block.name || "block";
-	const tagCount = block.tags.length;
-	const frameworkCount = block.frameworks.length;
-	const connectionCount = block.connections.length;
-	const docsCount = block.docs.length;
-	const linkCount = block.links.length;
-	const replicaCount = Math.max(
-		block.maxReplicas ?? 1,
-		block.minReplicas ?? 1,
-		1,
-	);
-	const complexity =
-		tagCount + frameworkCount * 2 + connectionCount * 3 + docsCount + linkCount;
-	const repoUrl = getRepoUrl(block, raw);
-	const buildStatus = inferBuildStatus(
-		firstString(raw, [
-			["ci", "buildStatus"],
-			["cicd", "buildStatus"],
-		]),
-	);
-	const coverage =
-		firstNumber(raw, [
-			["quality", "coverage"],
-			["tests", "coverage"],
-			["github", "coverage"],
-		]) ?? clamp(74 + frameworkCount * 3 + connectionCount, 52, 98);
-	const cpuCurrent =
-		firstNumber(raw, [
-			["performance", "cpuCurrent"],
-			["metrics", "cpuUsage"],
-		]) ??
-		clamp(
-			22 +
-				complexity * 3 +
-				replicaCount * 4 +
-				seededInt(seed, "cpu-current", -10, 16),
-			12,
-			92,
-		);
-	const memoryUsage =
-		firstNumber(raw, [
-			["performance", "memoryUsage"],
-			["metrics", "memoryUsage"],
-		]) ?? clamp(cpuCurrent + seededInt(seed, "memory-usage", -8, 20), 18, 94);
-	const errorRate =
-		firstNumber(raw, [["metrics", "errorRate"]]) ??
-		Number((0.4 + seededInt(seed, "error-rate", 0, 8) / 10).toFixed(1));
-	const uptime =
-		firstNumber(raw, [["metrics", "uptime"]]) ??
-		Number(
-			clamp(
-				99.05 + seededInt(seed, "uptime", 0, 18) / 100,
-				97.4,
-				99.99,
-			).toFixed(2),
-		);
-	const lastBuildHours = seededInt(seed, "last-build-hours", 1, 72);
-	const lastBuild =
-		firstString(raw, [
-			["ci", "lastBuild"],
-			["cicd", "lastBuild"],
-		]) ??
-		(lastBuildHours < 24
-			? `${lastBuildHours}h ago`
-			: `${Math.floor(lastBuildHours / 24)}d ago`);
-	const deployFrequency =
-		firstNumber(raw, [
-			["ci", "deployFrequency"],
-			["cicd", "deployFrequency"],
-		]) ??
-		(block.cicdTool === "none"
-			? 0
-			: clamp(
-					1 +
-						frameworkCount +
-						replicaCount +
-						seededInt(seed, "deploy-frequency", 0, 6),
-					1,
-					20,
-				));
-	const pipelineDuration =
-		firstNumber(raw, [
-			["ci", "pipelineDuration"],
-			["cicd", "pipelineDuration"],
-		]) ??
-		clamp(
-			6 + complexity * 2 + seededInt(seed, "pipeline-duration", 0, 18),
-			4,
-			42,
-		);
-	const vulnerableDeps = firstNumber(raw, [["dependencies", "vulnerableDeps"]]);
-	const outdatedDeps = firstNumber(raw, [["dependencies", "outdatedDeps"]]);
-	const cpuHistory =
-		firstStringArray(raw, [["performance", "cpuHistory"]])
-			?.map((value) => Number(value))
-			.filter((value) => Number.isFinite(value)) ??
-		buildCpuHistory(seed, cpuCurrent);
+	const number = (section: string, key: string) =>
+		firstNumber(raw, [[section, key]]);
+	const string = (section: string, key: string) =>
+		firstString(raw, [[section, key]]);
+	const deployStatus = (key: string): CICDCardProps["deployStatusProd"] => {
+		const value = string("cicd", key);
+		return value === "deployed" || value === "deploying" || value === "failed"
+			? value
+			: undefined;
+	};
+	const cpuHistory = getValue(raw, ["performance", "cpuHistory"]);
 
 	return {
+		runtimeAnalytics: raw?.runtimeAnalytics as
+			| RuntimeMetricSnapshot
+			| undefined,
+		runtimeMetrics: raw?.runtimeMetrics as RuntimeMetricSnapshot | undefined,
 		reports: ["tests", "dependencies", "cicd"].flatMap((section) => {
 			const value = raw?.[section];
 			if (!value || typeof value !== "object" || !("reports" in value))
@@ -290,145 +161,83 @@ export function getBlockCardData(block: Block): BlockCardData {
 				: [];
 		}),
 		github: {
-			repoUrl,
-			stars:
-				firstNumber(raw, [
-					["github", "stars"],
-					["repository", "stars"],
-				]) ??
-				clamp(
-					100 + complexity * 25 + seededInt(seed, "stars", 0, 1800),
-					40,
-					9000,
-				),
-			forks:
-				firstNumber(raw, [
-					["github", "forks"],
-					["repository", "forks"],
-				]) ??
-				clamp(12 + complexity * 4 + seededInt(seed, "forks", 0, 180), 4, 1200),
-			openIssues:
-				firstNumber(raw, [
-					["github", "openIssues"],
-					["repository", "openIssues"],
-				]) ??
-				clamp(connectionCount + seededInt(seed, "open-issues", 0, 18), 0, 48),
-			openPRs:
-				firstNumber(raw, [
-					["github", "openPRs"],
-					["repository", "openPRs"],
-				]) ?? clamp(frameworkCount + seededInt(seed, "open-prs", 0, 8), 0, 16),
-			lastCommit:
-				firstString(raw, [
-					["github", "lastCommit"],
-					["repository", "lastCommit"],
-				]) ?? lastBuild,
+			repoUrl: getRepoUrl(block, raw),
 			primaryLanguage: block.language ?? undefined,
-			linesOfCode:
-				firstNumber(raw, [
-					["github", "linesOfCode"],
-					["repository", "linesOfCode"],
-				]) ??
-				clamp(
-					4000 + complexity * 1600 + seededInt(seed, "loc", 0, 12000),
-					3000,
-					180000,
-				),
-			coverage,
-			vulnerabilities:
-				firstNumber(raw, [
-					["github", "vulnerabilities"],
-					["security", "vulnerabilities"],
-				]) ?? vulnerableDeps,
-			outdatedDeps,
-			activeContributors:
-				firstNumber(raw, [["github", "activeContributors"]]) ??
-				clamp(
-					2 +
-						frameworkCount +
-						connectionCount +
-						seededInt(seed, "contributors", 0, 6),
-					1,
-					18,
-				),
-			latestRelease: block.version ?? undefined,
-			license: firstString(raw, [["license"], ["github", "license"]]),
-			buildStatus,
+			stars: firstNumber(raw, [
+				["github", "stars"],
+				["repository", "stars"],
+			]),
+			forks: firstNumber(raw, [
+				["github", "forks"],
+				["repository", "forks"],
+			]),
+			openIssues: firstNumber(raw, [
+				["github", "openIssues"],
+				["repository", "openIssues"],
+			]),
+			openPRs: firstNumber(raw, [
+				["github", "openPRs"],
+				["repository", "openPRs"],
+			]),
+			linesOfCode: firstNumber(raw, [
+				["github", "linesOfCode"],
+				["repository", "linesOfCode"],
+			]),
+			coverage: number("github", "coverage"),
+			vulnerabilities: number("github", "vulnerabilities"),
+			outdatedDeps: number("github", "outdatedDeps"),
+			activeContributors: number("github", "activeContributors"),
+			lastCommit: string("github", "lastCommit"),
+			latestRelease: string("github", "latestRelease"),
+			license: string("github", "license"),
 		},
 		metrics: {
-			responseTimeP50:
-				firstNumber(raw, [
-					["metrics", "responseTimeP50"],
-					["metrics", "p50"],
-				]) ??
-				clamp(40 + complexity * 5 + seededInt(seed, "p50", 0, 40), 25, 260),
-			responseTimeP95:
-				firstNumber(raw, [
-					["metrics", "responseTimeP95"],
-					["metrics", "p95"],
-				]) ??
-				clamp(120 + complexity * 8 + seededInt(seed, "p95", 0, 90), 80, 520),
-			responseTimeP99:
-				firstNumber(raw, [
-					["metrics", "responseTimeP99"],
-					["metrics", "p99"],
-				]) ??
-				clamp(
-					220 + complexity * 12 + seededInt(seed, "p99", 0, 180),
-					150,
-					1200,
-				),
-			requestRate:
-				firstNumber(raw, [["metrics", "requestRate"]]) ??
-				clamp(
-					120 +
-						connectionCount * 140 +
-						replicaCount * 180 +
-						seededInt(seed, "request-rate", 0, 480),
-					60,
-					4200,
-				),
-			errorRate,
-			successRate: Number(clamp(100 - errorRate, 91, 99.9).toFixed(1)),
-			uptime,
-			activeConnections:
-				firstNumber(raw, [["metrics", "activeConnections"]]) ??
-				clamp(
-					connectionCount * 40 +
-						replicaCount * 70 +
-						seededInt(seed, "connections", 0, 140),
-					20,
-					1200,
-				),
-			cpuUsage: firstNumber(raw, [["metrics", "cpuUsage"]]) ?? cpuCurrent,
-			memoryUsage,
+			responseTimeP50: firstNumber(raw, [
+				["metrics", "responseTimeP50"],
+				["metrics", "p50"],
+			]),
+			responseTimeP95: firstNumber(raw, [
+				["metrics", "responseTimeP95"],
+				["metrics", "p95"],
+			]),
+			responseTimeP99: firstNumber(raw, [
+				["metrics", "responseTimeP99"],
+				["metrics", "p99"],
+			]),
+			requestRate: number("metrics", "requestRate"),
+			errorRate: number("metrics", "errorRate"),
+			successRate: number("metrics", "successRate"),
+			uptime: number("metrics", "uptime"),
+			activeConnections: number("metrics", "activeConnections"),
+			cpuUsage: number("metrics", "cpuUsage"),
+			memoryUsage: number("metrics", "memoryUsage"),
 		},
 		cicd: {
 			platform: block.cicdTool ?? undefined,
-			buildStatus,
-			lastBuild,
-			deployStatusProd:
-				(firstString(raw, [["cicd", "deployStatusProd"]]) as
-					| "deployed"
-					| "deploying"
-					| "failed"
-					| undefined) ?? inferDeployStatus(true),
-			deployStatusStaging:
-				(firstString(raw, [["cicd", "deployStatusStaging"]]) as
-					| "deployed"
-					| "deploying"
-					| "failed"
-					| undefined) ?? inferDeployStatus(false),
-			deployFrequency,
-			pipelineDuration,
-			failedBuilds:
-				firstNumber(raw, [
-					["cicd", "failedBuilds"],
-					["ci", "failedBuilds"],
-				]) ??
-				(buildStatus === "failing"
-					? seededInt(seed, "failed-builds", 1, 4)
-					: 0),
+			buildStatus: inferBuildStatus(
+				firstString(raw, [
+					["cicd", "buildStatus"],
+					["ci", "buildStatus"],
+				]),
+			),
+			lastBuild: firstString(raw, [
+				["cicd", "lastBuild"],
+				["ci", "lastBuild"],
+			]),
+			deployStatusProd: deployStatus("deployStatusProd"),
+			deployStatusStaging: deployStatus("deployStatusStaging"),
+			deployFrequency: firstNumber(raw, [
+				["cicd", "deployFrequency"],
+				["ci", "deployFrequency"],
+			]),
+			pipelineDuration: firstNumber(raw, [
+				["cicd", "pipelineDuration"],
+				["ci", "pipelineDuration"],
+			]),
+			failedBuilds: firstNumber(raw, [
+				["cicd", "failedBuilds"],
+				["ci", "failedBuilds"],
+			]),
 		},
 		tests: {
 			total: firstNumber(raw, [["tests", "total"]]),
@@ -457,22 +266,16 @@ export function getBlockCardData(block: Block): BlockCardData {
 			]) as DependenciesCardProps["licenseCompliance"],
 		},
 		performance: {
-			cpuHistory,
-			cpuCurrent,
-			cpuAvg:
-				firstNumber(raw, [["performance", "cpuAvg"]]) ??
-				Number(
-					(
-						cpuHistory.reduce((sum, value) => sum + value, 0) /
-						cpuHistory.length
-					).toFixed(1),
-				),
-			cpuPeak:
-				firstNumber(raw, [["performance", "cpuPeak"]]) ??
-				Math.max(...cpuHistory),
-			memoryUsage,
-			timeWindow:
-				firstString(raw, [["performance", "timeWindow"]]) ?? "Last 10 min",
+			cpuHistory: Array.isArray(cpuHistory)
+				? cpuHistory.filter(
+						(v): v is number => typeof v === "number" && Number.isFinite(v),
+					)
+				: undefined,
+			cpuCurrent: number("performance", "cpuCurrent"),
+			cpuAvg: number("performance", "cpuAvg"),
+			cpuPeak: number("performance", "cpuPeak"),
+			memoryUsage: number("performance", "memoryUsage"),
+			timeWindow: string("performance", "timeWindow"),
 		},
 	};
 }

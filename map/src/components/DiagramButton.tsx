@@ -5,7 +5,6 @@ import {
 	useGetScryrMapsQuery,
 } from "@/graphql/generated";
 import {
-	FALLBACK_MAP_KEYS,
 	getMapLabel,
 	mapSelectionStore,
 	type SelectedMap,
@@ -215,8 +214,7 @@ export function DiagramButton({ className = "" }: Props) {
 		setOpen(false);
 	}
 
-	const fallbackMaps = FALLBACK_MAP_KEYS.map((key) => ({ id: null, key }));
-	const visibleMaps = maps.length > 0 ? maps : fallbackMaps;
+	const visibleMaps = maps;
 	const currentMap = maps.find((map) =>
 		selectedMapEquals(selectedMapFromScryrMap(map), current),
 	);
