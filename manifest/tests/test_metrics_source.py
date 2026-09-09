@@ -16,6 +16,7 @@ def test_source_round_trip() -> None:
     assert encoded["metrics"]["provider"]["cacheTtl"] == 60
     assert encoded["metrics"]["provider"]["credentials"] == {"name": "grafana"}
     restored = Manifest.model_validate(encoded)
+    assert restored.metrics is not None
     assert restored.metrics.provider == source
 
 
