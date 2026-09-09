@@ -1,0 +1,5 @@
+# Synthetic JWT used by the JWT decoder unit test.
+020cc5096412fb28adb3a90ba018c0c6bce3fc84:crystal/crystal-cli/src/auth/jwt.rs:jwt:51
+
+# RFC 6455 sample WebSocket key used by the server upgrade test.
+020cc5096412fb28adb3a90ba018c0c6bce3fc84:crystal/crystal-server/src/server.rs:generic-api-key:231
