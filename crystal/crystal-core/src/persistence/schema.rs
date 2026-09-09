@@ -64,6 +64,10 @@ const CREATE_UPLOAD_LEDGER_INDEX_SQL: &str = r"
 
 const SCHEMA_STATEMENTS: &[(&str, &str)] = &[
     (
+        "create manifest action history",
+        super::action_history::CREATE_TABLE,
+    ),
+    (
         "create generated_manifests table",
         CREATE_GENERATED_MANIFESTS_SQL,
     ),

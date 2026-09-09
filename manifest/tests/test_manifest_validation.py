@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from scryr.manifest import Forge, InfoManifestSection, Link, Manifest
+from scryr.manifest import Forge, Info, Link, Manifest
 
 
 def test_manifest_rejects_unknown_fields() -> None:
@@ -35,10 +35,10 @@ def test_forge_rejects_unknown_top_level_fields() -> None:
 def test_manifest_enforces_replica_minimum_constraints() -> None:
     """Replica fields enforce minimum value constraints."""
     with pytest.raises(ValidationError, match="greater than or equal to 1"):
-        Manifest(name="BadReplicas", info=InfoManifestSection(max_replicas=0))
+        Manifest(name="BadReplicas", info=Info(max_replicas=0))
 
     with pytest.raises(ValidationError, match="greater than or equal to 1"):
-        Manifest(name="BadReplicas", info=InfoManifestSection(min_replicas=0))
+        Manifest(name="BadReplicas", info=Info(min_replicas=0))
 
 
 def test_manifest_default_list_fields_are_isolated_per_instance() -> None:
@@ -61,7 +61,7 @@ def test_manifest_docs_field_accepts_url_and_plain_text_values() -> None:
     """Docs field accepts both URL-like values and plain strings."""
     manifest = Manifest(
         name="DocsTypes",
-        info=InfoManifestSection(docs=["https://api.example.com", "Architecture RFC"]),
+        info=Info(docs=["https://api.example.com", "Architecture RFC"]),
     )
 
     data = manifest.to_dict()
@@ -73,4 +73,4 @@ def test_manifest_rejects_min_replicas_above_max_replicas() -> None:
     with pytest.raises(
         ValidationError, match="min_replicas must be less than or equal to max_replicas"
     ):
-        Manifest(name="ReplicaBounds", info=InfoManifestSection(min_replicas=3, max_replicas=2))
+        Manifest(name="ReplicaBounds", info=Info(min_replicas=3, max_replicas=2))

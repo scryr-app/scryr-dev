@@ -266,3 +266,15 @@ Upload a sample to a local GraphQL server:
 ```bash
 cargo run -p crystal-cli -- generate upload --path ../manifest/samples/mern/index.scry --manifest-dir ../manifest
 ```
+
+## Report GitHub Actions status
+
+`scryr report-action-status --manifest-id services/api` reads a `workflow_run`
+event from `GITHUB_EVENT_PATH` (or `--event-file`) and sends it to
+`SCRYR_ENDPOINT` (or `--endpoint`) using `SCRYR_TOKEN` and
+`SCRYR_CLERK_ORG_ID`. This command is implemented entirely in Rust.
+
+Automatic branch selection uses `GITHUB_TOKEN` to check `main`, then `master`,
+then falls back to the repository default branch. Override with `--branch`.
+No workflow ID is required; use `--workflow-id` to restrict reporting.
+See `manifest/examples/report-action-status.yml` for a completion reporter.

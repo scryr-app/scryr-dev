@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 import scryr
+import scryr.manifest
 from scryr.cli import main
 
 
@@ -37,6 +38,19 @@ def test_top_level_package_exports_core_manifest_api() -> None:
     assert scryr.CICD is scryr.Manifest.CICD
     assert scryr.parse_version("1.2.3") == scryr.SemVer("1.2.3")
     assert callable(scryr.run_manifest_file)
+    for name in (
+        "Info",
+        "Github",
+        "CICD",
+        "Metrics",
+        "Tests",
+        "Dependencies",
+        "Performance",
+        "OtherDiagram",
+    ):
+        model = getattr(scryr, name)
+        assert model.__name__ == name
+        assert not hasattr(scryr.manifest, name + "ManifestSection")
 
 
 def test_console_main_returns_usage_error_without_arguments(capsys) -> None:

@@ -7,7 +7,7 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from scryr.manifest import InfoManifestSection, Manifest
+from scryr.manifest import Info, Manifest
 from scryr.types import CalendarVersion, IncrementalVersion, SemVer
 
 
@@ -21,14 +21,14 @@ def test_manifest_default_version_is_typed_semver() -> None:
 
 def test_manifest_accepts_string_version_and_dispatches_constructor() -> None:
     """String version input is dispatched to the appropriate typed version constructor."""
-    semver_manifest = Manifest(name="SemVerSvc", info=InfoManifestSection(version=SemVer("7.3.0")))
+    semver_manifest = Manifest(name="SemVerSvc", info=Info(version=SemVer("7.3.0")))
     calendar_manifest = Manifest(
         name="CalendarSvc",
-        info=InfoManifestSection(version=CalendarVersion("2026.3")),
+        info=Info(version=CalendarVersion("2026.3")),
     )
     incremental_manifest = Manifest(
         name="IncrementalSvc",
-        info=InfoManifestSection(version=IncrementalVersion("123")),
+        info=Info(version=IncrementalVersion("123")),
     )
 
     assert isinstance(semver_manifest.info.version, SemVer)
@@ -42,11 +42,11 @@ def test_manifest_accepts_already_typed_version_instances() -> None:
     calendar = CalendarVersion("2026.12")
     incremental = IncrementalVersion(10)
 
-    semver_manifest = Manifest(name="SemVerSvc", info=InfoManifestSection(version=semver))
-    calendar_manifest = Manifest(name="CalendarSvc", info=InfoManifestSection(version=calendar))
+    semver_manifest = Manifest(name="SemVerSvc", info=Info(version=semver))
+    calendar_manifest = Manifest(name="CalendarSvc", info=Info(version=calendar))
     incremental_manifest = Manifest(
         name="IncrementalSvc",
-        info=InfoManifestSection(version=incremental),
+        info=Info(version=incremental),
     )
 
     assert semver_manifest.info.version is semver
@@ -58,7 +58,7 @@ def test_manifest_rejects_invalid_version_type() -> None:
     """Manifest rejects unsupported version input types."""
     invalid_version: Any = 123
     with pytest.raises(TypeError, match="version must be a version string"):
-        Manifest(name="BadVersionType", info=InfoManifestSection(version=invalid_version))
+        Manifest(name="BadVersionType", info=Info(version=invalid_version))
 
 
 def test_manifest_rejects_invalid_version_string() -> None:

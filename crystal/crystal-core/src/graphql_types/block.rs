@@ -24,6 +24,24 @@ pub struct Link {
 
 #[Object]
 impl Block {
+    /// Stable Manifest identity used to attach operational history.
+    pub async fn manifest_id(&self) -> Option<String> {
+        self.raw_json
+            .get("manifestId")
+            .and_then(Value::as_str)
+            .map(str::to_owned)
+    }
+
+    /// Recent GitHub workflow runs and their observed status history.
+    pub async fn github_actions(&self) -> Option<async_graphql::Json<Value>> {
+        self.raw_json
+            .get("cicd")?
+            .get("githubActions")
+            .filter(|value| !value.is_null())
+            .cloned()
+            .map(async_graphql::Json)
+    }
+
     /// Display name for the component (used as the block label).
     pub async fn name(&self) -> Option<String> {
         self.raw_json

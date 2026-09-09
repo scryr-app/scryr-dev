@@ -12,8 +12,8 @@ from scryr.manifest import (
     ForgeTaskBatch,
     ForgeTaskCommand,
     ForgeTool,
-    GithubManifestSection,
-    InfoManifestSection,
+    Github,
+    Info,
     Link,
     Manifest,
     ManifestQuery,
@@ -39,7 +39,7 @@ def test_manifest_dict_serializes_enums_and_version_to_strings() -> None:
     manifest = Manifest(
         name="SerializeMe",
         classification=Classification.internal_api,
-        info=InfoManifestSection(
+        info=Info(
             version=SemVer("1.2.3"),
             language=ProgrammingLanguage.javascript,
             frameworks=[WebFramework.express, WebFramework.nextjs],
@@ -72,12 +72,12 @@ def test_manifest_to_dict_returns_plain_json_safe_types() -> None:
     """to_dict returns JSON-safe primitives and lists, including version as a string."""
     manifest = Manifest(
         name="JsonSafe",
-        info=InfoManifestSection(
+        info=Info(
             version=CalendarVersion("2026.3"),
             links=[Link(site_name="Docs", http_url=Url("https://example.com/docs"))],
             docs=[Url("https://docs.example.com"), "README"],
         ),
-        github=GithubManifestSection(repo_url=Url("https://example.com/repo")),
+        github=Github(repo_url=Url("https://example.com/repo")),
     )
 
     data = manifest.to_dict()
@@ -98,8 +98,8 @@ def test_manifest_exposes_embedded_section_constructors() -> None:
         github=Manifest.Github(repo_url=Url("https://example.com/repo")),
     )
 
-    assert isinstance(manifest.info, InfoManifestSection)
-    assert isinstance(manifest.github, GithubManifestSection)
+    assert isinstance(manifest.info, Info)
+    assert isinstance(manifest.github, Github)
     assert manifest.to_dict()["info"]["description"] == "visible"
     assert manifest.to_dict()["github"]["repoUrl"] == "https://example.com/repo"
 
@@ -164,7 +164,7 @@ def test_forge_serializes_typed_mise_toml_sections() -> None:
 
 def test_manifest_dict_respects_model_dump_kwargs() -> None:
     """Dict should forward model_dump kwargs rather than ignore them."""
-    manifest = Manifest(name="IncludeOnly", info=InfoManifestSection(description="visible"))
+    manifest = Manifest(name="IncludeOnly", info=Info(description="visible"))
 
     data = manifest.dict(include={"name"})
 
@@ -238,11 +238,11 @@ def test_manifest_query_filters_by_nested_field_paths() -> None:
     """ManifestQuery accepts nested mappings and Python-safe double-underscore paths."""
     api = Manifest(
         name="API",
-        github=GithubManifestSection(repo_url=Url("https://example.com/api")),
+        github=Github(repo_url=Url("https://example.com/api")),
     )
     web = Manifest(
         name="Web",
-        github=GithubManifestSection(repo_url=Url("https://example.com/web")),
+        github=Github(repo_url=Url("https://example.com/web")),
     )
 
     query = ManifestQuery(

@@ -1,6 +1,6 @@
 """Browser-runner MERN sample manifest."""
 
-from scryr.manifest import Diagram, Link, Manifest
+from scryr import CICD, Diagram, Github, Info, Link, Manifest
 from scryr.types import (
     AuthType,
     CICDToolType,
@@ -21,100 +21,120 @@ react_block = Manifest(
     icon="🌐",
     tags=["user_interface"],
     connections=["Express"],
-    description=(
-        "A sample MERN-style application: MongoDB datastore, Express backend, "
-        "React frontend. Boy Howdy"
+    info=Info(
+        description=(
+            "A sample MERN-style application: MongoDB datastore, Express backend, "
+            "React frontend. Boy Howdy"
+        ),
+        version=SemVer("0.1.0-alpha.1"),
+        language=ProgrammingLanguage.javascript,
+        frameworks=[WebFramework.express, WebFramework.nextjs],
+        deployment=DeploymentTarget.ec2,
+        owner_team="Frontend Team",
+        auth_type=AuthType.oauth2,
+        monitoring=MonitoringType.datadog,
+        log_aggregation=LogAggregationType.cloudwatch,
+        tracing=TracingType.datadog,
+        iac_tool=IaCToolType.terraform,
+        max_replicas=5,
+        min_replicas=2,
+        links=[Link(site_name="Example Site", http_url=Url("https://www.example.com"))],
+        docs=["https://www.mongodb.com/docs/", "https://expressjs.com/", "https://reactjs.org/"],
     ),
-    version=SemVer("0.1.0-alpha.1"),
-    language=ProgrammingLanguage.javascript,
-    frameworks=[WebFramework.express, WebFramework.nextjs],
-    deployment=DeploymentTarget.ec2,
-    owner_team="Frontend Team",
-    auth_type=AuthType.oauth2,
-    monitoring=MonitoringType.datadog,
-    log_aggregation=LogAggregationType.cloudwatch,
-    tracing=TracingType.datadog,
-    iac_tool=IaCToolType.terraform,
-    max_replicas=5,
-    min_replicas=2,
-    links=[Link(site_name="Example Site", http_url=Url("https://www.example.com"))],
-    docs=["https://www.mongodb.com/docs/", "https://expressjs.com/", "https://reactjs.org/"],
-    repo_url=Url("https://github.com/example/mern-app"),
-    cicd_tool=CICDToolType.github_actions,
+    github=Github(
+        repo_url=Url("https://github.com/example/mern-app"),
+    ),
+    cicd=CICD(
+        platform=CICDToolType.github_actions,
+    ),
 )
 redis_pubsub_block = Manifest(
     name="Redis Pub/Sub",
     icon="📡",
     tags=["user_interface"],
     connections=["Express", "React"],
-    description="Redis configured for real-time messaging and event streaming",
-    version=SemVer("7.2.0"),
-    language=ProgrammingLanguage.c,
-    deployment=DeploymentTarget.ec2,
-    owner_team="Events Team",
-    auth_type=AuthType.api_key,
-    monitoring=MonitoringType.prometheus,
-    log_aggregation=LogAggregationType.elk_stack,
-    tracing=TracingType.jaeger,
-    iac_tool=IaCToolType.terraform,
-    max_replicas=4,
-    min_replicas=2,
-    links=[
-        Link(
-            site_name="Redis Pub/Sub Documentation",
-            http_url=Url("https://redis.io/docs/manual/pubsub/"),
-        )
-    ],
-    docs=["https://redis.io/docs/latest/", "https://redis.io/docs/latest/apis/"],
-    cicd_tool=CICDToolType.gitlab_ci,
+    info=Info(
+        description="Redis configured for real-time messaging and event streaming",
+        version=SemVer("7.2.0"),
+        language=ProgrammingLanguage.c,
+        deployment=DeploymentTarget.ec2,
+        owner_team="Events Team",
+        auth_type=AuthType.api_key,
+        monitoring=MonitoringType.prometheus,
+        log_aggregation=LogAggregationType.elk_stack,
+        tracing=TracingType.jaeger,
+        iac_tool=IaCToolType.terraform,
+        max_replicas=4,
+        min_replicas=2,
+        links=[
+            Link(
+                site_name="Redis Pub/Sub Documentation",
+                http_url=Url("https://redis.io/docs/manual/pubsub/"),
+            )
+        ],
+        docs=["https://redis.io/docs/latest/", "https://redis.io/docs/latest/apis/"],
+    ),
+    cicd=CICD(
+        platform=CICDToolType.gitlab_ci,
+    ),
 )
 express_block = Manifest(
     name="Express",
     connections=["MongoDB"],
-    language=ProgrammingLanguage.javascript,
-    deployment=DeploymentTarget.amplify,
-    owner_team="Backend Team",
-    auth_type=AuthType.jwt,
-    log_aggregation=LogAggregationType.elk_stack,
-    tracing=TracingType.jaeger,
-    iac_tool=IaCToolType.cloudformation,
-    max_replicas=3,
-    min_replicas=1,
+    info=Info(
+        language=ProgrammingLanguage.javascript,
+        deployment=DeploymentTarget.amplify,
+        owner_team="Backend Team",
+        auth_type=AuthType.jwt,
+        log_aggregation=LogAggregationType.elk_stack,
+        tracing=TracingType.jaeger,
+        iac_tool=IaCToolType.cloudformation,
+        max_replicas=3,
+        min_replicas=1,
+    ),
 )
 mongo_block = Manifest(
     name="MongoDB",
     connections=["Express", "React"],
-    frameworks=[WebFramework.nextjs],
-    owner_team="Data Team",
-    auth_type=AuthType.basic,
-    monitoring=MonitoringType.cloudwatch,
-    log_aggregation=LogAggregationType.cloudwatch,
-    tracing=TracingType.aws_xray,
-    iac_tool=IaCToolType.terraform,
-    max_replicas=3,
-    min_replicas=1,
-    cicd_tool=CICDToolType.github_actions,
+    info=Info(
+        frameworks=[WebFramework.nextjs],
+        owner_team="Data Team",
+        auth_type=AuthType.basic,
+        monitoring=MonitoringType.cloudwatch,
+        log_aggregation=LogAggregationType.cloudwatch,
+        tracing=TracingType.aws_xray,
+        iac_tool=IaCToolType.terraform,
+        max_replicas=3,
+        min_replicas=1,
+    ),
+    cicd=CICD(
+        platform=CICDToolType.github_actions,
+    ),
 )
 # Legacy AngularJS admin console (static site)
 angularjs_admin_block = Manifest(
     name="AngularJS Admin Console",
     icon="🛠️",
     connections=["Express"],
-    description="Legacy AngularJS-based admin console for operational management",
-    version=SemVer("1.7.9"),
-    language=ProgrammingLanguage.javascript,
-    deployment=DeploymentTarget.cloudfront,
-    owner_team="Ops Team",
-    auth_type=AuthType.basic,
-    monitoring=MonitoringType.cloudwatch,
-    log_aggregation=LogAggregationType.elk_stack,
-    tracing=TracingType.none,
-    iac_tool=IaCToolType.cloudformation,
-    max_replicas=2,
-    min_replicas=1,
-    links=[Link(site_name="Admin Portal", http_url=Url("https://admin.example.com"))],
-    docs=["https://docs.angularjs.org/"],
-    repo_url=Url("https://github.com/example/angularjs-admin"),
+    info=Info(
+        description="Legacy AngularJS-based admin console for operational management",
+        version=SemVer("1.7.9"),
+        language=ProgrammingLanguage.javascript,
+        deployment=DeploymentTarget.cloudfront,
+        owner_team="Ops Team",
+        auth_type=AuthType.basic,
+        monitoring=MonitoringType.cloudwatch,
+        log_aggregation=LogAggregationType.elk_stack,
+        tracing=TracingType.none,
+        iac_tool=IaCToolType.cloudformation,
+        max_replicas=2,
+        min_replicas=1,
+        links=[Link(site_name="Admin Portal", http_url=Url("https://admin.example.com"))],
+        docs=["https://docs.angularjs.org/"],
+    ),
+    github=Github(
+        repo_url=Url("https://github.com/example/angularjs-admin"),
+    ),
 )
 
 mern_diagram = Diagram(

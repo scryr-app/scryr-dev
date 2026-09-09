@@ -1,6 +1,8 @@
 """Public Python API for Scryr manifests."""
 
 from . import manifest as _manifest
+from .action_client import GithubActionsClient, ScryrClient
+from .github import ActionStatusEvent, GithubActionRun, GithubActionsLog
 from .runtime import (
     emit_diagram_values,
     emit_forge_values,
@@ -37,8 +39,8 @@ from .types import (
     parse_version,
 )
 
-CICD = _manifest.CICDManifestSection
-Dependencies = _manifest.DependenciesManifestSection
+CICD = _manifest.CICD
+Dependencies = _manifest.Dependencies
 Diagram = _manifest.Diagram
 Forge = _manifest.Forge
 ForgeEnvDirective = _manifest.ForgeEnvDirective
@@ -47,18 +49,19 @@ ForgeTaskBatch = _manifest.ForgeTaskBatch
 ForgeTaskCommand = _manifest.ForgeTaskCommand
 ForgeTaskConfirm = _manifest.ForgeTaskConfirm
 ForgeTool = _manifest.ForgeTool
-Github = _manifest.GithubManifestSection
-Info = _manifest.InfoManifestSection
+Github = _manifest.Github
+Info = _manifest.Info
 Link = _manifest.Link
 Manifest = _manifest.Manifest
 ManifestQuery = _manifest.ManifestQuery
-Metrics = _manifest.MetricsManifestSection
-OtherDiagram = _manifest.OtherDiagramManifestSection
-Performance = _manifest.PerformanceManifestSection
-Tests = _manifest.TestsManifestSection
+Metrics = _manifest.Metrics
+OtherDiagram = _manifest.OtherDiagram
+Performance = _manifest.Performance
+Tests = _manifest.Tests
 
 __all__ = [
     "CICD",
+    "ActionStatusEvent",
     "AuthType",
     "CICDToolType",
     "CalendarVersion",
@@ -74,6 +77,9 @@ __all__ = [
     "ForgeTaskConfirm",
     "ForgeTool",
     "Github",
+    "GithubActionRun",
+    "GithubActionsClient",
+    "GithubActionsLog",
     "IaCToolType",
     "Incremental",
     "IncrementalVersion",
@@ -90,6 +96,7 @@ __all__ = [
     "OtherDiagram",
     "Performance",
     "ProgrammingLanguage",
+    "ScryrClient",
     "SemVer",
     "Tests",
     "TracingType",
