@@ -1,15 +1,17 @@
 overwrite: true
-schema: "http://localhost:8000/graphql"
+schema: "../crystal/crystal-server/src/graphql_schema.snapshot.graphql"
 documents: "src/graphql/**/*.graphql"
 generates:
   src/graphql/generated.ts:
     plugins:
+      - add:
+          content: "import { graphqlFetcher } from './client';"
       - "typescript"
       - "typescript-operations"
       - "typescript-react-query"
     config:
       fetcher:
-        func: ./client#graphqlFetcher
+        func: graphqlFetcher
         isReactHook: false
       exposeDocument: true
       exposeQueryKeys: true

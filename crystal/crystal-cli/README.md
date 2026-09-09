@@ -278,3 +278,11 @@ Automatic branch selection uses `GITHUB_TOKEN` to check `main`, then `master`,
 then falls back to the repository default branch. Override with `--branch`.
 No workflow ID is required; use `--workflow-id` to restrict reporting.
 See `manifest/examples/report-action-status.yml` for a completion reporter.
+
+## Operational reports
+
+Use `scryr report tests`, `coverage`, `dependencies`, or `deployment` to publish
+existing CI results without regenerating manifests. `scryr report actions` is
+the grouped form of `report-action-status`. All reporters support `--dry-run`
+and `--json`. See [operational reporting](../../docs/cli-reporting.md) for formats,
+credentials, scope semantics, and the executable Northwind local demo.

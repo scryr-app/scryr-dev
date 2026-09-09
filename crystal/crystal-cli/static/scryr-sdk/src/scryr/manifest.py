@@ -390,6 +390,10 @@ class Metrics(_Section):
 class CICD(_Section):
     """Manifest section for CICD data."""
 
+    reports: dict[str, Any] | None = Field(
+        default=None, description="Current durable reports by kind and scope"
+    )
+
     github_actions: GithubActionsLog | None = Field(
         default=None,
         serialization_alias="githubActions",
@@ -454,6 +458,12 @@ class CICD(_Section):
 class Tests(_Section):
     """Manifest section for Tests data."""
 
+    reports: dict[str, Any] | None = Field(
+        default=None, description="Current durable reports by kind and scope"
+    )
+
+    errors: int | None = Field(default=None, ge=0, description="Errored tests")
+    skipped: int | None = Field(default=None, ge=0, description="Skipped tests")
     total: int | None = Field(default=None, ge=0, description="Total number of tests")
     passing: int | None = Field(default=None, ge=0, description="Number of passing tests")
     failing: int | None = Field(default=None, ge=0, description="Number of failing tests")
@@ -489,6 +499,16 @@ class Tests(_Section):
 class Dependencies(_Section):
     """Manifest section for Dependencies data."""
 
+    reports: dict[str, Any] | None = Field(
+        default=None, description="Current durable reports by kind and scope"
+    )
+
+    open_alerts: int | None = Field(
+        default=None,
+        ge=0,
+        serialization_alias="openAlerts",
+        validation_alias=AliasChoices("open_alerts", "openAlerts"),
+    )
     total_deps: int | None = Field(
         default=None,
         ge=0,

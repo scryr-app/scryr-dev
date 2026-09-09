@@ -51,19 +51,7 @@ SELECT content FROM manifest_action_events
 WHERE clerk_org_id = ? AND manifest_id = ? AND run_key IN (SELECT run_key FROM recent_runs)
 ORDER BY source_updated_at ASC, phase ASC, event_id ASC";
 
-/// Validate an explicit identity that is stable across source edits.
-fn validate_manifest_id(manifest_id: &str) -> Result<(), String> {
-    if manifest_id.is_empty()
-        || manifest_id.len() > 256
-        || !manifest_id.starts_with(|c: char| c.is_ascii_alphanumeric())
-        || !manifest_id
-            .chars()
-            .all(|c| c.is_ascii_alphanumeric() || "._:/-".contains(c))
-    {
-        return Err("manifestId must be a stable identifier of 1 to 256 characters".into());
-    }
-    Ok(())
-}
+use crate::reports::validate_manifest_id;
 
 /// Append an observation atomically; duplicates return false.
 ///
@@ -236,7 +224,9 @@ pub(super) async fn attach_history(
             let Some(id) = manifest.get("manifestId").and_then(Value::as_str) else {
                 continue;
             };
-            let durable = read_action_history(pool, clerk_org_id, id, 100, 0).await?;
+            let id = id.to_owned();
+            super::reports::attach(pool, clerk_org_id, &id, manifest).await?;
+            let durable = read_action_history(pool, clerk_org_id, &id, 100, 0).await?;
             if durable.runs.is_empty() {
                 continue;
             }

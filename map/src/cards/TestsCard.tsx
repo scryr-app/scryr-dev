@@ -101,6 +101,11 @@ export function TestsCard({
 			gap={5}
 			alignItems="stretch"
 		>
+			{total === undefined && coverage === undefined && (
+				<Text fontSize={10} color="#b8c2ce">
+					No test results reported
+				</Text>
+			)}
 			{/* Header */}
 			<Container
 				flexDirection="row"

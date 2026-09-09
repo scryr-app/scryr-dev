@@ -4,6 +4,7 @@ import type { DependenciesCardProps } from "./DependenciesCard";
 import type { GithubCardProps } from "./GithubCard";
 import type { MetricsCardProps } from "./MetricsCard";
 import type { PerformanceCardProps } from "./PerformanceCard";
+import { isOperationalReport, type OperationalReport } from "./ReportCard";
 import type { TestsCardProps } from "./TestsCard";
 
 type RawRecord = Record<string, unknown>;
@@ -161,16 +162,6 @@ function inferDeployStatus(isProd = true): "deployed" | "deploying" {
 	return isProd ? "deployed" : "deploying";
 }
 
-function inferSeverity(
-	count: number,
-): "critical" | "high" | "medium" | "low" | "none" {
-	if (count >= 4) return "critical";
-	if (count >= 3) return "high";
-	if (count >= 2) return "medium";
-	if (count >= 1) return "low";
-	return "none";
-}
-
 function buildCpuHistory(seed: string, current: number): number[] {
 	return Array.from({ length: 20 }, (_, index) => {
 		const drift = seededInt(seed, `cpu-history-${index}`, -12, 14);
@@ -179,6 +170,7 @@ function buildCpuHistory(seed: string, current: number): number[] {
 }
 
 export interface BlockCardData {
+	reports: OperationalReport[];
 	github: GithubCardProps;
 	metrics: MetricsCardProps;
 	cicd: CICDCardProps;
@@ -279,45 +271,8 @@ export function getBlockCardData(block: Block): BlockCardData {
 			4,
 			42,
 		);
-	const failingTests =
-		firstNumber(raw, [["tests", "failing"]]) ??
-		clamp(
-			Math.round((100 - coverage) / 9) + seededInt(seed, "failing-tests", 0, 4),
-			0,
-			18,
-		);
-	const totalTests =
-		firstNumber(raw, [["tests", "total"]]) ??
-		clamp(80 + complexity * 18 + replicaCount * 22, 60, 1200);
-	const passingTests = Math.max(totalTests - failingTests, 0);
-	const vulnerableDeps =
-		firstNumber(raw, [
-			["dependencies", "vulnerableDeps"],
-			["security", "vulnerabilities"],
-		]) ??
-		clamp(
-			(block.monitoring === "none" ? 1 : 0) +
-				(block.authType === "none" ? 1 : 0) +
-				seededInt(seed, "vulnerable-deps", 0, 2),
-			0,
-			5,
-		);
-	const outdatedDeps =
-		firstNumber(raw, [
-			["dependencies", "outdatedDeps"],
-			["github", "outdatedDeps"],
-		]) ??
-		clamp(frameworkCount * 3 + seededInt(seed, "outdated-deps", 0, 10), 0, 36);
-	const totalDeps =
-		firstNumber(raw, [["dependencies", "totalDeps"]]) ??
-		clamp(
-			25 + frameworkCount * 14 + connectionCount * 7 + tagCount * 5,
-			20,
-			420,
-		);
-	const directDeps =
-		firstNumber(raw, [["dependencies", "directDeps"]]) ??
-		clamp(frameworkCount * 6 + tagCount * 2 + 8, 8, totalDeps);
+	const vulnerableDeps = firstNumber(raw, [["dependencies", "vulnerableDeps"]]);
+	const outdatedDeps = firstNumber(raw, [["dependencies", "outdatedDeps"]]);
 	const cpuHistory =
 		firstStringArray(raw, [["performance", "cpuHistory"]])
 			?.map((value) => Number(value))
@@ -325,6 +280,15 @@ export function getBlockCardData(block: Block): BlockCardData {
 		buildCpuHistory(seed, cpuCurrent);
 
 	return {
+		reports: ["tests", "dependencies", "cicd"].flatMap((section) => {
+			const value = raw?.[section];
+			if (!value || typeof value !== "object" || !("reports" in value))
+				return [];
+			const reports = value.reports;
+			return reports && typeof reports === "object"
+				? Object.values(reports).filter(isOperationalReport)
+				: [];
+		}),
 		github: {
 			repoUrl,
 			stars:
@@ -467,65 +431,30 @@ export function getBlockCardData(block: Block): BlockCardData {
 					: 0),
 		},
 		tests: {
-			total: totalTests,
-			passing: passingTests,
-			failing: failingTests,
-			coverage,
-			coverageTrend:
-				(firstString(raw, [["tests", "coverageTrend"]]) as
-					| "up"
-					| "down"
-					| "stable"
-					| undefined) ?? "stable",
-			flakyTests:
-				firstNumber(raw, [["tests", "flakyTests"]]) ??
-				clamp(
-					seededInt(seed, "flaky-tests", 0, 5) +
-						(buildStatus === "pending" ? 1 : 0),
-					0,
-					8,
-				),
-			executionTime:
-				firstNumber(raw, [["tests", "executionTime"]]) ??
-				clamp(
-					18 + frameworkCount * 12 + seededInt(seed, "test-exec", 0, 40),
-					12,
-					180,
-				),
-			lastRun: firstString(raw, [["tests", "lastRun"]]) ?? lastBuild,
+			total: firstNumber(raw, [["tests", "total"]]),
+			passing: firstNumber(raw, [["tests", "passing"]]),
+			failing: firstNumber(raw, [["tests", "failing"]]),
+			coverage: firstNumber(raw, [["tests", "coverage"]]),
+			flakyTests: firstNumber(raw, [["tests", "flakyTests"]]),
+			executionTime: firstNumber(raw, [["tests", "executionTime"]]),
+			lastRun: firstString(raw, [["tests", "lastRun"]]),
+			coverageTrend: firstString(raw, [
+				["tests", "coverageTrend"],
+			]) as TestsCardProps["coverageTrend"],
 		},
 		dependencies: {
-			totalDeps,
-			outdatedDeps,
-			vulnerableDeps,
-			maxSeverity:
-				(firstString(raw, [["dependencies", "maxSeverity"]]) as
-					| "critical"
-					| "high"
-					| "medium"
-					| "low"
-					| "none"
-					| undefined) ?? inferSeverity(vulnerableDeps),
-			directDeps,
-			transitiveDeps: Math.max(totalDeps - directDeps, 0),
-			updateLag:
-				firstNumber(raw, [["dependencies", "updateLag"]]) ??
-				clamp(
-					4 + outdatedDeps * 2 + seededInt(seed, "update-lag", 0, 14),
-					0,
-					90,
-				),
-			licenseCompliance:
-				(firstString(raw, [["dependencies", "licenseCompliance"]]) as
-					| "compliant"
-					| "warning"
-					| "violation"
-					| undefined) ??
-				(vulnerableDeps >= 4
-					? "violation"
-					: outdatedDeps > 18
-						? "warning"
-						: "compliant"),
+			totalDeps: firstNumber(raw, [["dependencies", "totalDeps"]]),
+			outdatedDeps: firstNumber(raw, [["dependencies", "outdatedDeps"]]),
+			vulnerableDeps: firstNumber(raw, [["dependencies", "vulnerableDeps"]]),
+			directDeps: firstNumber(raw, [["dependencies", "directDeps"]]),
+			transitiveDeps: firstNumber(raw, [["dependencies", "transitiveDeps"]]),
+			updateLag: firstNumber(raw, [["dependencies", "updateLag"]]),
+			maxSeverity: firstString(raw, [
+				["dependencies", "maxSeverity"],
+			]) as DependenciesCardProps["maxSeverity"],
+			licenseCompliance: firstString(raw, [
+				["dependencies", "licenseCompliance"],
+			]) as DependenciesCardProps["licenseCompliance"],
 		},
 		performance: {
 			cpuHistory,

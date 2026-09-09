@@ -1,6 +1,8 @@
 //! CLI argument parsing.
 #![allow(clippy::missing_docs_in_private_items, clippy::redundant_pub_crate)]
 
+mod observations;
+pub(crate) use observations::{ObservationArgs, ReportCommand, ReportsArgs};
 mod auth;
 mod report;
 pub(crate) use report::ReportArgs;
@@ -37,6 +39,8 @@ pub(crate) enum Command {
     Migrate,
     /// Report a GitHub workflow run to Crystal.
     ReportActionStatus(ReportArgs),
+    /// Report operational results.
+    Report(Box<ReportsArgs>),
     /// Generate manifest artifacts and persist them through GraphQL.
     Generate(Box<GenerateArgs>),
     /// Interactive Clerk authentication helpers.
@@ -52,6 +56,8 @@ pub(crate) enum ResolvedCommand {
     Migrate,
     /// Report a GitHub workflow run to Crystal.
     ReportActionStatus(ReportArgs),
+    /// Report operational results.
+    Report(Box<ReportsArgs>),
     /// Generate manifest artifacts or render one generated artifact.
     Generate(GenerateRequest),
     /// Interactive Clerk authentication helpers.
@@ -63,6 +69,7 @@ impl Args {
     pub(crate) fn resolved_command(&self) -> Result<ResolvedCommand, String> {
         if let Some(command) = &self.command {
             return Ok(match command.clone() {
+                Command::Report(args) => ResolvedCommand::Report(args),
                 Command::ReportActionStatus(args) => ResolvedCommand::ReportActionStatus(args),
                 Command::Migrate => ResolvedCommand::Migrate,
                 Command::Serve(args) => ResolvedCommand::Serve(args),

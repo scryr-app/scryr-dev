@@ -11,6 +11,20 @@ pub(crate) struct GeneratedManifestMutationRoot;
 
 #[Object]
 impl GeneratedManifestMutationRoot {
+    /// Append a typed operational observation for the active organization.
+    async fn record_report(
+        &self,
+        ctx: &Context<'_>,
+        manifest_id: String,
+        report: async_graphql::Json<crystal_core::reports::Report>,
+    ) -> async_graphql::Result<bool> {
+        let pool = ctx.data::<DatabasePool>()?;
+        let context = ctx.data::<ManifestRequestContext>()?;
+        crystal_core::persistence::record_report(pool, context, &manifest_id, report.0)
+            .await
+            .map_err(async_graphql::Error::new)
+    }
+
     /// Record one GitHub Actions observation without rewriting a generated Manifest.
     async fn record_action_run(
         &self,
