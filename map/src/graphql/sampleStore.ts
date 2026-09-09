@@ -44,7 +44,7 @@ export function getMapLabel(key: string): string {
 }
 
 function createMapSelectionStore() {
-	let current: SelectedMap = { id: null, key: "mern" };
+	let current: SelectedMap = { id: null, key: "" };
 	const listeners = new Set<() => void>();
 
 	return {

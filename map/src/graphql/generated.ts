@@ -153,6 +153,8 @@ export type QueryRoot = {
    * Pass `scry_identifier` to load an exact Scryr map, or `sample` for legacy lookup.
    */
   blocks: Array<Block>;
+  /** Fetch configured runtime metrics once when opening a diagram. Block polling never calls this. */
+  diagramMetrics: Scalars['JSON']['output'];
   health: HealthStatus;
   /** Read operational observations for the active organization. */
   reportHistory: Scalars['JSON']['output'];
@@ -169,6 +171,12 @@ export type QueryRootActionHistoryArgs = {
 
 
 export type QueryRootBlocksArgs = {
+  sample?: InputMaybe<Scalars['String']['input']>;
+  scryIdentifier?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryRootDiagramMetricsArgs = {
   sample?: InputMaybe<Scalars['String']['input']>;
   scryIdentifier?: InputMaybe<Scalars['String']['input']>;
 };

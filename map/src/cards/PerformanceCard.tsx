@@ -127,7 +127,7 @@ export interface PerformanceCardProps {
 export function PerformanceCard({
 	cpuHistory = [],
 	cpuCurrent,
-	timeWindow = "Last 10 min",
+	timeWindow = "Window unavailable",
 }: PerformanceCardProps) {
 	const c = currentTheme.cardTextColor;
 

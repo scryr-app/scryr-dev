@@ -5,6 +5,7 @@ import {
 	useGetBlocksQuery,
 } from "@/graphql/generated";
 import { useRuntimePreviewBlocks } from "@/graphql/runtimePreviewStore";
+import { useDiagramMetrics } from "./useDiagramMetrics";
 
 type Block = GetBlocksQuery["blocks"][number];
 type RawRecord = Record<string, unknown>;
@@ -230,7 +231,42 @@ export function useBlocksData(variables?: GetBlocksQueryVariables) {
 		enabled: runtimePreviewBlocks === null,
 		refetchInterval: 30_000,
 	});
-	const blocks = useMemo(() => normalizeBlocksData(query.data), [query.data]);
+	const normalized = useMemo(
+		() => normalizeBlocksData(query.data),
+		[query.data],
+	);
+	const configured = normalized.some((block) =>
+		Boolean(
+			parseRawJsonString(block.rawJsonString)?.metrics &&
+				asRecord(parseRawJsonString(block.rawJsonString)?.metrics)?.provider,
+		),
+	);
+	const runtime = useDiagramMetrics(
+		variables,
+		runtimePreviewBlocks === null && configured,
+	);
+	const blocks = useMemo(
+		() =>
+			normalized.map((block) => {
+				const raw = parseRawJsonString(block.rawJsonString);
+				if (!raw || !asRecord(raw.metrics)?.provider) return block;
+				const id = typeof raw.manifestId === "string" ? raw.manifestId : "";
+				const snapshot = runtime.data?.diagramMetrics[id] ?? {
+					status: runtime.error
+						? "error"
+						: runtime.isFetching
+							? "loading"
+							: "no_data",
+					error: runtime.error ? "Unable to fetch runtime metrics" : undefined,
+					values: {},
+				};
+				return {
+					...block,
+					rawJsonString: JSON.stringify({ ...raw, runtimeMetrics: snapshot }),
+				};
+			}),
+		[normalized, runtime.data, runtime.error, runtime.isFetching],
+	);
 
 	return {
 		...query,

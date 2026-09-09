@@ -39,7 +39,7 @@ scryr serve --sample mern --host 127.0.0.1 --port 8000
 Server options:
 
 ```bash
---sample <name>       Sample key to serve by default. Defaults to mern.
+--sample <name>       Explicit persisted artifact key to serve. No default sample.
 --host <host>         Host interface to bind. Defaults to 127.0.0.1.
 --port <port>         TCP port to bind. Defaults to 8000.
 --auth-mode <mode>    Authentication mode: local or clerk.
@@ -286,3 +286,10 @@ existing CI results without regenerating manifests. `scryr report actions` is
 the grouped form of `report-action-status`. All reporters support `--dry-run`
 and `--json`. See [operational reporting](../../docs/cli-reporting.md) for formats,
 credentials, scope semantics, and the executable Northwind local demo.
+
+## Metrics on diagram load
+
+Declare `Metrics(provider=PrometheusSource(...))` in `index.scry` to fetch Grafana
+metrics when a diagram opens. Ordinary map polling does not fetch runtime metrics.
+See [diagram-load metrics](../../docs/diagram-metrics.md) for server connection
+setup, cache semantics, and the Northwind verification command.

@@ -8,24 +8,16 @@ use std::path::{Path, PathBuf};
 fn main() -> io::Result<()> {
     let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").map_err(io::Error::other)?);
     let map_static_dir = manifest_dir.join("static").join("map");
-    let sample_static_dir = manifest_dir.join("static").join("samples");
     let out_dir = PathBuf::from(env::var("OUT_DIR").map_err(io::Error::other)?);
     let output_path = out_dir.join("embedded_map_assets.rs");
 
     println!("cargo:rerun-if-changed={}", map_static_dir.display());
-    println!("cargo:rerun-if-changed={}", sample_static_dir.display());
 
     let mut assets = Vec::new();
     if map_static_dir.join("index.html").is_file() {
         collect_assets(&map_static_dir, &map_static_dir, &mut assets)?;
     }
     assets.sort_by(|left, right| left.0.cmp(&right.0));
-
-    let mut samples = Vec::new();
-    if sample_static_dir.is_dir() {
-        collect_sample_manifests(&sample_static_dir, &mut samples)?;
-    }
-    samples.sort_by(|left, right| left.0.cmp(&right.0));
 
     let mut output = fs::File::create(output_path)?;
     writeln!(output, "pub(crate) static ASSETS: &[EmbeddedAsset] = &[")?;
@@ -34,17 +26,6 @@ fn main() -> io::Result<()> {
         writeln!(
             output,
             "    EmbeddedAsset {{ path: {path:?}, content_type: {content_type:?}, bytes: include_bytes!({absolute_path:?}) }},"
-        )?;
-    }
-    writeln!(output, "];")?;
-    writeln!(
-        output,
-        "pub(crate) static SAMPLE_MANIFESTS: &[EmbeddedSampleManifest] = &["
-    )?;
-    for (name, absolute_path) in samples {
-        writeln!(
-            output,
-            "    EmbeddedSampleManifest {{ name: {name:?}, json: include_str!({absolute_path:?}) }},"
         )?;
     }
     writeln!(output, "];")?;
@@ -82,34 +63,6 @@ fn collect_assets(
             .collect::<Vec<_>>()
             .join("/");
         assets.push((asset_path, path.to_string_lossy().into_owned()));
-    }
-
-    Ok(())
-}
-
-/// Collect generated sample manifest JSON files prepared by the release task.
-fn collect_sample_manifests(
-    directory: &Path,
-    samples: &mut Vec<(String, String)>,
-) -> io::Result<()> {
-    for entry in fs::read_dir(directory)? {
-        let entry = entry?;
-        let file_name = entry.file_name();
-        if file_name.to_string_lossy().starts_with('.') {
-            continue;
-        }
-
-        let path = entry.path();
-        if !entry.file_type()?.is_file()
-            || path.extension().and_then(|extension| extension.to_str()) != Some("json")
-        {
-            continue;
-        }
-
-        let Some(name) = path.file_stem().and_then(|stem| stem.to_str()) else {
-            continue;
-        };
-        samples.push((name.to_string(), path.to_string_lossy().into_owned()));
     }
 
     Ok(())

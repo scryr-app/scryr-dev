@@ -21,7 +21,7 @@ pub struct Args {
 pub struct ServerArgs {
     /// Subfolder name inside samples/ to serve (e.g. "plane", "calcom").
     /// Omit to serve all samples.
-    #[arg(short, long, default_value = "mern")]
+    #[arg(short, long)]
     pub sample: Option<String>,
     /// Host interface to bind.
     #[arg(long, env = "HOST", default_value = "127.0.0.1")]

@@ -1,0 +1,427 @@
+//! On-demand, tenant-scoped Prometheus queries. Ordinary block reads never call this module.
+use serde::Deserialize;
+use serde_json::{Value, json};
+use std::{
+    collections::BTreeMap,
+    sync::Arc,
+    time::{Duration, Instant},
+};
+use tokio::sync::Mutex;
+
+#[derive(Clone, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct Source {
+    kind: String,
+    #[serde(alias = "query_endpoint")]
+    query_endpoint: Option<String>,
+    credentials: CredentialRef,
+    #[serde(alias = "dashboard_url")]
+    dashboard_url: Option<String>,
+    environment: String,
+    refresh: String,
+    window: u32,
+    step: u32,
+    #[serde(alias = "cache_ttl")]
+    cache_ttl: u32,
+    #[serde(alias = "ingestion_delay")]
+    ingestion_delay: u32,
+    queries: BTreeMap<String, String>,
+    #[serde(default)]
+    units: BTreeMap<String, String>,
+}
+#[derive(Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct CredentialRef {
+    name: String,
+}
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Connection {
+    endpoint: String,
+    username: String,
+    token: String,
+}
+#[derive(Default)]
+struct Entry {
+    attempted: Option<Instant>,
+    result: Value,
+}
+type Slot = Arc<Mutex<Entry>>;
+
+pub(crate) struct RuntimeMetrics {
+    connections: BTreeMap<String, BTreeMap<String, Connection>>,
+    cache: Mutex<BTreeMap<String, Slot>>,
+    client: reqwest::Client,
+}
+impl RuntimeMetrics {
+    pub(crate) fn from_env() -> std::io::Result<Self> {
+        let connections = if let Some(path) = std::env::var_os("SCRYR_METRICS_CONNECTIONS_FILE") {
+            let text = std::fs::read(path)?;
+            serde_json::from_slice(&text)
+                .map_err(|_| std::io::Error::other("invalid metrics connection file"))?
+        } else {
+            BTreeMap::new()
+        };
+        let client = reqwest::Client::builder()
+            .redirect(reqwest::redirect::Policy::none())
+            .timeout(Duration::from_secs(8))
+            .build()
+            .map_err(std::io::Error::other)?;
+        Ok(Self {
+            connections,
+            cache: Mutex::new(BTreeMap::new()),
+            client,
+        })
+    }
+    pub(crate) async fn load(&self, org: &str, manifests: &Value) -> Value {
+        let mut result = serde_json::Map::new();
+        if let Some(manifests) = manifests.as_array() {
+            let futures = manifests.iter().filter_map(|manifest| {
+                let id = manifest.get("manifestId")?.as_str()?;
+                let config = manifest.get("metrics")?.get("provider")?;
+                if config.is_null() {
+                    return None;
+                }
+                Some(async move { (id.to_owned(), self.snapshot(org, id, config).await) })
+            });
+            for (id, snapshot) in futures_util::future::join_all(futures).await {
+                result.insert(id, snapshot);
+            }
+        }
+        Value::Object(result)
+    }
+    async fn snapshot(&self, org: &str, id: &str, config: &Value) -> Value {
+        let Ok(source) = serde_json::from_value::<Source>(config.clone()) else {
+            return unavailable("Invalid metric source configuration");
+        };
+        if let Err(message) = source.validate() {
+            return unavailable(message);
+        }
+        let key = json!([org, id, config]).to_string();
+        let slot = {
+            let mut cache = self.cache.lock().await;
+            // Bound memory; evict only idle, expired slots, never in-flight queries.
+            cache.retain(|_, slot| {
+                slot.try_lock().map_or(true, |entry| {
+                    entry
+                        .attempted
+                        .is_none_or(|t| t.elapsed() < Duration::from_hours(2))
+                })
+            });
+            if cache.len() >= 256 && !cache.contains_key(&key) {
+                return unavailable("Metrics cache capacity reached");
+            }
+            Arc::clone(cache.entry(key).or_default())
+        };
+        let mut entry = slot.lock().await;
+        if entry
+            .attempted
+            .is_some_and(|t| t.elapsed() < Duration::from_secs(u64::from(source.cache_ttl)))
+        {
+            return entry.result.clone();
+        }
+        let collected = self.collect(org, &source).await;
+        entry.attempted = Some(Instant::now());
+        entry.result = match collected {
+            Ok(value) => value,
+            Err(message) => {
+                if entry.result["values"]
+                    .as_object()
+                    .is_some_and(|v| !v.is_empty())
+                {
+                    let mut prior = entry.result.clone();
+                    prior["status"] = json!("stale");
+                    prior["error"] = json!(message);
+                    prior
+                } else {
+                    unavailable(message)
+                }
+            }
+        };
+        entry.result.clone()
+    }
+    async fn collect(&self, org: &str, source: &Source) -> Result<Value, &'static str> {
+        let connection = self
+            .connections
+            .get(org)
+            .and_then(|connections| connections.get(&source.credentials.name))
+            .ok_or("Metric connection is not configured for this organization")?;
+        let endpoint = approved_endpoint(connection, source)?;
+        let end = chrono::Utc::now().timestamp() - i64::from(source.ingestion_delay);
+        let start = end - i64::from(source.window);
+        let futures = source.queries.iter().map(|(name, expression)| async {
+            let mut response = self
+                .client
+                .get(endpoint.clone())
+                .basic_auth(&connection.username, Some(&connection.token))
+                .query(&[
+                    ("query", expression.clone()),
+                    ("start", start.to_string()),
+                    ("end", end.to_string()),
+                    ("step", source.step.to_string()),
+                    ("timeout", "5s".into()),
+                ])
+                .send()
+                .await
+                .map_err(|_| "Metrics request failed or timed out")?;
+            if !response.status().is_success() {
+                return Err("Metrics backend rejected the request");
+            }
+            let mut bytes = Vec::new();
+            while let Some(chunk) = response
+                .chunk()
+                .await
+                .map_err(|_| "Cannot read metric response")?
+            {
+                if bytes.len() + chunk.len() > 1_000_000 {
+                    return Err("Metric response exceeds size limit");
+                }
+                bytes.extend_from_slice(&chunk);
+            }
+            let body: Value =
+                serde_json::from_slice(&bytes).map_err(|_| "Invalid metric response")?;
+            let series = parse_series(&body, start, end, source.step)?;
+            Ok((name.clone(), series))
+        });
+        let mut values = serde_json::Map::new();
+        let mut missing = Vec::new();
+        for (name, series) in futures_util::future::try_join_all(futures).await? {
+            if let Some(last) = series.last() {
+                values.insert(name.clone(),json!({"value":last.1,"evaluatedAt":last.0,"unit":source.units.get(&name),"samples":series}));
+            } else {
+                missing.push(name);
+            }
+        }
+        let status = if values.is_empty() {
+            "no_data"
+        } else if !missing.is_empty() {
+            "partial"
+        } else {
+            "ready"
+        };
+        let dashboard = source
+            .dashboard_url
+            .as_ref()
+            .and_then(|s| url::Url::parse(s).ok())
+            .filter(|u| u.scheme() == "https")
+            .map(|mut u| {
+                u.query_pairs_mut()
+                    .append_pair("from", &(start * 1000).to_string())
+                    .append_pair("to", &(end * 1000).to_string());
+                u.to_string()
+            });
+        Ok(
+            json!({"status":status,"values":values,"missing":missing,"fetchedAt":chrono::Utc::now(),"windowStart":start,"windowEnd":end,"environment":source.environment,"dashboardUrl":dashboard,"source":"prometheus"}),
+        )
+    }
+}
+fn unavailable(message: &str) -> Value {
+    json!({"status":"error","error":message,"values":{}})
+}
+impl Source {
+    fn validate(&self) -> Result<(), &'static str> {
+        if self.kind != "prometheus"
+            || self.refresh != "on_diagram_load"
+            || !(60..=86400).contains(&self.window)
+            || !(15..=3600).contains(&self.step)
+            || self.window / self.step > 1440
+            || !(1..=3600).contains(&self.cache_ttl)
+            || self.ingestion_delay > 3600
+            || self.queries.is_empty()
+            || self.queries.len() > 12
+            || self.credentials.name.is_empty()
+            || self.credentials.name.len() > 128
+            || self.environment.len() > 128
+            || self
+                .queries
+                .iter()
+                .any(|(k, v)| k.is_empty() || k.len() > 64 || v.trim().is_empty() || v.len() > 4096)
+        {
+            return Err("Invalid metric source configuration");
+        }
+        Ok(())
+    }
+}
+fn approved_endpoint(connection: &Connection, source: &Source) -> Result<url::Url, &'static str> {
+    let mut url =
+        url::Url::parse(&connection.endpoint).map_err(|_| "Invalid server metric endpoint")?;
+    // HTTP is only supported for explicitly configured loopback test backends.
+    let loopback = matches!(url.host_str(), Some("127.0.0.1" | "localhost" | "[::1]"));
+    if !(url.scheme() == "https" || url.scheme() == "http" && loopback)
+        || !url.username().is_empty()
+        || url.password().is_some()
+        || url.query().is_some()
+        || url.fragment().is_some()
+    {
+        return Err("Invalid server metric endpoint");
+    }
+    if let Some(endpoint) = &source.query_endpoint
+        && url::Url::parse(endpoint).ok().as_ref() != Some(&url)
+    {
+        return Err("Manifest metric endpoint is not approved for this connection");
+    }
+    let path = format!("{}/api/v1/query_range", url.path().trim_end_matches('/'));
+    url.set_path(&path);
+    Ok(url)
+}
+fn parse_series(
+    body: &Value,
+    start: i64,
+    end: i64,
+    step: u32,
+) -> Result<Vec<(f64, f64)>, &'static str> {
+    if body["status"] != "success"
+        || body
+            .get("warnings")
+            .and_then(Value::as_array)
+            .is_some_and(|v| !v.is_empty())
+        || body["data"]["resultType"] != "matrix"
+    {
+        return Err("Metrics backend returned an incomplete or invalid result");
+    }
+    let results = body["data"]["result"]
+        .as_array()
+        .ok_or("Missing metric results")?;
+    if results.len() > 1 {
+        return Err("Metric query must aggregate to a single series");
+    }
+    let Some(series) = results.first() else {
+        return Ok(Vec::new());
+    };
+    let samples = series["values"]
+        .as_array()
+        .ok_or("Missing metric samples")?;
+    if samples.len() > 1441 {
+        return Err("Too many metric samples");
+    }
+    let mut output = Vec::new();
+    for point in samples {
+        let timestamp = point[0].as_f64().ok_or("Invalid metric timestamp")?;
+        let value = point[1]
+            .as_str()
+            .ok_or("Invalid metric value")?
+            .parse::<f64>()
+            .map_err(|_| "Invalid metric number")?;
+        if !timestamp.is_finite() {
+            return Err("Invalid metric timestamp");
+        }
+        #[allow(clippy::cast_precision_loss)]
+        if timestamp < (start as f64) || timestamp > (end as f64) {
+            return Err("Metric timestamp outside requested window");
+        }
+        if value.is_finite() {
+            output.push((timestamp, value));
+        }
+    }
+    output.sort_by(|a, b| a.0.total_cmp(&b.0));
+    #[allow(clippy::cast_precision_loss)]
+    if output
+        .last()
+        .is_some_and(|last| (end as f64) - last.0 > f64::from(step) * 2.0)
+    {
+        return Ok(Vec::new());
+    }
+    Ok(output)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    async fn expire(runtime: &RuntimeMetrics) {
+        for slot in runtime.cache.lock().await.values() {
+            slot.lock().await.attempted = Instant::now().checked_sub(Duration::from_secs(2));
+        }
+    }
+    #[actix_web::test]
+    async fn load_deduplicates_caches_isolates_and_preserves_failures()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let calls = Arc::new(AtomicUsize::new(0));
+        let mode = Arc::new(AtomicUsize::new(0));
+        let observed_calls = Arc::clone(&calls);
+        let observed_mode = Arc::clone(&mode);
+        let listener = std::net::TcpListener::bind("127.0.0.1:0")?;
+        let address = listener.local_addr()?;
+        let server=actix_web::HttpServer::new(move || {
+            let calls=Arc::clone(&observed_calls);let mode=Arc::clone(&observed_mode);
+            actix_web::App::new().route("/api/v1/query_range",actix_web::web::get().to(move |request:actix_web::HttpRequest| {
+                let calls=Arc::clone(&calls);let mode=Arc::clone(&mode);
+                async move {
+                    calls.fetch_add(1,Ordering::SeqCst);
+                    assert_eq!(request.headers().get("authorization").and_then(|s|s.to_str().ok()),Some("Basic dXNlcjpzZWNyZXQ="));
+                    if mode.load(Ordering::SeqCst)==1 {return actix_web::HttpResponse::InternalServerError().finish();}
+                    let end=url::form_urlencoded::parse(request.query_string().as_bytes()).find(|(key,_)|key=="end").and_then(|(_,v)|v.parse::<i64>().ok()).unwrap_or_default();
+                    let results=if mode.load(Ordering::SeqCst)==2 {json!([])}else{json!([{"values":[[end,"12.5"]]}])};
+                    actix_web::HttpResponse::Ok().json(json!({"status":"success","data":{"resultType":"matrix","result":results}}))
+                }
+            }))
+        }).listen(listener)?.run();
+        let handle = server.handle();
+        actix_web::rt::spawn(server);
+        let runtime = RuntimeMetrics {
+            connections: BTreeMap::from([(
+                "org".into(),
+                BTreeMap::from([(
+                    "grafana".into(),
+                    Connection {
+                        endpoint: format!("http://{address}"),
+                        username: "user".into(),
+                        token: "secret".into(),
+                    },
+                )]),
+            )]),
+            cache: Mutex::default(),
+            client: reqwest::Client::new(),
+        };
+        let source = json!({"kind":"prometheus","credentials":{"name":"grafana"},"environment":"production","refresh":"on_diagram_load","window":900,"step":60,"cacheTtl":1,"ingestionDelay":120,"queries":{"requestRate":"sum(rate(requests[5m]))"}});
+        let manifests = json!([{"manifestId":"api","metrics":{"provider":source}}]);
+        let (a, b) = tokio::join!(
+            runtime.load("org", &manifests),
+            runtime.load("org", &manifests)
+        );
+        assert_eq!(a, b);
+        assert_eq!(calls.load(Ordering::SeqCst), 1);
+        assert_eq!(a["api"]["values"]["requestRate"]["value"], 12.5);
+        runtime.load("org", &manifests).await;
+        assert_eq!(calls.load(Ordering::SeqCst), 1);
+        let denied = runtime.load("other", &manifests).await;
+        assert_eq!(denied["api"]["status"], "error");
+        assert_eq!(calls.load(Ordering::SeqCst), 1);
+        let mut changed = manifests.clone();
+        changed[0]["metrics"]["provider"]["queryEndpoint"] = json!("https://unapproved.example");
+        assert_eq!(
+            runtime.load("org", &changed).await["api"]["status"],
+            "error"
+        );
+        assert_eq!(calls.load(Ordering::SeqCst), 1);
+        expire(&runtime).await;
+        mode.store(1, Ordering::SeqCst);
+        let failure = runtime.load("org", &manifests).await;
+        assert_eq!(failure["api"]["status"], "stale");
+        assert_eq!(failure["api"]["values"], a["api"]["values"]);
+        assert!(!failure.to_string().contains("secret"));
+        assert_eq!(calls.load(Ordering::SeqCst), 2);
+        runtime.load("org", &manifests).await;
+        assert_eq!(calls.load(Ordering::SeqCst), 2);
+        expire(&runtime).await;
+        mode.store(2, Ordering::SeqCst);
+        assert_eq!(
+            runtime.load("org", &manifests).await["api"]["status"],
+            "no_data"
+        );
+        handle.stop(true).await;
+        Ok(())
+    }
+    #[test]
+    fn rejects_ambiguous_series_and_ignores_nonfinite_samples() -> Result<(), &'static str> {
+        let body = json!({"status":"success","data":{"resultType":"matrix","result":[{"values":[[100,"NaN"],[160,"+Inf"]]}]}});
+        assert!(parse_series(&body, 100, 160, 60)?.is_empty());
+        let mut multiple = body;
+        multiple["data"]["result"] = json!([{"values":[]},{"values":[]}]);
+        assert!(parse_series(&multiple, 100, 160, 60).is_err());
+        let old = json!({"status":"success","data":{"resultType":"matrix","result":[{"values":[[100,"2"]]}]}});
+        assert!(parse_series(&old, 100, 300, 60)?.is_empty());
+        Ok(())
+    }
+}

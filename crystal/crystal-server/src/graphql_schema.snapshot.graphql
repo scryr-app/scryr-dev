@@ -177,6 +177,10 @@ type Link {
 
 type QueryRoot {
 	"""
+	Fetch configured runtime metrics once when opening a diagram. Block polling never calls this.
+	"""
+	diagramMetrics(scryIdentifier: String, sample: String): JSON!
+	"""
 	Read operational observations for the active organization.
 	"""
 	reportHistory(manifestId: String!, limit: Int! = 100, offset: Int! = 0): JSON!

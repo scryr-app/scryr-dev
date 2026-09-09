@@ -997,6 +997,32 @@ class Github(_Section):
         )
 
 
+class CredentialRef:
+    """Public name of a server connection; browser previews never resolve secrets."""
+
+    def __init__(self, *, name):
+        self.name = name
+
+    def to_dict(self):
+        return {"name": self.name}
+
+
+class PrometheusSource:
+    """Preserve declarative metric sources in offline browser previews."""
+
+    def __init__(self, *, credentials, query_endpoint=None, dashboard_url=None,
+                 environment="production", refresh="on_diagram_load", window=900,
+                 step=60, cache_ttl=60, ingestion_delay=120, queries, units=None):
+        self.values = dict(kind="prometheus", credentials=credentials.to_dict(),
+                           queryEndpoint=query_endpoint, dashboardUrl=dashboard_url,
+                           environment=environment, refresh=refresh, window=window,
+                           step=step, cacheTtl=cache_ttl, ingestionDelay=ingestion_delay,
+                           queries=queries, units=units or {})
+
+    def to_dict(self):
+        return self.values.copy()
+
+
 class Metrics(_Section):
     """Manifest section for Metrics data."""
 
@@ -1308,6 +1334,8 @@ from .github import ActionStatusEvent, GithubActionRun, GithubActionsLog
 
 from .manifest import (
     CICD,
+    CredentialRef,
+    PrometheusSource,
     Dependencies,
     Diagram,
     Github,
@@ -1346,6 +1374,8 @@ __all__ = [
     "GithubActionsLog",
     "AuthType",
     "CICD",
+    "CredentialRef",
+    "PrometheusSource",
     "CICDToolType",
     "CalendarVersion",
     "Dependencies",

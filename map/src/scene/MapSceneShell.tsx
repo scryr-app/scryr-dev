@@ -52,10 +52,7 @@ export function MapSceneShell({ header }: MapSceneShellProps) {
 						/>
 					</ErrorBoundary>
 					<ErrorBoundary name="TopCornerButtons" fallback={null}>
-						<TopCornerButtons
-							isPyodideOpen={isPyodideOpen}
-							onTogglePyodide={togglePyodide}
-						/>
+						<TopCornerButtons />
 					</ErrorBoundary>
 				</div>
 			</div>

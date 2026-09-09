@@ -17,6 +17,7 @@ from pydantic import (
 )
 
 from .github import GithubActionsLog  # noqa: TC001 - Pydantic resolves this at runtime.
+from .metrics_source import PrometheusSource  # noqa: TC001
 from .types import (
     AuthType,
     CalendarVersion,
@@ -316,6 +317,8 @@ class Github(_Section):
 
 class Metrics(_Section):
     """Manifest section for Metrics data."""
+
+    provider: PrometheusSource | None = None
 
     enabled: bool | None = Field(default=None, description="Whether Metrics data is enabled")
     response_time_p50: float | None = Field(

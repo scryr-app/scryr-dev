@@ -6,6 +6,7 @@ staging deployment observations in this demo are explicitly synthetic.
 
 import datetime
 import json
+import os
 from pathlib import Path
 import subprocess
 import urllib.request
@@ -14,7 +15,10 @@ ROOT = Path(__file__).resolve().parents[2]
 PROJECT = ROOT.parent / "ex-northwind-commerce"
 OUTPUT = ROOT / ".scryr/local-reports"
 CLI = ROOT / "crystal/target/debug/scryr"
-ENDPOINT = "http://127.0.0.1:8001/graphql"
+# Deliberate fixture injection must target a separately started disposable server.
+ENDPOINT = os.environ.get("SCRYR_DEMO_GRAPHQL_URL")
+if not ENDPOINT:
+    raise SystemExit("Set SCRYR_DEMO_GRAPHQL_URL to a disposable test server; this script injects synthetic reports.")
 NOW = datetime.datetime.now(datetime.timezone.utc).isoformat()
 RUN = "northwind-local-" + NOW
 

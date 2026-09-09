@@ -1,7 +1,6 @@
 //! Zero-config local development authentication.
 
 use super::models::{AuthOrganizationContext, AuthenticatedPrincipal};
-use crystal_core::manifest::ManifestRequestContext;
 
 const LOCAL_USER_ID: &str = "local-dev-user";
 const LOCAL_ORG_ID: &str = "local-dev-org";
@@ -21,17 +20,6 @@ impl AuthenticatedPrincipal {
                 permissions: vec![LOCAL_ORG_PERMISSION.to_string()],
             },
         )
-    }
-}
-
-/// Return the manifest request context used by zero-config local development.
-pub(crate) fn local_dev_manifest_request_context() -> ManifestRequestContext {
-    ManifestRequestContext {
-        clerk_user_id: LOCAL_USER_ID.to_string(),
-        clerk_org_id: LOCAL_ORG_ID.to_string(),
-        clerk_org_slug: Some(LOCAL_ORG_SLUG.to_string()),
-        clerk_org_role: Some(LOCAL_ORG_ROLE.to_string()),
-        clerk_org_permissions: vec![LOCAL_ORG_PERMISSION.to_string()],
     }
 }
 

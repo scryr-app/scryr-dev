@@ -149,14 +149,14 @@ mod tests {
     }
 
     #[test]
-    fn serve_command_defaults_to_mern_sample() -> Result<(), String> {
+    fn serve_command_does_not_default_to_a_sample() -> Result<(), String> {
         let args = Args::parse_from(["scryr", "serve"]);
 
         let ResolvedCommand::Serve(serve_args) = args.resolved_command()? else {
             return Err("expected serve command".to_string());
         };
 
-        assert_eq!(serve_args.sample, Some("mern".to_string()));
+        assert_eq!(serve_args.sample, None);
         Ok(())
     }
 
