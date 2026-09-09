@@ -228,6 +228,7 @@ export function useBlocksData(variables?: GetBlocksQueryVariables) {
 	const runtimePreviewBlocks = useRuntimePreviewBlocks();
 	const query = useGetBlocksQuery(variables, {
 		enabled: runtimePreviewBlocks === null,
+		refetchInterval: 30_000,
 	});
 	const blocks = useMemo(() => normalizeBlocksData(query.data), [query.data]);
 

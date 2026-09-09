@@ -14,6 +14,14 @@ enum ArtifactKind {
 
 type Block {
 	"""
+	Stable Manifest identity used to attach operational history.
+	"""
+	manifestId: String
+	"""
+	Recent GitHub workflow runs and their observed status history.
+	"""
+	githubActions: JSON
+	"""
 	Display name for the component (used as the block label).
 	"""
 	name: String
@@ -117,6 +125,10 @@ type Block {
 
 type GeneratedManifestMutationRoot {
 	"""
+	Record one GitHub Actions observation without rewriting a generated Manifest.
+	"""
+	recordActionRun(manifestId: String!, run: JSON!, eventId: String, source: String! = "api"): Boolean!
+	"""
 	Upsert a generated manifest artifact into storage.
 	"""
 	upsertGeneratedManifest(input: UpsertGeneratedManifestInput!): UpsertGeneratedManifestPayload!
@@ -141,6 +153,11 @@ type HealthStatus {
 }
 
 """
+A scalar that can represent any JSON value.
+"""
+scalar JSON
+
+"""
 External reference associated with a block (e.g., repo, docs, dashboard).
 """
 type Link {
@@ -155,6 +172,10 @@ type Link {
 }
 
 type QueryRoot {
+	"""
+	Read complete workflow attempts, newest first, scoped to the active organization.
+	"""
+	actionHistory(manifestId: String!, limit: Int! = 100, offset: Int! = 0): JSON!
 	health: HealthStatus!
 	"""
 	Lists persisted Scryr maps available in the configured database.

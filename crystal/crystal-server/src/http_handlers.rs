@@ -53,7 +53,9 @@ pub(crate) async fn graphql_handler(
 
 /// Return whether a GraphQL document uses fields that require Scryr map tenant context.
 fn request_requires_manifest_context(query: &str) -> bool {
-    query.contains("upsertGeneratedManifest")
+    query.contains("recordActionRun")
+        || query.contains("actionHistory")
+        || query.contains("upsertGeneratedManifest")
         || query.contains("scryrMaps")
         || query.contains("blocks")
 }

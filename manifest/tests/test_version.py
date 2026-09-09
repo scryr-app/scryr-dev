@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from scryr.manifest import InfoManifestSection, Manifest
+from scryr.manifest import Info, Manifest
 from scryr.types import (
     CalendarVersion,
     Incremental,
@@ -87,11 +87,11 @@ def test_manifest_keeps_version_typed_models() -> None:
     """Manifest stores version as typed version models internally."""
     semver_manifest = Manifest(
         name="SemVerSvc",
-        info=InfoManifestSection(version=SemVer.parse("1.2.3")),
+        info=Info(version=SemVer.parse("1.2.3")),
     )
     calendar_manifest = Manifest(
         name="CalendarSvc",
-        info=InfoManifestSection(version=parse_version("2026.12")),
+        info=Info(version=parse_version("2026.12")),
     )
 
     assert isinstance(semver_manifest.info.version, SemVer)

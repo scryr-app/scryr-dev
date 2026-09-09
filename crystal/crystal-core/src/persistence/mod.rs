@@ -5,6 +5,9 @@ use serde_json::Value;
 use std::path::Path;
 use uuid::Uuid;
 
+mod action_history;
+pub use action_history::{read_action_history, record_action_run};
+
 mod connection;
 mod metadata;
 mod persist;

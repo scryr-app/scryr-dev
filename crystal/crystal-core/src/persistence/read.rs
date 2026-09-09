@@ -20,10 +20,12 @@ pub(crate) async fn read_generated_manifest_json(
     ensure_table(pool).await?;
 
     if let Some(sample_key) = sample {
-        return read_generated_manifest_json_for_sample(pool, clerk_org_id, sample_key).await;
+        let value = read_generated_manifest_json_for_sample(pool, clerk_org_id, sample_key).await?;
+        return super::action_history::attach_history(pool, clerk_org_id, value).await;
     }
 
-    read_all_generated_manifest_json(pool, clerk_org_id).await
+    let value = read_all_generated_manifest_json(pool, clerk_org_id).await?;
+    super::action_history::attach_history(pool, clerk_org_id, value).await
 }
 
 /// List Scryr map value artifacts stored in storage.
@@ -102,7 +104,8 @@ pub(crate) async fn read_generated_manifest_json_by_scry_identifier(
         ));
     };
 
-    parse_manifest_blocks_value(&artifact_key, &content)
+    let value = parse_manifest_blocks_value(&artifact_key, &content)?;
+    super::action_history::attach_history(pool, clerk_org_id, value).await
 }
 
 /// Read a generated manifest JSON artifact for one sample key.

@@ -145,7 +145,7 @@ function getRepoUrl(
 
 function inferBuildStatus(
 	explicit?: string,
-): "passing" | "failing" | "pending" {
+): "passing" | "failing" | "pending" | undefined {
 	if (
 		explicit === "passing" ||
 		explicit === "failing" ||
@@ -154,7 +154,7 @@ function inferBuildStatus(
 		return explicit;
 	}
 
-	return "passing";
+	return undefined;
 }
 
 function inferDeployStatus(isProd = true): "deployed" | "deploying" {

@@ -1,3 +1,4 @@
+import githubShimSource from "./githubShim.py?raw";
 import sampleMernSource from "./index.scry?raw";
 
 const cicdToolSource = `
@@ -882,7 +883,7 @@ class Link:
         }
 
 
-class ManifestSection:
+class _Section:
     """Base class for lightweight browser manifest sections."""
 
     def _compact(self, data: dict[str, Any]) -> dict[str, Any]:
@@ -900,7 +901,7 @@ class ManifestSection:
         return getattr(value, "value", value)
 
 
-class InfoManifestSection(ManifestSection):
+class Info(_Section):
     """Manifest section for Info data."""
 
     def __init__(
@@ -972,7 +973,7 @@ class InfoManifestSection(ManifestSection):
         }
 
 
-class GithubManifestSection(ManifestSection):
+class Github(_Section):
     """Manifest section for Github data."""
 
     def __init__(self, **values: Any) -> None:
@@ -996,7 +997,7 @@ class GithubManifestSection(ManifestSection):
         )
 
 
-class MetricsManifestSection(ManifestSection):
+class Metrics(_Section):
     """Manifest section for Metrics data."""
 
     def __init__(self, **values: Any) -> None:
@@ -1019,7 +1020,7 @@ class MetricsManifestSection(ManifestSection):
         )
 
 
-class CICDManifestSection(ManifestSection):
+class CICD(_Section):
     """Manifest section for CICD data."""
 
     def __init__(self, **values: Any) -> None:
@@ -1034,13 +1035,14 @@ class CICDManifestSection(ManifestSection):
             "deploy_frequency": "deployFrequency",
             "pipeline_duration": "pipelineDuration",
             "failed_builds": "failedBuilds",
+            "github_actions": "githubActions",
         }
         return self._compact(
             {aliases.get(key, key): self._value(value) for key, value in self.values.items()}
         )
 
 
-class TestsManifestSection(ManifestSection):
+class Tests(_Section):
     """Manifest section for Tests data."""
 
     def __init__(self, **values: Any) -> None:
@@ -1058,7 +1060,7 @@ class TestsManifestSection(ManifestSection):
         )
 
 
-class DependenciesManifestSection(ManifestSection):
+class Dependencies(_Section):
     """Manifest section for Dependencies data."""
 
     def __init__(self, **values: Any) -> None:
@@ -1080,7 +1082,7 @@ class DependenciesManifestSection(ManifestSection):
         )
 
 
-class PerformanceManifestSection(ManifestSection):
+class Performance(_Section):
     """Manifest section for Performance data."""
 
     def __init__(self, **values: Any) -> None:
@@ -1100,7 +1102,7 @@ class PerformanceManifestSection(ManifestSection):
         )
 
 
-class OtherDiagramManifestSection(ManifestSection):
+class OtherDiagram(_Section):
     """Manifest section for OtherDiagram data."""
 
     def __init__(self, *, diagrams: list[Label | str] | None = None) -> None:
@@ -1113,18 +1115,19 @@ class OtherDiagramManifestSection(ManifestSection):
 class Manifest:
     """A lightweight browser port of the SDK Manifest model."""
 
-    Info = InfoManifestSection
-    Github = GithubManifestSection
-    Metrics = MetricsManifestSection
-    CICD = CICDManifestSection
-    Tests = TestsManifestSection
-    Dependencies = DependenciesManifestSection
-    Performance = PerformanceManifestSection
-    OtherDiagram = OtherDiagramManifestSection
+    Info = Info
+    Github = Github
+    Metrics = Metrics
+    CICD = CICD
+    Tests = Tests
+    Dependencies = Dependencies
+    Performance = Performance
+    OtherDiagram = OtherDiagram
 
     def __init__(
         self,
         *,
+        manifest_id: str | None = None,
         name: Label | str = "",
         icon: Label | str = "",
         tags: list[Label | str] | None = None,
@@ -1132,14 +1135,14 @@ class Manifest:
         forges: list[Label | str] | None = None,
         classification: Any = None,
         consumer_type: Any = None,
-        info: InfoManifestSection | None = None,
-        github: GithubManifestSection | None = None,
-        metrics: MetricsManifestSection | None = None,
-        cicd: CICDManifestSection | None = None,
-        tests: TestsManifestSection | None = None,
-        dependencies: DependenciesManifestSection | None = None,
-        performance: PerformanceManifestSection | None = None,
-        other_diagram: OtherDiagramManifestSection | None = None,
+        info: Info | None = None,
+        github: Github | None = None,
+        metrics: Metrics | None = None,
+        cicd: CICD | None = None,
+        tests: Tests | None = None,
+        dependencies: Dependencies | None = None,
+        performance: Performance | None = None,
+        other_diagram: OtherDiagram | None = None,
         description: Markdown | str | None = None,
         version: Version | str | None = None,
         language: ProgrammingLanguage | None = None,
@@ -1158,6 +1161,7 @@ class Manifest:
         repo_url: Url | str | None = None,
         cicd_tool: CICDToolType | str | None = None,
     ) -> None:
+        self.manifest_id = manifest_id
         self.name = Label(name)
         self.icon = Label(icon)
         self.tags = [Label(tag) for tag in (tags or [])]
@@ -1185,17 +1189,17 @@ class Manifest:
             key: value for key, value in info_values.items() if value is not None
         }
         if info_values:
-            self.info = InfoManifestSection(**{**getattr(info, "__dict__", {}), **info_values})
+            self.info = Info(**{**getattr(info, "__dict__", {}), **info_values})
         else:
-            self.info = info or InfoManifestSection()
+            self.info = info or Info()
         self.github = (
-            GithubManifestSection(**{**getattr(github, "values", {}), "repo_url": repo_url})
+            Github(**{**getattr(github, "values", {}), "repo_url": repo_url})
             if repo_url is not None
             else github
         )
         self.metrics = metrics
         self.cicd = (
-            CICDManifestSection(**{**getattr(cicd, "values", {}), "platform": cicd_tool})
+            CICD(**{**getattr(cicd, "values", {}), "platform": cicd_tool})
             if cicd_tool is not None
             else cicd
         )
@@ -1208,6 +1212,7 @@ class Manifest:
 
     def dict(self) -> dict[str, Any]:
         data = {
+            "manifestId": self.manifest_id,
             "name": str(self.name),
             "icon": str(self.icon),
             "tags": [str(tag) for tag in self.tags],
@@ -1299,18 +1304,20 @@ __all__ = [
 const packageInitSource = `
 """Browser package initializer for the Scryr SDK shim."""
 
+from .github import ActionStatusEvent, GithubActionRun, GithubActionsLog
+
 from .manifest import (
-    CICDManifestSection as CICD,
-    DependenciesManifestSection as Dependencies,
+    CICD,
+    Dependencies,
     Diagram,
-    GithubManifestSection as Github,
-    InfoManifestSection as Info,
+    Github,
+    Info,
     Link,
     Manifest,
-    MetricsManifestSection as Metrics,
-    OtherDiagramManifestSection as OtherDiagram,
-    PerformanceManifestSection as Performance,
-    TestsManifestSection as Tests,
+    Metrics,
+    OtherDiagram,
+    Performance,
+    Tests,
 )
 from .types import (
     AuthType,
@@ -1334,6 +1341,9 @@ from .types import (
 )
 
 __all__ = [
+    "ActionStatusEvent",
+    "GithubActionRun",
+    "GithubActionsLog",
     "AuthType",
     "CICD",
     "CICDToolType",
@@ -1369,6 +1379,7 @@ __all__ = [
 export const browserSdkFiles: Record<string, string> = {
 	"scryr/__init__.py": packageInitSource,
 	"scryr/manifest.py": manifestShimSource,
+	"scryr/github.py": githubShimSource,
 	"scryr/text.py": textShimSource,
 	"scryr/types/__init__.py": typesShimSource,
 	"scryr/saas/__init__.py": "",

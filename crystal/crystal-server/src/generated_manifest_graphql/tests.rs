@@ -84,3 +84,74 @@ async fn shared_upload_input_preserves_graphql_and_storage_contract()
     sqlite.close().await;
     Ok(())
 }
+
+/// Exercise the Python client's JSON contract, permissions, and tenant-scoped reads.
+#[tokio::test]
+async fn action_history_graphql_contract() -> Result<(), Box<dyn std::error::Error>> {
+    let sqlite = sqlx::sqlite::SqlitePoolOptions::new()
+        .max_connections(1)
+        .connect("sqlite::memory:")
+        .await?;
+    let schema = Schema::build(QueryRoot, GeneratedManifestMutationRoot, EmptySubscription)
+        .data(DatabasePool::Sqlite(sqlite.clone()))
+        .finish();
+    let run = serde_json::json!({
+        "host": "github.com", "repositoryId": 123, "repository": "example/api",
+        "workflowId": 42, "workflowName": "CI", "runId": 12345, "runAttempt": 1,
+        "headBranch": "main", "headSha": "abcdef", "htmlUrl": "https://github.com/example/api/actions/runs/12345",
+        "status": "completed", "conclusion": "success",
+        "createdAt": "2026-09-08T10:00:00Z", "updatedAt": "2026-09-08T10:02:00Z"
+    });
+    let request = || {
+        Request::new(
+        "mutation Record($manifestId: String!, $run: JSON!, $eventId: String, $source: String!) { recordActionRun(manifestId: $manifestId, run: $run, eventId: $eventId, source: $source) }"
+    ).variables(Variables::from_json(serde_json::json!({
+        "manifestId": "services/api", "run": run, "eventId": "delivery", "source": "webhook"
+    })))
+    };
+    assert!(!schema.execute(request()).await.errors.is_empty());
+    let mut principal = ManifestRequestContext {
+        clerk_user_id: "user".into(),
+        clerk_org_id: "org".into(),
+        clerk_org_slug: None,
+        clerk_org_role: None,
+        clerk_org_permissions: vec![],
+    };
+    assert!(
+        !schema
+            .execute(request().data(principal.clone()))
+            .await
+            .errors
+            .is_empty()
+    );
+    principal.clerk_org_role = Some("org:admin".into());
+    let recorded = schema.execute(request().data(principal.clone())).await;
+    assert!(recorded.errors.is_empty(), "{:?}", recorded.errors);
+    assert_eq!(recorded.data.into_json()?["recordActionRun"], true);
+    let repeated = schema.execute(request().data(principal.clone())).await;
+    assert_eq!(repeated.data.into_json()?["recordActionRun"], false);
+    let history = || {
+        Request::new("query History($manifestId: String!, $limit: Int!, $offset: Int!) { actionHistory(manifestId: $manifestId, limit: $limit, offset: $offset) }")
+        .variables(Variables::from_json(serde_json::json!({"manifestId": "services/api", "limit": 100, "offset": 0})))
+    };
+    assert!(!schema.execute(history()).await.errors.is_empty());
+    let result = schema.execute(history().data(principal.clone())).await;
+    assert!(result.errors.is_empty(), "{:?}", result.errors);
+    let json = result.data.into_json()?;
+    assert_eq!(json["actionHistory"]["runs"][0]["conclusion"], "success");
+    assert_eq!(
+        json["actionHistory"]["runs"][0]["events"][0]["eventId"],
+        "delivery"
+    );
+    principal.clerk_org_id = "other".into();
+    assert_eq!(
+        schema
+            .execute(history().data(principal))
+            .await
+            .data
+            .into_json()?["actionHistory"]["runs"],
+        serde_json::json!([])
+    );
+    sqlite.close().await;
+    Ok(())
+}

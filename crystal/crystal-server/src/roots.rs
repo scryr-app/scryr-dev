@@ -13,6 +13,25 @@ pub(crate) struct QueryRoot;
 
 #[Object]
 impl QueryRoot {
+    /// Read complete workflow attempts, newest first, scoped to the active organization.
+    async fn action_history(
+        &self,
+        ctx: &async_graphql::Context<'_>,
+        manifest_id: String,
+        #[graphql(default = 100)] limit: u32,
+        #[graphql(default = 0)] offset: u32,
+    ) -> async_graphql::Result<async_graphql::Json<crystal_core::action_history::GithubActionsLog>>
+    {
+        let context = ctx
+            .data::<crystal_core::manifest::ManifestRequestContext>()
+            .map_err(|_| async_graphql::Error::new("request is missing active organization"))?;
+        let pool = ctx.data::<persistence::DatabasePool>()?;
+        persistence::read_action_history(pool, &context.clerk_org_id, &manifest_id, limit, offset)
+            .await
+            .map(async_graphql::Json)
+            .map_err(async_graphql::Error::new)
+    }
+
     async fn health(&self, ctx: &async_graphql::Context<'_>) -> HealthStatus {
         let state = match ctx.data::<AppState>() {
             Ok(state) => state,

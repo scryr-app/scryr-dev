@@ -16,6 +16,7 @@ from pydantic import (
     model_validator,
 )
 
+from .github import GithubActionsLog  # noqa: TC001 - Pydantic resolves this at runtime.
 from .types import (
     AuthType,
     CalendarVersion,
@@ -82,7 +83,7 @@ def _parse_version_value(value: object) -> Version:
     raise TypeError(msg)
 
 
-class ManifestSection(BaseModel):
+class _Section(BaseModel):
     """Base model for optional Manifest section data."""
 
     model_config = ConfigDict(
@@ -102,7 +103,7 @@ class Link(BaseModel):
     http_url: Url | str = Field(default=Url(""), description="URL of the site")
 
 
-class InfoManifestSection(ManifestSection):
+class Info(_Section):
     """Manifest section for Info data."""
 
     description: Markdown | str = Field(default=Markdown(""), description="Short description")
@@ -176,6 +177,25 @@ class InfoManifestSection(ManifestSection):
     def _serialize_version(self, value: Version) -> str:
         return str(value)
 
+    @field_validator("deployment", mode="before")
+    @classmethod
+    def _parse_deployment(cls, value: object) -> object:
+        if isinstance(value, str):
+            return next((target for target in DeploymentTarget if target.id == value), value)
+        return value
+
+    @field_validator("frameworks", mode="before")
+    @classmethod
+    def _parse_frameworks(cls, value: object) -> object:
+        if isinstance(value, list):
+            return [
+                next((framework for framework in WebFramework if framework.framework == item), item)
+                if isinstance(item, str)
+                else item
+                for item in value
+            ]
+        return value
+
     @field_serializer("frameworks")
     def _serialize_frameworks(self, value: list[WebFramework]) -> list[str]:
         return [framework.framework for framework in value]
@@ -196,7 +216,7 @@ class InfoManifestSection(ManifestSection):
         return getattr(value, "value", value)
 
     @model_validator(mode="after")
-    def _validate_replica_bounds(self) -> InfoManifestSection:
+    def _validate_replica_bounds(self) -> Info:
         """Ensure replica bounds remain internally consistent."""
         if self.min_replicas > self.max_replicas:
             msg = "min_replicas must be less than or equal to max_replicas"
@@ -204,7 +224,7 @@ class InfoManifestSection(ManifestSection):
         return self
 
 
-class GithubManifestSection(ManifestSection):
+class Github(_Section):
     """Manifest section for Github data."""
 
     enabled: bool | None = Field(default=None, description="Whether Github data is enabled")
@@ -294,7 +314,7 @@ class GithubManifestSection(ManifestSection):
         return None if value is None else str(value)
 
 
-class MetricsManifestSection(ManifestSection):
+class Metrics(_Section):
     """Manifest section for Metrics data."""
 
     enabled: bool | None = Field(default=None, description="Whether Metrics data is enabled")
@@ -367,8 +387,15 @@ class MetricsManifestSection(ManifestSection):
     )
 
 
-class CICDManifestSection(ManifestSection):
+class CICD(_Section):
     """Manifest section for CICD data."""
+
+    github_actions: GithubActionsLog | None = Field(
+        default=None,
+        serialization_alias="githubActions",
+        validation_alias=AliasChoices("github_actions", "githubActions"),
+        description="Workflow runs and their observed status history",
+    )
 
     platform: CICDToolType | str | None = Field(default=None, description="CI/CD platform name")
     build_status: BuildStatus | None = Field(
@@ -424,7 +451,7 @@ class CICDManifestSection(ManifestSection):
         return value.value if isinstance(value, CICDToolType) else str(value)
 
 
-class TestsManifestSection(ManifestSection):
+class Tests(_Section):
     """Manifest section for Tests data."""
 
     total: int | None = Field(default=None, ge=0, description="Total number of tests")
@@ -459,7 +486,7 @@ class TestsManifestSection(ManifestSection):
     )
 
 
-class DependenciesManifestSection(ManifestSection):
+class Dependencies(_Section):
     """Manifest section for Dependencies data."""
 
     total_deps: int | None = Field(
@@ -518,7 +545,7 @@ class DependenciesManifestSection(ManifestSection):
     )
 
 
-class PerformanceManifestSection(ManifestSection):
+class Performance(_Section):
     """Manifest section for Performance data."""
 
     cpu_history: list[float] | None = Field(
@@ -567,7 +594,7 @@ class PerformanceManifestSection(ManifestSection):
     )
 
 
-class OtherDiagramManifestSection(ManifestSection):
+class OtherDiagram(_Section):
     """Manifest section for OtherDiagram data."""
 
     diagrams: list[Label | str] | None = Field(
@@ -765,20 +792,30 @@ class Forge(BaseModel):
 class Manifest(BaseModel):
     """A data model representing a single Scryr block."""
 
-    Info: ClassVar[type[InfoManifestSection]] = InfoManifestSection
-    Github: ClassVar[type[GithubManifestSection]] = GithubManifestSection
-    Metrics: ClassVar[type[MetricsManifestSection]] = MetricsManifestSection
-    CICD: ClassVar[type[CICDManifestSection]] = CICDManifestSection
-    Tests: ClassVar[type[TestsManifestSection]] = TestsManifestSection
-    Dependencies: ClassVar[type[DependenciesManifestSection]] = DependenciesManifestSection
-    Performance: ClassVar[type[PerformanceManifestSection]] = PerformanceManifestSection
-    OtherDiagram: ClassVar[type[OtherDiagramManifestSection]] = OtherDiagramManifestSection
+    Info: ClassVar[type[Info]] = Info
+    Github: ClassVar[type[Github]] = Github
+    Metrics: ClassVar[type[Metrics]] = Metrics
+    CICD: ClassVar[type[CICD]] = CICD
+    Tests: ClassVar[type[Tests]] = Tests
+    Dependencies: ClassVar[type[Dependencies]] = Dependencies
+    Performance: ClassVar[type[Performance]] = Performance
+    OtherDiagram: ClassVar[type[OtherDiagram]] = OtherDiagram
 
     model_config = ConfigDict(
         extra="forbid",
         populate_by_name=True,
         serialize_by_alias=True,
         validate_default=True,
+    )
+
+    manifest_id: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=256,
+        pattern=r"^[A-Za-z0-9][A-Za-z0-9._:/-]*$",
+        serialization_alias="manifestId",
+        validation_alias=AliasChoices("manifest_id", "manifestId"),
+        description="Stable, organization-scoped identity for operational history",
     )
 
     # Core identity and graph topology.
@@ -802,14 +839,14 @@ class Manifest(BaseModel):
 
     # Manifest sections. Names intentionally match the map surface, but remain
     # domain-level Manifest section models rather than UI component references.
-    info: InfoManifestSection = Field(default_factory=InfoManifestSection)
-    github: GithubManifestSection | None = Field(default=None)
-    metrics: MetricsManifestSection | None = Field(default=None)
-    cicd: CICDManifestSection | None = Field(default=None)
-    tests: TestsManifestSection | None = Field(default=None)
-    dependencies: DependenciesManifestSection | None = Field(default=None)
-    performance: PerformanceManifestSection | None = Field(default=None)
-    other_diagram: OtherDiagramManifestSection | None = Field(
+    info: Info = Field(default_factory=Info)
+    github: Github | None = Field(default=None)
+    metrics: Metrics | None = Field(default=None)
+    cicd: CICD | None = Field(default=None)
+    tests: Tests | None = Field(default=None)
+    dependencies: Dependencies | None = Field(default=None)
+    performance: Performance | None = Field(default=None)
+    other_diagram: OtherDiagram | None = Field(
         default=None,
         serialization_alias="otherDiagram",
         validation_alias=AliasChoices("other_diagram", "otherDiagram"),
@@ -818,20 +855,21 @@ class Manifest(BaseModel):
     def __init__(  # noqa: PLR0913
         self,
         *,
+        manifest_id: str | None = None,
         name: Label | str = "",
         icon: Label | str = "",
         classification: Classification = Classification.public_api,
         tags: list[Label | str] | None = None,
         connections: list[Label | str] | None = None,
         forges: list[Label | str] | None = None,
-        info: InfoManifestSection | None = None,
-        github: GithubManifestSection | None = None,
-        metrics: MetricsManifestSection | None = None,
-        cicd: CICDManifestSection | None = None,
-        tests: TestsManifestSection | None = None,
-        dependencies: DependenciesManifestSection | None = None,
-        performance: PerformanceManifestSection | None = None,
-        other_diagram: OtherDiagramManifestSection | None = None,
+        info: Info | None = None,
+        github: Github | None = None,
+        metrics: Metrics | None = None,
+        cicd: CICD | None = None,
+        tests: Tests | None = None,
+        dependencies: Dependencies | None = None,
+        performance: Performance | None = None,
+        other_diagram: OtherDiagram | None = None,
         description: Markdown | str | None = None,
         version: Version | str | None = None,
         language: ProgrammingLanguage | None = None,
@@ -859,6 +897,7 @@ class Manifest(BaseModel):
         }
         data.update(extra)
         optional_fields = {
+            "manifest_id": manifest_id,
             "tags": tags,
             "connections": connections,
             "forges": forges,
@@ -973,14 +1012,14 @@ class Manifest(BaseModel):
 
 
 _MANIFEST_QUERY_SECTION_MODELS: dict[str, type[BaseModel]] = {
-    "info": InfoManifestSection,
-    "github": GithubManifestSection,
-    "metrics": MetricsManifestSection,
-    "cicd": CICDManifestSection,
-    "tests": TestsManifestSection,
-    "dependencies": DependenciesManifestSection,
-    "performance": PerformanceManifestSection,
-    "other_diagram": OtherDiagramManifestSection,
+    "info": Info,
+    "github": Github,
+    "metrics": Metrics,
+    "cicd": CICD,
+    "tests": Tests,
+    "dependencies": Dependencies,
+    "performance": Performance,
+    "other_diagram": OtherDiagram,
 }
 
 _MANIFEST_QUERY_FIELD_ALIASES: dict[str, str] = {

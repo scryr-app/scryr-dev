@@ -2,6 +2,8 @@
 #![allow(clippy::missing_docs_in_private_items, clippy::redundant_pub_crate)]
 
 mod auth;
+mod report;
+pub(crate) use report::ReportArgs;
 mod generate;
 mod serve;
 
@@ -33,6 +35,8 @@ pub(crate) enum Command {
     Serve(ServerArgs),
     /// Apply database schema migrations without starting the HTTP server.
     Migrate,
+    /// Report a GitHub workflow run to Crystal.
+    ReportActionStatus(ReportArgs),
     /// Generate manifest artifacts and persist them through GraphQL.
     Generate(Box<GenerateArgs>),
     /// Interactive Clerk authentication helpers.
@@ -46,6 +50,8 @@ pub(crate) enum ResolvedCommand {
     Serve(ServerArgs),
     /// Apply database schema migrations without starting the HTTP server.
     Migrate,
+    /// Report a GitHub workflow run to Crystal.
+    ReportActionStatus(ReportArgs),
     /// Generate manifest artifacts or render one generated artifact.
     Generate(GenerateRequest),
     /// Interactive Clerk authentication helpers.
@@ -57,6 +63,7 @@ impl Args {
     pub(crate) fn resolved_command(&self) -> Result<ResolvedCommand, String> {
         if let Some(command) = &self.command {
             return Ok(match command.clone() {
+                Command::ReportActionStatus(args) => ResolvedCommand::ReportActionStatus(args),
                 Command::Migrate => ResolvedCommand::Migrate,
                 Command::Serve(args) => ResolvedCommand::Serve(args),
                 Command::Generate(args) => ResolvedCommand::Generate((*args).into_request()),

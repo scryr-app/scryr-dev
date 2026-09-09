@@ -1,0 +1,53 @@
+"""Offline example of a Manifest with a workflow status log."""
+
+from datetime import datetime
+
+from scryr import CICD, Diagram, Github, GithubActionRun, GithubActionsLog, Info, Manifest
+
+# Illustrative GitHub payloads, deliberately static so generation requires no credentials.
+run_payload = {
+    "id": 12345,
+    "run_attempt": 1,
+    "workflow_id": 42,
+    "name": "CI",
+    "repository": {"id": 123, "full_name": "example/api"},
+    "head_branch": "main",
+    "head_sha": "a" * 40,
+    "html_url": "https://github.com/example/api/actions/runs/12345",
+    "created_at": "2026-09-08T10:00:00Z",
+    "updated_at": "2026-09-08T10:00:00Z",
+    "status": "queued",
+    "conclusion": None,
+}
+actions = GithubActionsLog()
+actions.record(
+    GithubActionRun.from_github(run_payload),
+    event_id="example-queued",
+    recorded_at=datetime.fromisoformat(run_payload["updated_at"]),
+)
+run_payload.update(status="in_progress", updated_at="2026-09-08T10:00:05Z")
+actions.record(
+    GithubActionRun.from_github(run_payload),
+    event_id="example-started",
+    recorded_at=datetime.fromisoformat(run_payload["updated_at"]),
+)
+run_payload.update(status="completed", conclusion="success", updated_at="2026-09-08T10:02:00Z")
+actions.record(
+    GithubActionRun.from_github(run_payload),
+    event_id="example-completed",
+    recorded_at=datetime.fromisoformat(run_payload["updated_at"]),
+)
+
+api = Manifest(
+    manifest_id="services/api",
+    name="API",
+    info=Info(description="API with an attached GitHub Actions status history"),
+    github=Github(repo_url="https://github.com/example/api"),
+    cicd=CICD(
+        platform="github_actions",
+        github_actions=actions,
+        build_status=actions.build_status(repository="example/api"),
+    ),
+)
+
+actions_demo = Diagram(name="GitHub Actions", manifests=[api])

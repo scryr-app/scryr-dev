@@ -8,7 +8,7 @@ Architecture reference: https://docs.opensaas.sh/start/guided-tour/
 Source: https://github.com/wasp-lang/open-saas
 """
 
-from scryr.manifest import Diagram, Link, Manifest, ManifestQuery
+from scryr import CICD, Diagram, Github, Info, Link, Manifest, ManifestQuery
 from scryr.saas import Classification
 from scryr.types import (
     AuthType,
@@ -39,21 +39,27 @@ postgres_block = Manifest(
     classification=Classification.database,
     tags=["database", "sql", "infra"],
     connections=[],
-    description="Primary Prisma-managed PostgreSQL database. Stores all app data: users, sessions, subscriptions, daily stats, file records, and page view sources. Also hosts pg-boss job queue tables used by Wasp background jobs.",
-    version=parse_version("15.0.0"),
-    language=ProgrammingLanguage.sql,
-    deployment=_DEPLOYMENT,
-    owner_team="Platform",
-    auth_type=AuthType.basic,
-    monitoring=_MONITOR,
-    log_aggregation=_LOGS,
-    tracing=_TRACING,
-    iac_tool=_IAC,
-    max_replicas=1,
-    min_replicas=1,
-    links=[Link(site_name="Open SaaS Docs", http_url=_DOCS)],
-    repo_url=_SOURCE,
-    cicd_tool=_CICD,
+    info=Info(
+        description="Primary Prisma-managed PostgreSQL database. Stores all app data: users, sessions, subscriptions, daily stats, file records, and page view sources. Also hosts pg-boss job queue tables used by Wasp background jobs.",
+        version=parse_version("15.0.0"),
+        language=ProgrammingLanguage.sql,
+        deployment=_DEPLOYMENT,
+        owner_team="Platform",
+        auth_type=AuthType.basic,
+        monitoring=_MONITOR,
+        log_aggregation=_LOGS,
+        tracing=_TRACING,
+        iac_tool=_IAC,
+        max_replicas=1,
+        min_replicas=1,
+        links=[Link(site_name="Open SaaS Docs", http_url=_DOCS)],
+    ),
+    github=Github(
+        repo_url=_SOURCE,
+    ),
+    cicd=CICD(
+        platform=_CICD,
+    ),
 )
 server_block = Manifest(
     name="Wasp Server",
@@ -61,25 +67,31 @@ server_block = Manifest(
     classification=Classification.internal_api,
     tags=["wasp", "server", "auth"],
     connections=["PostgreSQL", "Email", "AWS S3", "Stripe"],
-    description="Wasp-generated Node.js/Express backend. Handles all type-safe server operations (Queries &amp; Actions via RPC), multi-method auth (email + Google + GitHub + Discord), payment webhook processing (Stripe / Polar.sh / Lemon Squeezy), and pg-boss background jobs (e.g. hourly `dailyStatsJob` for analytics aggregation).",
-    version=parse_version("0.22.0"),
-    language=ProgrammingLanguage.typescript,
-    frameworks=[WebFramework.express],
-    deployment=_DEPLOYMENT,
-    owner_team="Product",
-    auth_type=AuthType.oauth2,
-    monitoring=_MONITOR,
-    log_aggregation=_LOGS,
-    tracing=_TRACING,
-    iac_tool=_IAC,
-    max_replicas=2,
-    min_replicas=1,
-    links=[
-        Link(site_name="Wasp Docs", http_url=Url("https://wasp.sh/docs")),
-        Link(site_name="Open SaaS Docs", http_url=_DOCS),
-    ],
-    repo_url=_SOURCE,
-    cicd_tool=_CICD,
+    info=Info(
+        description="Wasp-generated Node.js/Express backend. Handles all type-safe server operations (Queries &amp; Actions via RPC), multi-method auth (email + Google + GitHub + Discord), payment webhook processing (Stripe / Polar.sh / Lemon Squeezy), and pg-boss background jobs (e.g. hourly `dailyStatsJob` for analytics aggregation).",
+        version=parse_version("0.22.0"),
+        language=ProgrammingLanguage.typescript,
+        frameworks=[WebFramework.express],
+        deployment=_DEPLOYMENT,
+        owner_team="Product",
+        auth_type=AuthType.oauth2,
+        monitoring=_MONITOR,
+        log_aggregation=_LOGS,
+        tracing=_TRACING,
+        iac_tool=_IAC,
+        max_replicas=2,
+        min_replicas=1,
+        links=[
+            Link(site_name="Wasp Docs", http_url=Url("https://wasp.sh/docs")),
+            Link(site_name="Open SaaS Docs", http_url=_DOCS),
+        ],
+    ),
+    github=Github(
+        repo_url=_SOURCE,
+    ),
+    cicd=CICD(
+        platform=_CICD,
+    ),
 )
 client_block = Manifest(
     name="Wasp Client",
@@ -87,21 +99,27 @@ client_block = Manifest(
     classification=Classification.public_ui,
     tags=["react", "spa", "wasp"],
     connections=["Wasp Server", "Analytics"],
-    description="Wasp-generated React SPA (Vite build) with TailwindCSS and ShadCN UI components. Includes landing page, user dashboard, subscription management, admin dashboard, AI demo app, and file upload UI. Communicates with the Wasp Server exclusively via type-safe Wasp Operations.",
-    version=parse_version("0.22.0"),
-    language=ProgrammingLanguage.typescript,
-    deployment=_DEPLOYMENT,
-    owner_team="Product",
-    auth_type=AuthType.oauth2,
-    monitoring=_MONITOR,
-    log_aggregation=_LOGS,
-    tracing=_TRACING,
-    iac_tool=_IAC,
-    max_replicas=2,
-    min_replicas=1,
-    links=[Link(site_name="Open SaaS Live Demo", http_url=Url("https://opensaas.sh"))],
-    repo_url=_SOURCE,
-    cicd_tool=_CICD,
+    info=Info(
+        description="Wasp-generated React SPA (Vite build) with TailwindCSS and ShadCN UI components. Includes landing page, user dashboard, subscription management, admin dashboard, AI demo app, and file upload UI. Communicates with the Wasp Server exclusively via type-safe Wasp Operations.",
+        version=parse_version("0.22.0"),
+        language=ProgrammingLanguage.typescript,
+        deployment=_DEPLOYMENT,
+        owner_team="Product",
+        auth_type=AuthType.oauth2,
+        monitoring=_MONITOR,
+        log_aggregation=_LOGS,
+        tracing=_TRACING,
+        iac_tool=_IAC,
+        max_replicas=2,
+        min_replicas=1,
+        links=[Link(site_name="Open SaaS Live Demo", http_url=Url("https://opensaas.sh"))],
+    ),
+    github=Github(
+        repo_url=_SOURCE,
+    ),
+    cicd=CICD(
+        platform=_CICD,
+    ),
 )
 blog_block = Manifest(
     name="Blog & Docs",
@@ -109,22 +127,28 @@ blog_block = Manifest(
     classification=Classification.public_ui,
     tags=["astro", "blog", "docs"],
     connections=[],
-    description="Astro Starlight static site serving the product marketing blog and documentation. Deployed independently from the main app. Supports MDX content, code highlighting, and full-text search out of the box.",
-    version=parse_version("4.0.0"),
-    language=ProgrammingLanguage.typescript,
-    frameworks=[WebFramework.astro],
-    deployment=_DEPLOYMENT,
-    owner_team="Product",
-    auth_type=AuthType.none,
-    monitoring=_MONITOR,
-    log_aggregation=_LOGS,
-    tracing=_TRACING,
-    iac_tool=_IAC,
-    max_replicas=1,
-    min_replicas=1,
-    links=[Link(site_name="Open SaaS Docs", http_url=_DOCS)],
-    repo_url=_SOURCE,
-    cicd_tool=_CICD,
+    info=Info(
+        description="Astro Starlight static site serving the product marketing blog and documentation. Deployed independently from the main app. Supports MDX content, code highlighting, and full-text search out of the box.",
+        version=parse_version("4.0.0"),
+        language=ProgrammingLanguage.typescript,
+        frameworks=[WebFramework.astro],
+        deployment=_DEPLOYMENT,
+        owner_team="Product",
+        auth_type=AuthType.none,
+        monitoring=_MONITOR,
+        log_aggregation=_LOGS,
+        tracing=_TRACING,
+        iac_tool=_IAC,
+        max_replicas=1,
+        min_replicas=1,
+        links=[Link(site_name="Open SaaS Docs", http_url=_DOCS)],
+    ),
+    github=Github(
+        repo_url=_SOURCE,
+    ),
+    cicd=CICD(
+        platform=_CICD,
+    ),
 )
 stripe_block = Manifest(
     name="Stripe",
@@ -132,27 +156,33 @@ stripe_block = Manifest(
     classification=Classification.public_api,
     tags=["payments", "billing", "stripe"],
     connections=[],
-    description="Stripe payment integration for subscription billing. The Wasp Server creates Checkout sessions and listens to Stripe webhook events (checkout.session.completed, customer.subscription.updated, etc.) to update user subscription tiers in PostgreSQL. Polar.sh and Lemon Squeezy are also supported as drop-in alternatives.",
-    version=IncrementalVersion.parse("1"),
-    language=ProgrammingLanguage.typescript,
-    deployment=DeploymentTarget.unknown,
-    owner_team="Product",
-    auth_type=AuthType.api_key,
-    monitoring=_MONITOR,
-    log_aggregation=_LOGS,
-    tracing=_TRACING,
-    iac_tool=_IAC,
-    max_replicas=1,
-    min_replicas=1,
-    links=[
-        Link(site_name="Stripe Docs", http_url=Url("https://stripe.com/docs")),
-        Link(
-            site_name="Payment Guide",
-            http_url=Url("https://docs.opensaas.sh/guides/payment-integrations/stripe/"),
-        ),
-    ],
-    repo_url=Url("https://github.com/stripe/stripe-node"),
-    cicd_tool=CICDToolType.none,
+    info=Info(
+        description="Stripe payment integration for subscription billing. The Wasp Server creates Checkout sessions and listens to Stripe webhook events (checkout.session.completed, customer.subscription.updated, etc.) to update user subscription tiers in PostgreSQL. Polar.sh and Lemon Squeezy are also supported as drop-in alternatives.",
+        version=IncrementalVersion.parse("1"),
+        language=ProgrammingLanguage.typescript,
+        deployment=DeploymentTarget.unknown,
+        owner_team="Product",
+        auth_type=AuthType.api_key,
+        monitoring=_MONITOR,
+        log_aggregation=_LOGS,
+        tracing=_TRACING,
+        iac_tool=_IAC,
+        max_replicas=1,
+        min_replicas=1,
+        links=[
+            Link(site_name="Stripe Docs", http_url=Url("https://stripe.com/docs")),
+            Link(
+                site_name="Payment Guide",
+                http_url=Url("https://docs.opensaas.sh/guides/payment-integrations/stripe/"),
+            ),
+        ],
+    ),
+    github=Github(
+        repo_url=Url("https://github.com/stripe/stripe-node"),
+    ),
+    cicd=CICD(
+        platform=CICDToolType.none,
+    ),
 )
 email_block = Manifest(
     name="Email",
@@ -160,25 +190,32 @@ email_block = Manifest(
     classification=Classification.public_api,
     tags=["email", "transactional", "auth"],
     connections=[],
-    description="Transactional email service (SendGrid or Mailgun, configurable via Wasp `emailSender`). Sends email verification links on sign-up, password reset emails, and any custom workflow emails triggered by server actions.",
-    version=parse_version("1.0.0"),
-    language=ProgrammingLanguage.typescript,
-    deployment=DeploymentTarget.unknown,
-    owner_team="Product",
-    auth_type=AuthType.api_key,
-    monitoring=_MONITOR,
-    log_aggregation=_LOGS,
-    tracing=_TRACING,
-    iac_tool=_IAC,
-    max_replicas=1,
-    min_replicas=1,
-    links=[
-        Link(
-            site_name="Email Guide", http_url=Url("https://docs.opensaas.sh/guides/email-sending/")
-        )
-    ],
-    repo_url=_SOURCE,
-    cicd_tool=CICDToolType.none,
+    info=Info(
+        description="Transactional email service (SendGrid or Mailgun, configurable via Wasp `emailSender`). Sends email verification links on sign-up, password reset emails, and any custom workflow emails triggered by server actions.",
+        version=parse_version("1.0.0"),
+        language=ProgrammingLanguage.typescript,
+        deployment=DeploymentTarget.unknown,
+        owner_team="Product",
+        auth_type=AuthType.api_key,
+        monitoring=_MONITOR,
+        log_aggregation=_LOGS,
+        tracing=_TRACING,
+        iac_tool=_IAC,
+        max_replicas=1,
+        min_replicas=1,
+        links=[
+            Link(
+                site_name="Email Guide",
+                http_url=Url("https://docs.opensaas.sh/guides/email-sending/"),
+            )
+        ],
+    ),
+    github=Github(
+        repo_url=_SOURCE,
+    ),
+    cicd=CICD(
+        platform=CICDToolType.none,
+    ),
 )
 s3_block = Manifest(
     name="AWS S3",
@@ -186,26 +223,32 @@ s3_block = Manifest(
     classification=Classification.object_storage,
     tags=["storage", "s3", "aws"],
     connections=[],
-    description="AWS S3 bucket for user file uploads. The Wasp Server generates pre-signed S3 upload URLs; the client uploads directly to S3. File metadata is tracked in PostgreSQL.",
-    version=IncrementalVersion.parse("1"),
-    language=ProgrammingLanguage.typescript,
-    deployment=DeploymentTarget.amplify,
-    owner_team="Product",
-    auth_type=AuthType.api_key,
-    monitoring=_MONITOR,
-    log_aggregation=_LOGS,
-    tracing=_TRACING,
-    iac_tool=_IAC,
-    max_replicas=1,
-    min_replicas=1,
-    links=[
-        Link(
-            site_name="File Upload Guide",
-            http_url=Url("https://docs.opensaas.sh/guides/file-uploading/"),
-        )
-    ],
-    repo_url=_SOURCE,
-    cicd_tool=CICDToolType.none,
+    info=Info(
+        description="AWS S3 bucket for user file uploads. The Wasp Server generates pre-signed S3 upload URLs; the client uploads directly to S3. File metadata is tracked in PostgreSQL.",
+        version=IncrementalVersion.parse("1"),
+        language=ProgrammingLanguage.typescript,
+        deployment=DeploymentTarget.amplify,
+        owner_team="Product",
+        auth_type=AuthType.api_key,
+        monitoring=_MONITOR,
+        log_aggregation=_LOGS,
+        tracing=_TRACING,
+        iac_tool=_IAC,
+        max_replicas=1,
+        min_replicas=1,
+        links=[
+            Link(
+                site_name="File Upload Guide",
+                http_url=Url("https://docs.opensaas.sh/guides/file-uploading/"),
+            )
+        ],
+    ),
+    github=Github(
+        repo_url=_SOURCE,
+    ),
+    cicd=CICD(
+        platform=CICDToolType.none,
+    ),
 )
 analytics_block = Manifest(
     name="Analytics",
@@ -213,25 +256,32 @@ analytics_block = Manifest(
     classification=Classification.public_api,
     tags=["analytics", "stats", "admin"],
     connections=[],
-    description="Web analytics integration — either Plausible Analytics or Google Analytics. The Wasp Client sends pageview events; the Wasp Server's hourly `dailyStatsJob` pulls aggregated stats via the provider's API and stores them in PostgreSQL for display on the Admin Dashboard.",
-    version=IncrementalVersion.parse("1"),
-    language=ProgrammingLanguage.typescript,
-    deployment=DeploymentTarget.unknown,
-    owner_team="Product",
-    auth_type=AuthType.api_key,
-    monitoring=MonitoringType.none,
-    log_aggregation=_LOGS,
-    tracing=_TRACING,
-    iac_tool=_IAC,
-    max_replicas=1,
-    min_replicas=1,
-    links=[
-        Link(
-            site_name="Analytics Guide", http_url=Url("https://docs.opensaas.sh/guides/analytics/")
-        )
-    ],
-    repo_url=_SOURCE,
-    cicd_tool=CICDToolType.none,
+    info=Info(
+        description="Web analytics integration — either Plausible Analytics or Google Analytics. The Wasp Client sends pageview events; the Wasp Server's hourly `dailyStatsJob` pulls aggregated stats via the provider's API and stores them in PostgreSQL for display on the Admin Dashboard.",
+        version=IncrementalVersion.parse("1"),
+        language=ProgrammingLanguage.typescript,
+        deployment=DeploymentTarget.unknown,
+        owner_team="Product",
+        auth_type=AuthType.api_key,
+        monitoring=MonitoringType.none,
+        log_aggregation=_LOGS,
+        tracing=_TRACING,
+        iac_tool=_IAC,
+        max_replicas=1,
+        min_replicas=1,
+        links=[
+            Link(
+                site_name="Analytics Guide",
+                http_url=Url("https://docs.opensaas.sh/guides/analytics/"),
+            )
+        ],
+    ),
+    github=Github(
+        repo_url=_SOURCE,
+    ),
+    cicd=CICD(
+        platform=CICDToolType.none,
+    ),
 )
 
 open_saas_diagram = Diagram(
