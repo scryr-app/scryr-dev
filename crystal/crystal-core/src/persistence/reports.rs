@@ -1,9 +1,6 @@
 //! Organization-scoped operational report storage.
 use super::{DatabasePool, schema};
-use crate::{
-    manifest::ManifestRequestContext,
-    reports::Report,
-};
+use crate::{manifest::ManifestRequestContext, reports::Report};
 use sha2::{Digest, Sha256};
 use std::fmt::Write as _;
 

@@ -185,5 +185,4 @@ mod tests {
         assert_eq!(serve_args.auth_mode, Some(AuthMode::Clerk));
         Ok(())
     }
-
 }

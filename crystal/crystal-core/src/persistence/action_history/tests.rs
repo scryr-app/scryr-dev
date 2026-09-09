@@ -138,7 +138,11 @@ async fn history_survives_regeneration_and_is_tenant_scoped()
     persist_generated_manifest(&pool, &input, &context).await?;
     let updated = read_generated_manifest_json_by_scry_identifier(&pool, "org", "api").await?;
     assert_eq!(updated[0]["name"], "Renamed API");
-    assert!(updated[0].get("cicd").is_none_or(serde_json::Value::is_null));
+    assert!(
+        updated[0]
+            .get("cicd")
+            .is_none_or(serde_json::Value::is_null)
+    );
     assert_eq!(first[0]["cicd"], updated[0]["cicd"]);
     let mut denied = principal("org");
     denied.clerk_org_role = None;

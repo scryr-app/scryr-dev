@@ -43,17 +43,19 @@ pub(crate) fn derive_manifest_artifact_key(manifest_dir: &Path, manifest_file: &
         .strip_prefix(manifest_dir)
         .unwrap_or(manifest_file);
 
-    let mut components = relative.components();
-    let first = components.next();
-    let second = components.next();
-    let third = components.next();
-    let has_extra = components.next().is_some();
+    let components = relative.components().collect::<Vec<_>>();
+    let sample_dir = match components.as_slice() {
+        [tests_root, samples_root, sample_dir, file_name]
+            if tests_root.as_os_str() == "tests"
+                && samples_root.as_os_str() == "samples"
+                && file_name.as_os_str() == "index.scry" =>
+        {
+            Some(sample_dir)
+        }
+        _ => None,
+    };
 
-    if let (Some(samples_root), Some(sample_dir), Some(file_name)) = (first, second, third)
-        && !has_extra
-        && samples_root.as_os_str() == "samples"
-        && file_name.as_os_str() == "index.scry"
-    {
+    if let Some(sample_dir) = sample_dir {
         return sample_dir.as_os_str().to_string_lossy().into_owned();
     }
 
@@ -73,8 +75,10 @@ mod tests {
     #[test]
     fn resolve_manifest_file_accepts_relative_python_paths() -> Result<(), String> {
         let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../manifest");
-        let resolved =
-            resolve_manifest_file(&manifest_dir, Path::new("tests/samples/open_saas/index.scry"))?;
+        let resolved = resolve_manifest_file(
+            &manifest_dir,
+            Path::new("tests/samples/open_saas/index.scry"),
+        )?;
 
         assert!(resolved.ends_with("tests/samples/open_saas/index.scry"));
         Ok(())
@@ -107,6 +111,16 @@ mod tests {
         let key = derive_manifest_artifact_key(&manifest_dir, &manifest_file);
 
         assert_eq!(key, "open_saas");
+    }
+
+    #[test]
+    fn derive_manifest_artifact_key_does_not_special_case_top_level_samples() {
+        let manifest_dir = Path::new("/workspace/manifest");
+        let manifest_file = manifest_dir.join("samples/open_saas/index.scry");
+
+        let key = derive_manifest_artifact_key(manifest_dir, &manifest_file);
+
+        assert_eq!(key, "samples/open_saas/index");
     }
 
     #[test]

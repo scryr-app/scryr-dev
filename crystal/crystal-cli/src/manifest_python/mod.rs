@@ -8,7 +8,7 @@ mod uv_runner;
 
 pub(crate) use adapter::{prepare_manifest_python_environment, run_manifest_python_command};
 pub(crate) use environment::ManifestPythonEnvironment;
-pub(crate) use output::{ManifestPythonMode, PythonAdapterOutput, format_manifest_adapter_output};
+pub(crate) use output::ManifestPythonMode;
 
 #[cfg(test)]
 mod tests {

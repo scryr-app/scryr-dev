@@ -17,29 +17,17 @@ pub(super) struct ManifestUploadMetadata {
 }
 
 impl ManifestUploadMetadata {
-    /// Build metadata from explicit GraphQL input with legacy artifact-key fallback.
+    /// Build metadata from explicit GraphQL input fields.
     pub(super) fn from_input(input: &UpsertGeneratedManifestInput) -> Self {
-        let (fallback_folder, fallback_file) = split_artifact_key(&input.artifact_key);
         Self {
-            folder_path: clean_optional_text(input.folder_path.as_deref())
-                .unwrap_or(fallback_folder),
-            file_name: clean_optional_text(input.file_name.as_deref()).unwrap_or(fallback_file),
+            folder_path: clean_optional_text(input.folder_path.as_deref()).unwrap_or_default(),
+            file_name: clean_optional_text(input.file_name.as_deref()).unwrap_or_default(),
             scry_identifier: clean_optional_text(input.scry_identifier.as_deref())
                 .unwrap_or_default(),
             name: clean_optional_text(input.name.as_deref()).unwrap_or_default(),
             git_commit_sha: clean_optional_text(input.git_commit_sha.as_deref()),
         }
     }
-}
-
-/// Split a legacy artifact key into folder path and file name fallback values.
-fn split_artifact_key(artifact_key: &str) -> (String, String) {
-    let trimmed = artifact_key.trim_matches('/');
-    let Some((folder_path, file_name)) = trimmed.rsplit_once('/') else {
-        return (String::new(), trimmed.to_string());
-    };
-
-    (folder_path.to_string(), file_name.to_string())
 }
 
 /// Normalize optional input text, treating blank strings as absent.
@@ -60,7 +48,7 @@ mod tests {
     fn upload_metadata_prefers_explicit_location_fields() {
         let input = UpsertGeneratedManifestInput {
             artifact_kind: ArtifactKind::Value,
-            artifact_key: "legacy/key".to_string(),
+            artifact_key: "artifact-key".to_string(),
             folder_path: Some("services/catalog".to_string()),
             file_name: Some("index.scry".to_string()),
             scry_identifier: Some("catalog_diagram".to_string()),
@@ -79,7 +67,7 @@ mod tests {
     }
 
     #[test]
-    fn upload_metadata_falls_back_to_legacy_artifact_key() {
+    fn upload_metadata_does_not_derive_location_from_artifact_key() {
         let input = UpsertGeneratedManifestInput {
             artifact_kind: ArtifactKind::Value,
             artifact_key: "tests/samples/open_saas".to_string(),
@@ -93,8 +81,8 @@ mod tests {
 
         let metadata = ManifestUploadMetadata::from_input(&input);
 
-        assert_eq!(metadata.folder_path, "samples");
-        assert_eq!(metadata.file_name, "open_saas");
+        assert_eq!(metadata.folder_path, "");
+        assert_eq!(metadata.file_name, "");
         assert_eq!(metadata.scry_identifier, "");
         assert_eq!(metadata.name, "");
         assert_eq!(metadata.git_commit_sha, None);

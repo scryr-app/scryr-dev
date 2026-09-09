@@ -123,7 +123,7 @@ sys.path.insert(0, '{manifest_dir}')
 
 from scryr.runtime import load_module_from_path
 
-sample = load_module_from_path('{manifest_dir / "samples" / "open_saas" / "index.scry"}')
+sample = load_module_from_path('{manifest_dir / "tests" / "samples" / "open_saas" / "index.scry"}')
 
 blocks = [
     json.loads(sample.postgres_block.model_dump_json()),
@@ -149,7 +149,7 @@ sys.path.insert(0, '{manifest_dir}')
 
 from scryr.discovery import collect_manifest_blocks
 
-blocks = collect_manifest_blocks(Path('{manifest_dir}') / 'samples' / 'open_saas')
+blocks = collect_manifest_blocks(Path('{manifest_dir}') / 'tests' / 'samples' / 'open_saas')
 print(json.dumps(blocks, indent=2))
 """
 
@@ -164,7 +164,7 @@ sys.path.insert(0, '{manifest_dir}')
 from scryr.runtime import load_module_from_path
 from scryr.types import Label, Markdown, SemVer
 
-sample = load_module_from_path('{manifest_dir / "samples" / "mern" / "index.scry"}')
+sample = load_module_from_path('{manifest_dir / "tests" / "samples" / "mern" / "index.scry"}')
 
 output = {{
     "name_type": type(sample.react_block.name).__name__,

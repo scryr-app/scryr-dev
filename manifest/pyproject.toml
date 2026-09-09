@@ -12,7 +12,7 @@ package = false
 scryr = { workspace = true }
 
 [tool.uv.workspace]
-members = ["scryr", "tests/samples", "tests"]
+members = ["scryr", "tests"]
 
 [dependency-groups]
 dev = ["ruff>=0.8.0", "pytest>=8.0.0", "ty"]

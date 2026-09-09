@@ -6,7 +6,6 @@ requires-python = "==3.14.6"
 members = [
     "scryr",
     "scryr-manifest-workspace",
-    "scryr-samples",
     "scryr-tests",
 ]
 
@@ -198,31 +197,18 @@ dev = [
 ]
 
 [[package]]
-name = "scryr-samples"
-version = "0.3.0"
-source = { editable = "samples" }
-dependencies = [
-    { name = "scryr" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "scryr", editable = "scryr" }]
-
-[[package]]
 name = "scryr-tests"
 version = "0.3.0"
 source = { virtual = "tests" }
 dependencies = [
     { name = "pytest" },
     { name = "scryr" },
-    { name = "scryr-samples" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "pytest", specifier = ">=8.0.0" },
     { name = "scryr", editable = "scryr" },
-    { name = "scryr-samples", editable = "samples" },
 ]
 
 [[package]]

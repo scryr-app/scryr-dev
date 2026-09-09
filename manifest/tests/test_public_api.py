@@ -66,7 +66,7 @@ def test_run_manifest_file_is_public_library_entrypoint() -> None:
     """run_manifest_file loads a manifest file without importing from the CLI module."""
     manifest_dir = Path(__file__).parent.parent
     payload = scryr.run_manifest_file(
-        manifest_dir / "samples" / "open_saas" / "index.scry",
+        manifest_dir / "tests" / "samples" / "open_saas" / "index.scry",
         "--json",
     )
 
