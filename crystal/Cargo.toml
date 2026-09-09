@@ -3,7 +3,7 @@ members = ["crystal-core", "crystal-server", "crystal-cli"]
 resolver = "3"
 
 [workspace.dependencies]
-roxmltree = "0.20"
+roxmltree = "0.21"
 actix-cors = "0.7"
 actix-web = "4.7"
 assert_cmd = "2.0"
