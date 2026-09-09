@@ -87,6 +87,7 @@ export function CardSlots({
 	return (
 		<>
 			{cardLayout.map((cardConfig, index) => {
+				if (cardConfig.components.length === 0) return null;
 				const slotKey = getCardSlotKey(cardConfig);
 
 				return (

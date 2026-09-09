@@ -137,7 +137,7 @@ run = "cargo clippy --manifest-path crystal/Cargo.toml --locked --workspace --al
 description = "Run Ruff against the Python SDK and sample manifests"
 dir = "{{config_root}}"
 hide = true
-run = "cd manifest && uv run ruff check . samples/*/*.scry"
+run = "cd manifest && uv run ruff check . tests/samples/*/*.scry"
 
 [tasks."lint:typescript"]
 description = "Run Biome lint for TypeScript code"
@@ -154,7 +154,7 @@ run = ["mise run lint:fix:python", "mise run lint:fix:typescript"]
 description = "Fix auto-fixable Ruff issues"
 dir = "{{config_root}}"
 hide = true
-run = "cd manifest && uv run ruff check --fix --unsafe-fixes . samples/*/*.scry"
+run = "cd manifest && uv run ruff check --fix --unsafe-fixes . tests/samples/*/*.scry"
 
 [tasks."lint:fix:typescript"]
 description = "Fix auto-fixable TypeScript lint issues"
@@ -181,7 +181,7 @@ run = "cargo fmt --manifest-path crystal/Cargo.toml --all"
 description = "Format Python code and sample manifests"
 dir = "{{config_root}}"
 hide = true
-run = "cd manifest && uv run ruff format . samples/*/*.scry"
+run = "cd manifest && uv run ruff format . tests/samples/*/*.scry"
 
 [tasks."format:typescript"]
 description = "Format TypeScript code"
@@ -208,7 +208,7 @@ run = "cargo fmt --manifest-path crystal/Cargo.toml --all -- --check"
 description = "Check Python formatting"
 dir = "{{config_root}}"
 hide = true
-run = "cd manifest && uv run ruff format --check . samples/*/*.scry"
+run = "cd manifest && uv run ruff format --check . tests/samples/*/*.scry"
 
 [tasks."format:check:typescript"]
 description = "Check TypeScript formatting"
@@ -235,7 +235,7 @@ run = "cargo check --locked --manifest-path crystal/Cargo.toml --workspace"
 description = "Run Python static type checks"
 dir = "{{config_root}}"
 hide = true
-run = "cd manifest && uv run ty check . samples/*/*.scry"
+run = "cd manifest && uv run ty check . tests/samples/*/*.scry"
 
 [tasks."type-check:typescript"]
 description = "Run TypeScript type checks"
@@ -347,13 +347,12 @@ hide = true
 run = "npm --prefix map run build"
 
 [tasks."build:oss"]
-description = "Build the self-contained open-source scryr CLI with embedded SDK, UI, and sample artifacts"
+description = "Build the self-contained open-source scryr CLI with embedded SDK and UI"
 dir = "{{config_root}}"
 run = [
   "mise run python:install-dependencies",
   "mise run sync:embedded-sdk",
   "mise run embed:ui:local",
-  "mise run embed:samples",
   "mise run build:rust:release",
 ]
 
@@ -395,10 +394,10 @@ if ! curl --silent --show-error --fail "$health_url" >/dev/null 2>&1; then
   fi
 fi
 
-for sample in manifest/samples/*/index.scry; do
+for sample in manifest/tests/samples/*/index.scry; do
   sample_name="$(basename "$(dirname "$sample")")"
   cargo run --locked --manifest-path crystal/Cargo.toml -p crystal-cli -- generate upload \
-    --path "samples/${sample_name}/index.scry" \
+    --path "tests/samples/${sample_name}/index.scry" \
     --manifest-dir manifest \
     --scryr-dir "${SCRYR_DIR:-.cache/scryr}"
 done
@@ -446,7 +445,7 @@ run = "npm --prefix map run codegen"
 [tasks."codegen:manifest-types"]
 description = "Generate manifest field type metadata via the Scryr CLI"
 dir = "{{config_root}}"
-run = "cargo run --locked --manifest-path crystal/Cargo.toml -p crystal-cli -- generate types --path samples/open_saas/index.scry --manifest-dir manifest --scryr-dir .cache/scryr"
+run = "cargo run --locked --manifest-path crystal/Cargo.toml -p crystal-cli -- generate types --path tests/samples/open_saas/index.scry --manifest-dir manifest --scryr-dir .cache/scryr"
 
 [tasks."install:oss"]
 description = "Build and install the self-contained scryr CLI on PATH"
@@ -554,29 +553,6 @@ find crystal/crystal-server/static/map -name .DS_Store -delete
 test -f crystal/crystal-server/static/map/index.html
 '''
 
-[tasks."embed:samples"]
-description = "Generate bundled sample artifacts for the embedded server"
-dir = "{{config_root}}"
-hide = true
-run = '''
-#!/usr/bin/env bash
-set -eu
-unset SCRYR_SPRITE SCRYR_SPRITE_ORG SCRYR_SPRITE_BIN
-
-rm -rf crystal/crystal-server/static/samples
-mkdir -p crystal/crystal-server/static/samples
-for sample_path in manifest/samples/*/index.scry; do
-  sample_name="$(basename "$(dirname "$sample_path")")"
-  cargo run --manifest-path crystal/Cargo.toml --locked --quiet -p crystal-cli -- generate artifact-json \
-    --path "samples/${sample_name}/index.scry" \
-    --manifest-dir manifest \
-    --scryr-dir .cache/scryr \
-    > "crystal/crystal-server/static/samples/${sample_name}.json"
-done
-
-test -f crystal/crystal-server/static/samples/mern.json
-'''
-
 # Cloud builds and deployment
 
 [tasks."build:docker"]
@@ -591,7 +567,6 @@ run = [
   "mise run python:install-dependencies",
   "mise run sync:embedded-sdk",
   "mise run embed:ui:cloud",
-  "mise run embed:samples",
   "mise run build:rust:release",
   "mise run build:ui:cloud",
 ]
@@ -760,7 +735,6 @@ run = '''
 set -euo pipefail
 export RUNNER_TEMP="$(mktemp -d)"
 trap 'rm -rf "$RUNNER_TEMP"' EXIT
-unset SCRYR_SPRITE SCRYR_SPRITE_ORG SCRYR_SPRITE_BIN
 unset DATABASE_URL TURSO_DATABASE_URL TURSO_AUTH_TOKEN LIBSQL_AUTH_TOKEN CLERK_SECRET_KEY
 export AUTH_MODE=local
 export SCRYR_API_TOKEN=windrunner
@@ -768,7 +742,7 @@ export SCRYR_DIR="$RUNNER_TEMP/scryr-release"
 
 ./crystal/target/release/scryr --version
 ./crystal/target/release/scryr generate schema \
-  --path samples/mern/index.scry \
+  --path tests/samples/mern/index.scry \
   --manifest-dir manifest \
   --scryr-dir .cache/scryr-release > "$RUNNER_TEMP/schema.json"
 python3 -m json.tool "$RUNNER_TEMP/schema.json" >/dev/null
@@ -776,7 +750,7 @@ python3 -m json.tool "$RUNNER_TEMP/schema.json" >/dev/null
 # Exercise the embedded SDK outside the source workspace.
 mkdir -p "$RUNNER_TEMP/standalone/sample"
 cp ./crystal/target/release/scryr "$RUNNER_TEMP/standalone/scryr"
-cp manifest/samples/mern/index.scry "$RUNNER_TEMP/standalone/sample/index.scry"
+cp manifest/tests/samples/mern/index.scry "$RUNNER_TEMP/standalone/sample/index.scry"
 (cd "$RUNNER_TEMP/standalone" && ./scryr generate schema \
   --path index.scry \
   --manifest-dir "$RUNNER_TEMP/standalone/sample" \
@@ -806,7 +780,7 @@ curl --silent --show-error --fail \
 test -s "$RUNNER_TEMP/index.html"
 
 ./crystal/target/release/scryr generate upload \
-  --path samples/mern/index.scry \
+  --path tests/samples/mern/index.scry \
   --manifest-dir manifest \
   --scryr-dir .cache/scryr-release \
   --graphql-url http://127.0.0.1:18080/graphql

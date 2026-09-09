@@ -32,6 +32,6 @@ instances. `.scry` manifests are executable Python: run only trusted manifests.
 ## Dependency alerts
 
 Dependabot alerts and security updates are enabled. Maintainers review new
-critical/high alerts promptly and other alerts weekly. Upstream advisories that
+critical/high alerts promptly and other alerts monthly. Upstream advisories that
 have no compatible fix remain open and visible until resolved; do not dismiss
 them merely to make the dashboard green.

@@ -9,7 +9,6 @@ dependencies = ["pydantic>=2.12.3"]
 authors = [{ name = "Scryr" }]
 keywords = ["architecture", "manifest", "pydantic", "systems-design"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.14",

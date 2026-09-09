@@ -32,7 +32,7 @@ To generate an artifact from a bundled sample:
 
 ```bash
 ./crystal/target/release/scryr generate schema \
-  --path samples/mern/index.scry --manifest-dir manifest
+  --path tests/samples/mern/index.scry --manifest-dir manifest
 ```
 
 Release automation builds Linux and macOS archives for x86_64 and ARM64, with
@@ -54,8 +54,7 @@ mise run test
 ```
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) for local development and pull requests,
-[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for community expectations, and
-[repository maintenance](docs/maintenance.md) for CI, security notices, and releases.
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for community expectations.
 Report bugs through the [issue templates](https://github.com/scryr-app/scryr-dev/issues/new/choose).
 Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
 See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for redistributed materials.

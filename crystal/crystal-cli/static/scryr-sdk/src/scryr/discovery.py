@@ -34,10 +34,7 @@ def discover_pydantic_instances(
     stderr: io.TextIOBase | None = None,
 ) -> list[dict[str, Any]]:
     """Discover Pydantic model instances in *search_path*."""
-    if search_path is None:
-        samples_dir = Path(__file__).resolve().parents[3] / "samples"
-    else:
-        samples_dir = Path(search_path)
+    samples_dir = Path.cwd() if search_path is None else Path(search_path)
 
     if not samples_dir.exists():
         msg = f"Path does not exist: {samples_dir}"

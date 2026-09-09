@@ -12,7 +12,7 @@ package = false
 scryr = { workspace = true }
 
 [tool.uv.workspace]
-members = ["scryr", "samples", "tests"]
+members = ["scryr", "tests"]
 
 [dependency-groups]
 dev = ["ruff>=0.8.0", "pytest>=8.0.0", "ty"]
@@ -51,12 +51,12 @@ lint.per-file-ignores."__init__.py" = [
     "F401",
     "D104",
 ]
-lint.per-file-ignores."samples/**/*.py" = [
+lint.per-file-ignores."tests/samples/**/*.py" = [
     "D",
     "T201",
     "E501",
 ]
-lint.per-file-ignores."samples/**/*.scry" = [
+lint.per-file-ignores."tests/samples/**/*.scry" = [
     "D",
     "T201",
     "E501",

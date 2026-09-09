@@ -121,12 +121,11 @@ For `scryr` against a hosted Clerk-backed endpoint, authenticate first with
 
 ```bash
 cargo run -p crystal-cli -- serve --sample mern
-cargo run -p crystal-cli -- generate types --path ../manifest/samples/mern/index.scry --manifest-dir ../manifest
-cargo run -p crystal-cli -- generate compose --path ../manifest/samples/mern/index.scry --manifest-dir ../manifest --forge "MERN Forge"
+cargo run -p crystal-cli -- generate types --path ../manifest/tests/samples/mern/index.scry --manifest-dir ../manifest
+cargo run -p crystal-cli -- generate compose --path ../manifest/tests/samples/mern/index.scry --manifest-dir ../manifest --forge "MERN Forge"
 cargo run -p crystal-cli -- auth whoami
 ```
 
-See [crystal-cli/README.md](crystal-cli/README.md) for every subcommand and option.
 
 Fly deployment health checks use `/ready`, while `/health` remains a lightweight
 process liveness endpoint.

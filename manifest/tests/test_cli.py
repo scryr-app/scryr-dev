@@ -18,7 +18,7 @@ def test_run_manifest_cli_types_returns_sample_metadata() -> None:
     """The adapter library emits type metadata for the sample Open SaaS manifest."""
     manifest_dir = Path(__file__).parent.parent
     payload = run_manifest_cli(
-        manifest_dir / "samples" / "open_saas" / "index.scry",
+        manifest_dir / "tests" / "samples" / "open_saas" / "index.scry",
         "--types",
     )
 
@@ -31,7 +31,7 @@ def test_load_manifest_module_suppresses_sample_stdout(capsys) -> None:
     """Loading a manifest module through the adapter does not leak print output."""
     manifest_dir = Path(__file__).parent.parent
     module = load_manifest_module(
-        manifest_dir / "samples" / "open_saas" / "index.scry",
+        manifest_dir / "tests" / "samples" / "open_saas" / "index.scry",
     )
 
     captured = capsys.readouterr()
@@ -55,7 +55,7 @@ def test_run_manifest_cli_json_serializes_manifest_values() -> None:
     """JSON mode returns serializable manifest values for the sample manifest."""
     manifest_dir = Path(__file__).parent.parent
     payload = run_manifest_cli(
-        manifest_dir / "samples" / "open_saas" / "index.scry",
+        manifest_dir / "tests" / "samples" / "open_saas" / "index.scry",
         "--json",
     )
 
@@ -67,7 +67,7 @@ def test_sample_query_diagrams_resolve_selected_manifests() -> None:
     """Sample query-backed diagrams serialize with their selected manifest blocks."""
     manifest_dir = Path(__file__).parent.parent
     payload = run_manifest_cli(
-        manifest_dir / "samples" / "open_saas" / "index.scry",
+        manifest_dir / "tests" / "samples" / "open_saas" / "index.scry",
         "--json",
     )
 

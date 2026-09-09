@@ -237,7 +237,7 @@ def test_record_preserves_initial_run_without_explicit_events() -> None:
 
 def test_offline_sample_emits_a_status_timeline() -> None:
     """The shipped sample executes through the real Manifest runtime."""
-    sample = Path(__file__).parents[1] / "samples/github_actions/index.scry"
+    sample = Path(__file__).parent / "samples/github_actions/index.scry"
     records = run_manifest_file(sample, "--json")
     assert isinstance(records, list)
     manifest = Manifest.model_validate(

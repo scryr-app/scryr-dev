@@ -257,7 +257,7 @@ export function DiagramButton({ className = "" }: Props) {
 					)}
 					{Boolean(mapsQuery.error) && maps.length === 0 && (
 						<div className="px-4 py-2 text-[12px] text-white/45">
-							Using fallback maps
+							Unable to load diagrams
 						</div>
 					)}
 					<div className="max-h-[min(28rem,calc(100vh-7rem))] overflow-y-auto">

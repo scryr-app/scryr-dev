@@ -1,14 +1,15 @@
 //! Manifest generation command workflow.
 
 mod executor;
+mod outputs;
 mod upload;
 
-use crate::args::{GenerateOutput, GenerateRequest};
+use crate::args::GenerateRequest;
 use crate::manifest_paths::{derive_manifest_artifact_key, resolve_manifest_file};
 use crate::manifest_python::ManifestPythonMode;
 use crystal_core::generation::map_artifacts_from_manifest_json;
-use crystal_core::generation::{render_compose_yaml, render_devcontainer_json, render_mise_toml};
 use executor::prepare_manifest_executor;
+use outputs::render_stdout_target;
 use upload::{
     GeneratedArtifactPersistence, ManifestLocation, default_local_graphql_url,
     persist_generated_artifacts, upload_bearer_token,
@@ -26,53 +27,14 @@ pub(super) async fn run(args: &GenerateRequest) -> Result<(), String> {
     let artifact_key = derive_manifest_artifact_key(&manifest_dir, &manifest_file);
     let manifest_executor = prepare_manifest_executor(args, &manifest_dir)?;
 
-    match args.output {
-        GenerateOutput::Types => {
-            let types_json =
-                manifest_executor.run(&manifest_dir, &manifest_file, ManifestPythonMode::Types)?;
-            print!("{types_json}");
-            return Ok(());
-        }
-        GenerateOutput::Schema => {
-            let schema_json =
-                manifest_executor.run(&manifest_dir, &manifest_file, ManifestPythonMode::Schema)?;
-            print!("{schema_json}");
-            return Ok(());
-        }
-        GenerateOutput::ArtifactJson => {
-            let manifest_json =
-                manifest_executor.run(&manifest_dir, &manifest_file, ManifestPythonMode::Json)?;
-            print!("{manifest_json}");
-            return Ok(());
-        }
-        GenerateOutput::Mise => {
-            let manifest_json =
-                manifest_executor.run(&manifest_dir, &manifest_file, ManifestPythonMode::Json)?;
-            print!(
-                "{}",
-                render_mise_toml(&manifest_json, args.forge.as_deref())?
-            );
-            return Ok(());
-        }
-        GenerateOutput::Compose => {
-            let manifest_json =
-                manifest_executor.run(&manifest_dir, &manifest_file, ManifestPythonMode::Json)?;
-            print!(
-                "{}",
-                render_compose_yaml(&manifest_json, args.forge.as_deref())?
-            );
-            return Ok(());
-        }
-        GenerateOutput::Devcontainer => {
-            let manifest_json =
-                manifest_executor.run(&manifest_dir, &manifest_file, ManifestPythonMode::Json)?;
-            print!(
-                "{}",
-                render_devcontainer_json(&manifest_json, args.forge.as_deref())?
-            );
-            return Ok(());
-        }
-        GenerateOutput::Upload => {}
+    if render_stdout_target(
+        args.output,
+        args,
+        &manifest_executor,
+        &manifest_dir,
+        &manifest_file,
+    )? {
+        return Ok(());
     }
 
     println!("Generating manifest artifacts...");

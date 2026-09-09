@@ -5,7 +5,6 @@ use crate::manifest_python::{
     ManifestPythonEnvironment, ManifestPythonMode, prepare_manifest_python_environment,
     run_manifest_python_command,
 };
-use crate::manifest_sprite::{SpriteExecutionEnvironment, run_manifest_sprite_command};
 use crate::scryr_dir::resolve_scryr_dir;
 use crate::uv::ensure_managed_uv;
 use std::path::Path;
@@ -14,8 +13,6 @@ use std::path::Path;
 pub(super) enum ManifestExecutor {
     /// Local uv-managed Python environment.
     Local(ManifestPythonEnvironment),
-    /// Remote sprites.dev execution environment.
-    Sprite(SpriteExecutionEnvironment),
 }
 
 impl ManifestExecutor {
@@ -30,9 +27,6 @@ impl ManifestExecutor {
             Self::Local(environment) => {
                 run_manifest_python_command(manifest_dir, manifest_file, mode, environment)
             }
-            Self::Sprite(environment) => {
-                run_manifest_sprite_command(manifest_dir, manifest_file, mode, environment)
-            }
         }
     }
 }
@@ -42,14 +36,6 @@ pub(super) fn prepare_manifest_executor(
     args: &GenerateRequest,
     manifest_dir: &Path,
 ) -> Result<ManifestExecutor, String> {
-    if let Some(sprite_name) = &args.sprite {
-        return Ok(ManifestExecutor::Sprite(SpriteExecutionEnvironment::new(
-            args.sprite_bin.clone(),
-            sprite_name.clone(),
-            args.sprite_org.clone(),
-        )));
-    }
-
     prepare_environment(args, manifest_dir).map(ManifestExecutor::Local)
 }
 

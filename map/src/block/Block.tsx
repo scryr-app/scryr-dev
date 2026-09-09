@@ -6,11 +6,7 @@ import { useMapTray } from "@/cards/MapTrayContext";
 import type { Block as GraphqlBlock } from "@/graphql/generated";
 import { currentTheme } from "@/theme/theme";
 import { CardSlots } from "./CardSlots";
-import {
-	type BlockCardGroup,
-	createBlockDataCards,
-	createDefaultCards,
-} from "./defaultCards";
+import { type BlockCardGroup, createBlockDataCards } from "./defaultCards";
 import { TopLabel } from "./TopLabel";
 import { Walls } from "./Walls";
 import { getCardHeaderZoomX, ZoomButton } from "./ZoomButton";
@@ -67,7 +63,6 @@ export function Block({
 	width = 3,
 	height = 2,
 	depth = 1,
-	cicdTool,
 	cards,
 	description,
 	classification,
@@ -92,7 +87,8 @@ export function Block({
 	const blockFocusId = blockData?.name ?? name;
 	const [isZoomButtonVisible, setIsZoomButtonVisible] = useState(false);
 	const zoomHideTimer = useRef<number | null>(null);
-	const fallbackCards = cards ?? createDefaultCards(cicdTool);
+	const fallbackCards =
+		cards ?? Array.from({ length: 6 }, () => ({ components: [] }));
 	const cardData = blockData ? getBlockCardData(blockData) : null;
 	const derivedCards = cardData
 		? createBlockDataCards(cardData)
@@ -141,7 +137,7 @@ export function Block({
 	const allCards = [
 		{ components: [overviewCard] },
 		...derivedCards,
-		{ components: [otherDiagramCard] },
+		{ components: diagrams.length > 0 ? [otherDiagramCard] : [] },
 	];
 
 	const showZoomButton = () => {

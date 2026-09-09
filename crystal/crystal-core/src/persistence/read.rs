@@ -6,7 +6,7 @@ use super::read_store;
 use super::schema::ensure_table;
 use serde_json::Value;
 
-/// Read a generated manifest JSON artifact from storage.
+/// Read generated manifest content without overlaying independently stored observations.
 ///
 /// # Errors
 ///
@@ -21,11 +21,11 @@ pub(crate) async fn read_generated_manifest_json(
 
     if let Some(sample_key) = sample {
         let value = read_generated_manifest_json_for_sample(pool, clerk_org_id, sample_key).await?;
-        return super::action_history::attach_history(pool, clerk_org_id, value).await;
+        return Ok(value);
     }
 
     let value = read_all_generated_manifest_json(pool, clerk_org_id).await?;
-    super::action_history::attach_history(pool, clerk_org_id, value).await
+    Ok(value)
 }
 
 /// List Scryr map value artifacts stored in storage.
@@ -78,7 +78,7 @@ fn rows_to_generated_manifest_maps(
         .collect()
 }
 
-/// Read a generated manifest JSON artifact by exact Scryr identifier or row id.
+/// Read manifest content by exact Scryr identifier or row id, without history overlays.
 ///
 /// # Errors
 ///
@@ -105,7 +105,7 @@ pub(crate) async fn read_generated_manifest_json_by_scry_identifier(
     };
 
     let value = parse_manifest_blocks_value(&artifact_key, &content)?;
-    super::action_history::attach_history(pool, clerk_org_id, value).await
+    Ok(value)
 }
 
 /// Read a generated manifest JSON artifact for one sample key.

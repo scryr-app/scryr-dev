@@ -4,5 +4,11 @@
       "path": "..",
       "name": "Scryr"
     }
-  ]
+  ],
+  "settings": {
+    "workbench.colorTheme": "Bearded Theme Vivid Purple",
+    "files.associations": {
+    "*.scry": "python"
+    }
+  }
 }

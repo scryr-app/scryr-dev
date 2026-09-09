@@ -61,9 +61,6 @@ These options are accepted by all `generate` targets:
 --path <file>          Manifest file to execute. Defaults to index.scry.
 --manifest-dir <dir>   Manifest project root. Defaults to the current directory.
 --scryr-dir <dir>      Scryr-managed local state directory.
---sprite <name>        Execute the manifest remotely through sprites.dev.
---sprite-org <org>     sprites.dev organization for remote execution.
---sprite-bin <path>    sprites.dev CLI executable. Defaults to sprite.
 ```
 
 For local execution, Scryr manages the Python runtime itself. On first use it
@@ -83,6 +80,15 @@ and an up-to-date `uv.lock`, because uv uses those files for
 `uv sync --no-dev --locked`. `scryr.toml` selects this mode; it does not replace
 uv's dependency metadata. Without it, Scryr runs its embedded adapter using
 `uv run --no-project` and a dedicated script environment.
+
+### Embedded Python SDK
+
+The standalone OSS CLI packages the Python SDK from `manifest/scryr`. Before
+the Rust CLI is compiled, `mise run sync:embedded-sdk` refreshes the crate-local
+copy at `crystal/crystal-cli/static/scryr-sdk`, removing build and cache files.
+`crystal/crystal-cli/build.rs` validates that copy and generates the embedded
+asset list used by the binary. Changes to `manifest/scryr` therefore require
+running the sync step before rebuilding the CLI.
 
 Forge-backed targets also accept:
 
@@ -255,16 +261,16 @@ scryr auth logout
 Run against the MERN sample:
 
 ```bash
-cargo run -p crystal-cli -- generate types --path ../manifest/samples/mern/index.scry --manifest-dir ../manifest
-cargo run -p crystal-cli -- generate mise --path ../manifest/samples/mern/index.scry --manifest-dir ../manifest --forge "MERN Forge"
-cargo run -p crystal-cli -- generate compose --path ../manifest/samples/mern/index.scry --manifest-dir ../manifest --forge "MERN Forge"
-cargo run -p crystal-cli -- generate devcontainer --path ../manifest/samples/mern/index.scry --manifest-dir ../manifest --forge "MERN Forge"
+cargo run -p crystal-cli -- generate types --path ../manifest/tests/samples/mern/index.scry --manifest-dir ../manifest
+cargo run -p crystal-cli -- generate mise --path ../manifest/tests/samples/mern/index.scry --manifest-dir ../manifest --forge "MERN Forge"
+cargo run -p crystal-cli -- generate compose --path ../manifest/tests/samples/mern/index.scry --manifest-dir ../manifest --forge "MERN Forge"
+cargo run -p crystal-cli -- generate devcontainer --path ../manifest/tests/samples/mern/index.scry --manifest-dir ../manifest --forge "MERN Forge"
 ```
 
 Upload a sample to a local GraphQL server:
 
 ```bash
-cargo run -p crystal-cli -- generate upload --path ../manifest/samples/mern/index.scry --manifest-dir ../manifest
+cargo run -p crystal-cli -- generate upload --path ../manifest/tests/samples/mern/index.scry --manifest-dir ../manifest
 ```
 
 ## Report GitHub Actions status
@@ -277,19 +283,15 @@ event from `GITHUB_EVENT_PATH` (or `--event-file`) and sends it to
 Automatic branch selection uses `GITHUB_TOKEN` to check `main`, then `master`,
 then falls back to the repository default branch. Override with `--branch`.
 No workflow ID is required; use `--workflow-id` to restrict reporting.
-See `manifest/examples/report-action-status.yml` for a completion reporter.
 
 ## Operational reports
 
 Use `scryr report tests`, `coverage`, `dependencies`, or `deployment` to publish
 existing CI results without regenerating manifests. `scryr report actions` is
 the grouped form of `report-action-status`. All reporters support `--dry-run`
-and `--json`. See [operational reporting](../../docs/cli-reporting.md) for formats,
-credentials, scope semantics, and the executable Northwind local demo.
+and `--json`.
 
 ## Metrics on diagram load
 
 Declare `Metrics(provider=PrometheusSource(...))` in `index.scry` to fetch Grafana
 metrics when a diagram opens. Ordinary map polling does not fetch runtime metrics.
-See [diagram-load metrics](../../docs/diagram-metrics.md) for server connection
-setup, cache semantics, and the Northwind verification command.

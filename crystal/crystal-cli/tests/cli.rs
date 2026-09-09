@@ -23,7 +23,7 @@ fn manifest_dir() -> Result<PathBuf, Box<dyn Error>> {
 
 /// Return a stable sample manifest path that exercises the real Python adapter.
 const fn sample_manifest() -> &'static str {
-    "samples/open_saas/index.scry"
+    "tests/samples/open_saas/index.scry"
 }
 
 /// Resolve the repo-local Scryr state directory used by CLI tests.
@@ -47,9 +47,6 @@ fn cli_command() -> Result<Command, Box<dyn Error>> {
     command.env_remove("SCRYR_DIR");
     command.env_remove("SCRYR_ORGANIZATION");
     command.env_remove("SCRYR_GIT_COMMIT_SHA");
-    command.env_remove("SCRYR_SPRITE");
-    command.env_remove("SCRYR_SPRITE_ORG");
-    command.env_remove("SCRYR_SPRITE_BIN");
     command.env_remove("HOST");
     command.env_remove("PORT");
     command.env_remove("AUTH_MODE");
@@ -227,54 +224,6 @@ chmod +x "$UV_UNMANAGED_INSTALL/uv"
     Ok((installer_path, log_path))
 }
 
-#[cfg(unix)]
-/// Create a fake sprite executable that logs invocations and returns adapter-shaped JSON.
-fn fake_sprite_executable(temp_dir: &TempDir) -> Result<(PathBuf, PathBuf), Box<dyn Error>> {
-    let sprite_path = temp_dir.path().join("sprite");
-    let log_path = temp_dir.path().join("sprite.log");
-    let script = format!(
-        r#"#!/bin/sh
-set -eu
-printf '%s\n' "$*" >> "{}"
-case "$*" in
-  *--schema*)
-    printf '{{"title":"Manifest"}}\n'
-    ;;
-  *--types*)
-    printf '[{{"variable":"sample_manifest","manifest_name":"Sample","field_types":{{}}}}]\n'
-    ;;
-  *)
-    printf '[{{"variable_name":"sample_manifest","manifest":{{"name":"Sample"}}}}]\n'
-    ;;
-esac
-"#,
-        log_path.display()
-    );
-    fs::write(&sprite_path, script).map_err(|error| {
-        format!(
-            "failed to write fake sprite {}: {error}",
-            sprite_path.display()
-        )
-    })?;
-    let mut permissions = fs::metadata(&sprite_path)
-        .map_err(|error| {
-            format!(
-                "failed to stat fake sprite {}: {error}",
-                sprite_path.display()
-            )
-        })?
-        .permissions();
-    permissions.set_mode(0o755);
-    fs::set_permissions(&sprite_path, permissions).map_err(|error| {
-        format!(
-            "failed to make fake sprite executable {}: {error}",
-            sprite_path.display()
-        )
-    })?;
-
-    Ok((sprite_path, log_path))
-}
-
 #[test]
 /// Verify `generate types` emits JSON metadata for a real manifest sample.
 fn generate_types_emits_json_metadata_for_sample_manifest() -> Result<(), Box<dyn Error>> {
@@ -338,7 +287,7 @@ fn generate_mise_toml_emits_sample_forge() -> Result<(), Box<dyn Error>> {
             "generate",
             "mise",
             "--path",
-            "samples/mern/index.scry",
+            "tests/samples/mern/index.scry",
             "--manifest-dir",
             &manifest_dir.to_string_lossy(),
             "--scryr-dir",
@@ -375,7 +324,7 @@ fn generate_compose_emits_sample_forge_services() -> Result<(), Box<dyn Error>> 
             "generate",
             "compose",
             "--path",
-            "samples/mern/index.scry",
+            "tests/samples/mern/index.scry",
             "--manifest-dir",
             &manifest_dir.to_string_lossy(),
             "--scryr-dir",
@@ -413,7 +362,7 @@ fn generate_devcontainer_emits_sample_forge_json() -> Result<(), Box<dyn Error>>
             "generate",
             "devcontainer",
             "--path",
-            "samples/mern/index.scry",
+            "tests/samples/mern/index.scry",
             "--manifest-dir",
             &manifest_dir.to_string_lossy(),
             "--scryr-dir",
@@ -452,7 +401,7 @@ fn generate_devcontainer_emits_sample_forge_json() -> Result<(), Box<dyn Error>>
 fn generate_forge_backed_targets_have_expected_sample_behavior() -> Result<(), Box<dyn Error>> {
     let manifest_dir = manifest_dir()?;
     let scryr_dir = scryr_dir()?;
-    for entry in fs::read_dir(manifest_dir.join("samples"))? {
+    for entry in fs::read_dir(manifest_dir.join("tests/samples"))? {
         let entry = entry?;
         if !entry.file_type()?.is_dir() {
             continue;
@@ -502,71 +451,6 @@ fn generate_forge_backed_targets_have_expected_sample_behavior() -> Result<(), B
                 ));
         }
     }
-    Ok(())
-}
-
-#[cfg(unix)]
-#[test]
-/// Verify `generate types --sprite` executes the adapter through the Sprites CLI.
-fn generate_types_with_sprite_executes_remote_adapter() -> Result<(), Box<dyn Error>> {
-    let temp_dir = TempDir::new()?;
-    let manifest_dir = manifest_dir()?;
-    let manifest_file = temp_dir.path().join("third_party.scry");
-    fs::write(
-        &manifest_file,
-        "from scryr import Manifest\nsample_manifest = Manifest(name='Sample')\n",
-    )?;
-    let (sprite_path, log_path) = fake_sprite_executable(&temp_dir)?;
-
-    let output = cli_command()?
-        .args([
-            "generate",
-            "types",
-            "--path",
-            &manifest_file.to_string_lossy(),
-            "--manifest-dir",
-            &manifest_dir.to_string_lossy(),
-            "--sprite",
-            "manifest-sandbox",
-            "--sprite-org",
-            "test-org",
-            "--sprite-bin",
-            &sprite_path.to_string_lossy(),
-        ])
-        .assert()
-        .success()
-        .get_output()
-        .stdout
-        .clone();
-
-    let parsed = serde_json::from_slice::<Value>(&output)
-        .map_err(|error| format!("stdout should be valid json: {error}"))?;
-    assert_eq!(
-        parsed
-            .as_array()
-            .and_then(|items| items.first())
-            .and_then(|item| item.get("manifest_name")),
-        Some(&Value::String("Sample".to_string()))
-    );
-
-    let log = fs::read_to_string(&log_path)
-        .map_err(|error| format!("fake sprite should have been executed: {error}"))?;
-    assert!(
-        log.contains("exec --no-port-forward -o test-org -s manifest-sandbox"),
-        "sprite exec should select the requested Sprite and org; log:\n{log}"
-    );
-    assert!(
-        log.contains("--file") && log.contains(".tar:/tmp/scryr-cli-"),
-        "manifest bundle should be uploaded before execution; log:\n{log}"
-    );
-    assert!(
-        log.contains("tar -xf"),
-        "remote command should unpack the manifest bundle; log:\n{log}"
-    );
-    assert!(
-        log.contains("uv run --no-dev python -m scryr.cli"),
-        "remote command should execute the Scryr adapter; log:\n{log}"
-    );
     Ok(())
 }
 

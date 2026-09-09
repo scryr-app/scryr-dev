@@ -52,13 +52,16 @@ test_instance = TestModel(name="test_object", value=999)
         assert test_instance_data["data"]["value"] == 999
 
 
-def test_discover_pydantic_instances_current_directory() -> None:
+def test_discover_pydantic_instances_current_directory(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Test that discover_pydantic_instances defaults to current directory."""
-    # When called with None, should use current directory
+    monkeypatch.chdir(tmp_path)
+
     results = discover_pydantic_instances(None)
 
-    # Should be a list (may be empty or have instances)
-    assert isinstance(results, list)
+    assert results == []
 
 
 def test_discover_pydantic_instances_nonexistent_path() -> None:

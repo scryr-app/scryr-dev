@@ -133,17 +133,16 @@ async fn history_survives_regeneration_and_is_tenant_scoped()
     };
     persist_generated_manifest(&pool, &input, &context).await?;
     let first = read_generated_manifest_json_by_scry_identifier(&pool, "org", "api").await?;
-    assert_eq!(
-        first[0]["cicd"]["githubActions"]["runs"]
-            .as_array()
-            .map(Vec::len),
-        Some(2)
-    );
+    assert!(first[0].get("cicd").is_none_or(serde_json::Value::is_null));
     input.content = input.content.replace("\"API\"", "\"Renamed API\"");
     persist_generated_manifest(&pool, &input, &context).await?;
     let updated = read_generated_manifest_json_by_scry_identifier(&pool, "org", "api").await?;
     assert_eq!(updated[0]["name"], "Renamed API");
-    assert_eq!(updated[0]["cicd"]["buildStatus"], "pending");
+    assert!(
+        updated[0]
+            .get("cicd")
+            .is_none_or(serde_json::Value::is_null)
+    );
     assert_eq!(first[0]["cicd"], updated[0]["cicd"]);
     let mut denied = principal("org");
     denied.clerk_org_role = None;

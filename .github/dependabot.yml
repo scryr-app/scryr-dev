@@ -1,11 +1,11 @@
 version: 2
-# Version PRs are weekly. Enable alerts and security updates separately in
+# Version PRs are monthly Enable alerts and security updates separately in
 # repository settings; the version-update schedule does not delay alerts.
 updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
       day: monday
     open-pull-requests-limit: 5
     groups:
@@ -17,7 +17,7 @@ updates:
   - package-ecosystem: npm
     directory: /map
     schedule:
-      interval: weekly
+      interval: monthly
       day: monday
     open-pull-requests-limit: 5
     groups:
@@ -32,7 +32,7 @@ updates:
   - package-ecosystem: cargo
     directory: /crystal
     schedule:
-      interval: weekly
+      interval: monthly
       day: monday
     open-pull-requests-limit: 5
     groups:
@@ -49,7 +49,7 @@ updates:
   - package-ecosystem: uv
     directory: /manifest
     schedule:
-      interval: weekly
+      interval: monthly
       day: monday
     open-pull-requests-limit: 5
     groups:
@@ -64,6 +64,6 @@ updates:
   - package-ecosystem: docker
     directory: /crystal
     schedule:
-      interval: weekly
+      interval: monthly
       day: monday
     open-pull-requests-limit: 5
