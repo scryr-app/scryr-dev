@@ -61,8 +61,8 @@ export function reportLines(report: OperationalReport): string[] {
 	const d = report.data;
 	if (d.kind === "tests")
 		return [
-			`${d.passing} passed · ${d.failing} failed`,
-			`${d.errors} errors · ${d.skipped} skipped`,
+			`${d.passing} passed - ${d.failing} failed`,
+			`${d.errors} errors - ${d.skipped} skipped`,
 			`${Number(d.duration).toFixed(2)} seconds`,
 		];
 	if (d.kind === "coverage")
@@ -79,8 +79,8 @@ export function reportLines(report: OperationalReport): string[] {
 		).filter((a) => a.state === "open");
 		return [
 			`${alerts.length} open security alerts`,
-			`critical: ${alerts.filter((a) => a.severity === "critical").length} · high: ${alerts.filter((a) => a.severity === "high").length}`,
-			`medium: ${alerts.filter((a) => a.severity === "medium").length} · low: ${alerts.filter((a) => a.severity === "low").length}`,
+			`critical: ${alerts.filter((a) => a.severity === "critical").length} - high: ${alerts.filter((a) => a.severity === "high").length}`,
+			`medium: ${alerts.filter((a) => a.severity === "medium").length} - low: ${alerts.filter((a) => a.severity === "low").length}`,
 			"Inventory and outdated counts not reported",
 		];
 	}
@@ -117,7 +117,7 @@ export function ReportCard({ report }: { report: OperationalReport }) {
 			<Text
 				fontSize={8}
 				color={stale ? "#f59e0b" : "#b8c2ce"}
-			>{`${report.source} · ${report.observedAt}${stale ? " · older than 7 days" : ""}`}</Text>
+			>{`${report.source} - ${report.observedAt}${stale ? " - older than 7 days" : ""}`}</Text>
 			{url && (
 				<Container
 					onClick={() => window.open(url, "_blank", "noopener,noreferrer")}

@@ -14,6 +14,7 @@ import type { JSX, PropsWithChildren } from "react";
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 
+import "./three/svgLoader.ts";
 import "./styles.css";
 
 import App from "./App.tsx";
