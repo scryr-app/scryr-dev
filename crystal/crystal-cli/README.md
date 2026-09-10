@@ -22,6 +22,12 @@ Run these commands from your own repository. The default entrypoint is `index.sc
 Use `--path` for a different file and `--manifest-dir` for a different project root.
 Paths passed to `--path` are relative to `--manifest-dir` (or absolute).
 
+When uploading with `scryr push`, `scryr generate upload`, or `scryr serve`,
+the diagram group is its parent folder relative to `--manifest-dir`. For example,
+`--path services/catalog/index.scry` assigns the group `services/catalog`.
+An entrypoint directly in the project root has no group; these diagrams appear
+first in the map dropdown without a group heading.
+
 ```bash
 scryr check
 scryr format

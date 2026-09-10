@@ -50,7 +50,7 @@ pub(crate) async fn persist_generated_artifacts(
         UpsertGeneratedManifestInput {
             artifact_kind: ArtifactKind::Schema,
             artifact_key: SCHEMA_ARTIFACT_KEY.to_string(),
-            folder_path: Some(context.manifest_location.folder_path.clone()),
+            folder_path: Some(context.manifest_location.group.clone()),
             file_name: Some(context.manifest_location.file_name.clone()),
             scry_identifier: None,
             name: None,
@@ -68,7 +68,7 @@ pub(crate) async fn persist_generated_artifacts(
             UpsertGeneratedManifestInput {
                 artifact_kind: ArtifactKind::Value,
                 artifact_key: artifact.artifact_key,
-                folder_path: Some(context.manifest_location.folder_path.clone()),
+                folder_path: Some(context.manifest_location.group.clone()),
                 file_name: Some(context.manifest_location.file_name.clone()),
                 scry_identifier: Some(artifact.map_metadata.scry_identifier),
                 name: Some(artifact.map_metadata.name),
@@ -102,19 +102,20 @@ pub(crate) struct GeneratedArtifactPersistence<'a> {
 
 /// Normalized source location metadata for the uploaded manifest file.
 pub(crate) struct ManifestLocation {
-    /// Folder path relative to the manifest project directory.
-    folder_path: String,
+    /// Diagram group derived from its folder relative to the manifest project directory.
+    /// An empty group leaves the diagram ungrouped in the map dropdown.
+    group: String,
     /// Manifest source file name.
     file_name: String,
 }
 
 impl ManifestLocation {
-    /// Derive a source location from resolved manifest paths.
+    /// Derive the diagram group and source file name from resolved manifest paths.
     pub(crate) fn from_paths(manifest_dir: &Path, manifest_file: &Path) -> Self {
         let relative = manifest_file
             .strip_prefix(manifest_dir)
             .unwrap_or(manifest_file);
-        let folder_path = relative
+        let group = relative
             .parent()
             .filter(|path| !path.as_os_str().is_empty())
             .map(|path| path.to_string_lossy().replace('\\', "/"))
@@ -124,10 +125,7 @@ impl ManifestLocation {
             .map(|name| name.to_string_lossy().into_owned())
             .unwrap_or_default();
 
-        Self {
-            folder_path,
-            file_name,
-        }
+        Self { group, file_name }
     }
 }
 
