@@ -209,7 +209,14 @@ server_block = Manifest(
     icon="💬",
     classification=Classification.internal_api,
     tags=["api", "websocket", "core"],
-    connections=["PostgreSQL", "Redis", "MinIO", "Elasticsearch", "OpenLDAP", "Keycloak"],
+    connections=[
+        Manifest(name="PostgreSQL"),
+        Manifest(name="Redis"),
+        Manifest(name="MinIO"),
+        Manifest(name="Elasticsearch"),
+        Manifest(name="OpenLDAP"),
+        Manifest(name="Keycloak"),
+    ],
     info=Info(
         description="Core Go application binary exposing the REST API v4, WebSocket event bus, plugin system, workflow automations (Playbooks), Calls voice/video (WebRTC), and the clustering layer for HA deployments.",
         version=parse_version("11.5.1"),
@@ -241,7 +248,7 @@ webapp_block = Manifest(
     icon="🌐",
     classification=Classification.public_ui,
     tags=["spa", "react", "ui"],
-    connections=["Mattermost Server"],
+    connections=[Manifest(name="Mattermost Server")],
     info=Info(
         description="TypeScript/React (Redux) single-page application served from the server binary. Houses the channels workspace, Playbooks UI, Boards, and the plugin component extension points.",
         version=parse_version("11.5.1"),
@@ -275,7 +282,7 @@ nginx_block = Manifest(
     icon="⚙️",
     classification=Classification.network_gateway,
     tags=["proxy", "load-balancer", "infra"],
-    connections=["Mattermost Server"],
+    connections=[Manifest(name="Mattermost Server")],
     info=Info(
         description="Reverse proxy and load balancer routing incoming HTTPS traffic across multiple Mattermost Server nodes (leader/follower), terminating TLS and forwarding WebSocket upgrades.",
         version=parse_version("1.27.0"),
@@ -303,7 +310,7 @@ prometheus_block = Manifest(
     icon="📈",
     classification=Classification.internal_api,
     tags=["metrics", "monitoring", "infra"],
-    connections=["Mattermost Server"],
+    connections=[Manifest(name="Mattermost Server")],
     info=Info(
         description="Metrics collection and storage. Mattermost Server exposes a `/metrics` endpoint; Prometheus scrapes it and feeds Grafana dashboards.",
         version=CalendarVersion.parse("2026.5"),
@@ -331,7 +338,7 @@ grafana_block = Manifest(
     icon="📊",
     classification=Classification.admin_ui,
     tags=["dashboards", "observability", "infra"],
-    connections=["Prometheus", "Loki"],
+    connections=[Manifest(name="Prometheus"), Manifest(name="Loki")],
     info=Info(
         description="Observability and dashboarding UI. Ships with a pre-built Mattermost performance monitoring dashboard powered by the Prometheus and Loki data sources.",
         version=parse_version("11.0.0"),
@@ -387,7 +394,7 @@ otel_collector_block = Manifest(
     icon="🔭",
     classification=Classification.worker,
     tags=["opentelemetry", "traces", "infra"],
-    connections=["Prometheus", "Loki"],
+    connections=[Manifest(name="Prometheus"), Manifest(name="Loki")],
     info=Info(
         description="OpenTelemetry Collector pipeline that receives traces, metrics, and logs from Mattermost Server and forwards them to Prometheus, Loki, and a configured trace backend.",
         version=parse_version("0.100.0"),

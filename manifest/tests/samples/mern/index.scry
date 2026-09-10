@@ -61,7 +61,7 @@ react_block = Manifest(
     classification=Classification.public_ui,
     tags=["user_interface"],
     forges=[mern_forge.name],
-    connections=["Express"],
+    connections=[Manifest(name="Express")],
     info=Info(
         description="This be a Billy Goat! A sample MERN-style application: MongoDB datastore, Express backend, React frontend. Boy Howdy",
         version=SemVer("0.1.0-alpha.1"),
@@ -91,7 +91,7 @@ redis_pubsub_block = Manifest(
     classification=Classification.queue,
     tags=["user_interface"],
     forges=[mern_forge.name],
-    connections=["Express", "React"],
+    connections=[Manifest(name="Express"), Manifest(name="React")],
     info=Info(
         description="Redis configured for real-time messaging and event streaming",
         version=SemVer("7.2.0"),
@@ -120,7 +120,7 @@ redis_pubsub_block = Manifest(
 express_block = Manifest(
     name="Express",
     classification=Classification.internal_api,
-    connections=["MongoDB"],
+    connections=[Manifest(name="MongoDB")],
     forges=[mern_forge.name],
     info=Info(
         language=ProgrammingLanguage.javascript,
@@ -137,7 +137,7 @@ express_block = Manifest(
 mongo_block = Manifest(
     name="MongoDB",
     classification=Classification.database,
-    connections=["Express", "React"],
+    connections=[Manifest(name="Express"), Manifest(name="React")],
     forges=[mern_forge.name],
     info=Info(
         frameworks=[WebFramework.nextjs],
@@ -159,7 +159,7 @@ angularjs_admin_block = Manifest(
     icon="🛠️",
     classification=Classification.admin_ui,
     forges=[mern_forge.name],
-    connections=["Express"],
+    connections=[Manifest(name="Express")],
     info=Info(
         description="Legacy AngularJS-based admin console for operational management",
         version=SemVer("1.7.9"),

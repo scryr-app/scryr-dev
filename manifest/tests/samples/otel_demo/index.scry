@@ -148,7 +148,7 @@ accounting_block = Manifest(
     icon="🧾",
     classification=Classification.worker,
     tags=["orders", "finance"],
-    connections=["Kafka", "PostgreSQL"],
+    connections=[Manifest(name="Kafka"), Manifest(name="PostgreSQL")],
     info=Info(
         description="Processes incoming orders from Kafka and tallies the sum of all orders (mock). Written in .NET.",
         version=parse_version("1.0.0"),
@@ -176,7 +176,7 @@ ad_block = Manifest(
     icon="📢",
     classification=Classification.internal_api,
     tags=["ads", "recommendations"],
-    connections=["Flagd"],
+    connections=[Manifest(name="Flagd")],
     info=Info(
         description="Provides contextual text ads based on product category keywords. Uses Flagd for feature-flag controlled ad campaigns. Written in Java.",
         version=parse_version("1.0.0"),
@@ -205,7 +205,7 @@ cart_block = Manifest(
     icon="🛒",
     classification=Classification.internal_api,
     tags=["cart", "shopping"],
-    connections=["Valkey", "Flagd"],
+    connections=[Manifest(name="Valkey"), Manifest(name="Flagd")],
     info=Info(
         description="Stores and retrieves shopping cart items per user session in Valkey. Written in .NET.",
         version=parse_version("1.0.0"),
@@ -233,7 +233,15 @@ checkout_block = Manifest(
     icon="💳",
     classification=Classification.internal_api,
     tags=["checkout", "orders", "orchestration"],
-    connections=["Cart", "Currency", "Email", "Payment", "Product Catalog", "Shipping", "Kafka"],
+    connections=[
+        Manifest(name="Cart"),
+        Manifest(name="Currency"),
+        Manifest(name="Email"),
+        Manifest(name="Payment"),
+        Manifest(name="Product Catalog"),
+        Manifest(name="Shipping"),
+        Manifest(name="Kafka"),
+    ],
     info=Info(
         description="Orchestrates the full purchase flow: retrieves cart, converts currency, charges payment, ships order, sends email, and publishes order events to Kafka. Written in Go.",
         version=parse_version("1.0.0"),
@@ -318,7 +326,7 @@ flagd_ui_block = Manifest(
     icon="🎛️",
     classification=Classification.admin_ui,
     tags=["feature-flags", "admin"],
-    connections=["Flagd"],
+    connections=[Manifest(name="Flagd")],
     info=Info(
         description="Web UI for toggling and editing OpenFeature feature flags backed by Flagd. Written in Elixir/Phoenix.",
         version=parse_version("1.0.0"),
@@ -346,7 +354,7 @@ fraud_detection_block = Manifest(
     icon="🕵️",
     classification=Classification.worker,
     tags=["fraud", "risk", "async"],
-    connections=["Kafka"],
+    connections=[Manifest(name="Kafka")],
     info=Info(
         description="Consumes order events from Kafka and applies heuristics to flag potentially fraudulent transactions (mock). Written in Kotlin.",
         version=parse_version("1.0.0"),
@@ -402,7 +410,7 @@ payment_block = Manifest(
     icon="💰",
     classification=Classification.internal_api,
     tags=["payments", "billing"],
-    connections=["Flagd"],
+    connections=[Manifest(name="Flagd")],
     info=Info(
         description="Charges credit cards (mock) with a given amount and returns a transaction ID. Written in JavaScript/Node.",
         version=parse_version("1.0.0"),
@@ -431,7 +439,7 @@ product_catalog_block = Manifest(
     icon="📦",
     classification=Classification.internal_api,
     tags=["products", "catalog"],
-    connections=["Flagd"],
+    connections=[Manifest(name="Flagd")],
     info=Info(
         description="Serves a product list from a JSON file and supports product search and individual product lookup. Written in Go.",
         version=parse_version("1.0.0"),
@@ -517,7 +525,7 @@ recommendation_block = Manifest(
     icon="👍",
     classification=Classification.internal_api,
     tags=["recommendations", "personalization"],
-    connections=["Product Catalog"],
+    connections=[Manifest(name="Product Catalog")],
     info=Info(
         description="Recommends related products based on the current cart contents. Written in Python.",
         version=parse_version("1.0.0"),
@@ -546,7 +554,7 @@ shipping_block = Manifest(
     icon="🚚",
     classification=Classification.internal_api,
     tags=["shipping", "logistics"],
-    connections=["Quote"],
+    connections=[Manifest(name="Quote")],
     info=Info(
         description="Provides shipping cost estimates and ships items to an address (mock). Written in Rust.",
         version=parse_version("1.0.0"),
@@ -575,14 +583,14 @@ frontend_block = Manifest(
     classification=Classification.public_ui,
     tags=["web", "storefront", "ui"],
     connections=[
-        "Ad",
-        "Cart",
-        "Checkout",
-        "Currency",
-        "Product Catalog",
-        "Recommendation",
-        "Shipping",
-        "Product Reviews",
+        Manifest(name="Ad"),
+        Manifest(name="Cart"),
+        Manifest(name="Checkout"),
+        Manifest(name="Currency"),
+        Manifest(name="Product Catalog"),
+        Manifest(name="Recommendation"),
+        Manifest(name="Shipping"),
+        Manifest(name="Product Reviews"),
     ],
     info=Info(
         description="Next.js web storefront. Auto-generates session IDs — no sign-up required. Calls all backend services directly. Written in TypeScript.",
@@ -617,7 +625,11 @@ frontend_proxy_block = Manifest(
     icon="🔀",
     classification=Classification.network_gateway,
     tags=["proxy", "ingress", "envoy"],
-    connections=["Frontend", "Flagd-UI", "Image Provider"],
+    connections=[
+        Manifest(name="Frontend"),
+        Manifest(name="Flagd-UI"),
+        Manifest(name="Image Provider"),
+    ],
     info=Info(
         description="Envoy reverse proxy that routes all inbound traffic to Frontend, Flagd-UI, and Image Provider. Single ingress point for the demo.",
         version=parse_version("1.29.0"),
@@ -645,7 +657,7 @@ load_generator_block = Manifest(
     icon="⚡",
     classification=Classification.worker,
     tags=["testing", "load", "simulation"],
-    connections=["Frontend Proxy"],
+    connections=[Manifest(name="Frontend Proxy")],
     info=Info(
         description="Locust-based load generator that continuously simulates realistic user shopping flows against the Frontend Proxy. Written in Python.",
         version=parse_version("1.0.0"),
@@ -673,7 +685,7 @@ react_native_app_block = Manifest(
     icon="📱",
     classification=Classification.mobile_app,
     tags=["mobile", "react-native", "ui"],
-    connections=["Frontend Proxy"],
+    connections=[Manifest(name="Frontend Proxy")],
     info=Info(
         description="React Native mobile application providing a shopping UI on top of the demo backend via the Frontend Proxy. Written in TypeScript.",
         version=parse_version("1.0.0"),

@@ -66,7 +66,12 @@ server_block = Manifest(
     icon="⚙️",
     classification=Classification.internal_api,
     tags=["wasp", "server", "auth"],
-    connections=["PostgreSQL", "Email", "AWS S3", "Stripe"],
+    connections=[
+        Manifest(name="PostgreSQL"),
+        Manifest(name="Email"),
+        Manifest(name="AWS S3"),
+        Manifest(name="Stripe"),
+    ],
     info=Info(
         description="Wasp-generated Node.js/Express backend. Handles all type-safe server operations (Queries &amp; Actions via RPC), multi-method auth (email + Google + GitHub + Discord), payment webhook processing (Stripe / Polar.sh / Lemon Squeezy), and pg-boss background jobs (e.g. hourly `dailyStatsJob` for analytics aggregation).",
         version=parse_version("0.22.0"),
@@ -98,7 +103,7 @@ client_block = Manifest(
     icon="🖥️",
     classification=Classification.public_ui,
     tags=["react", "spa", "wasp"],
-    connections=["Wasp Server", "Analytics"],
+    connections=[Manifest(name="Wasp Server"), Manifest(name="Analytics")],
     info=Info(
         description="Wasp-generated React SPA (Vite build) with TailwindCSS and ShadCN UI components. Includes landing page, user dashboard, subscription management, admin dashboard, AI demo app, and file upload UI. Communicates with the Wasp Server exclusively via type-safe Wasp Operations.",
         version=parse_version("0.22.0"),

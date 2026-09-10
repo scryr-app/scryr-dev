@@ -20,7 +20,7 @@ react_block = Manifest(
     name="React",
     icon="🌐",
     tags=["user_interface"],
-    connections=["Express"],
+    connections=[Manifest(name="Express")],
     info=Info(
         description=(
             "A sample MERN-style application: MongoDB datastore, Express backend, "
@@ -52,7 +52,7 @@ redis_pubsub_block = Manifest(
     name="Redis Pub/Sub",
     icon="📡",
     tags=["user_interface"],
-    connections=["Express", "React"],
+    connections=[Manifest(name="Express"), Manifest(name="React")],
     info=Info(
         description="Redis configured for real-time messaging and event streaming",
         version=SemVer("7.2.0"),
@@ -80,7 +80,7 @@ redis_pubsub_block = Manifest(
 )
 express_block = Manifest(
     name="Express",
-    connections=["MongoDB"],
+    connections=[Manifest(name="MongoDB")],
     info=Info(
         language=ProgrammingLanguage.javascript,
         deployment=DeploymentTarget.amplify,
@@ -95,7 +95,7 @@ express_block = Manifest(
 )
 mongo_block = Manifest(
     name="MongoDB",
-    connections=["Express", "React"],
+    connections=[Manifest(name="Express"), Manifest(name="React")],
     info=Info(
         frameworks=[WebFramework.nextjs],
         owner_team="Data Team",
@@ -115,7 +115,7 @@ mongo_block = Manifest(
 angularjs_admin_block = Manifest(
     name="AngularJS Admin Console",
     icon="🛠️",
-    connections=["Express"],
+    connections=[Manifest(name="Express")],
     info=Info(
         description="Legacy AngularJS-based admin console for operational management",
         version=SemVer("1.7.9"),

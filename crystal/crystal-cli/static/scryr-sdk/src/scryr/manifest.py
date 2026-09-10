@@ -851,7 +851,7 @@ class Manifest(BaseModel):
     tags: list[Label | str] = Field(
         default_factory=list, description="Arbitrary tags for categorization and filtering"
     )
-    connections: list[Label | str] = Field(
+    connections: list[Manifest] = Field(
         default_factory=list,
         description="Named connections to other components or services",
     )
@@ -884,7 +884,7 @@ class Manifest(BaseModel):
         icon: Label | str = "",
         classification: Classification = Classification.public_api,
         tags: list[Label | str] | None = None,
-        connections: list[Label | str] | None = None,
+        connections: list[Manifest] | None = None,
         forges: list[Label | str] | None = None,
         info: Info | None = None,
         github: Github | None = None,

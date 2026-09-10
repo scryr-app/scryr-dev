@@ -92,7 +92,13 @@ web_block = Manifest(
     icon="📅",
     classification=Classification.public_ui,
     tags=["frontend", "scheduling", "monolith"],
-    connections=["PostgreSQL", "Redis", "Email", "Daily.co", "Workflow Cron"],
+    connections=[
+        Manifest(name="PostgreSQL"),
+        Manifest(name="Redis"),
+        Manifest(name="Email"),
+        Manifest(name="Daily.co"),
+        Manifest(name="Workflow Cron"),
+    ],
     info=Info(
         description="Main Next.js application serving the cal.com scheduling UI and tRPC backend. Handles booking flows, event types, availability, user auth (NextAuth.js), calendar integrations, Prisma data access, and outbound webhooks.",
         version=parse_version("6.2.0"),
@@ -124,7 +130,7 @@ api_v2_block = Manifest(
     icon="🔌",
     classification=Classification.public_api,
     tags=["api", "platform", "headless"],
-    connections=["PostgreSQL", "Redis"],
+    connections=[Manifest(name="PostgreSQL"), Manifest(name="Redis")],
     info=Info(
         description="NestJS REST API for the Cal.com Platform offering (Cal Atoms). Provides headless scheduling endpoints so third-party developers can embed cal.com booking experiences into their own products.",
         version=parse_version("2.0.0"),
@@ -186,7 +192,7 @@ workflow_cron_block = Manifest(
     icon="⏰",
     classification=Classification.scheduler,
     tags=["cron", "workflows", "automation"],
-    connections=["PostgreSQL", "Email"],
+    connections=[Manifest(name="PostgreSQL"), Manifest(name="Email")],
     info=Info(
         description="Vercel cron-based job runner that processes automated cal.com workflows: scheduled email and SMS reminders (via Twilio), booking follow-ups, expired booking cleanup, and daily digest jobs.",
         version=parse_version("1.0.0"),
@@ -242,7 +248,7 @@ app_store_block = Manifest(
     icon="🧩",
     classification=Classification.sdk,
     tags=["integrations", "calendars", "payments"],
-    connections=["PostgreSQL", "Web App"],
+    connections=[Manifest(name="PostgreSQL"), Manifest(name="Web App")],
     info=Info(
         description="Cal.com App Store — a collection of OAuth2 and API-key integrations: Google Calendar, Outlook, Zoom, Stripe, HubSpot, Salesforce, Zapier, and 100+ more. Each app is a self-contained package in packages/app-store.",
         version=parse_version("1.0.0"),

@@ -18,7 +18,11 @@ from scryr.types import (
 linux_host_block = Manifest(
     name="Linux Host",
     classification=Classification.network_gateway,
-    connections=["Apache Web Server", "PHP Application", "MySQL Database"],
+    connections=[
+        Manifest(name="Apache Web Server"),
+        Manifest(name="PHP Application"),
+        Manifest(name="MySQL Database"),
+    ],
     info=Info(
         description="Ubuntu VM providing the operating system, firewall rules, process supervision, and local package management for the LAMP deployment.",
         version=SemVer("22.4.0"),
@@ -37,7 +41,7 @@ linux_host_block = Manifest(
 apache_web_block = Manifest(
     name="Apache Web Server",
     classification=Classification.public_ui,
-    connections=["PHP Application"],
+    connections=[Manifest(name="PHP Application")],
     info=Info(
         description="Apache HTTP Server terminates browser traffic, serves static assets, and forwards dynamic page requests to the PHP application runtime.",
         version=SemVer("2.4.0"),
@@ -57,7 +61,7 @@ apache_web_block = Manifest(
 php_app_block = Manifest(
     name="PHP Application",
     classification=Classification.internal_api,
-    connections=["MySQL Database"],
+    connections=[Manifest(name="MySQL Database")],
     info=Info(
         description="PHP application layer rendering server-side pages, handling form submissions, and coordinating reads and writes against MySQL.",
         version=SemVer("8.3.0"),

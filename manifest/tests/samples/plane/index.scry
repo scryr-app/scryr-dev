@@ -149,7 +149,12 @@ api_block = Manifest(
     icon="⚙️",
     classification=Classification.internal_api,
     tags=["api", "django", "core"],
-    connections=["PostgreSQL", "Valkey", "RabbitMQ", "MinIO"],
+    connections=[
+        Manifest(name="PostgreSQL"),
+        Manifest(name="Valkey"),
+        Manifest(name="RabbitMQ"),
+        Manifest(name="MinIO"),
+    ],
     info=Info(
         description="Django REST Framework API server — the core backend of Plane. Handles authentication (magic-link, OAuth2, SAML), workspace and project management, issues, cycles, modules, views, analytics, webhooks, and Prisma-free direct PostgreSQL access via Django ORM.",
         version=parse_version("1.2.3"),
@@ -183,7 +188,12 @@ worker_block = Manifest(
     icon="⚡",
     classification=Classification.worker,
     tags=["celery", "async", "worker"],
-    connections=["API Server", "PostgreSQL", "Valkey", "RabbitMQ"],
+    connections=[
+        Manifest(name="API Server"),
+        Manifest(name="PostgreSQL"),
+        Manifest(name="Valkey"),
+        Manifest(name="RabbitMQ"),
+    ],
     info=Info(
         description="Celery worker process (same image as API Server) that consumes tasks from RabbitMQ/Valkey. Handles async webhook dispatch, email notifications, export jobs, and bulk issue operations.",
         version=parse_version("1.2.3"),
@@ -212,7 +222,7 @@ beat_worker_block = Manifest(
     icon="🕐",
     classification=Classification.scheduler,
     tags=["celery", "cron", "scheduler"],
-    connections=["API Server", "PostgreSQL", "Valkey"],
+    connections=[Manifest(name="API Server"), Manifest(name="PostgreSQL"), Manifest(name="Valkey")],
     info=Info(
         description="Celery Beat scheduler process that triggers periodic tasks on a cron-like schedule: digest emails, stale issue cleanup, cycle auto-close, and analytics aggregation jobs.",
         version=parse_version("1.2.3"),
@@ -241,7 +251,7 @@ live_block = Manifest(
     icon="✍️",
     classification=Classification.internal_api,
     tags=["realtime", "collaboration", "pages"],
-    connections=["API Server"],
+    connections=[Manifest(name="API Server")],
     info=Info(
         description="Node.js real-time collaboration server powering Plane Pages co-editing. Uses Hocuspocus (a Yjs CRDT server) over WebSocket so multiple users can edit the same document simultaneously without conflicts.",
         version=parse_version("1.2.3"),
@@ -269,7 +279,7 @@ web_block = Manifest(
     icon="🗂️",
     classification=Classification.public_ui,
     tags=["frontend", "issues", "kanban"],
-    connections=["API Server", "Live Server"],
+    connections=[Manifest(name="API Server"), Manifest(name="Live Server")],
     info=Info(
         description="Main Plane web application built with React Router v7 (SSR) and TypeScript. Provides the full project management UI: issue tracker, Kanban/list/timeline views, cycles, modules, pages, analytics, and workspace settings.",
         version=parse_version("1.2.3"),
@@ -301,7 +311,7 @@ admin_block = Manifest(
     icon="🛡️",
     classification=Classification.admin_ui,
     tags=["admin", "instance", "config"],
-    connections=["API Server", "Web App"],
+    connections=[Manifest(name="API Server"), Manifest(name="Web App")],
     info=Info(
         description="God Mode admin panel (React Router v7 / TypeScript) for instance administrators. Manages global instance configuration, SSO/SAML setup, email settings, feature flags, and workspace-level oversight.",
         version=parse_version("1.2.3"),
@@ -335,7 +345,7 @@ space_block = Manifest(
     icon="🌐",
     classification=Classification.public_ui,
     tags=["public", "embed", "spaces"],
-    connections=["API Server", "Web App"],
+    connections=[Manifest(name="API Server"), Manifest(name="Web App")],
     info=Info(
         description="Public-facing React Router v7 app that renders Plane issue boards as embeddable or publicly shareable 'spaces'. Allows external stakeholders to view and vote on issues without a Plane account.",
         version=parse_version("1.2.3"),
@@ -364,7 +374,13 @@ proxy_block = Manifest(
     icon="🔀",
     classification=Classification.network_gateway,
     tags=["proxy", "nginx", "infra"],
-    connections=["Web App", "Admin Panel", "Spaces", "API Server", "Live Server"],
+    connections=[
+        Manifest(name="Web App"),
+        Manifest(name="Admin Panel"),
+        Manifest(name="Spaces"),
+        Manifest(name="API Server"),
+        Manifest(name="Live Server"),
+    ],
     info=Info(
         description="Nginx reverse proxy that acts as the single ingress point for all Plane traffic. Routes requests to Web, Admin, Space, API, and Live services. Also handles file upload size limits and serves MinIO uploads.",
         version=parse_version("1.25.0"),
