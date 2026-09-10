@@ -90,12 +90,37 @@ async fn branch(
 
 /// Send one observation through Crystal's authenticated history mutation.
 pub(crate) async fn run(args: &ReportArgs) -> Result<(), String> {
+    let mut resolved = args.clone();
+    if let Some((manifest, root)) = super::report_config::resolve(&args.source, &args.manifest_id)?
+    {
+        manifest["manifestId"]
+            .as_str()
+            .ok_or("Missing manifest ID")?
+            .clone_into(&mut resolved.manifest_id);
+        let source = &manifest["cicd"]["source"];
+        if resolved.jobs_file.is_none() {
+            resolved.jobs_file = source["jobs_file"].as_str().map(|p| root.join(p));
+        }
+        if resolved.workflow_id.is_none() {
+            resolved.workflow_id = source["workflow_id"].as_u64();
+        }
+        if resolved.branch.is_none() {
+            resolved.branch = source["branch"].as_str().map(str::to_owned);
+        }
+    }
+    let args = &resolved;
     crystal_core::reports::validate_manifest_id(&args.manifest_id)?;
     let event: Value = serde_json::from_slice(
         &std::fs::read(&args.event_file).map_err(|error| error.to_string())?,
     )
     .map_err(|error| error.to_string())?;
-    let observation = observation(&event)?;
+    let mut observation = observation(&event)?;
+    if let Some(file) = &args.jobs_file {
+        let payload: Value =
+            serde_json::from_slice(&std::fs::read(file).map_err(|e| e.to_string())?)
+                .map_err(|e| e.to_string())?;
+        attach_jobs(&mut observation, &payload)?;
+    }
     let client = reqwest::Client::builder()
         .redirect(reqwest::redirect::Policy::none())
         .timeout(std::time::Duration::from_secs(30))
@@ -172,6 +197,30 @@ pub(super) async fn reporting_token(target: &str) -> Result<Option<String>, Stri
         return Ok(None);
     }
     crate::auth::access_token().await.map(Some)
+}
+
+/// Attach a complete, correctly scoped GitHub jobs response.
+fn attach_jobs(run: &mut GithubActionRun, payload: &Value) -> Result<(), String> {
+    let jobs = payload["jobs"]
+        .as_array()
+        .ok_or("jobs file must contain a GitHub jobs response")?;
+    if payload["total_count"].as_u64() != Some(jobs.len() as u64) {
+        return Err("jobs file is incomplete; combine all pages before reporting".into());
+    }
+    let mut parsed = Vec::new();
+    for job in jobs {
+        if job["run_id"].as_u64() != Some(run.run_id)
+            || job["run_attempt"].as_u64() != Some(run.run_attempt)
+        {
+            return Err("job belongs to a different workflow run or attempt".into());
+        }
+        parsed.push(serde_json::from_value(json!({
+            "id":job["id"], "name":job["name"], "status":job["status"], "conclusion":job["conclusion"],
+            "startedAt":job["started_at"], "completedAt":job["completed_at"], "htmlUrl":job["html_url"]
+        })).map_err(|e| e.to_string())?);
+    }
+    run.jobs = Some(parsed);
+    run.validate()
 }
 
 #[cfg(test)]

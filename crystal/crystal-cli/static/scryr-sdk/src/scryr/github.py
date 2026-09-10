@@ -62,6 +62,29 @@ class ActionStatusEvent(_ActionModel):
         return self.source_updated_at, rank, self.event_id
 
 
+class GithubActionJob(_ActionModel):
+    """One job from a complete workflow-attempt snapshot."""
+
+    id: int = Field(gt=0)
+    name: str = Field(min_length=1)
+    status: ActionStatus
+    conclusion: ActionConclusion | None = None
+    started_at: AwareDatetime | None = None
+    completed_at: AwareDatetime | None = None
+    html_url: str = Field(pattern=r"^https?://")
+
+    @model_validator(mode="after")
+    def _validate_state(self) -> GithubActionJob:
+        """Validate the state and provider timestamps."""
+        if self.status != "completed" and self.conclusion is not None:
+            msg = "Only completed jobs can have a conclusion"
+            raise ValueError(msg)
+        if self.started_at and self.completed_at and self.completed_at < self.started_at:
+            msg = "completed_at must not precede started_at"
+            raise ValueError(msg)
+        return self
+
+
 class GithubActionRun(_ActionModel):
     """One workflow run attempt, including its observed status transitions."""
 
@@ -82,6 +105,7 @@ class GithubActionRun(_ActionModel):
     run_started_at: AwareDatetime | None = None
     logs_url: str | None = None
     events: list[ActionStatusEvent] = Field(default_factory=list)
+    jobs: list[GithubActionJob] | None = Field(default=None, exclude_if=lambda value: value is None)
 
     @property
     def identity(self) -> tuple[str, int, int, int]:
@@ -198,6 +222,8 @@ class GithubActionsLog(_ActionModel):
             if winner == event:
                 replacement = run.model_copy(deep=True)
                 replacement.events = current.events
+                if replacement.jobs is None:
+                    replacement.jobs = current.jobs
                 self.runs[self.runs.index(current)] = replacement
         self.runs.sort(
             key=lambda item: (item.created_at, item.run_id, item.run_attempt), reverse=True

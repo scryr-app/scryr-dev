@@ -198,7 +198,7 @@ fi
 
 for sample in manifest/tests/samples/*/index.scry; do
   sample_name="$(basename "$(dirname "$sample")")"
-  cargo run --locked --manifest-path crystal/Cargo.toml -p crystal-cli -- generate upload \
+  cargo run --locked --manifest-path crystal/Cargo.toml -p crystal-cli -- push \
     --path "tests/samples/${sample_name}/index.scry" \
     --manifest-dir manifest \
     --scryr-dir "${SCRYR_DIR:-.cache/scryr}"
@@ -241,7 +241,7 @@ mise run internal:generate:map
 [tasks."contribute:generate:manifest-types"]
 description = "Generate manifest field type metadata via the Scryr CLI"
 dir = "{{config_root}}"
-run = "cargo run --locked --manifest-path crystal/Cargo.toml -p crystal-cli -- generate types --path tests/samples/open_saas/index.scry --manifest-dir manifest --scryr-dir .cache/scryr"
+run = "cargo run --locked --manifest-path crystal/Cargo.toml -p crystal-cli -- inspect types --path tests/samples/open_saas/index.scry --manifest-dir manifest --scryr-dir .cache/scryr"
 
 [tasks."contribute:install"]
 description = "Build and install the self-contained scryr CLI on PATH"
@@ -522,7 +522,7 @@ export SCRYR_API_TOKEN=windrunner
 export SCRYR_DIR="$RUNNER_TEMP/scryr-release"
 
 ./crystal/target/release/scryr --version
-./crystal/target/release/scryr generate schema \
+./crystal/target/release/scryr inspect schema \
   --path tests/samples/mern/index.scry \
   --manifest-dir manifest \
   --scryr-dir .cache/scryr-release > "$RUNNER_TEMP/schema.json"
@@ -532,14 +532,14 @@ python3 -m json.tool "$RUNNER_TEMP/schema.json" >/dev/null
 mkdir -p "$RUNNER_TEMP/standalone/sample"
 cp ./crystal/target/release/scryr "$RUNNER_TEMP/standalone/scryr"
 cp manifest/tests/samples/mern/index.scry "$RUNNER_TEMP/standalone/sample/index.scry"
-(cd "$RUNNER_TEMP/standalone" && ./scryr generate schema \
+(cd "$RUNNER_TEMP/standalone" && ./scryr inspect schema \
   --path index.scry \
   --manifest-dir "$RUNNER_TEMP/standalone/sample" \
   --scryr-dir "$RUNNER_TEMP/standalone/state" > "$RUNNER_TEMP/standalone-schema.json")
 python3 -m json.tool "$RUNNER_TEMP/standalone-schema.json" >/dev/null
 
 SCRYR_SQLITE_PATH="$RUNNER_TEMP/scryr-release.db" \
-  ./crystal/target/release/scryr serve \
+  ./crystal/target/release/scryr serve --server-only \
     --host 127.0.0.1 \
     --port 18080 \
     > "$RUNNER_TEMP/scryr-release.log" 2>&1 &
@@ -560,7 +560,7 @@ curl --silent --show-error --fail \
   http://127.0.0.1:18080/ > "$RUNNER_TEMP/index.html"
 test -s "$RUNNER_TEMP/index.html"
 
-./crystal/target/release/scryr generate upload \
+./crystal/target/release/scryr push \
   --path tests/samples/mern/index.scry \
   --manifest-dir manifest \
   --scryr-dir .cache/scryr-release \
@@ -970,6 +970,7 @@ def main():
         "crystal-cli",
         "--",
         "serve",
+        "--server-only",
     ]
     if action == "debug":
         subprocess.run(

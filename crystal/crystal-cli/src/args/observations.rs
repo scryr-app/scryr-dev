@@ -23,12 +23,15 @@ pub(crate) enum ReportCommand {
 }
 #[derive(Clone, Debug, Args)]
 pub(crate) struct ObservationArgs {
-    #[arg(long)]
+    #[command(flatten)]
+    pub source: super::ReportSourceArgs,
+    #[arg(long, default_value = "")]
     pub manifest_id: String,
     #[arg(
         long,
+        alias = "graphql-url",
         env = "SCRYR_ENDPOINT",
-        default_value = "http://127.0.0.1:8000/graphql"
+        default_value_t = super::workflow::default_endpoint()
     )]
     pub endpoint: String,
     #[arg(long, env = "SCRYR_CLERK_ORG_ID")]
@@ -37,8 +40,8 @@ pub(crate) struct ObservationArgs {
     pub file: Vec<PathBuf>,
     #[arg(long)]
     pub format: Option<String>,
-    #[arg(long, alias = "scope", default_value = "default")]
-    pub suite: String,
+    #[arg(long, alias = "scope")]
+    pub suite: Option<String>,
     #[arg(long)]
     pub shard: Option<String>,
     #[arg(long, env = "GITHUB_RUN_ID")]

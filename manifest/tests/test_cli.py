@@ -193,6 +193,21 @@ def test_scry_normalization_keeps_existing_line_numbers() -> None:
     assert "__scryr_variable_aliases__" in normalized
 
 
+def test_scry_normalization_preserves_multiline_declaration_newline() -> None:
+    """A rewritten constructor opener must not consume its first argument line."""
+    source = (
+        "from scryr import Manifest\n"
+        "northwind-postgres = Manifest(\n"
+        '    name="northwind-postgres",\n'
+        ")\n"
+    )
+
+    normalized = normalize_scry_source(source)
+
+    assert "Manifest(\n    name=" in normalized
+    compile(normalized, "index.scry", "exec")
+
+
 def test_scry_manifest_imports_python_and_scry_modules(tmp_path: Path) -> None:
     """A `.scry` entrypoint can import sibling Python modules and `.scry` modules."""
     (tmp_path / "names.py").write_text('PYTHON_NAME = "Python helper"\n')

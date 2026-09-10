@@ -16,46 +16,75 @@ After installation, use the binary directly:
 scryr <command>
 ```
 
-## Commands
+## Primary workflows
+
+Run these commands from your own repository. The default entrypoint is `index.scry`.
+Use `--path` for a different file and `--manifest-dir` for a different project root.
+Paths passed to `--path` are relative to `--manifest-dir` (or absolute).
+
+```bash
+scryr check
+scryr format
+scryr lint --fix
+scryr push
+scryr serve --watch
+scryr report tests --run-id "$GITHUB_RUN_ID" --observed-at "$RESULTS_COMPLETED_AT"
+scryr report actions
+scryr query --list
+scryr query request_latency --json
+```
+
+## Check, format, and lint
+
+`scryr check` checks formatting, lint, and Python types, then executes the manifest
+once, serializes JSON, and validates Scryr diagram rules. It requires at least one
+public `Diagram`, unique diagram identifiers, and valid references to public
+`Manifest` objects. Failures identify the stage and return a nonzero exit status.
+Check does not rewrite source files or contact Scryr/provider APIs. Manifest
+execution itself runs user Python code and may have whatever effects that code defines.
+
+`scryr format` rewrites the entrypoint and reachable local `.scry`/`.py` imports.
+`scryr format --check` reports formatting differences without writing.
+`scryr lint` reports lint errors; `--fix` applies only safe fixes. Formatting and
+linting do not execute user code or format unrelated Python files. Existing Ruff
+configuration is honored, and `.scry` files are treated as Python. Unused-import
+warnings are suppressed because public imports can export Scryr objects. Hyphenated Scryr
+declarations retain their original names. Type checking uses temporary Python
+mirrors to resolve `.scry` imports and maps diagnostics back to original paths.
+
+Ruff 0.16.6 and ty 0.0.78 are pinned in the managed runtime, matching this repository's
+lockfile. Tool provisioning can download dependencies on first use.
+
+## Serve locally
 
 ```bash
 scryr serve
-scryr generate <target> --path index.scry
-scryr auth <command>
+scryr serve --watch --port 9000
+scryr serve --no-format --no-open
+scryr serve --server-only --sample mern
 ```
 
-Legacy positional generation still works for compatibility, but new docs and
-scripts should use `--path`.
+By default, `serve` starts the embedded UI and GraphQL server, waits for readiness,
+formats sources, runs all checks, uploads the validated artifact to that server,
+and opens the UI. `--watch` repeats on source changes. Local loading always uses
+the server's actual host and port, even when a cloud endpoint is configured.
+Validation failures are printed in the terminal; the server stays available and
+the previous valid diagram remains loaded. Without `--watch`, initial loading runs once.
 
-## `serve`
-
-Runs the Scryr GraphQL server from the CLI.
-
-```bash
-scryr serve
-scryr serve --sample mern --host 127.0.0.1 --port 8000
-```
-
-Server options:
-
-```bash
---sample <name>       Explicit persisted artifact key to serve. No default sample.
---host <host>         Host interface to bind. Defaults to 127.0.0.1.
---port <port>         TCP port to bind. Defaults to 8000.
---auth-mode <mode>    Authentication mode: local or clerk.
-```
+- `--server-only`: do not read, format, execute, or upload a local manifest. Use in deployments.
+- `--no-format`: verify formatting without changing source files.
+- `--no-open`: do not launch a browser.
+- `--host`: bind interface (default `127.0.0.1`).
+- `--port`: TCP port (default `8000`).
+- `--sample`: persisted artifact selection; no default sample.
+- `--auth-mode`: `local` (default) or `clerk`.
 
 `DATABASE_URL`, `SCRYR_SQLITE_PATH`, `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`,
-`CLERK_SECRET_KEY`, and
-`CORS_ALLOWED_ORIGINS` remain runtime environment settings for the embedded
-server.
+`CLERK_SECRET_KEY`, and `CORS_ALLOWED_ORIGINS` remain server environment settings.
 
-`scryr serve` defaults to local auth. Use `--auth-mode clerk` only for a hosted
-Clerk-backed deployment.
+## Shared manifest options
 
-## Shared Generate Options
-
-These options are accepted by all `generate` targets:
+These options are accepted by check, format, lint, push, serve, export, inspect, and query:
 
 ```bash
 --path <file>          Manifest file to execute. Defaults to index.scry.
@@ -90,7 +119,7 @@ copy at `crystal/crystal-cli/static/scryr-sdk`, removing build and cache files.
 asset list used by the binary. Changes to `manifest/scryr` therefore require
 running the sync step before rebuilding the CLI.
 
-Forge-backed targets also accept:
+Forge exports also accept:
 
 ```bash
 --forge <name-or-variable>
@@ -98,17 +127,17 @@ Forge-backed targets also accept:
 
 Use `--forge` when a manifest file defines multiple public `Forge` instances.
 
-## `generate upload`
+## `push`
 
 Executes the manifest, generates schema and diagram-scoped map artifacts, and
 persists them through the configured GraphQL API.
 
 ```bash
-scryr generate upload --path index.scry
+scryr push --path index.scry
 ```
 
-When `SCRYR_GRAPHQL_URL` is unset, `generate upload` defaults to
-`http://127.0.0.1:8000/graphql` and does not use a bearer token. Required for
+When no endpoint is configured, `push` defaults to
+`http://127.0.0.1:8000/graphql` and uses tokenless local authentication unless `SCRYR_TOKEN` is explicitly set. Required for
 hosted Clerk-backed uploads:
 
 ```bash
@@ -118,34 +147,38 @@ scryr auth login
 Relevant environment variables:
 
 ```bash
-SCRYR_GRAPHQL_URL
+SCRYR_ENDPOINT
 SCRYR_CLERK_ORG_ID
 SCRYR_GIT_COMMIT_SHA
 ```
 
-`generate upload` is the only generate target that writes to the Scryr backend.
-The other targets print artifacts to stdout. Localhost, `127.0.0.1`, and `[::1]`
-GraphQL endpoints use tokenless local auth; all other endpoints require a
-cached Clerk OAuth token.
+`push` validates before uploading and reuses the generated JSON without executing
+the manifest again. It prints the deployment UI URL. Export and inspect commands
+print artifacts to stdout; progress and deprecation messages go to stderr. Localhost, `127.0.0.1`, and `[::1]`
+GraphQL endpoints use tokenless local auth; all other endpoints require `SCRYR_TOKEN` or a cached Clerk OAuth token.
 
-## `generate types`
+Endpoint precedence is `--endpoint` (alias `--graphql-url`), `SCRYR_ENDPOINT`,
+legacy `SCRYR_GRAPHQL_URL`, then loopback using `PORT` or port 8000. This applies
+to push, report, and query.
+
+## `inspect types`
 
 Prints JSON metadata describing declared and runtime field types for public
 top-level Scryr objects.
 
 ```bash
-scryr generate types --path index.scry
+scryr inspect types --path index.scry
 ```
 
 This is useful for debugging manifests, validating `.scry` imports, and building
 editor or inspection tooling.
 
-## `generate schema`
+## `inspect schema`
 
 Prints the serialized Pydantic JSON schema for Scryr's top-level models.
 
 ```bash
-scryr generate schema --path index.scry
+scryr inspect schema --path index.scry
 ```
 
 The output contains schemas for:
@@ -154,12 +187,12 @@ The output contains schemas for:
 - `Forge`
 - `Diagram`
 
-## `generate mise`
+## `export mise`
 
 Prints a selected `Forge` as `mise.toml`.
 
 ```bash
-scryr generate mise --path index.scry --forge "MERN Forge"
+scryr export mise --path index.scry --forge "MERN Forge"
 ```
 
 It renders modeled Forge sections such as:
@@ -171,12 +204,12 @@ It renders modeled Forge sections such as:
 - `[settings]`
 - `[plugins]`
 
-## `generate compose`
+## `export compose`
 
 Prints Docker Compose YAML for service tools declared in the selected `Forge`.
 
 ```bash
-scryr generate compose --path index.scry --forge "MERN Forge"
+scryr export compose --path index.scry --forge "MERN Forge"
 ```
 
 Currently supported service tools:
@@ -201,12 +234,12 @@ Forge(
 
 Generates services using `mongo:8` and `redis:7`.
 
-## `generate devcontainer`
+## `export devcontainer`
 
 Prints a `devcontainer.json` for the selected `Forge`.
 
 ```bash
-scryr generate devcontainer --path index.scry --forge "MERN Forge"
+scryr export devcontainer --path index.scry --forge "MERN Forge"
 ```
 
 The generated devcontainer:
@@ -227,7 +260,7 @@ uploads. Local no-cloud uploads do not require this command.
 scryr auth login
 ```
 
-Use this before `generate upload`.
+Use this before `push`.
 
 Optional environment overrides:
 
@@ -261,37 +294,99 @@ scryr auth logout
 Run against the MERN sample:
 
 ```bash
-cargo run -p crystal-cli -- generate types --path ../manifest/tests/samples/mern/index.scry --manifest-dir ../manifest
-cargo run -p crystal-cli -- generate mise --path ../manifest/tests/samples/mern/index.scry --manifest-dir ../manifest --forge "MERN Forge"
-cargo run -p crystal-cli -- generate compose --path ../manifest/tests/samples/mern/index.scry --manifest-dir ../manifest --forge "MERN Forge"
-cargo run -p crystal-cli -- generate devcontainer --path ../manifest/tests/samples/mern/index.scry --manifest-dir ../manifest --forge "MERN Forge"
+cargo run -p crystal-cli -- inspect types --path ../manifest/tests/samples/mern/index.scry --manifest-dir ../manifest
+cargo run -p crystal-cli -- export mise --path ../manifest/tests/samples/mern/index.scry --manifest-dir ../manifest --forge "MERN Forge"
+cargo run -p crystal-cli -- export compose --path ../manifest/tests/samples/mern/index.scry --manifest-dir ../manifest --forge "MERN Forge"
+cargo run -p crystal-cli -- export devcontainer --path ../manifest/tests/samples/mern/index.scry --manifest-dir ../manifest --forge "MERN Forge"
 ```
 
 Upload a sample to a local GraphQL server:
 
 ```bash
-cargo run -p crystal-cli -- generate upload --path ../manifest/tests/samples/mern/index.scry --manifest-dir ../manifest
+cargo run -p crystal-cli -- push --path ../manifest/tests/samples/mern/index.scry --manifest-dir ../manifest
 ```
 
-## Report GitHub Actions status
+## Report existing results
 
-`scryr report-action-status --manifest-id services/api` reads a `workflow_run`
-event from `GITHUB_EVENT_PATH` (or `--event-file`) and sends it to
-`SCRYR_ENDPOINT` (or `--endpoint`) using `SCRYR_TOKEN` and
-`SCRYR_CLERK_ORG_ID`. This command is implemented entirely in Rust.
+Declare a stable `manifest_id` and optional typed input settings:
 
-Automatic branch selection uses `GITHUB_TOKEN` to check `main`, then `master`,
-then falls back to the repository default branch. Override with `--branch`.
-No workflow ID is required; use `--workflow-id` to restrict reporting.
+```python
+from scryr import ActionsReportSource, CICD, Diagram, Manifest, TestReportSource, Tests
 
-## Operational reports
+api = Manifest(
+    manifest_id="services/api",
+    name="API",
+    tests=Tests(source=TestReportSource(files=["results/junit.xml"], suite="unit")),
+    cicd=CICD(source=ActionsReportSource(workflow_id=42, branch="main", jobs_file="results/jobs.json")),
+)
+diagram = Diagram(name="System", manifests=[api])
+```
 
-Use `scryr report tests`, `coverage`, `dependencies`, or `deployment` to publish
-existing CI results without regenerating manifests. `scryr report actions` is
-the grouped form of `report-action-status`. All reporters support `--dry-run`
-and `--json`.
+```bash
+scryr report tests --manifest api --run-id "$GITHUB_RUN_ID" --observed-at "$RESULTS_COMPLETED_AT"
+scryr report actions --manifest api --event-file workflow-run.json
+```
 
-## Metrics on diagram load
+Artifact paths in declarations are relative to the entrypoint. Explicit flags
+such as `--file`, `--format`, `--suite`, `--workflow-id`, `--branch`, and `--jobs-file`
+override declared defaults. Multiple manifests require `--manifest` (public variable,
+name, or stable ID). Reporting executes the manifest to resolve its declarations;
+it does not run tests, regenerate diagrams, or automatically push diagrams.
 
-Declare `Metrics(provider=PrometheusSource(...))` in `index.scry` to fetch Grafana
-metrics when a diagram opens. Ordinary map polling does not fetch runtime metrics.
+Explicit `--manifest-id` without `--path` or `--manifest` retains the existing
+Python-free reporting mode. Test reporting still requires a run ID and a stable
+source completion time (`--observed-at`); `GITHUB_RUN_ID` supplies the former in CI.
+
+Actions reporting reads `workflow_run` events from `GITHUB_EVENT_PATH` or
+`--event-file`. Automatic branch selection uses `GITHUB_TOKEN` to check main,
+master, then the repository default; `--branch` or the declaration avoids that lookup.
+The optional jobs file is a complete GitHub jobs API response with `total_count`
+and `jobs`; combine all pages first. Every job must belong to the exact workflow
+run and attempt. Jobs enrich existing run history, and identical retries are idempotent.
+
+The existing `report coverage`, `report dependencies`, and `report deployment`
+commands remain supported. All reporters support `--dry-run` and `--json`.
+
+## Query declared providers
+
+```bash
+scryr query --list
+scryr query request_latency --manifest api
+scryr query page_views --json --endpoint https://your-scryr.example/graphql
+```
+
+Query names come from `metrics.provider.queries` and `analytics.queries` in the
+local manifest. Listing executes the manifest but makes no provider request.
+Duplicate query names require a manifest selector; use `--provider prometheus` or
+`--provider posthog` when both providers on one manifest use the same query name. Queries execute through a
+running Scryr server and its organization-scoped `SCRYR_METRICS_CONNECTIONS_FILE`
+connections; they do not publish the local manifest. Provider failures return a
+nonzero exit status. JSON output includes timestamps, status, values, and units.
+Grafana support uses Prometheus-compatible data sources; PostHog uses declared
+HogQL aggregates. Credentials remain in server connections, outside artifacts.
+
+## Export and inspect
+
+`export json` prints checked diagram JSON. `export mise`, `export compose`, and
+`export devcontainer` operate on Forges and do not require a Diagram.
+`inspect types` prints runtime metadata; use `check` for static type checking.
+`inspect schema` prints the SDK's JSON schema.
+
+## Migration
+
+| Deprecated command | Canonical command |
+| --- | --- |
+| `generate upload` | `push` |
+| `generate types` | `inspect types` |
+| `generate schema` | `inspect schema` |
+| `generate mise` | `export mise` |
+| `generate compose` | `export compose` |
+| `generate devcontainer` | `export devcontainer` |
+| `report-action-status` | `report actions` |
+
+Compatibility commands emit a deprecation warning on stderr. The hidden
+`generate artifact-json` release interface retains its existing output behavior;
+new users should use `export json`. Legacy uploads now undergo full validation,
+including the required Diagram rule. Existing persisted artifacts remain readable.
+Deployments that previously used `serve` must add `--server-only` to retain
+server-only behavior. Docker and repository server scripts have been updated.

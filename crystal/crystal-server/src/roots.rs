@@ -13,6 +13,24 @@ pub(crate) struct QueryRoot;
 
 #[Object]
 impl QueryRoot {
+    /// Execute a named local declaration without persisting a diagram.
+    async fn manifest_query(
+        &self,
+        ctx: &async_graphql::Context<'_>,
+        source: async_graphql::Json<serde_json::Value>,
+        name: String,
+    ) -> Result<async_graphql::Json<serde_json::Value>, String> {
+        let auth = require_authenticated_request(ctx).map_err(|error| error.message)?;
+        let context = auth.manifest_request_context()?;
+        let metrics = ctx
+            .data::<crate::runtime_metrics::RuntimeMetrics>()
+            .map_err(|e| e.message)?;
+        metrics
+            .query(&context.clerk_org_id, &source.0, &name)
+            .await
+            .map(async_graphql::Json)
+    }
+
     /// Fetch configured runtime metrics once when opening a diagram. Block polling never calls this.
     async fn diagram_metrics(
         &self,

@@ -137,3 +137,34 @@ raise SystemExit(main())
     fs::write(&path, inline_adapter)
         .map_err(|error| format!("Failed to write {}: {error}", path.display()))
 }
+
+/// Run source-only tooling inside the managed SDK/project environment.
+pub(crate) fn run_manifest_tool(
+    manifest_dir: &Path,
+    manifest_file: &Path,
+    mode: &str,
+    environment: &ManifestPythonEnvironment,
+) -> Result<String, String> {
+    let mut args: Vec<OsString> = ["run", "--with", "ruff==0.16.6", "--with", "ty==0.0.78"]
+        .into_iter()
+        .map(OsString::from)
+        .collect();
+    if has_scryr_project(manifest_dir) {
+        args.extend(
+            [
+                "--no-dev",
+                "--no-sync",
+                "python",
+                "-m",
+                MANIFEST_PYTHON_MODULE,
+            ]
+            .map(OsString::from),
+        );
+    } else {
+        args.push(OsString::from("--no-project"));
+        args.push(environment.inline_adapter_path().into_os_string());
+    }
+    args.push(manifest_file.as_os_str().to_owned());
+    args.push(OsString::from(mode));
+    run_uv_command(manifest_dir, args, environment)
+}

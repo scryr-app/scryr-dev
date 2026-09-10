@@ -125,6 +125,41 @@ pub(crate) async fn run(args: &ReportsArgs) -> Result<(), String> {
     if let ReportCommand::Actions(a) = &args.command {
         return super::report::run(a).await;
     }
+    let mut resolved = args.clone();
+    let observation = match &mut resolved.command {
+        ReportCommand::Tests(a)
+        | ReportCommand::Coverage(a)
+        | ReportCommand::Dependencies(a)
+        | ReportCommand::Deployment(a) => a,
+        ReportCommand::Actions(_) => unreachable!(),
+    };
+    if let Some((manifest, root)) =
+        super::report_config::resolve(&observation.source, &observation.manifest_id)?
+    {
+        manifest["manifestId"]
+            .as_str()
+            .ok_or("Missing manifest ID")?
+            .clone_into(&mut observation.manifest_id);
+        let source = &manifest["tests"]["source"];
+        if matches!(&args.command, ReportCommand::Tests(_)) {
+            if observation.file.is_empty()
+                && let Some(files) = source["files"].as_array()
+            {
+                observation.file = files
+                    .iter()
+                    .filter_map(Value::as_str)
+                    .map(|p| root.join(p))
+                    .collect();
+            }
+            if observation.format.is_none() {
+                observation.format = source["format"].as_str().map(str::to_owned);
+            }
+            if observation.suite.is_none() {
+                observation.suite = source["suite"].as_str().map(str::to_owned);
+            }
+        }
+    }
+    let args = &resolved;
     let (a, data) = match &args.command {
         ReportCommand::Tests(a) => (
             a,
@@ -152,10 +187,10 @@ pub(crate) async fn run(args: &ReportsArgs) -> Result<(), String> {
             ..
         } => format!("{repository}:{manifest_path}"),
         ReportData::Deployment { environment, .. } => environment.clone(),
-        _ => a
-            .shard
-            .as_ref()
-            .map_or_else(|| a.suite.clone(), |s| format!("{}/shard/{s}", a.suite)),
+        _ => a.shard.as_ref().map_or_else(
+            || a.suite.as_deref().unwrap_or("default").to_owned(),
+            |s| format!("{}/shard/{s}", a.suite.as_deref().unwrap_or("default")),
+        ),
     };
     let report = Report {
         schema_version: 1,

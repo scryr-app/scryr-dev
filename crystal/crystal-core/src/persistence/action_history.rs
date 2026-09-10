@@ -36,7 +36,10 @@ WHERE NOT (? = 'api' AND EXISTS (
         WHERE clerk_org_id = ? AND manifest_id = ? AND run_key = ?
         ORDER BY source_updated_at DESC, phase DESC, event_id DESC LIMIT 1
     ) WHERE status = ? AND conclusion = ? AND source_updated_at <= ?
-)) ON CONFLICT DO NOTHING";
+)) ON CONFLICT DO UPDATE SET
+content = json_set(manifest_action_events.content, '$.jobs', json_extract(excluded.content, '$.jobs'))
+WHERE json_type(excluded.content, '$.jobs') = 'array'
+AND json_extract(manifest_action_events.content, '$.jobs') IS NOT json_extract(excluded.content, '$.jobs')";
 
 const READ_EVENTS: &str = r"
 WITH recent_runs AS (

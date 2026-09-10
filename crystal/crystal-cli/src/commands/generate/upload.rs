@@ -17,13 +17,16 @@ const PORT_ENV: &str = "PORT";
 const DEFAULT_LOCAL_GRAPHQL_PORT: u16 = 8000;
 
 /// Return the default local GraphQL endpoint, honoring the shared local `PORT`.
-pub(super) fn default_local_graphql_url() -> String {
+pub(crate) fn default_local_graphql_url() -> String {
     let configured_port = env::var(PORT_ENV).ok();
     default_local_graphql_url_from_port(configured_port.as_deref())
 }
 
 /// Resolve the optional bearer token needed for one upload target.
-pub(super) async fn upload_bearer_token(graphql_url: &str) -> Result<Option<String>, String> {
+pub(crate) async fn upload_bearer_token(graphql_url: &str) -> Result<Option<String>, String> {
+    if let Ok(token) = env::var("SCRYR_TOKEN") {
+        return Ok(Some(token));
+    }
     if graphql_endpoint_uses_local_auth(graphql_url) {
         return Ok(None);
     }
@@ -34,7 +37,7 @@ pub(super) async fn upload_bearer_token(graphql_url: &str) -> Result<Option<Stri
 }
 
 /// Persist the schema and value artifacts produced by one generate run.
-pub(super) async fn persist_generated_artifacts(
+pub(crate) async fn persist_generated_artifacts(
     context: GeneratedArtifactPersistence<'_>,
 ) -> Result<(), String> {
     let client = reqwest::Client::new();
@@ -80,25 +83,25 @@ pub(super) async fn persist_generated_artifacts(
 }
 
 /// Values needed to persist generated artifacts through GraphQL.
-pub(super) struct GeneratedArtifactPersistence<'a> {
+pub(crate) struct GeneratedArtifactPersistence<'a> {
     /// GraphQL endpoint to receive generated artifacts.
-    pub(super) graphql_url: &'a str,
+    pub(crate) graphql_url: &'a str,
     /// Optional bearer token used for hosted GraphQL mutations.
-    pub(super) bearer_token: Option<&'a str>,
+    pub(crate) bearer_token: Option<&'a str>,
     /// Optional Clerk organization id to request for server-verified upload scope.
-    pub(super) clerk_org_id: Option<&'a str>,
+    pub(crate) clerk_org_id: Option<&'a str>,
     /// Generated schema artifact content.
-    pub(super) pydantic_schema: String,
+    pub(crate) pydantic_schema: String,
     /// Generated map value artifacts.
-    pub(super) map_artifacts: Vec<GeneratedMapArtifact>,
+    pub(crate) map_artifacts: Vec<GeneratedMapArtifact>,
     /// Normalized source file location metadata.
-    pub(super) manifest_location: ManifestLocation,
+    pub(crate) manifest_location: ManifestLocation,
     /// Optional git commit SHA.
-    pub(super) git_commit_sha: Option<String>,
+    pub(crate) git_commit_sha: Option<String>,
 }
 
 /// Normalized source location metadata for the uploaded manifest file.
-pub(super) struct ManifestLocation {
+pub(crate) struct ManifestLocation {
     /// Folder path relative to the manifest project directory.
     folder_path: String,
     /// Manifest source file name.
@@ -107,7 +110,7 @@ pub(super) struct ManifestLocation {
 
 impl ManifestLocation {
     /// Derive a source location from resolved manifest paths.
-    pub(super) fn from_paths(manifest_dir: &Path, manifest_file: &Path) -> Self {
+    pub(crate) fn from_paths(manifest_dir: &Path, manifest_file: &Path) -> Self {
         let relative = manifest_file
             .strip_prefix(manifest_dir)
             .unwrap_or(manifest_file);

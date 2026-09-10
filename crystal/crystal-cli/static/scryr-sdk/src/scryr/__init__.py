@@ -2,7 +2,7 @@
 
 from . import manifest as _manifest
 from .action_client import GithubActionsClient, ScryrClient
-from .github import ActionStatusEvent, GithubActionRun, GithubActionsLog
+from .github import ActionStatusEvent, GithubActionJob, GithubActionRun, GithubActionsLog
 from .metrics_source import CredentialRef, PostHogSource, PrometheusSource
 from .runtime import (
     emit_diagram_values,
@@ -40,6 +40,8 @@ from .types import (
     parse_version,
 )
 
+ActionsReportSource = _manifest.ActionsReportSource
+TestReportSource = _manifest.TestReportSource
 CICD = _manifest.CICD
 Dependencies = _manifest.Dependencies
 Diagram = _manifest.Diagram
@@ -63,6 +65,7 @@ Tests = _manifest.Tests
 __all__ = [
     "CICD",
     "ActionStatusEvent",
+    "ActionsReportSource",
     "AuthType",
     "CICDToolType",
     "CalendarVersion",
@@ -79,6 +82,7 @@ __all__ = [
     "ForgeTaskConfirm",
     "ForgeTool",
     "Github",
+    "GithubActionJob",
     "GithubActionRun",
     "GithubActionsClient",
     "GithubActionsLog",
@@ -102,6 +106,7 @@ __all__ = [
     "PrometheusSource",
     "ScryrClient",
     "SemVer",
+    "TestReportSource",
     "Tests",
     "TracingType",
     "Url",

@@ -390,8 +390,28 @@ class Metrics(_Section):
     )
 
 
+class TestReportSource(BaseModel):
+    """Input artifacts for scryr report tests; paths are relative to index.scry."""
+
+    model_config = ConfigDict(extra="forbid")
+    files: list[str] = Field(default_factory=list)
+    format: Literal["junit"] = "junit"
+    suite: str = Field(default="default", min_length=1)
+
+
+class ActionsReportSource(BaseModel):
+    """Workflow selection for scryr report actions."""
+
+    model_config = ConfigDict(extra="forbid")
+    workflow_id: int | None = Field(default=None, gt=0)
+    jobs_file: str | None = None
+    branch: str | None = None
+
+
 class CICD(_Section):
     """Manifest section for CICD data."""
+
+    source: ActionsReportSource | None = None
 
     reports: dict[str, Any] | None = Field(
         default=None, description="Current durable reports by kind and scope"
@@ -460,6 +480,8 @@ class CICD(_Section):
 
 class Tests(_Section):
     """Manifest section for Tests data."""
+
+    source: TestReportSource | None = None
 
     reports: dict[str, Any] | None = Field(
         default=None, description="Current durable reports by kind and scope"

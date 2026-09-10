@@ -80,6 +80,40 @@ impl RuntimeMetrics {
             client,
         })
     }
+    /// Execute one local declaration using only this organization's approved connections.
+    pub(crate) async fn query(
+        &self,
+        org: &str,
+        config: &Value,
+        name: &str,
+    ) -> Result<Value, String> {
+        if config.to_string().len() > 65536 {
+            return Err("Query source exceeds size limit".into());
+        }
+        let source: Source =
+            serde_json::from_value(config.clone()).map_err(|_| "Invalid query source")?;
+        source.validate().map_err(str::to_owned)?;
+        if !source.queries.contains_key(name) {
+            return Err("Unknown query name".into());
+        }
+        let mut selected = config.clone();
+        for field in ["queries", "units", "labels"] {
+            if let Some(values) = selected.get_mut(field).and_then(Value::as_object_mut) {
+                values.retain(|key, _| key == name);
+            }
+        }
+        let result = self.snapshot(org, "cli", &selected).await;
+        if matches!(
+            result["status"].as_str(),
+            Some("error" | "unavailable" | "stale" | "partial")
+        ) {
+            return Err(result["error"]
+                .as_str()
+                .unwrap_or("Query unavailable")
+                .to_owned());
+        }
+        Ok(result)
+    }
     pub(crate) async fn load(&self, org: &str, manifests: &Value) -> Value {
         let mut result = serde_json::Map::new();
         if let Some(manifests) = manifests.as_array() {
@@ -574,6 +608,10 @@ mod tests {
             "error"
         );
         assert_eq!(calls.load(Ordering::SeqCst), 1);
+        let selected = runtime.query("org", &source, "views").await?;
+        assert_eq!(selected["values"]["views"]["value"], 0.0);
+        assert!(runtime.query("other", &source, "views").await.is_err());
+        assert!(runtime.query("org", &source, "unknown").await.is_err());
         handle.stop(true).await;
         Ok(())
     }

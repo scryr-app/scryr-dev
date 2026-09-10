@@ -17,11 +17,13 @@ cd scryr-dev
 mise install
 mise run contribute:setup
 mise run release:build
-./crystal/target/release/scryr serve
+./crystal/target/release/scryr serve --server-only
 ```
 
 Open `http://127.0.0.1:8000`. The binary embeds the map UI and Python SDK.
-Local startup serves only uploaded maps; it does not seed bundled samples.
+Use `scryr serve` from a repository containing `index.scry` to format, check, and load
+its diagrams automatically. `--server-only` serves existing uploaded maps without
+reading or modifying local manifests. Add `--watch` to reload after source edits.
 This workflow needs no Clerk, Turso, Fly, or other cloud account. The build and first manifest
 execution need internet access to download dependencies and managed Python.
 
@@ -31,7 +33,7 @@ Only run trusted `.scry` files: manifests execute Python code.
 To generate an artifact from a bundled sample:
 
 ```bash
-./crystal/target/release/scryr generate schema \
+./crystal/target/release/scryr inspect schema \
   --path tests/samples/mern/index.scry --manifest-dir manifest
 ```
 

@@ -10,14 +10,23 @@ use crate::uv::ensure_managed_uv;
 use std::path::Path;
 
 /// Selected manifest execution backend.
-pub(super) enum ManifestExecutor {
+pub(crate) enum ManifestExecutor {
     /// Local uv-managed Python environment.
     Local(ManifestPythonEnvironment),
 }
 
 impl ManifestExecutor {
+    /// Run formatting, lint, or type checks without executing user code.
+    pub(crate) fn tool(&self, root: &Path, file: &Path, mode: &str) -> Result<String, String> {
+        match self {
+            Self::Local(environment) => {
+                crate::manifest_python::adapter::run_manifest_tool(root, file, mode, environment)
+            }
+        }
+    }
+
     /// Run the manifest adapter in the selected backend.
-    pub(super) fn run(
+    pub(crate) fn run(
         &self,
         manifest_dir: &Path,
         manifest_file: &Path,
@@ -32,7 +41,7 @@ impl ManifestExecutor {
 }
 
 /// Prepare the requested manifest execution backend.
-pub(super) fn prepare_manifest_executor(
+pub(crate) fn prepare_manifest_executor(
     args: &GenerateRequest,
     manifest_dir: &Path,
 ) -> Result<ManifestExecutor, String> {

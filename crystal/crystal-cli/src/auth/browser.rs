@@ -1,7 +1,7 @@
 //! Browser launching for interactive auth.
 
 /// Open a URL in the user's default browser.
-pub(super) fn open_browser(url: &str) -> Result<(), String> {
+pub(crate) fn open_browser(url: &str) -> Result<(), String> {
     let candidates: Vec<(&str, Vec<&str>)> = {
         #[cfg(target_os = "macos")]
         {

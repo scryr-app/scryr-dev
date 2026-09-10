@@ -186,7 +186,7 @@ case "$1" in
     if [ "$flag" = "--schema" ]; then
       printf '{{"title":"Manifest"}}\n'
     else
-      printf '[{{"variable_name":"sample_manifest","manifest":{{"name":"Sample"}}}}]\n'
+      printf '[{{"variable_name":"sample_manifest","manifest":{{"name":"Sample"}}}},{{"kind":"diagram","variable_name":"diagram","diagram":{{"name":"Sample","manifests":[{{"name":"Sample"}}]}}}}]\n'
     fi
     ;;
   *)
@@ -625,5 +625,29 @@ fn migrate_creates_schema_and_is_repeatable() -> Result<(), Box<dyn Error>> {
             .stdout(predicate::str::contains("Database schema is up to date"));
     }
     assert!(fs::metadata(database)?.len() > 0);
+    Ok(())
+}
+
+#[test]
+fn workflow_commands_have_help_and_serve_requires_explicit_server_only()
+-> Result<(), Box<dyn Error>> {
+    for args in [
+        vec!["check"],
+        vec!["format"],
+        vec!["lint"],
+        vec!["push"],
+        vec!["export", "json"],
+        vec!["inspect", "types"],
+        vec!["query"],
+        vec!["report", "tests"],
+        vec!["serve"],
+    ] {
+        cli_command()?.args(args).arg("--help").assert().success();
+    }
+    cli_command()?
+        .args(["serve", "--server-only", "--watch"])
+        .assert()
+        .failure();
+    cli_command()?.args(["query"]).assert().failure();
     Ok(())
 }
