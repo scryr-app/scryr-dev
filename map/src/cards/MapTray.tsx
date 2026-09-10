@@ -4,6 +4,7 @@ import {
 	ArrowLeft,
 	ArrowRight,
 	ArrowUp,
+	Box,
 	ChevronDown,
 	ChevronLeft,
 	ChevronRight,
@@ -12,14 +13,13 @@ import {
 	GitFork,
 	Info,
 	Layers,
+	Map as MapIcon,
 	Minus,
-	Moon,
 	Package,
 	Palette,
 	PencilLine,
 	Plus,
 	Rocket,
-	Sun,
 	TestTube,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -60,16 +60,21 @@ function holdAction(action: () => void, onLeave?: () => void) {
 			clearInterval(interval);
 			interval = null;
 		}
+		window.removeEventListener("pointerup", stop);
+		window.removeEventListener("pointercancel", stop);
 		onLeave?.();
 	};
 	return {
-		onMouseDown: (e: React.MouseEvent) => {
+		onPointerDown: (e: React.PointerEvent) => {
 			e.preventDefault();
+			e.currentTarget.setPointerCapture(e.pointerId);
 			action();
 			interval = setInterval(action, 16);
+			window.addEventListener("pointerup", stop, { once: true });
+			window.addEventListener("pointercancel", stop, { once: true });
 		},
-		onMouseUp: stop,
-		onMouseLeave: stop,
+		onPointerUp: stop,
+		onPointerCancel: stop,
 	};
 }
 
@@ -81,11 +86,18 @@ interface MapTrayProps {
 export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 	const { activeCardIndex, toggleCard } = useMapTray();
 	const [themeOpen, setThemeOpen] = useState(false);
+	const [viewMenuOpen, setViewMenuOpen] = useState(false);
+	const [viewMode, setViewMode] = useState<"top-down" | "isometric" | null>(
+		"isometric",
+	);
+	const cameraAction = (action: () => void) => {
+		setViewMode(null);
+		action();
+	};
 	const [hoveredIndex, setHoveredIndex] = useState<
 		| number
 		| "editor"
 		| "theme"
-		| "diagram-mode"
 		| "zoom-in"
 		| "zoom-out"
 		| "pan-up"
@@ -165,7 +177,7 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 					style={{ animation: "traySlideUp 0.15s ease-out" }}
 				>
 					<p className="text-[9px] font-semibold uppercase tracking-widest text-white/30 px-2 py-1">
-						Theme
+						Style
 					</p>
 					{Object.keys(ThemePresets).map((name) => {
 						const key = name as keyof typeof ThemePresets;
@@ -186,11 +198,99 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 							</button>
 						);
 					})}
+					<div className="my-1 border-t border-white/10" />
+					<button
+						type="button"
+						onClick={handleDiagramModeToggle}
+						role="switch"
+						aria-checked={diagramMode === "dark"}
+						aria-label={`Switch to ${diagramMode === "light" ? "dark" : "light"} mode`}
+						className="flex w-full items-center justify-between gap-4 rounded-lg px-2.5 py-1.5 text-left text-xs text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+					>
+						<span>Display Brightness</span>
+						<span
+							className={cn(
+								"relative flex h-6 w-16 items-center rounded-full px-1 text-[9px] font-semibold tracking-wide transition-colors",
+								diagramMode === "dark"
+									? "justify-end bg-white/25 text-white"
+									: "justify-start bg-white/15 text-white/70",
+							)}
+						>
+							<span
+								className={cn(
+									"absolute left-1 size-4 rounded-full bg-white shadow-sm transition-transform",
+									diagramMode === "dark" && "translate-x-10",
+								)}
+							/>
+							<span
+								className={cn(
+									"z-10 px-0.5 text-[8px] font-bold",
+									diagramMode === "light"
+										? "ml-5 text-white"
+										: "mr-5 text-white",
+								)}
+							>
+								{diagramMode === "light" ? "LIGHT" : "DARK"}
+							</span>
+						</span>
+					</button>
 				</div>
 			)}
 
 			{/* Pill */}
 			<div className="flex items-center gap-0.5 rounded-full px-1.5 py-1 bg-black/40 backdrop-blur-md border border-white/15 shadow-2xl">
+				<div className="relative">
+					{viewMenuOpen && (
+						<div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 flex flex-col gap-0.5 rounded-xl bg-black/70 p-1.5 text-xs text-white shadow-2xl backdrop-blur-md">
+							<button
+								type="button"
+								onClick={() => {
+									setViewMode("top-down");
+									cameraStore.setTopDownView();
+									setViewMenuOpen(false);
+								}}
+								className={cn(
+									"flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left",
+									viewMode === "top-down" && "bg-white/20 text-white",
+								)}
+							>
+								<MapIcon size={14} /> Top Down
+							</button>
+							<button
+								type="button"
+								onClick={() => {
+									setViewMode("isometric");
+									cameraStore.setIsometricView();
+									setViewMenuOpen(false);
+								}}
+								className={cn(
+									"flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left",
+									viewMode === "isometric" && "bg-white/20 text-white",
+								)}
+							>
+								<Box size={14} /> Isometric
+							</button>
+						</div>
+					)}
+					<Button
+						type="button"
+						variant="ghost"
+						size="icon"
+						className={cn(
+							"rounded-full size-10 text-white/50 hover:text-white hover:bg-white/15",
+							viewMode && "bg-white/20 text-white",
+						)}
+						onClick={() => setViewMenuOpen((open) => !open)}
+						aria-label="Select map view"
+					>
+						{viewMode === "top-down" ? (
+							<MapIcon size={18} />
+						) : (
+							<Box size={18} />
+						)}
+					</Button>
+				</div>
+
 				{/* Rotate section — 4-quadrant circle */}
 				<div className="relative">
 					{(hoveredIndex === "rotate-up" ||
@@ -225,7 +325,7 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 							className="absolute inset-0 flex items-start justify-center pt-1 text-white/50 hover:text-white hover:bg-white/15 transition-all duration-150 cursor-pointer"
 							style={{ clipPath: "polygon(50% 50%, 0 0, 100% 0)" }}
 							{...holdAction(
-								() => cameraStore.rotateUp(),
+								() => cameraAction(() => cameraStore.rotateUp()),
 								() => setHoveredIndex(null),
 							)}
 							onMouseEnter={() => setHoveredIndex("rotate-up")}
@@ -237,7 +337,7 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 							className="absolute inset-0 flex items-end justify-center pb-1 text-white/50 hover:text-white hover:bg-white/15 transition-all duration-150 cursor-pointer"
 							style={{ clipPath: "polygon(50% 50%, 100% 100%, 0 100%)" }}
 							{...holdAction(
-								() => cameraStore.rotateDown(),
+								() => cameraAction(() => cameraStore.rotateDown()),
 								() => setHoveredIndex(null),
 							)}
 							onMouseEnter={() => setHoveredIndex("rotate-down")}
@@ -249,7 +349,7 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 							className="absolute inset-0 flex items-center justify-start pl-1 text-white/50 hover:text-white hover:bg-white/15 transition-all duration-150 cursor-pointer"
 							style={{ clipPath: "polygon(50% 50%, 0 0, 0 100%)" }}
 							{...holdAction(
-								() => cameraStore.rotateLeft(),
+								() => cameraAction(() => cameraStore.rotateLeft()),
 								() => setHoveredIndex(null),
 							)}
 							onMouseEnter={() => setHoveredIndex("rotate-left")}
@@ -261,7 +361,7 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 							className="absolute inset-0 flex items-center justify-end pr-1 text-white/50 hover:text-white hover:bg-white/15 transition-all duration-150 cursor-pointer"
 							style={{ clipPath: "polygon(50% 50%, 100% 0, 100% 100%)" }}
 							{...holdAction(
-								() => cameraStore.rotateRight(),
+								() => cameraAction(() => cameraStore.rotateRight()),
 								() => setHoveredIndex(null),
 							)}
 							onMouseEnter={() => setHoveredIndex("rotate-right")}
@@ -289,7 +389,7 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 							type="button"
 							className="flex w-full h-1/2 items-end justify-center pb-0.5 text-white/50 hover:text-white hover:bg-white/15 transition-all duration-150 cursor-pointer"
 							{...holdAction(
-								() => cameraStore.zoomIn(),
+								() => cameraAction(() => cameraStore.zoomIn()),
 								() => setHoveredIndex(null),
 							)}
 							onMouseEnter={() => setHoveredIndex("zoom-in")}
@@ -300,7 +400,7 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 							type="button"
 							className="flex w-full h-1/2 items-start justify-center pt-0.5 text-white/50 hover:text-white hover:bg-white/15 transition-all duration-150 cursor-pointer"
 							{...holdAction(
-								() => cameraStore.zoomOut(),
+								() => cameraAction(() => cameraStore.zoomOut()),
 								() => setHoveredIndex(null),
 							)}
 							onMouseEnter={() => setHoveredIndex("zoom-out")}
@@ -345,7 +445,7 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 							className="absolute inset-0 flex items-start justify-center pt-1 text-white/50 hover:text-white hover:bg-white/15 transition-all duration-150 cursor-pointer"
 							style={{ clipPath: "polygon(50% 50%, 0 0, 100% 0)" }}
 							{...holdAction(
-								() => cameraStore.panUp(),
+								() => cameraAction(() => cameraStore.panUp()),
 								() => setHoveredIndex(null),
 							)}
 							onMouseEnter={() => setHoveredIndex("pan-up")}
@@ -357,7 +457,7 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 							className="absolute inset-0 flex items-end justify-center pb-1 text-white/50 hover:text-white hover:bg-white/15 transition-all duration-150 cursor-pointer"
 							style={{ clipPath: "polygon(50% 50%, 100% 100%, 0 100%)" }}
 							{...holdAction(
-								() => cameraStore.panDown(),
+								() => cameraAction(() => cameraStore.panDown()),
 								() => setHoveredIndex(null),
 							)}
 							onMouseEnter={() => setHoveredIndex("pan-down")}
@@ -369,7 +469,7 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 							className="absolute inset-0 flex items-center justify-start pl-1 text-white/50 hover:text-white hover:bg-white/15 transition-all duration-150 cursor-pointer"
 							style={{ clipPath: "polygon(50% 50%, 0 0, 0 100%)" }}
 							{...holdAction(
-								() => cameraStore.panLeft(),
+								() => cameraAction(() => cameraStore.panLeft()),
 								() => setHoveredIndex(null),
 							)}
 							onMouseEnter={() => setHoveredIndex("pan-left")}
@@ -381,7 +481,7 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 							className="absolute inset-0 flex items-center justify-end pr-1 text-white/50 hover:text-white hover:bg-white/15 transition-all duration-150 cursor-pointer"
 							style={{ clipPath: "polygon(50% 50%, 100% 0, 100% 100%)" }}
 							{...holdAction(
-								() => cameraStore.panRight(),
+								() => cameraAction(() => cameraStore.panRight()),
 								() => setHoveredIndex(null),
 							)}
 							onMouseEnter={() => setHoveredIndex("pan-right")}
@@ -455,6 +555,9 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 					</div>
 				))}
 
+				{/* Divider between card diagrams and the editor */}
+				<div className="w-px h-6 bg-white/20 mx-1.5" />
+
 				{/* Theme section */}
 				<div className="relative">
 					{hoveredIndex === "editor" && (
@@ -488,7 +591,7 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 							className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 rounded-md bg-black/70 backdrop-blur-sm border border-white/15 text-white text-xs font-medium whitespace-nowrap pointer-events-none"
 							style={{ animation: "traySlideUp 0.1s ease-out" }}
 						>
-							Theme
+							Style
 						</div>
 					)}
 					<Button
@@ -504,36 +607,6 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 						onMouseLeave={() => setHoveredIndex(null)}
 					>
 						<Palette size={18} />
-					</Button>
-				</div>
-
-				<div className="relative">
-					{hoveredIndex === "diagram-mode" && (
-						<div
-							className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 rounded-md bg-black/70 backdrop-blur-sm border border-white/15 text-white text-xs font-medium whitespace-nowrap pointer-events-none"
-							style={{ animation: "traySlideUp 0.1s ease-out" }}
-						>
-							{diagramMode === "light" ? "Dark Diagram" : "Light Diagram"}
-						</div>
-					)}
-					<Button
-						type="button"
-						variant="ghost"
-						size="icon"
-						className={cn(
-							"rounded-full size-10 text-white/50 hover:text-white hover:bg-white/15 transition-all duration-150",
-							diagramMode === "dark" && "bg-white/20 text-white",
-						)}
-						onClick={handleDiagramModeToggle}
-						onMouseEnter={() => setHoveredIndex("diagram-mode")}
-						onMouseLeave={() => setHoveredIndex(null)}
-						aria-label={
-							diagramMode === "light"
-								? "Switch diagram to dark mode"
-								: "Switch diagram to light mode"
-						}
-					>
-						{diagramMode === "light" ? <Moon size={18} /> : <Sun size={18} />}
 					</Button>
 				</div>
 			</div>

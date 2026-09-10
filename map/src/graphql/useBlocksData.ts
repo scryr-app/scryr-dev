@@ -123,41 +123,48 @@ function normalizeLinks(value: unknown): Block["links"] {
 }
 
 function normalizeBlock(block: Block): Block {
-	const raw = parseRawJsonString(block.rawJsonString);
+	// The 3D text font does not include these Unicode punctuation glyphs.
+	// Normalize them at the data boundary so labels and metadata cards are safe.
+	const sanitizedBlock = JSON.parse(
+		JSON.stringify(block).replaceAll("…", "...").replaceAll("—", "-"),
+	) as Block;
+	const raw = parseRawJsonString(sanitizedBlock.rawJsonString);
 	const rawLinks = normalizeLinks(
 		getValue(raw, ["info", "links"]) ?? getValue(raw, ["links"]),
 	);
 
 	return {
-		...block,
-		connections: asStringArray(block.connections),
+		...sanitizedBlock,
+		connections: asStringArray(sanitizedBlock.connections),
 		description:
-			nonEmptyString(block.description) ??
+			nonEmptyString(sanitizedBlock.description) ??
 			firstString(raw, [["info", "description"], ["description"]]),
 		version:
-			block.version ?? firstString(raw, [["info", "version"], ["version"]]),
+			sanitizedBlock.version ??
+			firstString(raw, [["info", "version"], ["version"]]),
 		language:
-			block.language ?? firstString(raw, [["info", "language"], ["language"]]),
+			sanitizedBlock.language ??
+			firstString(raw, [["info", "language"], ["language"]]),
 		frameworks:
-			asStringArray(block.frameworks).length > 0
-				? asStringArray(block.frameworks)
+			asStringArray(sanitizedBlock.frameworks).length > 0
+				? asStringArray(sanitizedBlock.frameworks)
 				: firstStringArray(raw, [["info", "frameworks"], ["frameworks"]]),
 		deployment:
-			block.deployment ??
+			sanitizedBlock.deployment ??
 			firstString(raw, [["info", "deployment"], ["deployment"]]),
 		sourceCodeUrl:
-			block.sourceCodeUrl ??
+			sanitizedBlock.sourceCodeUrl ??
 			firstString(raw, [
 				["github", "repoUrl"],
 				["sourceCodeUrl"],
 				["source_code_url"],
 			]),
 		docs:
-			asStringArray(block.docs).length > 0
-				? asStringArray(block.docs)
+			asStringArray(sanitizedBlock.docs).length > 0
+				? asStringArray(sanitizedBlock.docs)
 				: firstStringArray(raw, [["info", "docs"], ["docs"]]),
 		ownerTeam:
-			block.ownerTeam ??
+			sanitizedBlock.ownerTeam ??
 			firstString(raw, [
 				["info", "ownerTeam"],
 				["info", "owner_team"],
@@ -165,7 +172,7 @@ function normalizeBlock(block: Block): Block {
 				["owner_team"],
 			]),
 		authType:
-			block.authType ??
+			sanitizedBlock.authType ??
 			firstString(raw, [
 				["info", "authType"],
 				["info", "auth_type"],
@@ -173,10 +180,10 @@ function normalizeBlock(block: Block): Block {
 				["auth_type"],
 			]),
 		monitoring:
-			block.monitoring ??
+			sanitizedBlock.monitoring ??
 			firstString(raw, [["info", "monitoring"], ["monitoring"]]),
 		logAggregation:
-			block.logAggregation ??
+			sanitizedBlock.logAggregation ??
 			firstString(raw, [
 				["info", "logAggregation"],
 				["info", "log_aggregation"],
@@ -184,9 +191,10 @@ function normalizeBlock(block: Block): Block {
 				["log_aggregation"],
 			]),
 		tracing:
-			block.tracing ?? firstString(raw, [["info", "tracing"], ["tracing"]]),
+			sanitizedBlock.tracing ??
+			firstString(raw, [["info", "tracing"], ["tracing"]]),
 		iacTool:
-			block.iacTool ??
+			sanitizedBlock.iacTool ??
 			firstString(raw, [
 				["info", "iacTool"],
 				["info", "iac_tool"],
@@ -194,10 +202,10 @@ function normalizeBlock(block: Block): Block {
 				["iac_tool"],
 			]),
 		cicdTool:
-			block.cicdTool ??
+			sanitizedBlock.cicdTool ??
 			firstString(raw, [["cicd", "platform"], ["cicdTool"], ["cicd_tool"]]),
 		maxReplicas:
-			block.maxReplicas ??
+			sanitizedBlock.maxReplicas ??
 			firstNumber(raw, [
 				["info", "maxReplicas"],
 				["info", "max_replicas"],
@@ -205,15 +213,18 @@ function normalizeBlock(block: Block): Block {
 				["max_replicas"],
 			]),
 		minReplicas:
-			block.minReplicas ??
+			sanitizedBlock.minReplicas ??
 			firstNumber(raw, [
 				["info", "minReplicas"],
 				["info", "min_replicas"],
 				["minReplicas"],
 				["min_replicas"],
 			]),
-		links: block.links.length > 0 ? normalizeLinks(block.links) : rawLinks,
-		tags: asStringArray(block.tags),
+		links:
+			sanitizedBlock.links.length > 0
+				? normalizeLinks(sanitizedBlock.links)
+				: rawLinks,
+		tags: asStringArray(sanitizedBlock.tags),
 	};
 }
 

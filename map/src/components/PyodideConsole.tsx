@@ -106,12 +106,20 @@ export function PyodideConsole({
 				});
 			}
 			setStatus("Persisting generated manifests");
-			const diagram = result.diagrams.at(0);
-			const scryIdentifier = diagram?.name ?? sample;
-			const mapName =
-				typeof diagram?.diagram.name === "string"
-					? diagram.diagram.name
-					: scryIdentifier;
+			if (result.diagrams.length === 0) {
+				throw new Error(
+					"index.scry must declare at least one Diagram with a name.",
+				);
+			}
+			const [diagram] = result.diagrams;
+			if (
+				typeof diagram.diagram.name !== "string" ||
+				!diagram.diagram.name.trim()
+			) {
+				throw new Error("The Diagram in index.scry must have a name.");
+			}
+			const scryIdentifier = diagram.name;
+			const mapName = diagram.diagram.name;
 			await persistGeneratedManifest.mutateAsync({
 				artifactKind: ArtifactKind.Value,
 				artifactKey: scryIdentifier,

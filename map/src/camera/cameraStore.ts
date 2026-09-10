@@ -249,6 +249,31 @@ export const cameraStore = {
 		ctrl.update();
 	},
 
+	setTopDownView() {
+		const ctrl = this.controls;
+		if (!ctrl) return;
+		const distance = ctrl.object.position.distanceTo(ctrl.target);
+		ctrl.object.position.set(
+			ctrl.target.x,
+			ctrl.target.y + distance,
+			ctrl.target.z,
+		);
+		ctrl.update();
+	},
+
+	setIsometricView() {
+		const ctrl = this.controls;
+		if (!ctrl) return;
+		const distance = ctrl.object.position.distanceTo(ctrl.target);
+		const horizontal = distance / Math.sqrt(3);
+		ctrl.object.position.set(
+			ctrl.target.x + horizontal,
+			ctrl.target.y + horizontal,
+			ctrl.target.z + horizontal,
+		);
+		ctrl.update();
+	},
+
 	zoomIn(factor = 0.97) {
 		const ctrl = this.controls;
 		if (!ctrl) return;
