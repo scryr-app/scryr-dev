@@ -127,7 +127,7 @@ mod tests {
         let uv_path = temp_dir.path().join("uv");
         fs::write(
             &uv_path,
-            "#!/bin/sh\nprintf '\\x1b[31mTraceback (most recent call last):\\n  File \\\"index.scry\\\", line 1, in <module>\\n    raise ValueError(\\\"bad manifest\\\")\\nValueError: bad manifest\\n\\x1b[0m' >&2\nexit 1\n",
+            "#!/bin/sh\nprintf '%s\\n' 'Traceback (most recent call last):' '  File \"index.scry\", line 1, in <module>' '    raise ValueError(\"bad manifest\")' 'ValueError: bad manifest' >&2\nexit 1\n",
         )?;
         fs::set_permissions(&uv_path, fs::Permissions::from_mode(0o755))?;
 
@@ -144,7 +144,7 @@ mod tests {
         assert!(error.contains("uv command failed"));
         assert!(error.contains("Traceback (most recent call last):\n  File \"index.scry\""));
         assert!(error.contains("ValueError: bad manifest"));
-        assert!(!error.contains("\\033[31m"));
+        assert!(!error.contains("\\x1b[31m"));
         Ok(())
     }
 }
