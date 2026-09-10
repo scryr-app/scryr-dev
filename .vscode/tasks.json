@@ -1,0 +1,85 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "mise contribute:oss:debug",
+      "type": "process",
+      "command": "mise",
+      "args": [
+        "run",
+        "contribute:oss:debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "mise contribute:oss:map",
+      "type": "process",
+      "command": "mise",
+      "args": [
+        "run",
+        "contribute:oss:map"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": {
+        "owner": "vite",
+        "pattern": {
+          "regexp": "^(.*):(\\d+):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "VITE.*",
+          "endsPattern": "Local:.*http://127\\.0\\.0\\.1:3000/"
+        }
+      },
+      "isBackground": true
+    },
+    {
+      "label": "mise contribute:cloud:debug",
+      "type": "process",
+      "command": "mise",
+      "args": [
+        "run",
+        "contribute:cloud:debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "mise contribute:cloud:map",
+      "type": "process",
+      "command": "mise",
+      "args": [
+        "run",
+        "contribute:cloud:map"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": {
+        "owner": "vite",
+        "pattern": {
+          "regexp": "^(.*):(\\d+):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "VITE.*",
+          "endsPattern": "Local:.*http://127\\.0\\.0\\.1:3000/"
+        }
+      },
+      "isBackground": true
+    }
+  ]
+}

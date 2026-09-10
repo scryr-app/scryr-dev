@@ -23,7 +23,7 @@ When you add or change GraphQL operations:
 
 1. Update `src/graphql/**/*.graphql`.
 2. Make sure the GraphQL server is available at the endpoint configured by `mise`.
-3. Run `mise run codegen-graphql-requests`.
+3. Run `mise run contribute:generate:graphql`.
 4. Import the generated hooks in your components.
 
 Example:

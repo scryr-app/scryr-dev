@@ -14,9 +14,9 @@ Install [mise](https://mise.jdx.dev/getting-started.html) and Git, then:
 ```bash
 git clone https://github.com/scryr-app/scryr-dev.git
 cd scryr-dev
-mise install rust python uv node
-mise run install-dependencies
-mise run build:oss
+mise install
+mise run contribute:setup
+mise run release:build
 ./crystal/target/release/scryr serve
 ```
 
@@ -47,11 +47,14 @@ The distribution workflow supports npm, Homebrew, and crates.io.
 - `map`: React/Three.js frontend.
 
 ```bash
-mise run dev:oss # Rust reload + Vite HMR, local SQLite
-# mise run dev:cloud # local reload + remote Turso/Clerk
-mise run static
-mise run test
+mise run contribute:setup
+mise run contribute:oss # Rust reload + Vite HMR, local SQLite
+mise run pre-commit     # Apply fixes, then run all CI checks
 ```
+
+Use `mise run verify` for the full checks without applying fixes. Component
+checks are `verify:manifest`, `verify:crystal`, and `verify:map`.
+`mise run release` and `mise run deploy` show the maintainer workflows and inputs.
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) for local development and pull requests,
 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for community expectations.

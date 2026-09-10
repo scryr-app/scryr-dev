@@ -26,8 +26,8 @@ names directly.
 For local development:
 
 ```bash
-mise run install:python
-mise run test:python
+mise run contribute:setup
+mise run verify:test:manifest
 cd manifest
 uv run python -m scryr.cli tests/samples/open_saas/index.scry --json
 ```

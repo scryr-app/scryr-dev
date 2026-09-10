@@ -78,21 +78,21 @@ access-control layer.
 ```bash
 # install toolchain and fetch dependencies
 mise install
-mise run install:rust
+mise run contribute:setup
 
 # build the standalone scryr binary with embedded map UI
-mise run build:oss
+mise run release:build
 
 # build it and update the global scryr command on PATH
-mise run install:oss
+mise run contribute:install
 
 # run the distributed-style binary
 ./target/release/scryr serve
 
 # checks
-mise run lint:rust
-mise run type-check:rust
-mise run test:rust
+mise run verify:lint:crystal
+mise run verify:types:crystal
+mise run verify:test:crystal
 ```
 
 ## Endpoints
@@ -105,7 +105,7 @@ mise run test:rust
 - Readiness: `GET http://127.0.0.1:8000/ready`
 
 The distributed `scryr` binary serves the Vite build from embedded Rust assets.
-Build it with `mise run build:oss`; direct `cargo build --release` does not
+Build it with `mise run release:build`; direct `cargo build --release` does not
 prepare fresh frontend assets. Packaged crates include the prepared assets under
 `crystal-server/static`.
 
