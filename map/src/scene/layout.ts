@@ -552,8 +552,8 @@ export function calculateRegionCorners(
 	const marginX = width * marginPercent;
 	const marginY = height * marginPercent;
 
-	// Get z-offset for layering overlapping regions
-	const zOffset = calculateGroupZOffset(group, allGroups);
+	// Lift regions slightly above the floor while preserving overlap layering.
+	const zOffset = calculateGroupZOffset(group, allGroups) + 0.03;
 
 	// Get expand factor (15% expansion for larger overlapping regions)
 	const expandFactor = calculateGroupExpandFactor(group, allGroups);

@@ -37,6 +37,8 @@ function MapRegions({ layout }: { layout: LayoutResult }) {
 	return (
 		<>
 			{layout.groups.map((group, groupIndex) => {
+				if (group.nodeIds.length === 1) return null;
+
 				const { p1, p2, p3, p4 } = calculateRegionCorners(group, layout.groups);
 				const groupColor = getRegionColor(group.tag);
 
@@ -61,6 +63,8 @@ function MapRegionSigns({ layout }: { layout: LayoutResult }) {
 	return (
 		<>
 			{layout.groups.map((group) => {
+				if (group.nodeIds.length === 1) return null;
+
 				const worldPos = toWorldCoordinates(
 					group.signPosition.x,
 					group.signPosition.y,
@@ -70,7 +74,7 @@ function MapRegionSigns({ layout }: { layout: LayoutResult }) {
 				return (
 					<group
 						key={`sign-${group.id}`}
-						position={[worldPos[0], 0.28, worldPos[2]]}
+						position={[worldPos[0], 0.31, worldPos[2]]}
 					>
 						<Sign
 							label={group.tag}

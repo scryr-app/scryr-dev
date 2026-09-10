@@ -63,7 +63,7 @@ export function Sign({
 				<meshStandardMaterial color={color} metalness={0.1} roughness={0.7} />
 			</mesh>
 			<Text
-				position={[0, 0, signDepth / 2 + 0.001]}
+				position={[0, 0.03, signDepth / 2 + 0.001]}
 				fontSize={fontSize}
 				color={labelColor}
 				anchorX="center"
