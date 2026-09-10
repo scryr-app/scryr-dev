@@ -25,8 +25,9 @@ use crate::args::Args;
 use clap::Parser;
 
 #[tokio::main]
-async fn main() -> std::io::Result<()> {
-    app::run(&Args::parse())
-        .await
-        .map_err(std::io::Error::other)
+async fn main() {
+    if let Err(error) = app::run(&Args::parse()).await {
+        eprintln!("Error: {error}");
+        std::process::exit(1);
+    }
 }

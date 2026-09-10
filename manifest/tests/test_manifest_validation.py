@@ -46,7 +46,7 @@ def test_manifest_default_list_fields_are_isolated_per_instance() -> None:
     first = Manifest(name="First")
     second = Manifest(name="Second")
 
-    first.connections.append("OtherService")
+    first.connections.append(Manifest(name="OtherService"))
     first.tags.append("tagged")
     first.info.docs.append("https://docs.example.com")
     first.forges.append("node")
