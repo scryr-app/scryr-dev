@@ -35,7 +35,7 @@ jobs:
         with:
           install_args: rust python uv node
       - run: mise run release:validate
-      - run: mise run distribute:oss
+      - run: mise run release:distribute
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}

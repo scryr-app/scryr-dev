@@ -30,8 +30,8 @@ jobs:
           fetch-depth: 0
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
         with:
-          install_args: python
-      - run: mise run ci:quality
+          install_args: python uv
+      - run: mise run verify:automation
 
   manifest:
     name: Python manifest
@@ -44,7 +44,7 @@ jobs:
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
         with:
           install_args: python uv
-      - run: mise run ci:python
+      - run: mise run verify:manifest
 
   crystal:
     name: Rust server and CLI
@@ -57,7 +57,7 @@ jobs:
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
         with:
           install_args: rust python uv
-      - run: mise run ci:rust
+      - run: mise run verify:crystal
 
   map:
     name: Frontend map
@@ -70,7 +70,7 @@ jobs:
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
         with:
           install_args: node
-      - run: mise run ci:ui
+      - run: mise run verify:map
 
   release-cli:
     name: Release CLI smoke
@@ -84,4 +84,4 @@ jobs:
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
         with:
           install_args: rust python uv node
-      - run: mise run ci:release
+      - run: mise run verify:release

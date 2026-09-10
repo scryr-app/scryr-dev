@@ -84,7 +84,7 @@ uv's dependency metadata. Without it, Scryr runs its embedded adapter using
 ### Embedded Python SDK
 
 The standalone OSS CLI packages the Python SDK from `manifest/scryr`. Before
-the Rust CLI is compiled, `mise run sync:embedded-sdk` refreshes the crate-local
+the Rust CLI is compiled, `mise run internal:embed:manifest` refreshes the crate-local
 copy at `crystal/crystal-cli/static/scryr-sdk`, removing build and cache files.
 `crystal/crystal-cli/build.rs` validates that copy and generates the embedded
 asset list used by the binary. Changes to `manifest/scryr` therefore require

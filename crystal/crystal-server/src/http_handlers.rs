@@ -73,7 +73,7 @@ pub(crate) async fn map_ui_handler(request: HttpRequest) -> HttpResponse {
         return HttpResponse::ServiceUnavailable()
             .content_type("text/plain; charset=utf-8")
             .body(
-                "Scryr map UI assets are not embedded in this binary. Build with `mise run build:oss`.",
+                "Scryr map UI assets are not embedded in this binary. Build with `mise run release:build`.",
             );
     }
 

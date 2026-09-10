@@ -13,7 +13,7 @@
       ],
       "cwd": "${workspaceFolder}",
       "envFile": "${workspaceFolder}/.cache/debug-oss.env",
-      "preLaunchTask": "mise debug:oss"
+      "preLaunchTask": "mise contribute:oss:debug"
     },
     {
       "name": "Vite: OSS",
@@ -21,7 +21,7 @@
       "request": "launch",
       "url": "http://127.0.0.1:3000",
       "webRoot": "${workspaceFolder}/map",
-      "preLaunchTask": "mise dev:ui:oss",
+      "preLaunchTask": "mise contribute:oss:map",
       "sourceMaps": true
     },
     {
@@ -36,7 +36,7 @@
       ],
       "cwd": "${workspaceFolder}",
       "envFile": "${workspaceFolder}/.cache/debug-cloud.env",
-      "preLaunchTask": "mise debug:cloud"
+      "preLaunchTask": "mise contribute:cloud:debug"
     },
     {
       "name": "Vite: CLOUD",
@@ -44,7 +44,7 @@
       "request": "launch",
       "url": "http://127.0.0.1:3000",
       "webRoot": "${workspaceFolder}/map",
-      "preLaunchTask": "mise dev:ui:cloud",
+      "preLaunchTask": "mise contribute:cloud:map",
       "sourceMaps": true
     },
     {
