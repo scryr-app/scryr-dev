@@ -60,7 +60,40 @@ fn pretty_uv_stderr(stderr: &str) -> String {
         }
     }
 
-    cleaned.trim().to_string()
+    let cleaned = cleaned.trim();
+    let location = python_error_location(cleaned);
+    if cleaned.contains("PydanticSerializationError")
+        && cleaned.contains("Circular reference detected")
+    {
+        let location = location
+            .map(|value| format!(" at {value}"))
+            .unwrap_or_default();
+        return format!(
+            "Manifest serialization failed{location}: a circular reference was found.\n\n\
+			Check `connections` for cycles or nested full Manifest objects. Use\n\
+			name-only references such as `Manifest(name=\"API\")` in connections,\n\
+			and avoid self-references.\n\nDetails: Circular reference detected while serializing the manifest."
+        );
+    }
+
+    location.map_or_else(
+        || cleaned.to_string(),
+        |location| format!("Manifest error at {location}:\n\n{cleaned}"),
+    )
+}
+
+/// Extract the last Python source location from a traceback.
+fn python_error_location(stderr: &str) -> Option<String> {
+    stderr.lines().rev().find_map(|line| {
+        let file_start = line.find("File \"")? + "File \"".len();
+        let file_end = line[file_start..].find('"')? + file_start;
+        let line_start = line[file_end..].find("line ")? + file_end + "line ".len();
+        let line_number = line[line_start..]
+            .split(|character: char| !character.is_ascii_digit())
+            .next()
+            .filter(|value| !value.is_empty())?;
+        Some(format!("{}:{}", &line[file_start..file_end], line_number))
+    })
 }
 
 /// Resolve a Python interpreter already provisioned for the manifest project.
@@ -107,7 +140,7 @@ fn mise_python_executable(manifest_dir: &Path) -> Option<PathBuf> {
 
 #[cfg(test)]
 mod tests {
-    use super::{pretty_uv_stderr, run_uv_command};
+    use super::{pretty_uv_stderr, python_error_location, run_uv_command};
     use crate::manifest_python::environment::ManifestPythonEnvironment;
     use std::error::Error;
     use std::ffi::OsString;
@@ -118,6 +151,51 @@ mod tests {
     #[test]
     fn pretty_uv_stderr_trims_and_removes_terminal_styles() {
         assert_eq!(pretty_uv_stderr("\u{1b}[31merror\u{1b}[0m\n\n"), "error");
+    }
+
+    #[test]
+    fn python_error_location_extracts_manifest_line() {
+        assert_eq!(
+            python_error_location("Traceback\n  File \"index.scry\", line 17, in <module>"),
+            Some("index.scry:17".to_string())
+        );
+    }
+
+    #[test]
+    fn python_error_location_uses_the_last_traceback_frame() {
+        assert_eq!(
+            python_error_location(
+                "Traceback\n  File \"scryr/runtime.py\", line 40, in run\n  File \"index.scry\", line 29, in <module>",
+            ),
+            Some("index.scry:29".to_string())
+        );
+    }
+
+    #[test]
+    fn pretty_uv_stderr_preserves_errors_without_source_locations() {
+        assert_eq!(
+            pretty_uv_stderr("ValidationError: invalid manifest"),
+            "ValidationError: invalid manifest"
+        );
+    }
+
+    #[test]
+    fn pretty_uv_stderr_adds_location_to_regular_manifest_errors() {
+        let error = pretty_uv_stderr(
+            "Traceback (most recent call last):\n  File \"/project/index.scry\", line 8, in <module>\nValueError: invalid name",
+        );
+        assert!(error.starts_with("Manifest error at /project/index.scry:8:"));
+        assert!(error.contains("ValueError: invalid name"));
+    }
+
+    #[test]
+    fn pretty_uv_stderr_explains_circular_manifest_references() {
+        let error = pretty_uv_stderr(
+            "Traceback...\n  File \"index.scry\", line 42, in <module>\nPydanticSerializationError: Error serializing to JSON: ValueError: Circular reference detected (id repeated)",
+        );
+        assert!(error.contains("Manifest serialization failed at index.scry:42"));
+        assert!(error.contains("name-only references"));
+        assert!(!error.contains("Traceback"));
     }
 
     #[test]
@@ -142,6 +220,7 @@ mod tests {
         };
 
         assert!(error.contains("uv command failed"));
+        assert!(error.contains("Manifest error at index.scry:1"));
         assert!(error.contains("Traceback (most recent call last):\n  File \"index.scry\""));
         assert!(error.contains("ValueError: bad manifest"));
         assert!(!error.contains("\\x1b[31m"));

@@ -137,7 +137,7 @@ angularjs_admin_block = Manifest(
     ),
 )
 
-mern_diagram = Diagram(
+diagram = Diagram(
     name="MERN",
     manifests=[
         react_block,
@@ -146,4 +146,14 @@ mern_diagram = Diagram(
         mongo_block,
         angularjs_admin_block,
     ],
+)
+
+customer_path = Diagram(
+    name="MERN Customer Path",
+    manifests=[react_block, express_block, mongo_block],
+)
+
+operability = Diagram(
+    name="MERN Operability",
+    manifests=[redis_pubsub_block, express_block, mongo_block],
 )
