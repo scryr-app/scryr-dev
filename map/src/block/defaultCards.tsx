@@ -21,6 +21,20 @@ function hasData(props: object): boolean {
 	);
 }
 
+function reportKey(
+	report: BlockCardData["reports"][number],
+	index: number,
+): string {
+	return [
+		report.data.kind,
+		report.scope,
+		report.source,
+		report.runId,
+		report.attempt,
+		index,
+	].join(":");
+}
+
 export function createBlockDataCards(cardData: BlockCardData): BlockCardGroup {
 	return [
 		{
@@ -57,7 +71,9 @@ export function createBlockDataCards(cardData: BlockCardData): BlockCardGroup {
 					: []),
 				...cardData.reports
 					.filter((r) => r.data.kind === "deployment")
-					.map((r) => <ReportCard key={r.scope} report={r} />),
+					.map((r, index) => (
+						<ReportCard key={reportKey(r, index)} report={r} />
+					)),
 			],
 		},
 		{
@@ -68,8 +84,8 @@ export function createBlockDataCards(cardData: BlockCardData): BlockCardGroup {
 						.filter(
 							(r) => r.data.kind === "tests" || r.data.kind === "coverage",
 						)
-						.map((r) => (
-							<ReportCard key={`${r.data.kind}:${r.scope}`} report={r} />
+						.map((r, index) => (
+							<ReportCard key={reportKey(r, index)} report={r} />
 						))
 				: hasData(cardData.tests)
 					? [<TestsCard key="tests-card" {...cardData.tests} />]
@@ -79,7 +95,9 @@ export function createBlockDataCards(cardData: BlockCardData): BlockCardGroup {
 			components: cardData.reports.some((r) => r.data.kind === "dependencies")
 				? cardData.reports
 						.filter((r) => r.data.kind === "dependencies")
-						.map((r) => <ReportCard key={r.scope} report={r} />)
+						.map((r, index) => (
+							<ReportCard key={reportKey(r, index)} report={r} />
+						))
 				: hasData(cardData.dependencies)
 					? [<DependenciesCard key="deps-card" {...cardData.dependencies} />]
 					: [],

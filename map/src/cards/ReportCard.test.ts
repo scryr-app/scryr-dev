@@ -22,7 +22,7 @@ describe("operational report summaries", () => {
 					duration: 1.25,
 				}),
 			),
-		).toEqual(["15 passed · 1 failed", "2 errors · 3 skipped", "1.25 seconds"]);
+		).toEqual(["15 passed - 1 failed", "2 errors - 3 skipped", "1.25 seconds"]);
 	});
 	it("does not claim zero-line coverage is passing", () => {
 		expect(
@@ -40,7 +40,7 @@ describe("operational report summaries", () => {
 			}),
 		);
 		expect(lines).toContain("1 open security alerts");
-		expect(lines).toContain("critical: 0 · high: 1");
+		expect(lines).toContain("critical: 0 - high: 1");
 		expect(lines).toContain("Inventory and outdated counts not reported");
 	});
 });
