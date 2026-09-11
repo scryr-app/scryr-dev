@@ -10,12 +10,13 @@ WORKDIR /app
 
 ENV PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1
 
-# Cache dependencies: copy workspace manifests first, then fetch deps
-# before the full source tree so Docker can reuse the dependency layer.
-COPY Cargo.toml Cargo.lock ./
-COPY crystal-core/Cargo.toml ./crystal-core/Cargo.toml
-COPY crystal-server/Cargo.toml ./crystal-server/Cargo.toml
-COPY crystal-cli/Cargo.toml ./crystal-cli/Cargo.toml
+# Fly's dashboard builds from the repository root. Copy from the `crystal/`
+# workspace while retaining that workspace's layout inside the image.
+# Copy manifests first so Docker can reuse the dependency layer.
+COPY crystal/Cargo.toml crystal/Cargo.lock ./
+COPY crystal/crystal-core/Cargo.toml ./crystal-core/Cargo.toml
+COPY crystal/crystal-server/Cargo.toml ./crystal-server/Cargo.toml
+COPY crystal/crystal-cli/Cargo.toml ./crystal-cli/Cargo.toml
 RUN mkdir -p crystal-core/src crystal-server/src crystal-cli/src \
     && printf 'pub fn placeholder() {}\n' > crystal-core/src/lib.rs \
     && printf 'fn main() {}\n' > crystal-server/src/main.rs \
@@ -24,9 +25,9 @@ RUN mkdir -p crystal-core/src crystal-server/src crystal-cli/src \
 RUN cargo fetch --locked
 
 # Build the CLI release binary from the workspace. The server runs as `scryr serve`.
-COPY crystal-core ./crystal-core
-COPY crystal-server ./crystal-server
-COPY crystal-cli ./crystal-cli
+COPY crystal/crystal-core ./crystal-core
+COPY crystal/crystal-server ./crystal-server
+COPY crystal/crystal-cli ./crystal-cli
 RUN cargo build --locked --release -p crystal-cli --bin scryr
 
 # --- Runtime stage ---

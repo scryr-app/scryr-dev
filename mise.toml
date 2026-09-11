@@ -1149,11 +1149,13 @@ def main(action):
         run(
             "docker",
             "build",
+            "--file",
+            "crystal/Dockerfile",
             "--build-arg",
             f"RUST_VERSION={rust}",
             "-t",
             "scryr-server",
-            "crystal",
+            ".",
         )
     elif action in ("ui", "embed"):
         env = cloud_ui_env()
@@ -1187,7 +1189,9 @@ def main(action):
         run(
             "flyctl",
             "deploy",
-            "crystal",
+            ".",
+            "--config",
+            "crystal/fly.toml",
             "--app",
             os.environ["FLY_APP"],
             "--remote-only",

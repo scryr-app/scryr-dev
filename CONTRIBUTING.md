@@ -248,9 +248,10 @@ mise run deploy:cloud
 ```
 
 The task checks configuration, builds the CLI and cloud UI, runs `scryr migrate`
-against Turso, stages Fly secrets, deploys from the `crystal` Docker context,
-and builds/publishes Vercel production output. The Docker Rust version comes
-from mise. Fly uses Clerk auth and embeds a Clerk-enabled UI with a relative API
+against Turso, stages Fly secrets, deploys from the repository-root Docker
+context, and builds/publishes Vercel production output. Fly uses
+`crystal/Dockerfile`; the Docker Rust version comes from mise. Fly
+uses Clerk auth and embeds a Clerk-enabled UI with a relative API
 endpoint; the primary frontend is served by Vercel and targets the public Fly API.
 
 `deploy:database:migrate`, `deploy:fly`, `deploy:vercel`, and `deploy:secrets`
