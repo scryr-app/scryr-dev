@@ -60,6 +60,16 @@ root.
 Set `VITE_SCRYR_AUTH_MODE=clerk` only when building or testing a hosted
 Clerk-backed frontend.
 
+Vercel Production and Preview builds require `VITE_SCRYR_AUTH_MODE=clerk`,
+`VITE_CLERK_PUBLISHABLE_KEY`, and an absolute HTTPS `VITE_GRAPHQL_ENDPOINT`.
+The prebuild check rejects incomplete hosted configuration instead of silently
+shipping local authentication. Rebuild after changing these variables because
+Vite embeds them in the frontend bundle. The Clerk publishable key must belong
+to the same instance as the server's `CLERK_SECRET_KEY`.
+
+Run the configuration regression checks with
+`node --test scripts/check-hosted-config.test.mjs` from `map/`.
+
 ## Source editor
 
 The Python console loads the selected diagram's stored source using
