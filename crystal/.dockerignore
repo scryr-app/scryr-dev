@@ -1,0 +1,2 @@
+# Local Cargo artifacts are not needed by the container build.
+target/
