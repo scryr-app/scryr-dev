@@ -161,7 +161,7 @@ draft, and distributing a published release are separate stages.
 ```bash
 mise run release:build
 mise run verify:release:smoke
-mise run contribute:install
+mise run contribute:oss:install
 ```
 
 The output is `crystal/target/release/scryr`. It embeds the Vite UI, Python SDK,
@@ -173,7 +173,7 @@ dependencies; it is not an entirely offline Python runtime.
 `verify:release:smoke` requires an existing release build and exercises the SDK
 outside the checkout, the HTTP UI, readiness, and a GraphQL upload.
 `verify:release` performs both the build and smoke test.
-`contribute:install` builds the CLI, copies it to
+`contribute:oss:install` builds the CLI, copies it to
 `${SCRYR_CLI_INSTALL_DIR:-$HOME/.local/bin}`, and configures supported shell
 profiles. `release:build:docker` builds a local server image and needs Docker.
 

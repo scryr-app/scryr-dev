@@ -213,7 +213,7 @@ export function getBlockCardData(block: Block): BlockCardData {
 			memoryUsage: number("metrics", "memoryUsage"),
 		},
 		cicd: {
-			platform: block.cicdTool ?? undefined,
+			platform: block.cicdTool ?? string("cicd", "platform"),
 			buildStatus: inferBuildStatus(
 				firstString(raw, [
 					["cicd", "buildStatus"],

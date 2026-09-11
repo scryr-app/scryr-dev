@@ -8,6 +8,44 @@ use async_graphql::Object;
 use crystal_core::graphql_types::{Block, HealthStatus, ScryrMap};
 use crystal_core::persistence;
 
+/// Attach durable workflow history to the generated block without rewriting its artifact.
+async fn attach_action_history(
+    pool: &persistence::DatabasePool,
+    clerk_org_id: &str,
+    raw_json: &mut serde_json::Value,
+) -> Result<(), String> {
+    let Some(manifest_id) = raw_json
+        .get("manifestId")
+        .and_then(serde_json::Value::as_str)
+    else {
+        return Ok(());
+    };
+    let history = persistence::read_action_history(pool, clerk_org_id, manifest_id, 100, 0).await?;
+    let Some(last_build) = history.runs.first().map(|run| run.updated_at) else {
+        return Ok(());
+    };
+    let status = history.build_status();
+    let cicd = raw_json
+        .as_object_mut()
+        .ok_or("generated manifest block must be an object")?
+        .entry("cicd")
+        .or_insert_with(|| serde_json::json!({}));
+    let cicd = cicd
+        .as_object_mut()
+        .ok_or("generated manifest cicd section must be an object")?;
+    cicd.insert(
+        "githubActions".into(),
+        serde_json::to_value(history).map_err(|error| error.to_string())?,
+    );
+    cicd.insert("lastBuild".into(), serde_json::json!(last_build));
+    if let Some(status) = status {
+        cicd.insert("buildStatus".into(), serde_json::json!(status));
+    } else {
+        cicd.remove("buildStatus");
+    }
+    Ok(())
+}
+
 /// Root query type for GraphQL schema.
 pub(crate) struct QueryRoot;
 
@@ -182,14 +220,16 @@ impl QueryRoot {
                 .await?
         };
 
-        // Parse the JSON array; each item is already the block object, so keep it intact.
-        let blocks = raw_json.as_array().map_or_else(Vec::new, |arr| {
-            arr.iter()
-                .map(|item| Block {
-                    raw_json: item.clone(),
-                })
-                .collect()
-        });
+        // Operational history is stored separately so reports never rewrite generated artifacts.
+        // Enrich the response copy that the map already polls every 30 seconds.
+        let mut blocks = Vec::new();
+        if let Some(items) = raw_json.as_array() {
+            for item in items {
+                let mut item = item.clone();
+                attach_action_history(pool, &request_context.clerk_org_id, &mut item).await?;
+                blocks.push(Block { raw_json: item });
+            }
+        }
 
         Ok(blocks)
     }
@@ -200,3 +240,59 @@ pub(crate) type MutationRoot = GeneratedManifestMutationRoot;
 
 /// Root subscription type for GraphQL schema.
 pub(crate) type SubscriptionRoot = async_graphql::EmptySubscription;
+
+#[cfg(test)]
+mod tests {
+    use super::attach_action_history;
+    use crystal_core::{
+        action_history::GithubActionRun,
+        manifest::ManifestRequestContext,
+        persistence::{self, DatabasePool},
+    };
+
+    #[tokio::test]
+    async fn durable_action_history_enriches_generated_blocks()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let sqlite = sqlx::sqlite::SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await?;
+        let pool = DatabasePool::Sqlite(sqlite.clone());
+        let context = ManifestRequestContext {
+            clerk_user_id: "user".into(),
+            clerk_org_id: "org".into(),
+            clerk_org_slug: None,
+            clerk_org_role: Some("org:admin".into()),
+            clerk_org_permissions: vec![],
+        };
+        let run: GithubActionRun = serde_json::from_value(serde_json::json!({
+            "host": "github.com", "repositoryId": 123, "repository": "example/api",
+            "workflowId": 42, "workflowName": "CI", "runId": 12345, "runAttempt": 1,
+            "headBranch": "main", "headSha": "abcdef",
+            "htmlUrl": "https://github.com/example/api/actions/runs/12345",
+            "status": "completed", "conclusion": "success",
+            "createdAt": "2026-09-08T10:00:00Z", "updatedAt": "2026-09-08T10:02:00Z"
+        }))?;
+        persistence::record_action_run(
+            &pool,
+            &context,
+            "services/api",
+            run,
+            Some("delivery".into()),
+            "webhook",
+        )
+        .await?;
+
+        let mut block = serde_json::json!({
+            "manifestId": "services/api",
+            "cicd": {"platform": "github_actions"}
+        });
+        attach_action_history(&pool, "org", &mut block).await?;
+        assert_eq!(block["cicd"]["buildStatus"], "passing");
+        assert_eq!(block["cicd"]["lastBuild"], "2026-09-08T10:02:00Z");
+        assert_eq!(block["cicd"]["githubActions"]["runs"][0]["runId"], 12345);
+
+        sqlite.close().await;
+        Ok(())
+    }
+}

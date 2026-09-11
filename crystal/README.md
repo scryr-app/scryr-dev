@@ -84,7 +84,7 @@ mise run contribute:setup
 mise run release:build
 
 # build it and update the global scryr command on PATH
-mise run contribute:install
+mise run contribute:oss:install
 
 # run the distributed-style binary
 ./target/release/scryr serve
