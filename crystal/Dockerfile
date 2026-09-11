@@ -28,6 +28,9 @@ RUN cargo fetch --locked
 COPY crystal/crystal-core ./crystal-core
 COPY crystal/crystal-server ./crystal-server
 COPY crystal/crystal-cli ./crystal-cli
+# crystal-cli/build.rs validates its bundled SDK against this source directory.
+# The build script resolves it as /manifest/scryr from the /app workspace.
+COPY manifest/scryr /manifest/scryr
 RUN cargo build --locked --release -p crystal-cli --bin scryr
 
 # --- Runtime stage ---
