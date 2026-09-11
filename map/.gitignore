@@ -9,3 +9,5 @@ mise.local.toml
 .nitro
 .tanstack
 .wrangler
+test-results/
+playwright-report/

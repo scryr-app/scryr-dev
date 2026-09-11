@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Building2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect } from "react";
+import { EditorScope } from "@/graphql/useManifestEditor";
 import { currentTheme } from "@/theme/theme";
 import { AccountButton } from "./AccountButton";
 import { useClerkTokenBridge } from "./useClerkTokenBridge";
@@ -96,5 +97,9 @@ export function AuthenticatedSession({ children }: AuthenticatedSessionProps) {
 		);
 	}
 
-	return children;
+	return (
+		<EditorScope.Provider key={orgId} value={orgId}>
+			{children}
+		</EditorScope.Provider>
+	);
 }

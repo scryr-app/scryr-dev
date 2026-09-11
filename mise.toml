@@ -487,7 +487,10 @@ run = ["mise run verify:test:integration:crystal", "mise run verify:test:integra
 [tasks."verify:test:integration:crystal"]
 description = "Run Rust integration tests"
 dir = "{{config_root}}"
-run = "cargo test --locked --manifest-path crystal/Cargo.toml -p crystal-cli --test cli"
+run = [
+  "cargo test --locked --manifest-path crystal/Cargo.toml -p crystal-core --tests",
+  "cargo test --locked --manifest-path crystal/Cargo.toml -p crystal-cli --test cli",
+]
 
 [tasks."verify:test:integration:manifest"]
 description = "Run Python sample integration tests"
@@ -508,6 +511,10 @@ run = ["mise run verify:test:unit:manifest", "mise run verify:test:integration:m
 description = "Run all frontend tests"
 dir = "{{config_root}}"
 run = "mise run verify:test:unit:map"
+
+[tasks."verify:editor"]
+description = "Build and test the standalone source editor in Chrome; requires network"
+run = ["mise run release:build", "npm --prefix map run test:editor"]
 
 [tasks."verify:release:smoke"]
 description = "Smoke-test the existing release:build binary outside the checkout; requires network on first run"

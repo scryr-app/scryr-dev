@@ -13,6 +13,32 @@ pub(crate) struct QueryRoot;
 
 #[Object]
 impl QueryRoot {
+    /// Read the selected diagram's complete source document.
+    async fn manifest_document(
+        &self,
+        ctx: &async_graphql::Context<'_>,
+        identifier: String,
+    ) -> async_graphql::Result<
+        async_graphql::Json<crystal_core::persistence::documents::ManifestDocument>,
+    > {
+        let context = ctx.data::<crystal_core::manifest::ManifestRequestContext>()?;
+        let state = ctx.data::<AppState>()?;
+        if state.auth_mode == crate::state::AuthMode::Local
+            && !ctx
+                .data_opt::<crate::editor::EditorRequestAllowed>()
+                .is_some_and(|v| v.0)
+        {
+            return Err(async_graphql::Error::new(
+                "Local editor requests require the server's own origin",
+            ));
+        }
+        let editor = ctx.data::<crate::editor::EditorService>()?;
+        editor
+            .read(&state.db_pool, context, &identifier)
+            .await
+            .map(async_graphql::Json)
+            .map_err(async_graphql::Error::new)
+    }
     /// Execute a named local declaration without persisting a diagram.
     async fn manifest_query(
         &self,

@@ -59,3 +59,30 @@ Personal overrides should go in untracked `mise.local.toml` at the repository
 root.
 Set `VITE_SCRYR_AUTH_MODE=clerk` only when building or testing a hosted
 Clerk-backed frontend.
+
+## Source editor
+
+The Python console loads the selected diagram's stored source using
+`manifestDocument`, runs the actual `manifest/scryr` SDK in a fresh Pyodide worker,
+and commits through `saveManifestDocument`. Revisions protect against lost updates;
+all diagrams from one entrypoint are saved together. Successful saves invalidate
+the diagram list and blocks cache immediately. Organization changes discard the
+previous editor session and cancel its Python worker.
+
+`scryr serve` injects a same-origin `/graphql` runtime configuration into its
+embedded UI, so custom ports work without rebuilding. Only the registered local
+entrypoint can be written. Cloud mode edits stored snapshots, not Git or local disk.
+
+Regression checks:
+
+```bash
+mise run verify:editor
+```
+
+This builds the standalone binary, copies it outside the checkout, and uses
+Chrome to test local disk saves, reload/restart, invalid/conflicting drafts,
+stored-source saves, and `--watch`. Chrome and access to jsDelivr are required.
+Builds (including Vercel) need the full repository with `manifest/scryr` available
+beside `map`; the SDK is bundled into the worker, never read from disk at runtime.
+Frontend state tests also run in the normal `npm test` suite; Rust source-storage
+tests exercise both SQLite and libSQL transactions and organization isolation.

@@ -30,6 +30,22 @@ pub async fn run(args: ServerArgs) -> std::io::Result<()> {
 /// # Errors
 /// Returns initialization or bind errors without starting background work.
 pub async fn start(args: ServerArgs) -> std::io::Result<actix_web::dev::Server> {
+    start_with_workspace(args, None).await
+}
+
+/// Start a server with an optional explicitly selected local editor workspace.
+///
+/// # Errors
+/// Returns configuration, storage, or listener errors.
+pub async fn start_with_workspace(
+    args: ServerArgs,
+    workspace: Option<crate::editor::LocalWorkspace>,
+) -> std::io::Result<actix_web::dev::Server> {
+    if workspace.is_some() && !matches!(args.host.as_str(), "127.0.0.1" | "localhost" | "::1") {
+        return Err(std::io::Error::other(
+            "Local source editing requires a loopback host; use --server-only for network hosting",
+        ));
+    }
     let db_pool = persistence::connect_from_env()
         .await
         .map_err(std::io::Error::other)?;
@@ -55,6 +71,7 @@ pub async fn start(args: ServerArgs) -> std::io::Result<actix_web::dev::Server> 
     };
 
     let schema = Schema::build(QueryRoot, MutationRoot::default(), EmptySubscription)
+        .data(crate::editor::EditorService { local: workspace })
         .data(app_state.clone())
         .data(app_state.db_pool.clone())
         .data(crate::runtime_metrics::RuntimeMetrics::from_env()?)
@@ -81,6 +98,7 @@ pub async fn start(args: ServerArgs) -> std::io::Result<actix_web::dev::Server> 
             .wrap(cors_for_allowed_origins(allowed_origins.clone()))
             .app_data(schema_data.clone())
             .app_data(app_state_data.clone())
+            .app_data(web::JsonConfig::default().limit(8 * 1024 * 1024))
             .service(
                 web::resource("/health")
                     .guard(guard::Get())
@@ -124,7 +142,7 @@ fn graphql_resource() -> actix_web::Resource {
 }
 
 /// Parse explicitly configured CORS origins.
-fn allowed_origins_from_env() -> Vec<String> {
+pub(crate) fn allowed_origins_from_env() -> Vec<String> {
     env::var("CORS_ALLOWED_ORIGINS").map_or_else(
         |_| Vec::new(),
         |value| {

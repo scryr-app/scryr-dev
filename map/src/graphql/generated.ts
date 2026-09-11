@@ -101,6 +101,8 @@ export type GeneratedManifestMutationRoot = {
   recordActionRun: Scalars['Boolean']['output'];
   /** Append a typed operational observation for the active organization. */
   recordReport: Scalars['Boolean']['output'];
+  /** Save source and all its diagram artifacts with optimistic concurrency. */
+  saveManifestDocument: Scalars['JSON']['output'];
   /** Upsert a generated manifest artifact into storage. */
   upsertGeneratedManifest: UpsertGeneratedManifestPayload;
 };
@@ -117,6 +119,13 @@ export type GeneratedManifestMutationRootRecordActionRunArgs = {
 export type GeneratedManifestMutationRootRecordReportArgs = {
   manifestId: Scalars['String']['input'];
   report: Scalars['JSON']['input'];
+};
+
+
+export type GeneratedManifestMutationRootSaveManifestDocumentArgs = {
+  envelope: Scalars['JSON']['input'];
+  identifier: Scalars['String']['input'];
+  revision: Scalars['String']['input'];
 };
 
 
@@ -156,6 +165,8 @@ export type QueryRoot = {
   /** Fetch configured runtime metrics once when opening a diagram. Block polling never calls this. */
   diagramMetrics: Scalars['JSON']['output'];
   health: HealthStatus;
+  /** Read the selected diagram's complete source document. */
+  manifestDocument: Scalars['JSON']['output'];
   /** Execute a named local declaration without persisting a diagram. */
   manifestQuery: Scalars['JSON']['output'];
   /** Read operational observations for the active organization. */
@@ -181,6 +192,11 @@ export type QueryRootBlocksArgs = {
 export type QueryRootDiagramMetricsArgs = {
   sample?: InputMaybe<Scalars['String']['input']>;
   scryIdentifier?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryRootManifestDocumentArgs = {
+  identifier: Scalars['String']['input'];
 };
 
 

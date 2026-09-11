@@ -16,18 +16,70 @@ pub(super) async fn run(args: &ServerArgs) -> Result<(), String> {
         );
     }
     // Bind before starting the loader, so an occupied port cannot receive our upload.
-    let server = crystal_server::server::start(args.server.clone())
-        .await
+    let root = args
+        .common
+        .manifest_dir
+        .canonicalize()
         .map_err(|e| e.to_string())?;
+    let file = crate::manifest_paths::resolve_manifest_file(&root, &args.common.manifest_file)?;
+    let common = args.common.clone();
+    let format = !args.no_format;
+    let workspace = crystal_server::editor::LocalWorkspace::new(
+        &root,
+        &file,
+        std::sync::Arc::new(move |files, entrypoint| {
+            let staged = tempfile::tempdir().map_err(|e| e.to_string())?;
+            // Keep the original runtime and working directory (including opted-in
+            // project dependencies), but validate source in a disposable tree.
+            let mut project = Project::new(common.clone())?;
+            let source_root = project.file.parent().ok_or("Missing source root")?;
+            let relative = source_root
+                .strip_prefix(&project.root)
+                .map_err(|e| e.to_string())?;
+            let staged_sources = staged.path().join(relative);
+            for directory in source_root
+                .ancestors()
+                .take_while(|path| path.starts_with(&project.root))
+            {
+                let relative = directory
+                    .strip_prefix(&project.root)
+                    .map_err(|e| e.to_string())?;
+                let destination = staged.path().join(relative);
+                std::fs::create_dir_all(&destination).map_err(|e| e.to_string())?;
+                for name in ["pyproject.toml", "ruff.toml", ".ruff.toml", "ty.toml"] {
+                    let config = directory.join(name);
+                    if config.is_file() {
+                        std::fs::copy(config, destination.join(name)).map_err(|e| e.to_string())?;
+                    }
+                }
+            }
+            for source in files {
+                let path = staged_sources.join(source.path);
+                if let Some(parent) = path.parent() {
+                    std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+                }
+                std::fs::write(path, source.content).map_err(|e| e.to_string())?;
+            }
+            project.file = staged_sources.join(entrypoint);
+            if format {
+                project.tool("--format")?;
+            }
+            serde_json::from_str(&project.check()?.json).map_err(|e| e.to_string())
+        }),
+    )?;
+    let server =
+        crystal_server::server::start_with_workspace(args.server.clone(), Some(workspace.clone()))
+            .await
+            .map_err(|e| e.to_string())?;
     tokio::pin!(server);
     tokio::select! {
         result = &mut server => result.map_err(|e| e.to_string()),
-        () = load_loop(args) => server.await.map_err(|e| e.to_string()),
+        () = load_loop(args, &workspace) => server.await.map_err(|e| e.to_string()),
     }
 }
 
 /// Wait for this server, then refresh only when source contents change.
-async fn load_loop(args: &ServerArgs) {
+async fn load_loop(args: &ServerArgs, workspace: &crystal_server::editor::LocalWorkspace) {
     let host = match args.host.as_str() {
         "0.0.0.0" => "127.0.0.1".to_owned(),
         "::" => "[::1]".to_owned(),
@@ -57,6 +109,7 @@ async fn load_loop(args: &ServerArgs) {
     let mut previous = None;
     let mut opened = false;
     loop {
+        let guard = workspace.gate.lock().await;
         let fingerprint = fingerprint(&common);
         if previous.as_ref() != Some(&fingerprint) {
             let load_common = common.clone();
@@ -99,6 +152,7 @@ async fn load_loop(args: &ServerArgs) {
         if !args.watch {
             return;
         }
+        drop(guard);
         tokio::time::sleep(Duration::from_millis(500)).await;
     }
 }

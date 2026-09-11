@@ -4,9 +4,15 @@ import viteReact from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
 import { fileURLToPath, URL } from "node:url";
+import { existsSync } from "node:fs";
+
+if (!existsSync(fileURLToPath(new URL("../manifest/scryr/src/scryr/runtime.py", import.meta.url)))) {
+	throw new Error("Build the map from the full Scryr checkout: ../manifest/scryr is required for the Python console SDK.");
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({
+	worker: { format: "es" },
 	plugins: [
 		devtools({
 			injectSource: {

@@ -77,6 +77,28 @@ the server's actual host and port, even when a cloud endpoint is configured.
 Validation failures are printed in the terminal; the server stays available and
 the previous valid diagram remains loaded. Without `--watch`, initial loading runs once.
 
+Open the Python editor in the UI to load the selected diagram's actual `index.scry`.
+**Run** executes the real Scryr SDK in an isolated Pyodide worker, then validates
+the local source using the CLI's native checks. A successful run atomically
+replaces the registered entrypoint and updates every diagram declared by it.
+This works with plain `scryr serve`, with `--watch`, and on custom ports; no Vite
+server or repository checkout is needed by an installed binary.
+
+Syntax/validation errors leave the last saved file and diagram intact. External
+edits are detected; a conflicting browser draft is retained and must be copied
+or discarded with **Reload source** before saving. Supporting `.scry`/`.py` imports
+are available to Python but are not editable through this single-file editor.
+Local file editing requires a loopback bind address and the same-origin UI;
+explicit loopback `CORS_ALLOWED_ORIGINS` also support Vite development.
+
+In cloud/server-only mode, Run saves the organization's stored source snapshot
+and all its diagram artifacts in one transaction; it does not write the server's
+filesystem or commit to Git. Cloud write permissions are enforced by the server.
+Pyodide and its pinned Python packages require access to the jsDelivr CDN on
+first execution. A cancelled or timed-out Python run is not saved. Once saving
+starts, wait for its result. If the local process is interrupted while committing,
+restart `scryr serve` to regenerate artifacts from the authoritative disk source.
+
 - `--server-only`: do not read, format, execute, or upload a local manifest. Use in deployments.
 - `--no-format`: verify formatting without changing source files.
 - `--no-open`: do not launch a browser.
