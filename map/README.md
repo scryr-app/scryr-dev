@@ -82,7 +82,9 @@ mise run verify:editor
 This builds the standalone binary, copies it outside the checkout, and uses
 Chrome to test local disk saves, reload/restart, invalid/conflicting drafts,
 stored-source saves, and `--watch`. Chrome and access to jsDelivr are required.
-Builds (including Vercel) need the full repository with `manifest/scryr` available
-beside `map`; the SDK is bundled into the worker, never read from disk at runtime.
+Development and builds refresh `src/pyodide/sdkSources.generated.json` from
+`../manifest/scryr` when the full checkout is available. Commit this generated
+file when changing the SDK. Standalone builds (including Vercel) use the checked-in
+bundle; the SDK is never read from disk at runtime.
 Frontend state tests also run in the normal `npm test` suite; Rust source-storage
 tests exercise both SQLite and libSQL transactions and organization isolation.
