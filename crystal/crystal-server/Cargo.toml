@@ -2,6 +2,7 @@
 name = "crystal-server"
 version = "0.5.0"
 edition = "2024"
+publish = false
 description = "GraphQL server for the Scryr architecture map."
 readme = "../README.md"
 license = "MIT"

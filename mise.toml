@@ -607,7 +607,7 @@ Release the standalone CLI:
   mise run release:package        Archive the tested binary on each platform
   mise run release:draft          Create a draft from all four platform archives
 Review and publish the draft on GitHub, then:
-  mise run release:distribute     Publish npm, Homebrew, and crates.io packages
+  mise run release:distribute     Publish the Homebrew formula
 Pushing a vX.Y.Z tag starts validation, checks, packaging, and draft creation.
 Publishing the GitHub draft starts distribution. See CONTRIBUTING.md for inputs.
 GUIDE
@@ -640,13 +640,11 @@ tools = { "gh" = "2.92.0" }
 dir = "{{config_root}}"
 
 [tasks."release:distribute"]
-description = "Distribute the published standalone release to npm, Homebrew and crates.io"
+description = "Distribute the published standalone release through Homebrew"
 run = [
   "mise run internal:release:preflight",
   "mise run release:distribution:prepare",
-  "mise run release:distribute:npm",
   "mise run release:distribute:homebrew",
-  "mise run release:distribute:crates",
 ]
 dir = "{{config_root}}"
 
@@ -657,25 +655,15 @@ tools = { "docker-cli" = "29.4.3" }
 dir = "{{config_root}}"
 
 [tasks."release:distribution:prepare"]
-description = "Verify published release artifacts and prepare publisher packages"
+description = "Verify published release artifacts and prepare the Homebrew formula"
 run = "mise run internal:release:process prepare"
 tools = { "gh" = "2.92.0" }
-dir = "{{config_root}}"
-
-[tasks."release:distribute:npm"]
-description = "Publish the prepared npm distribution"
-run = "mise run internal:release:process npm"
 dir = "{{config_root}}"
 
 [tasks."release:distribute:homebrew"]
 description = "Publish the prepared homebrew distribution"
 run = "mise run internal:release:process homebrew"
 tools = { "gh" = "2.92.0" }
-dir = "{{config_root}}"
-
-[tasks."release:distribute:crates"]
-description = "Publish the prepared crates distribution"
-run = "mise run internal:release:process crates"
 dir = "{{config_root}}"
 
 # Deployment: build, migrate, and update configured cloud resources
@@ -1263,7 +1251,7 @@ PYTHON
 description = "Shared release validation, packaging and publisher operations"
 hide = true
 dir = "{{config_root}}"
-usage = "arg \"<action>\" { choices \"validate\" \"package\" \"draft\" \"prepare\" \"npm\" \"homebrew\" \"crates\" \"preflight\" }"
+usage = "arg \"<action>\" { choices \"validate\" \"package\" \"draft\" \"prepare\" \"homebrew\" \"preflight\" }"
 run = '''
 python - "$usage_action" <<'PYTHON'
 """Build handoff and distribution of tested, versioned standalone binaries."""
@@ -1277,7 +1265,6 @@ import shutil
 import subprocess
 import sys
 import tarfile
-import tempfile
 from pathlib import Path
 
 import tomllib
@@ -1394,11 +1381,6 @@ def draft():
 def prepare():
     tag, version = tag_version()
     repo = require("GH_REPO")
-    npm_name = require("NPM_PACKAGE_NAME")
-    if not re.fullmatch(r"@[a-z0-9_-]+/[a-z0-9_-]+", npm_name):
-        raise SystemExit(
-            "NPM_PACKAGE_NAME must be a scoped npm name, for example @scryr/cli"
-        )
     release = json.loads(
         run(
             "gh",
@@ -1426,67 +1408,6 @@ def prepare():
         "--clobber",
     )
     verify()
-    packages = OUT / "npm"
-    packages.mkdir(exist_ok=True)
-    optional = {}
-    for target, (os_name, cpu) in PLATFORMS.items():
-        name = f"{npm_name}-{os_name}-{cpu}"
-        optional[name] = version
-        dest = packages / target
-        dest.mkdir(exist_ok=True)
-        with tarfile.open(OUT / f"scryr-{target}.tar.gz") as tar:
-            tar.extractall(dest, filter="data")
-        (dest / "scryr").chmod(0o755)
-        (dest / "package.json").write_text(
-            json.dumps(
-                {
-                    "name": name,
-                    "version": version,
-                    "description": "Scryr standalone native CLI",
-                    "license": "MIT",
-                    "os": [os_name],
-                    "cpu": [cpu],
-                    "files": ["scryr", "LICENSE", "THIRD_PARTY_NOTICES.md"],
-                    "repository": f"https://github.com/{repo}",
-                },
-                indent=2,
-            )
-            + "\n"
-        )
-    wrapper = packages / "cli"
-    wrapper.mkdir(exist_ok=True)
-    (wrapper / "package.json").write_text(
-        json.dumps(
-            {
-                "name": npm_name,
-                "version": version,
-                "description": "Scryr CLI with embedded UI and SDK",
-                "license": "MIT",
-                "bin": {"scryr": "scryr.cjs"},
-                "files": ["scryr.cjs", "LICENSE", "THIRD_PARTY_NOTICES.md"],
-                "optionalDependencies": optional,
-                "repository": f"https://github.com/{repo}",
-            },
-            indent=2,
-        )
-        + "\n"
-    )
-    (wrapper / "scryr.cjs").write_text(
-        """#!/usr/bin/env node
-const { spawnSync } = require('node:child_process');
-const name = __PACKAGE_NAME__ + '-' + process.platform + '-' + process.arch;
-let binary;
-try { binary = require.resolve(name + '/scryr'); }
-catch { console.error('No Scryr binary for ' + process.platform + '/' + process.arch + '. Install optional dependencies.'); process.exit(1); }
-const result = spawnSync(binary, process.argv.slice(2), {stdio: 'inherit'});
-if (result.error) { console.error(result.error.message); process.exit(1); }
-if (result.signal) process.kill(process.pid, result.signal);
-else process.exit(result.status ?? 1);
-""".replace("__PACKAGE_NAME__", json.dumps(npm_name))
-    )
-    (wrapper / "scryr.cjs").chmod(0o755)
-    for file in ["LICENSE", "THIRD_PARTY_NOTICES.md"]:
-        shutil.copy2(ROOT / file, wrapper / file)
     formula = [
         "class Scryr < Formula",
         '  desc "Architecture maps and manifest CLI"',
@@ -1516,41 +1437,6 @@ else process.exit(result.status ?? 1);
         "end",
     ]
     (OUT / "scryr.rb").write_text("\n".join(formula) + "\n")
-
-
-def npm():
-    require("NPM_TOKEN")
-    # A temporary npm config keeps registry credentials out of the workspace.
-    with tempfile.TemporaryDirectory() as scratch:
-        config = Path(scratch) / "npmrc"
-        config.write_text("//registry.npmjs.org/:_authToken=${NPM_TOKEN}\n")
-        config.chmod(0o600)
-        for directory in [
-            *(OUT / "npm" / target for target in PLATFORMS),
-            OUT / "npm/cli",
-        ]:
-            data = json.loads((directory / "package.json").read_text())
-            spec = f"{data['name']}@{data['version']}"
-            # Allow a retry after a partially successful publication.
-            exists = subprocess.run(
-                ["npm", "view", spec, "version"],
-                cwd=ROOT,
-                capture_output=True,
-                check=False,
-                env={**os.environ, "NPM_CONFIG_USERCONFIG": str(config)},
-            )
-            if exists.returncode == 0:
-                continue
-            if b"E404" not in exists.stderr:
-                raise SystemExit("Could not check npm version; publication stopped")
-            run(
-                "npm",
-                "publish",
-                str(directory),
-                "--access",
-                "public",
-                env={**os.environ, "NPM_CONFIG_USERCONFIG": str(config)},
-            )
 
 
 def homebrew():
@@ -1597,30 +1483,10 @@ def preflight():
     tag_version()
     for key in [
         "GH_REPO",
-        "NPM_PACKAGE_NAME",
-        "NPM_TOKEN",
         "HOMEBREW_TAP",
         "HOMEBREW_TAP_TOKEN",
-        "CARGO_REGISTRY_TOKEN",
     ]:
         require(key)
-
-
-def crates():
-    require("CARGO_REGISTRY_TOKEN")
-    validate()
-    # Generated assets must be in each published crate. Cargo verifies packages;
-    # workspace order ensures dependencies reach the registry before dependants.
-    run("mise", "run", "release:build")
-    for crate in ["crystal-core", "crystal-server", "crystal-cli"]:
-        run(
-            "cargo",
-            "publish",
-            "--locked",
-            "--allow-dirty",
-            "--manifest-path",
-            f"crystal/{crate}/Cargo.toml",
-        )
 
 
 if __name__ == "__main__":
@@ -1631,9 +1497,7 @@ if __name__ == "__main__":
             package,
             draft,
             prepare,
-            npm,
             homebrew,
-            crates,
             preflight,
         ]
     }
@@ -1953,7 +1817,7 @@ class AutomationTests(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 release.verify()
 
-    def test_publisher_packages_embed_verified_binary(self):
+    def test_homebrew_formula_uses_verified_binaries(self):
         with (
             tempfile.TemporaryDirectory() as directory,
             patch.object(release, "OUT", Path(directory)),
@@ -1976,17 +1840,12 @@ class AutomationTests(unittest.TestCase):
                     {
                         "RELEASE_TAG": "v1.2.3",
                         "GH_REPO": "example/scryr",
-                        "NPM_PACKAGE_NAME": "@example/cli",
                     },
                 ),
                 patch.object(release, "run") as run,
             ):
                 run.return_value.stdout = '{"isDraft": false, "isPrerelease": false}'
                 release.prepare()
-            wrapper = json.loads((Path(directory) / "npm/cli/package.json").read_text())
-            self.assertEqual(len(wrapper["optionalDependencies"]), 4)
-            for target in release.PLATFORMS:
-                self.assertTrue((Path(directory) / "npm" / target / "scryr").is_file())
             formula = (Path(directory) / "scryr.rb").read_text()
             self.assertEqual(formula.count("sha256"), 4)
             self.assertIn("/releases/download/v1.2.3/", formula)
