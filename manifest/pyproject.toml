@@ -1,6 +1,6 @@
 [project]
 name = "scryr-manifest-workspace"
-version = "0.3.0"
+version = "0.5.0"
 description = "Workspace root for the Scryr manifest library, samples, and tests"
 requires-python = ">=3.14,<3.15"
 dependencies = ["scryr"]
