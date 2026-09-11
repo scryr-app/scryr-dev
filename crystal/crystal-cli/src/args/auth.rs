@@ -37,7 +37,7 @@ pub(crate) struct LoginArgs {
     #[arg(
         long,
         env = "SCRYR_CLERK_OAUTH_SCOPES",
-        default_value = "profile email"
+        default_value = "profile email offline_access"
     )]
     pub(crate) scopes: String,
 }
