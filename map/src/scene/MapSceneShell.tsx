@@ -13,7 +13,7 @@ interface MapSceneShellProps {
 }
 
 export function MapSceneShell({ header }: MapSceneShellProps) {
-	const [isPyodideOpen, setIsPyodideOpen] = useState(false);
+	const [isPyodideOpen, setIsPyodideOpen] = useState(true);
 	const [pyodidePanelWidth, setPyodidePanelWidth] = useState(() => {
 		if (typeof window === "undefined") {
 			return 420;
