@@ -1,9 +1,9 @@
 # syntax=docker/dockerfile:1
 
 # --- Build stage ---
-# Rust 1.85 is the first release with Rust 2024 edition support. Keep a
-# default here because Fly builds do not supply this build argument.
-ARG RUST_VERSION=1.85
+# Keep this aligned with the project toolchain. Fly dashboard builds do not
+# supply this build argument, and the locked SQLx dependency requires Rust 1.94+.
+ARG RUST_VERSION=1.96
 FROM rust:${RUST_VERSION}-bookworm AS builder
 
 WORKDIR /app
