@@ -8,6 +8,9 @@ mod report;
 pub(crate) use report::ReportArgs;
 mod generate;
 mod serve;
+mod workflow;
+pub(crate) use generate::{GenerateCommonArgs, resolve_generate_request};
+pub(crate) use workflow::*;
 
 pub(crate) use auth::{AuthArgs, AuthCommand, LoginArgs};
 pub(crate) use generate::{GenerateArgs, GenerateOutput, GenerateRequest};
@@ -23,7 +26,7 @@ use clap::{Parser, Subcommand};
     version,
     about,
     long_about = None,
-    after_help = "Examples:\n  scryr serve\n  scryr generate upload --path index.scry\n  scryr generate types --path index.scry\n  scryr generate mise --path index.scry --forge \"MERN Forge\"\n  scryr generate compose --path index.scry --forge \"MERN Forge\"\n  scryr generate devcontainer --path index.scry --forge \"MERN Forge\""
+    after_help = "Examples:\n  scryr check\n  scryr format\n  scryr lint --fix\n  scryr push\n  scryr serve\n  scryr report tests\n  scryr query --list\nLegacy commands:\n  scryr generate upload --path index.scry\n  scryr generate types --path index.scry\n  scryr generate mise --path index.scry --forge \"MERN Forge\"\n  scryr generate compose --path index.scry --forge \"MERN Forge\"\n  scryr generate devcontainer --path index.scry --forge \"MERN Forge\""
 )]
 pub(crate) struct Args {
     #[command(subcommand)]
@@ -33,14 +36,28 @@ pub(crate) struct Args {
 /// Top-level CLI commands.
 #[derive(Subcommand, Debug, Clone)]
 pub(crate) enum Command {
-    /// Run the Scryr GraphQL server.
+    /// Check formatting, lint, Python types, execution, and Scryr rules.
+    Check(GenerateCommonArgs),
+    /// Format manifest source files in place.
+    Format(FormatArgs),
+    /// Lint manifest sources; optionally apply safe fixes.
+    Lint(LintArgs),
+    /// Check and push diagrams to a Scryr deployment.
+    Push(GenerateCommonArgs),
+    /// Start the local UI, format, check, and load index.scry.
     Serve(ServerArgs),
+    /// Report operational results.
+    Report(Box<ReportsArgs>),
+    /// Run a named query declared in index.scry.
+    Query(QueryArgs),
+    /// Export JSON or Forge configuration.
+    Export(ExportArgs),
+    /// Inspect model schemas and runtime type metadata.
+    Inspect(InspectArgs),
     /// Apply database schema migrations without starting the HTTP server.
     Migrate,
     /// Report a GitHub workflow run to Crystal.
     ReportActionStatus(ReportArgs),
-    /// Report operational results.
-    Report(Box<ReportsArgs>),
     /// Generate manifest artifacts and persist them through GraphQL.
     Generate(Box<GenerateArgs>),
     /// Interactive Clerk authentication helpers.
@@ -50,8 +67,22 @@ pub(crate) enum Command {
 /// Fully resolved top-level command consumed by execution.
 #[derive(Debug, Clone)]
 pub(crate) enum ResolvedCommand {
-    /// Run the Scryr GraphQL server.
+    /// Check formatting, lint, Python types, execution, and Scryr rules.
+    Check(GenerateCommonArgs),
+    /// Format manifest source files in place.
+    Format(FormatArgs),
+    /// Lint manifest sources; optionally apply safe fixes.
+    Lint(LintArgs),
+    /// Check and push diagrams to a Scryr deployment.
+    Push(GenerateCommonArgs),
+    /// Start the local UI, format, check, and load index.scry.
     Serve(ServerArgs),
+    /// Export JSON or Forge configuration.
+    Export(ExportArgs),
+    /// Inspect model schemas and runtime type metadata.
+    Inspect(InspectArgs),
+    /// Run a named query declared in index.scry.
+    Query(QueryArgs),
     /// Apply database schema migrations without starting the HTTP server.
     Migrate,
     /// Report a GitHub workflow run to Crystal.
@@ -69,6 +100,13 @@ impl Args {
     pub(crate) fn resolved_command(&self) -> Result<ResolvedCommand, String> {
         if let Some(command) = &self.command {
             return Ok(match command.clone() {
+                Command::Check(args) => ResolvedCommand::Check(args),
+                Command::Format(args) => ResolvedCommand::Format(args),
+                Command::Lint(args) => ResolvedCommand::Lint(args),
+                Command::Push(args) => ResolvedCommand::Push(args),
+                Command::Export(args) => ResolvedCommand::Export(args),
+                Command::Inspect(args) => ResolvedCommand::Inspect(args),
+                Command::Query(args) => ResolvedCommand::Query(args),
                 Command::Report(args) => ResolvedCommand::Report(args),
                 Command::ReportActionStatus(args) => ResolvedCommand::ReportActionStatus(args),
                 Command::Migrate => ResolvedCommand::Migrate,
@@ -79,7 +117,7 @@ impl Args {
         }
 
         Err(
-            "missing command: use `serve`, `migrate`, `generate <target>`, or `auth <subcommand>`"
+            "missing command: use `check`, `format`, `lint`, `push`, `serve`, `report`, or `query`"
                 .to_string(),
         )
     }

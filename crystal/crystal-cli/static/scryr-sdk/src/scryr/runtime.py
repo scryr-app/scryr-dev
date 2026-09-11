@@ -75,11 +75,14 @@ def normalize_scry_source(source: str) -> str:
         declared_name = match.group("name")
         python_name = f"scryr_scry_{line_number}_{python_identifier_from_scry_name(declared_name)}"
         aliases[python_name] = declared_name
+        line_ending = "\r\n" if line.endswith("\r\n") else "\n" if line.endswith("\n") else ""
+        rest = match.group("rest").removesuffix("\r")
         lines.append(
             f"{python_name}"
             f"{match.group('assignment')}"
             f"{match.group('constructor')}"
-            f"{match.group('rest')}"
+            f"{rest}"
+            f"{line_ending}"
         )
 
     if aliases:

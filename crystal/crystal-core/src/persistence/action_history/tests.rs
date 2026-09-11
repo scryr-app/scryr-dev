@@ -187,3 +187,47 @@ async fn concurrent_deliveries_append_without_lost_updates()
     sqlite.close().await;
     Ok(())
 }
+
+#[tokio::test]
+async fn job_snapshot_enriches_a_run_and_retries_are_idempotent()
+-> Result<(), Box<dyn std::error::Error>> {
+    let sqlite = sqlx::sqlite::SqlitePoolOptions::new()
+        .max_connections(1)
+        .connect("sqlite::memory:")
+        .await?;
+    let pool = DatabasePool::Sqlite(sqlite);
+    let context = principal("org");
+    let mut completed = run("completed", "2026-09-08T10:02:00Z", 1)?;
+    assert!(
+        record_action_run(
+            &pool,
+            &context,
+            "services/api",
+            completed.clone(),
+            None,
+            "webhook"
+        )
+        .await?
+    );
+    completed.jobs = Some(serde_json::from_value(serde_json::json!([{
+        "id": 99, "name":"tests", "status":"completed", "conclusion":"success",
+        "startedAt":"2026-09-08T10:00:00Z", "completedAt":"2026-09-08T10:02:00Z",
+        "htmlUrl":"https://github.com/example/api/actions/runs/12345/jobs/99"
+    }]))?);
+    assert!(
+        record_action_run(
+            &pool,
+            &context,
+            "services/api",
+            completed.clone(),
+            None,
+            "webhook"
+        )
+        .await?
+    );
+    assert!(!record_action_run(&pool, &context, "services/api", completed, None, "webhook").await?);
+    let history = read_action_history(&pool, "org", "services/api", 100, 0).await?;
+    assert_eq!(history.runs.len(), 1);
+    assert_eq!(history.runs[0].jobs.as_ref().map(Vec::len), Some(1));
+    Ok(())
+}

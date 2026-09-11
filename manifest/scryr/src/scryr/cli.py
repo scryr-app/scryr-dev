@@ -54,6 +54,10 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     manifest_file = Path(arguments[0]).resolve()
     mode = arguments[1] if len(arguments) > 1 else "--json"
+    if mode in {"--format", "--format-check", "--lint", "--lint-fix", "--typecheck", "--sources"}:
+        from scryr.tooling import run
+
+        return run(manifest_file, mode)
     sys.stdout.write(f"{json.dumps(run_manifest_cli(manifest_file, mode), indent=2)}\n")
     return 0
 

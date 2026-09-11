@@ -22,6 +22,14 @@ use std::env;
 /// invalid, the bind address cannot be opened, or the HTTP server exits with an
 /// error.
 pub async fn run(args: ServerArgs) -> std::io::Result<()> {
+    start(args).await?.await
+}
+
+/// Initialize storage and bind the HTTP listener before returning the server.
+///
+/// # Errors
+/// Returns initialization or bind errors without starting background work.
+pub async fn start(args: ServerArgs) -> std::io::Result<actix_web::dev::Server> {
     let db_pool = persistence::connect_from_env()
         .await
         .map_err(std::io::Error::other)?;
@@ -68,7 +76,7 @@ pub async fn run(args: ServerArgs) -> std::io::Result<()> {
         println!("SQLite database at {}", display_path.display());
     }
 
-    HttpServer::new(move || {
+    let server = HttpServer::new(move || {
         App::new()
             .wrap(cors_for_allowed_origins(allowed_origins.clone()))
             .app_data(schema_data.clone())
@@ -92,8 +100,8 @@ pub async fn run(args: ServerArgs) -> std::io::Result<()> {
             .default_service(web::route().guard(guard::Get()).to(map_ui_handler))
     })
     .bind((host.as_str(), port))?
-    .run()
-    .await
+    .run();
+    Ok(server)
 }
 
 /// Route browser visits, GraphQL operations, and WebSocket upgrades separately.

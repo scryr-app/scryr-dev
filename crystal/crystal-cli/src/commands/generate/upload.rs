@@ -17,13 +17,16 @@ const PORT_ENV: &str = "PORT";
 const DEFAULT_LOCAL_GRAPHQL_PORT: u16 = 8000;
 
 /// Return the default local GraphQL endpoint, honoring the shared local `PORT`.
-pub(super) fn default_local_graphql_url() -> String {
+pub(crate) fn default_local_graphql_url() -> String {
     let configured_port = env::var(PORT_ENV).ok();
     default_local_graphql_url_from_port(configured_port.as_deref())
 }
 
 /// Resolve the optional bearer token needed for one upload target.
-pub(super) async fn upload_bearer_token(graphql_url: &str) -> Result<Option<String>, String> {
+pub(crate) async fn upload_bearer_token(graphql_url: &str) -> Result<Option<String>, String> {
+    if let Ok(token) = env::var("SCRYR_TOKEN") {
+        return Ok(Some(token));
+    }
     if graphql_endpoint_uses_local_auth(graphql_url) {
         return Ok(None);
     }
@@ -34,7 +37,7 @@ pub(super) async fn upload_bearer_token(graphql_url: &str) -> Result<Option<Stri
 }
 
 /// Persist the schema and value artifacts produced by one generate run.
-pub(super) async fn persist_generated_artifacts(
+pub(crate) async fn persist_generated_artifacts(
     context: GeneratedArtifactPersistence<'_>,
 ) -> Result<(), String> {
     let client = reqwest::Client::new();
@@ -47,7 +50,7 @@ pub(super) async fn persist_generated_artifacts(
         UpsertGeneratedManifestInput {
             artifact_kind: ArtifactKind::Schema,
             artifact_key: SCHEMA_ARTIFACT_KEY.to_string(),
-            folder_path: Some(context.manifest_location.folder_path.clone()),
+            folder_path: Some(context.manifest_location.group.clone()),
             file_name: Some(context.manifest_location.file_name.clone()),
             scry_identifier: None,
             name: None,
@@ -65,7 +68,7 @@ pub(super) async fn persist_generated_artifacts(
             UpsertGeneratedManifestInput {
                 artifact_kind: ArtifactKind::Value,
                 artifact_key: artifact.artifact_key,
-                folder_path: Some(context.manifest_location.folder_path.clone()),
+                folder_path: Some(context.manifest_location.group.clone()),
                 file_name: Some(context.manifest_location.file_name.clone()),
                 scry_identifier: Some(artifact.map_metadata.scry_identifier),
                 name: Some(artifact.map_metadata.name),
@@ -80,38 +83,39 @@ pub(super) async fn persist_generated_artifacts(
 }
 
 /// Values needed to persist generated artifacts through GraphQL.
-pub(super) struct GeneratedArtifactPersistence<'a> {
+pub(crate) struct GeneratedArtifactPersistence<'a> {
     /// GraphQL endpoint to receive generated artifacts.
-    pub(super) graphql_url: &'a str,
+    pub(crate) graphql_url: &'a str,
     /// Optional bearer token used for hosted GraphQL mutations.
-    pub(super) bearer_token: Option<&'a str>,
+    pub(crate) bearer_token: Option<&'a str>,
     /// Optional Clerk organization id to request for server-verified upload scope.
-    pub(super) clerk_org_id: Option<&'a str>,
+    pub(crate) clerk_org_id: Option<&'a str>,
     /// Generated schema artifact content.
-    pub(super) pydantic_schema: String,
+    pub(crate) pydantic_schema: String,
     /// Generated map value artifacts.
-    pub(super) map_artifacts: Vec<GeneratedMapArtifact>,
+    pub(crate) map_artifacts: Vec<GeneratedMapArtifact>,
     /// Normalized source file location metadata.
-    pub(super) manifest_location: ManifestLocation,
+    pub(crate) manifest_location: ManifestLocation,
     /// Optional git commit SHA.
-    pub(super) git_commit_sha: Option<String>,
+    pub(crate) git_commit_sha: Option<String>,
 }
 
 /// Normalized source location metadata for the uploaded manifest file.
-pub(super) struct ManifestLocation {
-    /// Folder path relative to the manifest project directory.
-    folder_path: String,
+pub(crate) struct ManifestLocation {
+    /// Diagram group derived from its folder relative to the manifest project directory.
+    /// An empty group leaves the diagram ungrouped in the map dropdown.
+    group: String,
     /// Manifest source file name.
     file_name: String,
 }
 
 impl ManifestLocation {
-    /// Derive a source location from resolved manifest paths.
-    pub(super) fn from_paths(manifest_dir: &Path, manifest_file: &Path) -> Self {
+    /// Derive the diagram group and source file name from resolved manifest paths.
+    pub(crate) fn from_paths(manifest_dir: &Path, manifest_file: &Path) -> Self {
         let relative = manifest_file
             .strip_prefix(manifest_dir)
             .unwrap_or(manifest_file);
-        let folder_path = relative
+        let group = relative
             .parent()
             .filter(|path| !path.as_os_str().is_empty())
             .map(|path| path.to_string_lossy().replace('\\', "/"))
@@ -121,10 +125,7 @@ impl ManifestLocation {
             .map(|name| name.to_string_lossy().into_owned())
             .unwrap_or_default();
 
-        Self {
-            folder_path,
-            file_name,
-        }
+        Self { group, file_name }
     }
 }
 

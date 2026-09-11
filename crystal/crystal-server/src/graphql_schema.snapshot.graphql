@@ -177,6 +177,10 @@ type Link {
 
 type QueryRoot {
 	"""
+	Execute a named local declaration without persisting a diagram.
+	"""
+	manifestQuery(source: JSON!, name: String!): JSON!
+	"""
 	Fetch configured runtime metrics once when opening a diagram. Block polling never calls this.
 	"""
 	diagramMetrics(scryIdentifier: String, sample: String): JSON!

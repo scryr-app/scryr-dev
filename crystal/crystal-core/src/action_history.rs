@@ -34,6 +34,26 @@ impl ActionStatusEvent {
     }
 }
 
+/// One job within a particular workflow attempt.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct GithubActionJob {
+    /// Stable GitHub job ID.
+    pub id: u64,
+    /// Job display name.
+    pub name: String,
+    /// Provider status.
+    pub status: String,
+    /// Completed outcome.
+    pub conclusion: Option<String>,
+    /// Start time supplied by GitHub.
+    pub started_at: Option<DateTime<Utc>>,
+    /// Completion time supplied by GitHub.
+    pub completed_at: Option<DateTime<Utc>>,
+    /// Link to the job log.
+    pub html_url: String,
+}
+
 /// One workflow run attempt and its observed transitions.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -73,6 +93,9 @@ pub struct GithubActionRun {
     /// Observations ordered by provider time, phase, and event ID.
     #[serde(default)]
     pub events: Vec<ActionStatusEvent>,
+    /// Optional complete job snapshot for this exact workflow attempt.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub jobs: Option<Vec<GithubActionJob>>,
 }
 
 impl GithubActionRun {
@@ -118,6 +141,47 @@ impl GithubActionRun {
                 ))
         {
             return Err("invalid GitHub run conclusion".into());
+        }
+        if let Some(jobs) = &self.jobs {
+            let mut ids = std::collections::HashSet::new();
+            for job in jobs {
+                if job.id == 0
+                    || !ids.insert(job.id)
+                    || job.name.trim().is_empty()
+                    || !matches!(
+                        job.status.as_str(),
+                        "queued"
+                            | "in_progress"
+                            | "completed"
+                            | "waiting"
+                            | "pending"
+                            | "requested"
+                    )
+                    || (job.status != "completed" && job.conclusion.is_some())
+                    || job.conclusion.as_deref().is_some_and(|c| {
+                        !matches!(
+                            c,
+                            "success"
+                                | "failure"
+                                | "cancelled"
+                                | "neutral"
+                                | "skipped"
+                                | "stale"
+                                | "timed_out"
+                                | "action_required"
+                                | "startup_failure"
+                        )
+                    })
+                    || !(job.html_url.starts_with("https://")
+                        || job.html_url.starts_with("http://"))
+                    || job
+                        .started_at
+                        .zip(job.completed_at)
+                        .is_some_and(|(start, end)| end < start)
+                {
+                    return Err("invalid GitHub job snapshot".into());
+                }
+            }
         }
         if self.updated_at < self.created_at {
             return Err("updatedAt must not precede createdAt".into());
@@ -190,6 +254,12 @@ impl GithubActionsLog {
             .find(|item| item.identity() == run.identity())
         {
             let incoming_wins = run.order_key() > current.order_key();
+            if run.updated_at >= current.updated_at && run.jobs.is_some() {
+                current.jobs.clone_from(&run.jobs);
+            }
+            if run.jobs.is_none() {
+                run.jobs.clone_from(&current.jobs);
+            }
             let mut events = std::mem::take(&mut current.events);
             for event in &run.events {
                 if !events.iter().any(|item| item.event_id == event.event_id) {

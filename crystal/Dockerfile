@@ -43,4 +43,4 @@ ENV PORT=8000
 
 EXPOSE 8000
 
-ENTRYPOINT ["scryr", "serve"]
+ENTRYPOINT ["scryr", "serve", "--server-only"]

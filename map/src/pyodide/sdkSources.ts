@@ -1052,6 +1052,30 @@ class Metrics(_Section):
         )
 
 
+class TestReportSource:
+    """Local test artifact selection for the CLI."""
+
+    def __init__(self, *, files=None, format="junit", suite="default"):
+        self.files = list(files or [])
+        self.format = format
+        self.suite = suite
+
+    def to_dict(self):
+        return dict(files=self.files, format=self.format, suite=self.suite)
+
+
+class ActionsReportSource:
+    """Local workflow and jobs artifact selection for the CLI."""
+
+    def __init__(self, *, workflow_id=None, branch=None, jobs_file=None):
+        self.workflow_id = workflow_id
+        self.branch = branch
+        self.jobs_file = jobs_file
+
+    def to_dict(self):
+        return dict(workflow_id=self.workflow_id, branch=self.branch, jobs_file=self.jobs_file)
+
+
 class CICD(_Section):
     """Manifest section for CICD data."""
 
@@ -1342,6 +1366,8 @@ const packageInitSource = `
 from .github import ActionStatusEvent, GithubActionRun, GithubActionsLog
 
 from .manifest import (
+    ActionsReportSource,
+    TestReportSource,
     CICD,
     CredentialRef,
     PrometheusSource,
@@ -1380,6 +1406,8 @@ from .types import (
 
 __all__ = [
     "ActionStatusEvent",
+    "ActionsReportSource",
+    "TestReportSource",
     "GithubActionRun",
     "GithubActionsLog",
     "AuthType",

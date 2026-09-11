@@ -156,6 +156,8 @@ export type QueryRoot = {
   /** Fetch configured runtime metrics once when opening a diagram. Block polling never calls this. */
   diagramMetrics: Scalars['JSON']['output'];
   health: HealthStatus;
+  /** Execute a named local declaration without persisting a diagram. */
+  manifestQuery: Scalars['JSON']['output'];
   /** Read operational observations for the active organization. */
   reportHistory: Scalars['JSON']['output'];
   /** Lists persisted Scryr maps available in the configured database. */
@@ -179,6 +181,12 @@ export type QueryRootBlocksArgs = {
 export type QueryRootDiagramMetricsArgs = {
   sample?: InputMaybe<Scalars['String']['input']>;
   scryIdentifier?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryRootManifestQueryArgs = {
+  name: Scalars['String']['input'];
+  source: Scalars['JSON']['input'];
 };
 
 

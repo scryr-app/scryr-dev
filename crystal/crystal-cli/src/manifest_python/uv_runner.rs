@@ -33,9 +33,10 @@ where
             .map_err(|e| format!("uv produced invalid UTF-8 in stdout: {e}"));
     }
 
+    let stdout = String::from_utf8_lossy(&output.stdout);
     let stderr = pretty_uv_stderr(&String::from_utf8_lossy(&output.stderr));
     Err(format!(
-        "uv command failed in {}:\n\n{stderr}",
+        "uv command failed in {}:\n\n{stdout}{stderr}",
         manifest_dir.display()
     ))
 }

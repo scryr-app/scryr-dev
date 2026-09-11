@@ -121,8 +121,8 @@ For `scryr` against a hosted Clerk-backed endpoint, authenticate first with
 
 ```bash
 cargo run -p crystal-cli -- serve --sample mern
-cargo run -p crystal-cli -- generate types --path ../manifest/tests/samples/mern/index.scry --manifest-dir ../manifest
-cargo run -p crystal-cli -- generate compose --path ../manifest/tests/samples/mern/index.scry --manifest-dir ../manifest --forge "MERN Forge"
+cargo run -p crystal-cli -- inspect types --path ../manifest/tests/samples/mern/index.scry --manifest-dir ../manifest
+cargo run -p crystal-cli -- export compose --path ../manifest/tests/samples/mern/index.scry --manifest-dir ../manifest --forge "MERN Forge"
 cargo run -p crystal-cli -- auth whoami
 ```
 

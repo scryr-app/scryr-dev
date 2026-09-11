@@ -1,4 +1,4 @@
-import { FileCode2, FolderGit2, Layers } from "lucide-react";
+import { FileCode2, Folder, Layers } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import {
 	type GetScryrMapsQuery,
@@ -215,13 +215,16 @@ export function DiagramButton({ className = "" }: Props) {
 	}
 
 	const visibleMaps = maps;
-	const mapsByRepository = visibleMaps.reduce((groups, map) => {
-		const repository = map.folderPath.trim() || "Other repositories";
-		const group = groups.get(repository) ?? [];
+	const mapsByGroup = visibleMaps.reduce((groups, map) => {
+		const groupName = map.folderPath.trim();
+		const group = groups.get(groupName) ?? [];
 		group.push(map);
-		groups.set(repository, group);
+		groups.set(groupName, group);
 		return groups;
 	}, new Map<string, ScryrMapOption[]>());
+	const orderedGroups = Array.from(mapsByGroup.entries()).sort(
+		([left], [right]) => Number(Boolean(left)) - Number(Boolean(right)),
+	);
 	const currentMap = maps.find((map) =>
 		selectedMapEquals(selectedMapFromScryrMap(map), current),
 	);
@@ -256,9 +259,6 @@ export function DiagramButton({ className = "" }: Props) {
 					className="absolute top-full left-0 mt-2 w-[min(28rem,calc(100vw-2rem))] rounded-xl border border-white/15 shadow-2xl z-[1100] overflow-hidden py-1"
 					style={{ background: "rgba(0,0,0,0.88)" }}
 				>
-					<p className="text-[11px] text-white/40 font-medium uppercase tracking-widest px-4 pt-2 pb-1.5">
-						Repositories
-					</p>
 					{mapsQuery.isLoading && (
 						<div className="px-4 py-2 text-[13px] text-white/45">Loading</div>
 					)}
@@ -268,53 +268,55 @@ export function DiagramButton({ className = "" }: Props) {
 						</div>
 					)}
 					<div className="max-h-[min(28rem,calc(100vh-7rem))] overflow-y-auto">
-						{Array.from(mapsByRepository.entries()).map(
-							([repository, repositoryMaps]) => (
-								<div key={repository}>
+						{orderedGroups.map(([groupName, groupMaps]) => (
+							<div key={groupName}>
+								{groupName && (
 									<div className="flex items-center gap-2 border-t border-white/10 px-4 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-widest text-white/45 first:border-t-0">
-										<FolderGit2 size={13} className="text-white/50" />
-										<span className="truncate">{repository}</span>
+										<Folder size={13} className="text-white/50" />
+										<span className="truncate">{groupName}</span>
 									</div>
-									{repositoryMaps.map((map) => {
-										const isSelected =
-											(map.id && map.id === current.id) ||
-											(!current.id && map.key === current.key);
-										const labels = visibleMapLabels(map);
+								)}
+								{groupMaps.map((map) => {
+									const isSelected =
+										(map.id && map.id === current.id) ||
+										(!current.id && map.key === current.key);
+									const labels = visibleMapLabels(map);
 
-										return (
-											<button
-												key={map.id ?? map.key}
-												type="button"
-												onClick={() => select({ id: map.id, key: map.key })}
-												title={labels.title}
-												className={`w-full min-w-0 text-left px-4 py-2.5 text-[13px] transition-colors ${
-													isSelected
-														? "text-white bg-white/10"
-														: "text-white/60 hover:text-white hover:bg-white/5"
-												}`}
+									return (
+										<button
+											key={map.id ?? map.key}
+											type="button"
+											onClick={() => select({ id: map.id, key: map.key })}
+											title={labels.title}
+											className={`w-full min-w-0 text-left px-4 py-2.5 text-[13px] transition-colors ${
+												isSelected
+													? "text-white bg-white/10"
+													: "text-white/60 hover:text-white hover:bg-white/5"
+											}`}
+										>
+											<div
+												className={`flex min-w-0 items-start gap-2 ${groupName ? "pl-5" : ""}`}
 											>
-												<div className="flex min-w-0 items-start gap-2 pl-5">
-													<FileCode2
-														size={14}
-														className="mt-0.5 shrink-0 text-white/35"
-													/>
-													<span className="min-w-0">
-														<span className="block whitespace-normal break-words font-medium leading-snug">
-															{labels.primary}
-														</span>
-														{labels.secondary && (
-															<span className="mt-0.5 block truncate text-[12px] text-white/40">
-																{labels.secondary}
-															</span>
-														)}
+												<FileCode2
+													size={14}
+													className="mt-0.5 shrink-0 text-white/35"
+												/>
+												<span className="min-w-0">
+													<span className="block whitespace-normal break-words font-medium leading-snug">
+														{labels.primary}
 													</span>
-												</div>
-											</button>
-										);
-									})}
-								</div>
-							),
-						)}
+													{labels.secondary && (
+														<span className="mt-0.5 block truncate text-[12px] text-white/40">
+															{labels.secondary}
+														</span>
+													)}
+												</span>
+											</div>
+										</button>
+									);
+								})}
+							</div>
+						))}
 					</div>
 				</div>
 			)}

@@ -47,7 +47,7 @@ pub(crate) struct GenerateCommonArgs {
     #[arg(long)]
     pub(crate) scryr_dir: Option<PathBuf>,
     /// GraphQL endpoint used by `generate upload`.
-    #[arg(long, env = "SCRYR_GRAPHQL_URL")]
+    #[arg(long = "endpoint", alias = "graphql-url", env = "SCRYR_ENDPOINT")]
     pub(crate) graphql_url: Option<String>,
     /// Clerk organization id to use for generated manifest uploads.
     #[arg(long, env = "SCRYR_CLERK_ORG_ID")]
@@ -137,7 +137,7 @@ impl GenerateArgs {
 }
 
 /// Convert command-specific options into a concrete request.
-fn resolve_generate_request(
+pub(crate) fn resolve_generate_request(
     output: GenerateOutput,
     common: GenerateCommonArgs,
     forge: Option<String>,
@@ -148,7 +148,9 @@ fn resolve_generate_request(
         manifest_dir: common.manifest_dir,
         scryr_dir: common.scryr_dir,
         forge,
-        graphql_url: common.graphql_url,
+        graphql_url: common
+            .graphql_url
+            .or_else(|| std::env::var("SCRYR_GRAPHQL_URL").ok()),
         clerk_org_id: common.clerk_org_id,
         git_commit_sha: common.git_commit_sha,
     }
