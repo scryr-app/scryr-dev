@@ -1,4 +1,4 @@
-app = "scryr-crystal-graphql"
+app = "scryrsh-crystal"
 primary_region = "dfw"
 
 [build]
