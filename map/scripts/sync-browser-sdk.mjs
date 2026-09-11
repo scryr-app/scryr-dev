@@ -17,7 +17,7 @@ if (existsSync(root)) {
   }
   collect(root);
   if (!files["scryr/runtime.py"]) throw new Error("Python SDK runtime is missing");
-  writeFileSync(output, `${JSON.stringify(files, null, 2)}\n`);
+  writeFileSync(output, `${JSON.stringify(files, null, "\t")}\n`);
 } else {
   const files = JSON.parse(readFileSync(output, "utf8"));
   if (!files["scryr/runtime.py"]) throw new Error("Bundled Python SDK runtime is missing");
