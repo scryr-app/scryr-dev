@@ -9,6 +9,7 @@ import {
 import {
 	isLocalAuthMode,
 	isScryrLocalAuthMode,
+	runtimeConfig,
 	scryrAuthMode,
 } from "@/auth/env";
 
@@ -16,7 +17,9 @@ import {
 // Set via the root `mise.toml` or a local override in untracked `mise.local.toml`.
 const DEFAULT_GRAPHQL_PATH = "/graphql";
 const CONFIGURED_GRAPHQL_ENDPOINT =
-	import.meta.env.VITE_GRAPHQL_ENDPOINT ?? DEFAULT_GRAPHQL_PATH;
+	runtimeConfig?.graphqlEndpoint ??
+	import.meta.env.VITE_GRAPHQL_ENDPOINT ??
+	DEFAULT_GRAPHQL_PATH;
 const GRAPHQL_ENDPOINT = resolveGraphqlEndpoint(CONFIGURED_GRAPHQL_ENDPOINT);
 type ClerkTokenGetter = () => Promise<string | null>;
 

@@ -5,6 +5,8 @@ use serde_json::Value;
 use std::path::Path;
 use uuid::Uuid;
 
+/// Revision-checked editing of a manifest and all its diagrams.
+pub mod documents;
 mod reports;
 pub use reports::{read_reports, record_report};
 mod action_history;

@@ -10,12 +10,15 @@
   },
   "type": "module",
   "engines": {
-    "node": "26.x"
+    "node": "24.x"
   },
   "scripts": {
+    "test:editor": "playwright test",
     "codegen": "graphql-codegen --config codegen.yml",
     "codegen:watch": "graphql-codegen --config codegen.yml --watch",
+    "predev": "node scripts/sync-browser-sdk.mjs",
     "dev": "vite --port 3000",
+    "prebuild": "node scripts/sync-browser-sdk.mjs",
     "build": "vite build && tsc",
     "serve": "vite preview",
     "test": "vitest run",
@@ -61,6 +64,7 @@
     "@graphql-codegen/cli": "^7.4.0",
     "@graphql-codegen/typescript-react-query": "^7.0.1",
     "@graphql-typed-document-node/core": "^3.2.0",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/vite": "^4.3.0",
     "@tanstack/devtools-vite": "^0.8.5",
     "@testing-library/dom": "^10.4.1",

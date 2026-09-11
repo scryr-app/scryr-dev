@@ -4,9 +4,9 @@ import viteReact from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
 import { fileURLToPath, URL } from "node:url";
-
 // https://vitejs.dev/config/
 export default defineConfig({
+	worker: { format: "es" },
 	plugins: [
 		devtools({
 			injectSource: {

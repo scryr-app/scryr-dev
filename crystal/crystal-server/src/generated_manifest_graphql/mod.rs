@@ -11,6 +11,34 @@ pub(crate) struct GeneratedManifestMutationRoot;
 
 #[Object]
 impl GeneratedManifestMutationRoot {
+    /// Save source and all its diagram artifacts with optimistic concurrency.
+    async fn save_manifest_document(
+        &self,
+        ctx: &Context<'_>,
+        identifier: String,
+        revision: String,
+        envelope: async_graphql::Json<serde_json::Value>,
+    ) -> async_graphql::Result<
+        async_graphql::Json<crystal_core::persistence::documents::ManifestDocument>,
+    > {
+        let context = ctx.data::<ManifestRequestContext>()?;
+        let state = ctx.data::<crate::state::AppState>()?;
+        if state.auth_mode == crate::state::AuthMode::Local
+            && !ctx
+                .data_opt::<crate::editor::EditorRequestAllowed>()
+                .is_some_and(|v| v.0)
+        {
+            return Err(async_graphql::Error::new(
+                "Local editor requests require the server's own origin",
+            ));
+        }
+        let editor = ctx.data::<crate::editor::EditorService>()?;
+        editor
+            .save(&state.db_pool, context, &identifier, &revision, envelope.0)
+            .await
+            .map(async_graphql::Json)
+            .map_err(async_graphql::Error::new)
+    }
     /// Append a typed operational observation for the active organization.
     async fn record_report(
         &self,

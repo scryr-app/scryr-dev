@@ -3,6 +3,8 @@
 #![allow(clippy::useless_let_if_seq)]
 
 mod auth;
+/// Source editing and explicit local workspace registration.
+pub mod editor;
 mod generated_manifest_graphql;
 mod health;
 mod http_handlers;

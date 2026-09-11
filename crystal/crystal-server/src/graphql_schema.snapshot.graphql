@@ -125,6 +125,10 @@ type Block {
 
 type GeneratedManifestMutationRoot {
 	"""
+	Save source and all its diagram artifacts with optimistic concurrency.
+	"""
+	saveManifestDocument(identifier: String!, revision: String!, envelope: JSON!): JSON!
+	"""
 	Append a typed operational observation for the active organization.
 	"""
 	recordReport(manifestId: String!, report: JSON!): Boolean!
@@ -176,6 +180,10 @@ type Link {
 }
 
 type QueryRoot {
+	"""
+	Read the selected diagram's complete source document.
+	"""
+	manifestDocument(identifier: String!): JSON!
 	"""
 	Execute a named local declaration without persisting a diagram.
 	"""

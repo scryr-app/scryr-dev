@@ -32,7 +32,7 @@ pub(super) async fn upsert_generated_manifest_row(
 }
 
 /// Insert or update the current `SQLite` manifest row.
-async fn upsert_current_manifest(
+pub(super) async fn upsert_current_manifest(
     transaction: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
     row: &GeneratedManifestRow,
     metadata: &ManifestUploadMetadata,
@@ -67,7 +67,7 @@ async fn upsert_current_manifest(
 }
 
 /// Append a generated manifest upload ledger row in `SQLite`.
-async fn insert_upload_ledger_row(
+pub(super) async fn insert_upload_ledger_row(
     transaction: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
     current_id: &str,
     row: &GeneratedManifestUploadRow,

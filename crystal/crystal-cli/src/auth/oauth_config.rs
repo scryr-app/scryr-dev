@@ -9,8 +9,7 @@ use sha2::{Digest, Sha256};
 use url::Url;
 
 pub(super) const DEFAULT_SCOPES: &str = "profile email offline_access";
-pub(super) const DEFAULT_CLERK_PUBLISHABLE_KEY: &str =
-    "pk_live_Y2xlcmsuc2NyeXIuYXBwJA";
+pub(super) const DEFAULT_CLERK_PUBLISHABLE_KEY: &str = "pk_live_Y2xlcmsuc2NyeXIuYXBwJA";
 pub(super) const DEFAULT_CLERK_OAUTH_CLIENT_ID: &str = "y9f16XlWxvQfR659";
 pub(super) const OAUTH_CALLBACK_PORT: u16 = 9789;
 
