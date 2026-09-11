@@ -244,7 +244,9 @@ export function DiagramButton({ className = "" }: Props) {
 			>
 				<Layers size={13} strokeWidth={2.2} className="shrink-0" />
 				<span className="flex min-w-0 flex-col text-left leading-snug">
-					<span className="truncate font-medium">{currentLabels.primary}</span>
+					<span className="truncate text-lg font-medium">
+						{currentLabels.primary}
+					</span>
 					{currentLabels.secondary && (
 						<span className="truncate text-[11px] text-white/40">
 							{currentLabels.secondary}

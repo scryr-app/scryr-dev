@@ -18,10 +18,10 @@
     "codegen:watch": "graphql-codegen --config codegen.yml --watch",
     "predev": "node scripts/sync-browser-sdk.mjs",
     "dev": "vite --port 3000",
-    "prebuild": "node scripts/sync-browser-sdk.mjs",
+    "prebuild": "node scripts/check-hosted-config.mjs && node scripts/sync-browser-sdk.mjs",
     "build": "vite build && tsc",
     "serve": "vite preview",
-    "test": "vitest run",
+    "test": "node --test scripts/check-hosted-config.test.mjs && vitest run --exclude scripts/check-hosted-config.test.mjs",
     "format": "biome format --write .",
     "lint": "biome lint .",
     "check": "biome check ."
