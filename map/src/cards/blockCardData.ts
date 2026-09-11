@@ -3,6 +3,12 @@ import type { RuntimeMetricSnapshot } from "../graphql/useDiagramMetrics";
 import type { CICDCardProps } from "./CICDCard";
 import type { DependenciesCardProps } from "./DependenciesCard";
 import type { GithubCardProps } from "./GithubCard";
+import {
+	type ActionRun,
+	type CardCategory,
+	type IntegrationView,
+	isIntegrationView,
+} from "./integrationCatalog";
 import type { MetricsCardProps } from "./MetricsCard";
 import type { PerformanceCardProps } from "./PerformanceCard";
 import { isOperationalReport, type OperationalReport } from "./ReportCard";
@@ -121,6 +127,10 @@ function inferBuildStatus(
 }
 
 export interface BlockCardData {
+	cards?: IntegrationView[];
+	cardCategories?: CardCategory[];
+	runtimeCards?: Record<string, RuntimeMetricSnapshot>;
+	actionRuns?: ActionRun[];
 	runtimeAnalytics?: RuntimeMetricSnapshot;
 	runtimeMetrics?: RuntimeMetricSnapshot;
 	reports: OperationalReport[];
@@ -147,6 +157,19 @@ export function getBlockCardData(block: Block): BlockCardData {
 	const cpuHistory = getValue(raw, ["performance", "cpuHistory"]);
 
 	return {
+		cards: Array.isArray(raw?.cards)
+			? raw.cards.filter(isIntegrationView)
+			: undefined,
+		cardCategories: Array.isArray(raw?.cardCategories)
+			? (raw.cardCategories as CardCategory[])
+			: undefined,
+		runtimeCards: asRecord(raw?.runtimeCards) as
+			| Record<string, RuntimeMetricSnapshot>
+			| undefined,
+		actionRuns:
+			(getValue(raw, ["cicd", "githubActions", "runs"]) as
+				| ActionRun[]
+				| undefined) ?? [],
 		runtimeAnalytics: raw?.runtimeAnalytics as
 			| RuntimeMetricSnapshot
 			| undefined,

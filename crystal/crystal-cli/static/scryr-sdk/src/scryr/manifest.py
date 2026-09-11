@@ -17,6 +17,7 @@ from pydantic import (
 )
 
 from .github import GithubActionsLog  # noqa: TC001 - Pydantic resolves this at runtime.
+from .integrations import CardCategory, Integration, IntegrationView
 from .metrics_source import PostHogSource, PrometheusSource  # noqa: TC001
 from .types import (
     AuthType,
@@ -882,6 +883,41 @@ class Manifest(BaseModel):
         description="Named forge configurations this component uses",
     )
 
+    integrations: list[Integration] = Field(default_factory=list)
+    cards: list[IntegrationView] | None = Field(default=None)
+    card_categories: list[CardCategory] = Field(
+        default_factory=lambda: list(CardCategory),
+        alias="cardCategories",
+    )
+
+    @model_validator(mode="after")
+    def validate_cards(self) -> Manifest:
+        """Require distinct views backed by explicitly included integration objects."""
+        if len({id(i) for i in self.integrations}) != len(self.integrations):
+            msg = "An integration may only appear once in a manifest"
+            raise ValueError(msg)
+        cards = self.cards or []
+        if len({id(c) for c in cards}) != len(cards):
+            msg = "A card may only appear once in a manifest"
+            raise ValueError(msg)
+        for card in cards:
+            for integration in self.integrations:
+                if card.integration is integration:
+                    break
+                if (
+                    integration.id
+                    and card.integration.id == integration.id
+                    and card.integration == integration
+                ):
+                    break
+            else:
+                msg = "Each card's integration must be included in Manifest.integrations"
+                raise ValueError(msg)
+        if len(set(self.card_categories)) != len(self.card_categories):
+            msg = "Card categories must be unique"
+            raise ValueError(msg)
+        return self
+
     # Manifest sections. Names intentionally match the map surface, but remain
     # domain-level Manifest section models rather than UI component references.
     info: Info = Field(default_factory=Info)
@@ -902,6 +938,9 @@ class Manifest(BaseModel):
         self,
         *,
         manifest_id: str | None = None,
+        integrations: list[Integration] | None = None,
+        cards: list[IntegrationView] | None = None,
+        card_categories: list[CardCategory] | None = None,
         name: Label | str = "",
         icon: Label | str = "",
         classification: Classification = Classification.public_api,
@@ -945,6 +984,9 @@ class Manifest(BaseModel):
         data.update(extra)
         optional_fields = {
             "manifest_id": manifest_id,
+            "integrations": integrations,
+            "cards": cards,
+            "card_categories": card_categories,
             "tags": tags,
             "connections": connections,
             "forges": forges,

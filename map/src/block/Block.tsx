@@ -88,7 +88,7 @@ export function Block({
 	const [isZoomButtonVisible, setIsZoomButtonVisible] = useState(false);
 	const zoomHideTimer = useRef<number | null>(null);
 	const fallbackCards =
-		cards ?? Array.from({ length: 6 }, () => ({ components: [] }));
+		cards ?? Array.from({ length: 8 }, () => ({ components: [] }));
 	const cardData = blockData ? getBlockCardData(blockData) : null;
 	const derivedCards = cardData
 		? createBlockDataCards(cardData)
@@ -107,7 +107,7 @@ export function Block({
 	const CARD_MARGIN = 0.1; // world-unit margin around all edges
 	const cardWidth = width - 2 * CARD_MARGIN;
 	const cardHeight = height - 2 * CARD_MARGIN;
-	const zoomButtonX = getCardHeaderZoomX(activeCardIndex, cardWidth);
+	const zoomButtonX = getCardHeaderZoomX(cardWidth);
 	const zoomButtonY = cardHeight / 2 - 0.13;
 
 	const overviewCard = (
@@ -135,9 +135,13 @@ export function Block({
 	);
 
 	const allCards = [
-		{ components: [overviewCard] },
+		{ id: "info", categoryIndex: 0, components: [overviewCard] },
 		...derivedCards,
-		{ components: diagrams.length > 0 ? [otherDiagramCard] : [] },
+		{
+			id: "diagrams",
+			categoryIndex: 7,
+			components: diagrams.length > 0 ? [otherDiagramCard] : [],
+		},
 	];
 
 	const showZoomButton = () => {

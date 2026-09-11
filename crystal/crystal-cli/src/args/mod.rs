@@ -56,6 +56,8 @@ pub(crate) enum Command {
     Inspect(InspectArgs),
     /// Apply database schema migrations without starting the HTTP server.
     Migrate,
+    /// Convert an existing JSON connection file to TOML without overwriting either file.
+    MigrateSecrets(MigrateSecretsArgs),
     /// Report a GitHub workflow run to Crystal.
     ReportActionStatus(ReportArgs),
     /// Generate manifest artifacts and persist them through GraphQL.
@@ -85,6 +87,8 @@ pub(crate) enum ResolvedCommand {
     Query(QueryArgs),
     /// Apply database schema migrations without starting the HTTP server.
     Migrate,
+    /// Convert an existing JSON connection file to TOML without overwriting either file.
+    MigrateSecrets(MigrateSecretsArgs),
     /// Report a GitHub workflow run to Crystal.
     ReportActionStatus(ReportArgs),
     /// Report operational results.
@@ -110,6 +114,7 @@ impl Args {
                 Command::Report(args) => ResolvedCommand::Report(args),
                 Command::ReportActionStatus(args) => ResolvedCommand::ReportActionStatus(args),
                 Command::Migrate => ResolvedCommand::Migrate,
+                Command::MigrateSecrets(args) => ResolvedCommand::MigrateSecrets(args),
                 Command::Serve(args) => ResolvedCommand::Serve(args),
                 Command::Generate(args) => ResolvedCommand::Generate((*args).into_request()),
                 Command::Auth(args) => ResolvedCommand::Auth(args),

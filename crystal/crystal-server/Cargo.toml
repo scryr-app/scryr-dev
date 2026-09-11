@@ -32,6 +32,9 @@ tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 uuid = { workspace = true }
 
+[dev-dependencies]
+tempfile = { workspace = true }
+
 [lib]
 name = "crystal_server"
 path = "src/lib.rs"

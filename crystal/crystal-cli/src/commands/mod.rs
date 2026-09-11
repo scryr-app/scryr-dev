@@ -3,6 +3,7 @@
 mod auth;
 mod generate;
 mod migrate;
+mod migrate_secrets;
 mod observations;
 mod query;
 mod report;
@@ -45,6 +46,7 @@ pub(crate) async fn run(command: ResolvedCommand) -> Result<(), String> {
             report::run(&args).await
         }
         ResolvedCommand::Migrate => migrate::run().await,
+        ResolvedCommand::MigrateSecrets(args) => migrate_secrets::run(&args),
         ResolvedCommand::Serve(args) => serve::run(&args).await,
         ResolvedCommand::Generate(args) => {
             eprintln!("Deprecated: use scryr push, scryr export, or scryr inspect");

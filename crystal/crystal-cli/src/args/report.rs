@@ -5,6 +5,9 @@ use std::path::PathBuf;
 
 #[derive(Args, Debug, Clone)]
 pub(crate) struct ReportArgs {
+    /// Select a typed GitHub Actions pipeline by its source variable name.
+    #[arg(long)]
+    pub card: Option<String>,
     #[arg(long)]
     pub dry_run: bool,
     #[arg(long)]

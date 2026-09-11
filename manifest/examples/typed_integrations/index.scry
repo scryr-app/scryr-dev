@@ -1,0 +1,68 @@
+"""Two performance providers and an uptime view on the same API block."""
+
+from scryr import (
+    CardCategory,
+    Diagram,
+    Grafana,
+    GrafanaAuthentication,
+    GrafanaPerformance,
+    GrafanaPerformanceQueries,
+    GrafanaUptime,
+    GrafanaUptimeQueries,
+    Manifest,
+    MetricUnit,
+    PostHog,
+    PostHogAuthentication,
+    PostHogPerformance,
+    PostHogPerformanceQueries,
+    PostHogQuery,
+    PrometheusQuery,
+)
+
+grafana_authentication = GrafanaAuthentication()
+posthog_authentication = PostHogAuthentication()
+
+grafana = Grafana(
+    authentication=grafana_authentication,
+    endpoint="https://prometheus.example.com",
+)
+posthog = PostHog(authentication=posthog_authentication, project_id=123)
+
+grafana_performance = GrafanaPerformance(
+    integration=grafana,
+    queries=GrafanaPerformanceQueries(
+        cpu_current=PrometheusQuery(
+            expression='100 * (1 - avg(rate(node_cpu_seconds_total{mode="idle"}[5m])))',
+            unit=MetricUnit.percent,
+        ),
+    ),
+)
+posthog_performance = PostHogPerformance(
+    integration=posthog,
+    queries=PostHogPerformanceQueries(
+        largest_contentful_paint=PostHogQuery(
+            expression=(
+                "SELECT quantile(0.95)(toFloat(properties.$web_vitals_LCP_value)) "
+                "FROM events WHERE event = '$web_vitals' "
+                "AND timestamp >= toDateTime({start}) AND timestamp < toDateTime({end}) "
+                "AND properties.environment = {environment}"
+            ),
+            unit=MetricUnit.milliseconds,
+            label="LCP p95",
+        ),
+    ),
+)
+grafana_uptime = GrafanaUptime(
+    integration=grafana,
+    queries=GrafanaUptimeQueries(
+        uptime=PrometheusQuery(expression="avg(up)", unit=MetricUnit.ratio),
+    ),
+)
+
+api = Manifest(
+    name="API",
+    integrations=[grafana, posthog],
+    cards=[grafana_performance, posthog_performance, grafana_uptime],
+    card_categories=[CardCategory.performance, CardCategory.uptime, CardCategory.cicd],
+)
+diagram = Diagram(name="Typed integrations", manifests=[api])

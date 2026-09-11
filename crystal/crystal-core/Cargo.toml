@@ -11,6 +11,7 @@ categories = ["development-tools"]
 include = ["Cargo.toml", "README.md", "src/**"]
 
 [dependencies]
+toml_edit.workspace = true
 chrono.workspace = true
 sha2.workspace = true
 async-graphql = { workspace = true }

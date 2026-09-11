@@ -47,13 +47,13 @@ async fn branch(
     args: &ReportArgs,
     event: &Value,
     run: &GithubActionRun,
+    configured_token: Option<&str>,
 ) -> Result<String, String> {
     if let Some(branch) = &args.branch {
         return Ok(branch.clone());
     }
-    let token = std::env::var("GITHUB_TOKEN").map_err(
-        |_| "GITHUB_TOKEN is required for automatic branch selection; alternatively pass --branch",
-    )?;
+    let token = configured_token.map(str::to_owned).or_else(|| std::env::var("GITHUB_TOKEN").ok())
+        .ok_or("Configure GitHubAuthentication in scryr.secrets.toml for automatic branch selection, or pass --branch")?;
     let api = endpoint(
         &std::env::var("GITHUB_API_URL").unwrap_or_else(|_| "https://api.github.com".into()),
     )?;
@@ -88,15 +88,63 @@ async fn branch(
         .ok_or_else(|| "missing repository default branch".into())
 }
 
-/// Send one observation through Crystal's authenticated history mutation.
-pub(crate) async fn run(args: &ReportArgs) -> Result<(), String> {
+/// Resolve one typed pipeline and its private authentication before reading the event.
+fn resolve_configuration(
+    args: &ReportArgs,
+) -> Result<(ReportArgs, Option<String>, Option<String>), String> {
     let mut resolved = args.clone();
+    let mut configured_token = None;
+    let mut repository = None;
     if let Some((manifest, root)) = super::report_config::resolve(&args.source, &args.manifest_id)?
     {
         manifest["manifestId"]
             .as_str()
             .ok_or("Missing manifest ID")?
             .clone_into(&mut resolved.manifest_id);
+        let pipelines: Vec<_> = manifest["cards"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter(|c| {
+                c["kind"] == "github_actions_pipeline"
+                    && args
+                        .card
+                        .as_deref()
+                        .is_none_or(|id| c["id"].as_str() == Some(id))
+            })
+            .collect();
+        if args.card.is_some() && pipelines.is_empty() {
+            return Err("No GitHub Actions pipeline matches --card".into());
+        }
+        if pipelines.len() > 1 {
+            return Err("Multiple GitHub Actions pipelines found; select --card".into());
+        }
+        if let Some(card) = pipelines.first() {
+            repository = card["integration"]["repository"]
+                .as_str()
+                .map(str::to_owned);
+            resolved.workflow_id = resolved.workflow_id.or_else(|| card["workflowId"].as_u64());
+            resolved.branch = resolved
+                .branch
+                .or_else(|| card["branch"].as_str().map(str::to_owned));
+            if let Some(name) = card["integration"]["authentication"]["id"].as_str() {
+                use crystal_core::integration_secrets::{
+                    Authentication, SecretsFile, secrets_path,
+                };
+                let secrets = SecretsFile::read(&secrets_path(&root.join("index.scry")))?;
+                let scope = secrets.scope(args.clerk_org_id.as_deref().unwrap_or("local-dev-org"));
+                match scope.authentication.get(name) {
+                    Some(Authentication::GitHub(secret)) => {
+                        configured_token = Some(secret.token.clone());
+                    }
+                    _ => {
+                        return Err(format!(
+                            "Missing GitHub authentication.{name} in scryr.secrets.toml"
+                        ));
+                    }
+                }
+            }
+        }
         let source = &manifest["cicd"]["source"];
         if resolved.jobs_file.is_none() {
             resolved.jobs_file = source["jobs_file"].as_str().map(|p| root.join(p));
@@ -108,6 +156,17 @@ pub(crate) async fn run(args: &ReportArgs) -> Result<(), String> {
             resolved.branch = source["branch"].as_str().map(str::to_owned);
         }
     }
+    if args.card.is_some() && repository.is_none() {
+        return Err(
+            "--card requires a manifest declaration selected with --path or --manifest".into(),
+        );
+    }
+    Ok((resolved, configured_token, repository))
+}
+
+/// Send one observation through Crystal's authenticated history mutation.
+pub(crate) async fn run(args: &ReportArgs) -> Result<(), String> {
+    let (resolved, configured_token, repository) = resolve_configuration(args)?;
     let args = &resolved;
     crystal_core::reports::validate_manifest_id(&args.manifest_id)?;
     let event: Value = serde_json::from_slice(
@@ -115,6 +174,12 @@ pub(crate) async fn run(args: &ReportArgs) -> Result<(), String> {
     )
     .map_err(|error| error.to_string())?;
     let mut observation = observation(&event)?;
+    if repository
+        .as_deref()
+        .is_some_and(|repo| repo != observation.repository)
+    {
+        return Err("Workflow event repository does not match the selected integration".into());
+    }
     if let Some(file) = &args.jobs_file {
         let payload: Value =
             serde_json::from_slice(&std::fs::read(file).map_err(|e| e.to_string())?)
@@ -134,7 +199,14 @@ pub(crate) async fn run(args: &ReportArgs) -> Result<(), String> {
         println!("Skipped unmatched workflow");
         return Ok(());
     }
-    let selected = branch(&client, args, &event, &observation).await?;
+    let selected = branch(
+        &client,
+        args,
+        &event,
+        &observation,
+        configured_token.as_deref(),
+    )
+    .await?;
     if observation.head_branch.as_deref() != Some(selected.as_str()) {
         println!("Skipped run outside selected branch {selected}");
         return Ok(());

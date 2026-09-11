@@ -243,11 +243,16 @@ def test_offline_sample_emits_a_status_timeline() -> None:
     manifest = Manifest.model_validate(
         next(record["manifest"] for record in records if record["variable_name"] == "api"),
     )
-    assert manifest.manifest_id == "services/api"
-    assert manifest.cicd is not None
-    assert manifest.cicd.build_status == "passing"
-    assert manifest.cicd.github_actions is not None
-    assert len(manifest.cicd.github_actions.runs[0].events) == 3
+    from scryr import GitHubActionsPipeline
+
+    assert manifest.manifest_id == "api"
+    assert manifest.cards is not None
+    pipeline = manifest.cards[0]
+    assert isinstance(pipeline, GitHubActionsPipeline)
+    assert pipeline.id == "github_pipeline"
+    assert pipeline.observations is not None
+    assert pipeline.observations.build_status(repository="example/api") == "passing"
+    assert len(pipeline.observations.runs[0].events) == 3
 
 
 def test_browser_history_matches_sdk() -> None:

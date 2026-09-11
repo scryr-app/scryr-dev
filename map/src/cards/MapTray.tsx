@@ -32,17 +32,20 @@ import {
 	setThemePreset,
 	ThemePresets,
 } from "../theme/theme";
+import { IntegrationSetupDialog } from "./IntegrationSetup";
 import { useMapTray } from "./MapTrayContext";
 
 const CARD_TYPES = [
 	{ index: 0, icon: Info, label: "Info" },
-	{ index: 1, icon: GitFork, label: "GitHub" },
+	{ index: 1, icon: GitFork, label: "Repository" },
 	{ index: 2, icon: Activity, label: "Metrics" },
 	{ index: 3, icon: Rocket, label: "CI/CD" },
 	{ index: 4, icon: TestTube, label: "Tests" },
 	{ index: 5, icon: Package, label: "Dependencies" },
 	{ index: 6, icon: Gauge, label: "Performance" },
 	{ index: 7, icon: Layers, label: "Diagrams" },
+	{ index: 8, icon: Activity, label: "Uptime" },
+	{ index: 9, icon: Gauge, label: "Analytics" },
 ] as const;
 
 /**
@@ -170,6 +173,7 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 				zIndex: 1000,
 			}}
 		>
+			<IntegrationSetupDialog />
 			{/* Theme dropdown — opens above the pill */}
 			{themeOpen && (
 				<div
@@ -516,6 +520,8 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 									activeCardIndex === index &&
 										"bg-white/20 text-white shadow-inner",
 								)}
+								aria-label={label}
+								aria-pressed={activeCardIndex === index}
 								onClick={() => toggleCard(index)}
 								onMouseEnter={() => setHoveredIndex(index)}
 								onMouseLeave={() => setHoveredIndex(null)}
@@ -546,6 +552,8 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 								activeCardIndex === index &&
 									"bg-white/20 text-white shadow-inner",
 							)}
+							aria-label={label}
+							aria-pressed={activeCardIndex === index}
 							onClick={() => toggleCard(index)}
 							onMouseEnter={() => setHoveredIndex(index)}
 							onMouseLeave={() => setHoveredIndex(null)}

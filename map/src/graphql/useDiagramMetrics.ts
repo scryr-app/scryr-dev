@@ -3,6 +3,7 @@ import { graphqlFetcher } from "./client";
 import type { GetBlocksQueryVariables } from "./generated";
 
 export interface RuntimeMetricSnapshot {
+	cards?: Record<string, RuntimeMetricSnapshot>;
 	analytics?: RuntimeMetricSnapshot;
 	source?: string;
 	windowStart?: number;

@@ -1,10 +1,14 @@
-import type { ReactNode } from "react";
+import { Text } from "@react-three/drei/core/Text";
+import { isValidElement, type ReactNode, useState } from "react";
 import * as THREE from "three";
 import { currentTheme } from "@/theme/theme";
 import { Card } from "../components/Card";
 import { useCardSlideAnimation } from "./useCardSlideAnimation";
 
 export interface CardSlotConfig {
+	categoryIndex?: number;
+	id?: string;
+	label?: string;
 	components: ReactNode[];
 	zOffset: number;
 }
@@ -51,7 +55,19 @@ export function CardSlot({
 		isSlotHovered,
 	});
 
-	const primaryComponent = config.components[0] ?? null;
+	const [selectedKey, setSelectedKey] = useState<string | null>(null);
+	const keys = config.components.map((c, i) =>
+		isValidElement(c) && c.key != null ? String(c.key) : String(i),
+	);
+	const selectedIndex = Math.max(
+		0,
+		selectedKey === null ? 0 : keys.indexOf(selectedKey),
+	);
+	const primaryComponent = config.components[selectedIndex] ?? null;
+	const selectRelative = (delta: number) => {
+		const next = (selectedIndex + delta + keys.length) % keys.length;
+		setSelectedKey(keys[next]);
+	};
 	const cardColor = new THREE.Color(blockColor)
 		.lerp(
 			new THREE.Color(currentTheme.cardHighlightColor),
@@ -100,7 +116,42 @@ export function CardSlot({
 				textColor={currentTheme.cardTextColor}
 				fontSize={0.12}
 			>
-				<group position={[0, 0, 0.001]}>{primaryComponent}</group>
+				<group
+					position={[0, config.components.length > 1 ? 0.04 : 0, 0.001]}
+					scale={config.components.length > 1 ? 0.9 : 1}
+				>
+					{primaryComponent}
+				</group>
+				{config.components.length > 1 && (
+					<group position={[0, -cardHeight / 2 + 0.12, 0.02]}>
+						<Text
+							position={[-0.9, 0, 0]}
+							fontSize={0.1}
+							color={currentTheme.cardTextColor}
+							onClick={(e) => {
+								e.stopPropagation();
+								selectRelative(-1);
+							}}
+						>
+							‹ Previous
+						</Text>
+						<Text
+							fontSize={0.09}
+							color={currentTheme.cardTextColor}
+						>{`${config.label ?? "Cards"} ${selectedIndex + 1}/${keys.length}`}</Text>
+						<Text
+							position={[0.9, 0, 0]}
+							fontSize={0.1}
+							color={currentTheme.cardTextColor}
+							onClick={(e) => {
+								e.stopPropagation();
+								selectRelative(1);
+							}}
+						>
+							Next ›
+						</Text>
+					</group>
+				)}
 			</Card>
 		</group>
 	);

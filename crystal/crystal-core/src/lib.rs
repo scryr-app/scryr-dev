@@ -19,3 +19,6 @@ pub mod graphql_types;
 pub mod manifest;
 /// Storage connections, reads, and writes.
 pub mod persistence;
+
+/// Shared TOML integration credential loading and validation.
+pub mod integration_secrets;

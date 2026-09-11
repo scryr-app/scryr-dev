@@ -2,28 +2,9 @@ import { RoundedBox } from "@react-three/drei/core/RoundedBox";
 import { useState } from "react";
 import { cameraStore } from "@/camera";
 
-const CARD_HEADER_TITLES = [
-	"INFO",
-	"GITHUB",
-	"METRICS",
-	"CI/CD",
-	"TESTS",
-	"DEPENDENCIES",
-	"PERFORMANCE",
-	"OTHER DIAGRAMS",
-];
-
-export function getCardHeaderZoomX(
-	activeCardIndex: number | null,
-	cardWidth: number,
-) {
-	const title = CARD_HEADER_TITLES[activeCardIndex ?? 0] ?? "CARD";
-	const titleTextStartX = -cardWidth / 2 + 0.28;
-	const estimatedTitleWidth = title.length * 0.076;
-	const gapAfterTitle = 0.13;
-	const maxX = cardWidth / 2 - 0.18;
-
-	return Math.min(maxX, titleTextStartX + estimatedTitleWidth + gapAfterTitle);
+/** Keep the control clear of provider-specific card titles. */
+export function getCardHeaderZoomX(cardWidth: number) {
+	return cardWidth / 2 - 0.18;
 }
 
 interface ZoomButtonProps {

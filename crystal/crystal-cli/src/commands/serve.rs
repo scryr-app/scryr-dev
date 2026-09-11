@@ -1,6 +1,7 @@
 //! Start the local UI and load validated manifest artifacts.
 use super::workflow::{Project, publish};
 use crate::args::ServerArgs;
+use sha2::{Digest, Sha256};
 use std::time::Duration;
 
 /// Run the server, optionally formatting, validating, and watching local sources.
@@ -126,7 +127,16 @@ async fn load_loop(args: &ServerArgs, workspace: &crystal_server::editor::LocalW
             .await;
             let (result, revision) = match prepared {
                 Ok(Ok((project, checked, revision))) => {
-                    (publish(&project, checked).await, revision)
+                    let declarations =
+                        serde_json::from_str(&checked.json).map_err(|e| e.to_string());
+                    let result = match declarations {
+                        Ok(declarations) => match publish(&project, checked).await {
+                            Ok(url) => workspace.set_integrations(declarations).map(|()| url),
+                            Err(error) => Err(error),
+                        },
+                        Err(error) => Err(error),
+                    };
+                    (result, revision)
                 }
                 Ok(Err(error)) => (Err(error), fingerprint.clone()),
                 Err(error) => (Err(error.to_string()), fingerprint.clone()),
@@ -160,7 +170,13 @@ async fn load_loop(args: &ServerArgs, workspace: &crystal_server::editor::LocalW
 /// Fingerprint source contents, including creation/deletion, without executing code.
 fn fingerprint(args: &crate::args::GenerateCommonArgs) -> String {
     let file = args.manifest_dir.join(&args.manifest_file);
-    crate::manifest_source::collect_manifest_source_files(&file)
+    let sources = crate::manifest_source::collect_manifest_source_files(&file)
         .and_then(|files| serde_json::to_string(&files).map_err(|e| e.to_string()))
-        .unwrap_or_else(|error| error)
+        .unwrap_or_else(|error| error);
+    let mut digest = Sha256::new();
+    digest.update(sources.as_bytes());
+    if let Ok(secret_file) = std::fs::read(crystal_core::integration_secrets::secrets_path(&file)) {
+        digest.update(secret_file);
+    }
+    format!("{:?}", digest.finalize())
 }
