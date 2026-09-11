@@ -59,7 +59,7 @@ async function openEditor(page: Page) {
 }
 async function run(page: Page, code: string, location: "disk" | "cloud") {
     await page.locator(".cm-content").fill(code);
-    await page.getByRole("button", { name: "Run", exact: true }).click();
+    await page.getByRole("button", { name: "Save and Run", exact: true }).click();
     await expect(page.getByRole("status").filter({ hasText: /Saved to .*Diagram updated|Run failed/ })).toBeVisible({ timeout: 120_000 });
     expect(await page.getByRole("log").innerText()).not.toContain("Error:");
     await expect(page.getByRole("status").filter({ hasText: `Saved to ${location} · Diagram updated` })).toBeVisible();
@@ -88,21 +88,21 @@ test("standalone serve edits disk, refreshes fresh blocks, survives restart, and
     expect(blocks.data.blocks.some((block: {name: string}) => block.name === "Console Web")).toBe(true);
     await run(page, changed.replaceAll("Console Web", "Console Web Again"), "disk");
     await page.locator(".cm-content").fill(`${changed}\ndef invalid_native() -> None:\n    unused = 1\n`);
-    await page.getByRole("button", { name: "Run", exact: true }).click();
+    await page.getByRole("button", { name: "Save and Run", exact: true }).click();
     await expect(page.getByRole("status").filter({ hasText: "Run failed" })).toBeVisible({ timeout: 120_000 });
     await expect(page.getByRole("log")).toContainText("F841");
     expect(await readFile(resolve(directory, "index.scry"), "utf8")).toContain("Console Web Again");
     await page.locator(".cm-content").fill("while True:\n    pass\n");
-    await page.getByRole("button", { name: "Run", exact: true }).click();
+    await page.getByRole("button", { name: "Save and Run", exact: true }).click();
     await page.getByRole("button", { name: "Cancel run", exact: true }).click();
     await expect(page.getByRole("log")).toContainText("Execution cancelled");
     await page.locator(".cm-content").fill("this is invalid Python !!!");
-    await page.getByRole("button", { name: "Run", exact: true }).click();
+    await page.getByRole("button", { name: "Save and Run", exact: true }).click();
     await expect(page.getByRole("status").filter({ hasText: "Run failed" })).toBeVisible({ timeout: 120_000 });
     expect(await readFile(resolve(directory, "index.scry"), "utf8")).toContain("Console Web Again");
     await writeFile(resolve(directory, "index.scry"), changed.replaceAll("Console Web", "External Web"));
     await expect(page.getByRole("alert")).toContainText("Source changed elsewhere");
-    await expect(page.getByRole("button", { name: "Run", exact: true })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "Save and Run", exact: true })).toBeDisabled();
     await stop();
     await launch(request);
     await page.goto(base);
@@ -153,4 +153,28 @@ test("nested entrypoint preserves project tooling configuration and only writes 
     const source = await gql(request, '{ manifestDocument(identifier: "mern_diagram") }');
     expect(source.data.manifestDocument.folderPath).toBe("services");
     expect(source.data.manifestDocument.local).toBe(true);
+});
+
+test("console follows tray brightness and keeps source controls in the bottom toolbar", async ({ page, request }) => {
+    await launch(request);
+    await openEditor(page);
+    const panel = page.getByRole("region", { name: "Manifest source editor" });
+    const footer = panel.locator("footer");
+    await expect(panel.getByRole("button", { name: "Save and Run", exact: true })).toBeVisible();
+    await expect(footer.getByRole("checkbox", { name: "Follow selected block" })).toBeVisible();
+    await expect(footer.getByRole("button", { name: "Reload source" })).toBeVisible();
+    await expect(panel.getByText(/Run saves/)).toHaveCount(0);
+    await expect(page.locator(".cm-editor")).toHaveCSS("color", "rgb(15, 23, 42)");
+    const palette = page.locator("button").filter({ has: page.locator("svg.lucide-palette") });
+    const tray = palette.locator("../..");
+    expect(await panel.evaluate(el => getComputedStyle(el).backgroundColor)).toBe(await tray.evaluate(el => getComputedStyle(el).backgroundColor));
+    await page.screenshot({ path: test.info().outputPath("console-light.png") });
+    await palette.click();
+    await Promise.all([
+        page.waitForEvent("load"),
+        page.getByRole("switch", { name: "Switch to dark mode" }).click(),
+    ]);
+    await page.getByRole("button", { name: "Show editor", exact: true }).click();
+    await expect(page.locator(".cm-editor")).toHaveCSS("color", "rgb(226, 232, 240)");
+    await page.screenshot({ path: test.info().outputPath("console-dark.png") });
 });

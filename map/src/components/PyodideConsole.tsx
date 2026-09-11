@@ -1,7 +1,8 @@
-import { LoaderCircle, Play, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Crosshair, LoaderCircle, Play, RefreshCw, X } from "lucide-react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useMapTray } from "@/cards/MapTrayContext";
 import { useManifestEditor } from "@/graphql/useManifestEditor";
+import { getDiagramMode, subscribeDiagramMode } from "@/theme/theme";
 import {
 	PythonCodeEditor,
 	type PythonCodeEditorHandle,
@@ -22,7 +23,7 @@ export function PyodideConsole({
 	const editor = useManifestEditor(isOpen);
 	const editorRef = useRef<PythonCodeEditorHandle | null>(null);
 	const { selectedBlock } = useMapTray();
-	const [theme, setTheme] = useState<"dark" | "light">("dark");
+	const theme = useSyncExternalStore(subscribeDiagramMode, getDiagramMode);
 	const [follow, setFollow] = useState(true);
 	const resize = useRef<{ x: number; width: number } | null>(null);
 	useEffect(() => {
@@ -60,7 +61,7 @@ export function PyodideConsole({
 		<section
 			aria-label="Manifest source editor"
 			style={{ width: panelWidth }}
-			className={`absolute left-4 top-18 z-[920] flex h-[calc(100vh-6rem)] max-h-[46rem] overflow-hidden rounded-[28px] border shadow-2xl backdrop-blur-2xl ${theme === "dark" ? "border-white/18 bg-black/85 text-slate-100" : "border-black/10 bg-white/90 text-slate-900"}`}
+			className="absolute left-4 top-18 z-[920] flex h-[calc(100vh-6rem)] max-h-[46rem] overflow-hidden rounded-[28px] border border-white/15 bg-black/40 text-slate-100 shadow-2xl backdrop-blur-md"
 		>
 			<div className="flex min-w-0 flex-1 flex-col">
 				<header className="flex flex-wrap items-center gap-2 border-b border-current/15 p-3">
@@ -95,45 +96,9 @@ export function PyodideConsole({
 						) : (
 							<Play size={14} />
 						)}{" "}
-						Run
+						Save and Run
 					</button>
 				</header>
-				<div className="flex flex-wrap gap-3 border-b border-current/15 px-3 py-2 text-xs">
-					<button
-						type="button"
-						onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-					>
-						Use {theme === "dark" ? "light" : "dark"} theme
-					</button>
-					<label>
-						<input
-							type="checkbox"
-							checked={follow}
-							onChange={(event) => setFollow(event.target.checked)}
-						/>{" "}
-						Follow selected block
-					</label>
-					<button
-						type="button"
-						disabled={editor.running}
-						onClick={() => {
-							if (
-								!editor.dirty ||
-								window.confirm(
-									"Discard this unsaved draft and reload the saved source?",
-								)
-							)
-								void editor.reload();
-						}}
-					>
-						Reload source
-					</button>
-					{editor.canCancel && (
-						<button type="button" onClick={editor.cancel}>
-							Cancel run
-						</button>
-					)}
-				</div>
 				{editor.conflict && (
 					<div role="alert" className="bg-amber-500/15 p-3 text-sm">
 						Source changed elsewhere. Your draft is retained; copy it before
@@ -145,7 +110,9 @@ export function PyodideConsole({
 						This source is read-only in the current session.
 					</div>
 				)}
-				<div className="min-h-0 flex-1 overflow-hidden">
+				<div
+					className={`min-h-0 flex-1 overflow-hidden ${theme === "dark" ? "bg-[#1e1e1e]" : "bg-white"}`}
+				>
 					<PythonCodeEditor
 						ref={editorRef}
 						value={editor.code}
@@ -154,13 +121,54 @@ export function PyodideConsole({
 					/>
 				</div>
 				<footer className="border-t border-current/15 p-3 text-xs">
+					<div className="mb-2 flex flex-wrap items-center gap-2">
+						{editor.canCancel && (
+							<button
+								type="button"
+								onClick={editor.cancel}
+								className="mr-auto inline-flex items-center rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 font-medium text-slate-300 transition-colors hover:border-white/20 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/70"
+							>
+								Cancel run
+							</button>
+						)}
+						<div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+							<label
+								className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 py-1.5 font-medium shadow-sm transition-colors focus-within:ring-2 focus-within:ring-cyan-400/70 ${
+									follow
+										? "border-cyan-300/25 bg-cyan-400/15 text-cyan-100 hover:bg-cyan-400/20"
+										: "border-white/10 bg-white/5 text-slate-300 hover:border-white/20 hover:bg-white/10 hover:text-white"
+								}`}
+							>
+								<input
+									type="checkbox"
+									checked={follow}
+									onChange={(event) => setFollow(event.target.checked)}
+									className="sr-only"
+								/>
+								<Crosshair size={14} strokeWidth={2} aria-hidden="true" />
+								Follow selected block
+							</label>
+							<button
+								type="button"
+								disabled={editor.running}
+								onClick={() => {
+									if (
+										!editor.dirty ||
+										window.confirm(
+											"Discard this unsaved draft and reload the saved source?",
+										)
+									)
+										void editor.reload();
+								}}
+								className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 font-medium text-slate-300 shadow-sm transition-colors hover:border-white/20 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/70 disabled:cursor-not-allowed disabled:opacity-40"
+							>
+								<RefreshCw size={14} strokeWidth={2} aria-hidden="true" />
+								Reload source
+							</button>
+						</div>
+					</div>
 					<div role="status" aria-live="polite">
 						{editor.status}
-					</div>
-					<div className="mt-1 opacity-60">
-						{editor.doc?.local
-							? "Run saves the local file and updates its diagrams."
-							: "Run saves this source and its diagrams to the server."}
 					</div>
 					{editor.output && (
 						<pre

@@ -470,6 +470,15 @@ export function getDiagramMode(): DiagramMode {
 	return currentDiagramMode;
 }
 
+const diagramModeListeners = new Set<() => void>();
+
+export function subscribeDiagramMode(listener: () => void): () => void {
+	diagramModeListeners.add(listener);
+	return () => {
+		diagramModeListeners.delete(listener);
+	};
+}
+
 // Available theme presets
 export const ThemePresets = {
 	AutumnOffice: AutumnOfficeTheme,
@@ -489,6 +498,7 @@ export function setTheme(themeAttributes: ThemeAttributes): void {
 export function setDiagramMode(mode: DiagramMode): void {
 	currentDiagramMode = mode;
 	Object.assign(currentTheme, activeTheme);
+	for (const listener of diagramModeListeners) listener();
 }
 
 // Convenience function to set theme by preset name
