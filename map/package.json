@@ -10,7 +10,7 @@
   },
   "type": "module",
   "engines": {
-    "node": "26.x"
+    "node": "24.x"
   },
   "scripts": {
     "test:editor": "playwright test",

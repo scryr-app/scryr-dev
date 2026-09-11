@@ -59,9 +59,7 @@ function consoleView() {
 }
 it("labels the action Save and Run and groups source controls with the bottom status", () => {
 	consoleView();
-	fireEvent.click(
-		screen.getByRole("button", { name: "Save and Run" }),
-	);
+	fireEvent.click(screen.getByRole("button", { name: "Save and Run" }));
 	expect(editor.run).toHaveBeenCalledOnce();
 	const panel = screen.getByRole("region", { name: "Manifest source editor" });
 	const footer = panel.querySelector("footer");
