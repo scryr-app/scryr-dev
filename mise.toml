@@ -243,7 +243,7 @@ description = "Generate manifest field type metadata via the Scryr CLI"
 dir = "{{config_root}}"
 run = "cargo run --locked --manifest-path crystal/Cargo.toml -p crystal-cli -- inspect types --path tests/samples/open_saas/index.scry --manifest-dir manifest --scryr-dir .cache/scryr"
 
-[tasks."contribute:install"]
+[tasks."contribute:oss:install"]
 description = "Build and install the self-contained scryr CLI on PATH"
 dir = "{{config_root}}"
 run = '''

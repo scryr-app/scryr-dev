@@ -49,4 +49,21 @@ describe("reported card data", () => {
 		expect(data.cicd.failedBuilds).toBe(0);
 		expect(data.cicd.deployStatusProd).toBeUndefined();
 	});
+	it("renders durable GitHub Actions summaries attached by the server", () => {
+		const data = getBlockCardData(
+			block({
+				cicd: {
+					platform: "github_actions",
+					buildStatus: "passing",
+					lastBuild: "2026-09-08T10:02:00Z",
+					githubActions: { runs: [{ runId: 12345 }] },
+				},
+			}),
+		);
+		expect(data.cicd).toMatchObject({
+			platform: "github_actions",
+			buildStatus: "passing",
+			lastBuild: "2026-09-08T10:02:00Z",
+		});
+	});
 });
