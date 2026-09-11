@@ -2,6 +2,7 @@
 name = "crystal-core"
 version = "0.5.0"
 edition = "2024"
+publish = false
 description = "Shared models, artifact generation, and persistence for Scryr generated manifests."
 readme = "../README.md"
 license = "MIT"

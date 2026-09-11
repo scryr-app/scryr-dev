@@ -40,7 +40,7 @@ To generate an artifact from a bundled sample:
 Release automation builds Linux and macOS archives for x86_64 and ARM64, with
 SHA-256 checksums, as draft GitHub Releases. Maintainers review and publish them;
 see available builds on the [releases page](https://github.com/scryr-app/scryr-dev/releases).
-The distribution workflow supports npm, Homebrew, and crates.io.
+The distribution workflow publishes the CLI through Homebrew.
 
 ## Develop and contribute
 
