@@ -212,17 +212,14 @@ mise run release:validate
 mise run release:distribute
 ```
 
-Set `GH_REPO`, GitHub authentication, `NPM_PACKAGE_NAME`, `NPM_TOKEN`,
-`HOMEBREW_TAP`, `HOMEBREW_TAP_TOKEN`, and `CARGO_REGISTRY_TOKEN` as shown in
-`mise.local.toml.example`. Distribution validates settings, downloads and verifies
-the published artifacts, prepares packages, and publishes npm, Homebrew, then
-crates.io in order. A draft or prerelease is not eligible.
+Set `GH_REPO`, GitHub authentication, `HOMEBREW_TAP`, and
+`HOMEBREW_TAP_TOKEN` as shown in `mise.local.toml.example`. Distribution validates
+settings, downloads and verifies the published artifacts, prepares the formula,
+and publishes it to the Homebrew tap. A draft or prerelease is not eligible.
 
-`release:distribution:prepare` prepares publisher inputs without publishing.
-The targeted `release:distribute:npm`, `release:distribute:homebrew`, and
-`release:distribute:crates` tasks are maintenance operations requiring their
-respective credentials and prepared inputs. Publishing across registries is
-sequential, not atomic.
+`release:distribution:prepare` prepares the formula without publishing.
+`release:distribute:homebrew` is the targeted maintenance operation for updating
+the tap and requires its credentials and prepared input.
 
 ## Deploy cloud
 

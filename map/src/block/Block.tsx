@@ -191,7 +191,13 @@ export function Block({
 			}}
 		>
 			{/* Top label with icon and name */}
-			<TopLabel icon={icon} name={name} fontColor={fontColor} hh={hh} />
+			<TopLabel
+				icon={icon}
+				name={name}
+				fontColor={fontColor}
+				hh={hh}
+				width={width}
+			/>
 
 			{/* Outer and inner walls */}
 			<Walls color={color} hw={hw} hh={hh} hd={hd} />

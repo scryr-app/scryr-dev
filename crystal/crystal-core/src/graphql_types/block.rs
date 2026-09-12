@@ -265,15 +265,7 @@ impl Block {
 
     /// Named connections to other components in the graph.
     pub async fn connections(&self) -> Vec<String> {
-        self.raw_json
-            .get("connections")
-            .and_then(Value::as_array)
-            .map(|arr| {
-                arr.iter()
-                    .filter_map(|item| item.as_str().map(std::string::ToString::to_string))
-                    .collect()
-            })
-            .unwrap_or_default()
+        block_connections(&self.raw_json)
     }
 
     /// Infrastructure as Code tooling (terraform, pulumi, cdk, etc.).
@@ -314,11 +306,30 @@ fn block_icon(raw_json: &Value) -> Option<String> {
         .map(str::to_owned)
 }
 
+fn block_connections(raw_json: &Value) -> Vec<String> {
+    raw_json
+        .get("connections")
+        .and_then(Value::as_array)
+        .map(|connections| {
+            connections
+                .iter()
+                .filter_map(|connection| {
+                    connection
+                        .as_str()
+                        .or_else(|| connection.get("name").and_then(Value::as_str))
+                        .filter(|name| !name.trim().is_empty())
+                        .map(str::to_owned)
+                })
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
 #[cfg(test)]
 mod tests {
     use serde_json::json;
 
-    use super::block_icon;
+    use super::{block_connections, block_icon};
 
     #[test]
     fn block_icon_does_not_invent_classification_icon() {
@@ -338,6 +349,30 @@ mod tests {
         });
 
         assert_eq!(block_icon(&block).as_deref(), Some("🧪"));
+    }
+
+    #[test]
+    fn block_connections_support_manifest_references_and_legacy_names() {
+        let block = json!({
+            "connections": [
+                { "name": "Database", "connections": [] },
+                "Legacy Queue"
+            ]
+        });
+
+        assert_eq!(
+            block_connections(&block),
+            vec!["Database".to_string(), "Legacy Queue".to_string()]
+        );
+    }
+
+    #[test]
+    fn block_connections_ignore_invalid_or_empty_references() {
+        let block = json!({
+            "connections": [{ "name": "" }, {}, null, 42]
+        });
+
+        assert!(block_connections(&block).is_empty());
     }
 
     #[test]
