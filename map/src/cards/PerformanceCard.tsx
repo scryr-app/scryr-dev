@@ -5,7 +5,6 @@ import { currentTheme } from "@/theme/theme";
 const CARD_SIZE_X = 2.8;
 const CARD_SIZE_Y = 1.8;
 const PIXEL_SIZE = 0.01;
-const LABEL_COLOR = "rgba(255,255,255,0.40)";
 
 // Chart visual constants (virtual px at PIXEL_SIZE=0.01)
 const CHART_H = 40; // inner bar area height
@@ -78,7 +77,7 @@ function CpuChart({ data }: CpuChartProps) {
 			overflow="hidden"
 		>
 			{count === 0 ? (
-				<Text fontSize={9} color={LABEL_COLOR}>
+				<Text fontSize={9} color={currentTheme.cardMutedTextColor}>
 					no data
 				</Text>
 			) : (
@@ -152,7 +151,7 @@ export function PerformanceCard({
 						PERFORMANCE
 					</Text>
 				</Container>
-				<Text fontSize={11} color={LABEL_COLOR}>
+				<Text fontSize={11} color={currentTheme.cardMutedTextColor}>
 					{timeWindow}
 				</Text>
 			</Container>
@@ -169,7 +168,7 @@ export function PerformanceCard({
 				<Text fontSize={24} color={cpuTextColor(cpuCurrent)}>
 					{cpuCurrent !== undefined ? `${cpuCurrent.toFixed(1)}%` : "--"}
 				</Text>
-				<Text fontSize={9} color={LABEL_COLOR}>
+				<Text fontSize={9} color={currentTheme.cardMutedTextColor}>
 					now
 				</Text>
 			</Container>
@@ -177,8 +176,8 @@ export function PerformanceCard({
 			{/* ── Chart ───────────────────────────────────────────── */}
 			<Container flexDirection="column" gap={3}>
 				<Container flexDirection="row" alignItems="center" gap={3}>
-					<Clock width={8} height={8} color={LABEL_COLOR} />
-					<Text fontSize={8} color={LABEL_COLOR}>
+					<Clock width={8} height={8} color={currentTheme.cardMutedTextColor} />
+					<Text fontSize={8} color={currentTheme.cardMutedTextColor}>
 						HISTORY
 					</Text>
 				</Container>

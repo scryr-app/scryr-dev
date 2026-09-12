@@ -6,8 +6,6 @@ import { currentTheme } from "@/theme/theme";
 const CARD_SIZE_X = 2.8;
 const CARD_SIZE_Y = 1.8;
 const PIXEL_SIZE = 0.01;
-const INSET_BG = "rgba(0,0,0,0.22)";
-const LABEL_COLOR = "rgba(255,255,255,0.40)";
 
 function Section({
 	label,
@@ -21,7 +19,7 @@ function Section({
 	return (
 		<Container
 			flexDirection="column"
-			backgroundColor={INSET_BG}
+			backgroundColor={currentTheme.cardInsetColor}
 			borderRadius={5}
 			padding={7}
 			gap={4}
@@ -29,7 +27,7 @@ function Section({
 			{label && (
 				<Container flexDirection="row" alignItems="center" gap={3}>
 					{icon}
-					<Text fontSize={8} color={LABEL_COLOR}>
+					<Text fontSize={8} color={currentTheme.cardMutedTextColor}>
 						{label}
 					</Text>
 				</Container>
@@ -119,7 +117,7 @@ export function CICDCard({
 					</Text>
 				</Container>
 				{platform && (
-					<Text fontSize={11} color={LABEL_COLOR}>
+					<Text fontSize={11} color={currentTheme.cardMutedTextColor}>
 						{platform}
 					</Text>
 				)}
@@ -128,7 +126,13 @@ export function CICDCard({
 			{/* Build */}
 			<Section
 				label="BUILD"
-				icon={<Hammer width={8} height={8} color={LABEL_COLOR} />}
+				icon={
+					<Hammer
+						width={8}
+						height={8}
+						color={currentTheme.cardMutedTextColor}
+					/>
+				}
 			>
 				{buildStatus && (
 					<Container flexDirection="row" alignItems="center" gap={4}>
@@ -145,7 +149,7 @@ export function CICDCard({
 					</Container>
 				)}
 				{lastBuild && (
-					<Text fontSize={11} color={LABEL_COLOR}>
+					<Text fontSize={11} color={currentTheme.cardMutedTextColor}>
 						{lastBuild}
 					</Text>
 				)}
@@ -154,11 +158,17 @@ export function CICDCard({
 			{/* Deploy */}
 			<Section
 				label="DEPLOY"
-				icon={<Rocket width={8} height={8} color={LABEL_COLOR} />}
+				icon={
+					<Rocket
+						width={8}
+						height={8}
+						color={currentTheme.cardMutedTextColor}
+					/>
+				}
 			>
 				{deployStatusProd && (
 					<Container flexDirection="column" gap={2}>
-						<Text fontSize={8} color={LABEL_COLOR}>
+						<Text fontSize={8} color={currentTheme.cardMutedTextColor}>
 							prod
 						</Text>
 						<Text fontSize={12} color={deployColor[deployStatusProd]}>
@@ -168,7 +178,7 @@ export function CICDCard({
 				)}
 				{deployStatusStaging && (
 					<Container flexDirection="column" gap={2} alignItems="flex-end">
-						<Text fontSize={8} color={LABEL_COLOR}>
+						<Text fontSize={8} color={currentTheme.cardMutedTextColor}>
 							staging
 						</Text>
 						<Text fontSize={12} color={deployColor[deployStatusStaging]}>
@@ -181,7 +191,13 @@ export function CICDCard({
 			{/* Pipeline */}
 			<Section
 				label="PIPELINE"
-				icon={<GitMerge width={8} height={8} color={LABEL_COLOR} />}
+				icon={
+					<GitMerge
+						width={8}
+						height={8}
+						color={currentTheme.cardMutedTextColor}
+					/>
+				}
 			>
 				{pipelineDuration !== undefined && (
 					<Container flexDirection="row" alignItems="center" gap={4}>

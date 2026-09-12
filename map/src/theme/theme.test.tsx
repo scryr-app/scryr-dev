@@ -38,18 +38,25 @@ it("switches the whole appearance and persists it without remounting the draft",
 	const draft = screen.getByRole("textbox", { name: "Draft" });
 	fireEvent.change(draft, { target: { value: "keep my changes" } });
 	localStorage.setItem("diagramMode", "light");
-	fireEvent.click(screen.getByRole("button", { name: /Lightning Neon/ }));
+	fireEvent.click(screen.getByRole("button", { name: /Luminous Crystal/ }));
 	expect(screen.getByLabelText("Appearance").textContent).toBe(
 		"dark / crystal / glow",
 	);
 	expect(
 		screen
-			.getByRole("button", { name: /Lightning Neon/ })
+			.getByRole("button", { name: /Luminous Crystal/ })
 			.getAttribute("aria-pressed"),
 	).toBe("true");
 	expect(localStorage.getItem("selectedTheme")).toBe("LightningNeon");
 	expect(localStorage.getItem("diagramMode")).toBeNull();
 	expect(screen.getByRole("textbox", { name: "Draft" })).toBe(draft);
+	expect((draft as HTMLInputElement).value).toBe("keep my changes");
+	fireEvent.click(screen.getByRole("button", { name: /Scholarly Grimoire/ }));
+	expect(screen.getByLabelText("Appearance").textContent).toBe(
+		"dark / leather / matte",
+	);
+	expect(localStorage.getItem("selectedTheme")).toBe("ScholarsGrimoire");
+	expect(getTheme().cardTextColor).toBe("#fff5df");
 	expect((draft as HTMLInputElement).value).toBe("keep my changes");
 	fireEvent.click(screen.getByRole("button", { name: /Industrial Forest/ }));
 	expect(screen.getByLabelText("Appearance").textContent).toBe(
@@ -61,6 +68,7 @@ it("switches the whole appearance and persists it without remounting the draft",
 
 it.each([
 	["LightningNeon", "light", "LightningNeon"],
+	["ScholarsGrimoire", "light", "ScholarsGrimoire"],
 	["IndustrialForest", "dark", "IndustrialForest"],
 	["AutumnOffice", "dark", "LightningNeon"],
 	["ForestFactory", "light", "IndustrialForest"],

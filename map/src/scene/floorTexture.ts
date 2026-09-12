@@ -9,7 +9,11 @@ const TEXTURE_SIZE = 256;
 const TILE_COUNT = 8;
 const TILE_SIZE = TEXTURE_SIZE / TILE_COUNT;
 
-export function createFloorTexture(evenColor: string, oddColor: string) {
+export function createFloorTexture(
+	evenColor: string,
+	oddColor: string,
+	pattern?: "wood",
+) {
 	if (typeof document === "undefined") {
 		return null;
 	}
@@ -32,6 +36,26 @@ export function createFloorTexture(evenColor: string, oddColor: string) {
 				TILE_SIZE,
 				TILE_SIZE,
 			);
+		}
+	}
+
+	if (pattern === "wood") {
+		// Long walnut boards, with subtle grain and staggered joins.
+		for (let plank = 0; plank < 4; plank++) {
+			context.fillStyle = plank % 2 ? oddColor : evenColor;
+			context.fillRect(plank * 64, 0, 64, TEXTURE_SIZE);
+			for (let grain = 0; grain < 28; grain++) {
+				const x = plank * 64 + grain * 2.3;
+				context.strokeStyle =
+					grain % 2 ? "rgba(187,142,79,0.045)" : "rgba(0,0,0,0.12)";
+				context.beginPath();
+				context.moveTo(x, 0);
+				context.bezierCurveTo(x + 3, 80, x - 2, 170, x + 1, 256);
+				context.stroke();
+			}
+			context.fillStyle = "rgba(0,0,0,0.35)";
+			context.fillRect(plank * 64, 0, 1, 256);
+			context.fillRect(plank * 64, plank % 2 ? 160 : 64, 64, 1);
 		}
 	}
 

@@ -15,11 +15,14 @@ export interface SceneLight {
 }
 export interface ThemeAppearance {
 	textures: {
-		wall: "ribbed" | "crystal";
+		wall: "ribbed" | "crystal" | "leather";
+		card?: "parchment";
+		paperColor?: string;
 		wallBrightness: number;
 		glowCore: number;
 		glowRim: number;
 	};
+	content?: { text: string; muted: string; link: string; inset: string };
 	shapes: {
 		flatFaces: boolean;
 		cardRadius: number;
@@ -43,6 +46,7 @@ export interface ThemeAppearance {
 		reflections: (SceneLight & { scale: [number, number, number] })[];
 	};
 	floor: {
+		pattern?: "wood";
 		tiles: [string, string];
 		opacity: number;
 		roughness: number;
@@ -208,4 +212,82 @@ export const neonAppearance: ThemeAppearance = {
 	},
 	connections: { color: "#b974ff", luminous: true, haloOpacity: 0.1 },
 	view: { fov: 32, position: [10, 11, 16] },
+};
+
+/** A candlelit reading room: leather bindings, aged paper and antique brass. */
+export const grimoireAppearance: ThemeAppearance = {
+	textures: {
+		wall: "leather",
+		wallBrightness: 1,
+		card: "parchment",
+		glowCore: 0,
+		glowRim: 0,
+	},
+	content: {
+		text: "#fff5df",
+		muted: "#e1d2b5",
+		link: "#d9c8ff",
+		inset: "rgba(20,14,9,0.16)",
+	},
+	shapes: {
+		flatFaces: true,
+		cardRadius: 0.007,
+		frameFront: 0,
+		frameBack: 0,
+		frameCard: 0,
+	},
+	walls: {
+		...matte,
+		metalness: 0.08,
+		roughness: 0.86,
+		clearcoat: 0.08,
+		clearcoatRoughness: 0.7,
+		envMapIntensity: 0.25,
+	},
+	innerWalls: { ...matte, metalness: 0, roughness: 0.95 },
+	cards: {
+		...matte,
+		metalness: 0,
+		roughness: 0.96,
+		brightness: 1,
+		useBlockColor: true,
+		overlayOpacity: 0,
+		rimHighlight: 0,
+	},
+	lighting: {
+		ambient: 0.7,
+		hemisphere: { sky: "#f5e8cd", ground: "#483a2c", intensity: 0.7 },
+		key: { position: [-5, 12, 9], color: "#ffe9c5", intensity: 1.5 },
+		fill: [
+			{ position: [8, 6, -10], color: "#b6c4cd", intensity: 0.35 },
+			{ position: [5, 6, 12], color: "#fff1d9", intensity: 0.5 },
+		],
+		reflections: [
+			{
+				position: [-4, 6, 5],
+				scale: [3, 5, 1],
+				color: "#e8af61",
+				intensity: 0.6,
+			},
+		],
+	},
+	floor: {
+		pattern: "wood",
+		tiles: ["#302319", "#3b2b1f"],
+		opacity: 1,
+		roughness: 0.8,
+		metalness: 0.05,
+		gridMajor: "#a58b57",
+		gridMinor: "#796746",
+		gridOpacity: 0.055,
+	},
+	regions: {
+		tint: "#66543b",
+		signColor: "#302218",
+		labelColor: "#dfc797",
+		roughness: 0.94,
+		frame: 0,
+	},
+	connections: { color: "#d4b276", luminous: false, haloOpacity: 0 },
+	view: { fov: 35, position: [10, 12, 17] },
 };

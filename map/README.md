@@ -104,7 +104,8 @@ tests exercise both SQLite and libSQL transactions and organization isolation.
 The palette button selects a complete theme:
 
 - **Industrial Forest** includes Light Mode, the original ribbed blocks and matte cards, daylight, and the original camera view.
-- **Lightning Neon** includes Dark Mode, dark crystal materials, layered glowing edges, violet connections, a subdued grid, and an elevated camera view.
+- **Scholarly Grimoire** includes Dark Mode, gilt leather covers, parchment cards tinted to their blocks with ivory text, warm reading light, brass connections, and walnut floorboards.
+- **Luminous Crystal** includes Dark Mode, dark crystal materials, layered glowing edges, violet connections, a subdued grid, and an elevated camera view.
 
 Each preset in `src/theme/theme.ts` owns its mode and palette. Its typed
 `ThemeAppearance` in `src/theme/appearance.ts` defines textures, face and card
@@ -114,3 +115,7 @@ and appearance definition to extend the chooser; mode is never stored separately
 Selection updates immediately and persists in `selectedTheme`. Legacy palette and
 `diagramMode` settings resolve to the corresponding complete theme. Changing themes
 rebuilds the 3D scene while keeping the editor, its draft, and map selection mounted.
+
+The Pyodide console follows each theme with coordinated syntax colors and surfaces. Console text uses 97% opacity (3% transparency).
+
+Drag the console’s top bar to reposition it. Its controls remain clickable, and dragging and resizing keep the panel within the viewport.

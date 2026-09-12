@@ -17,8 +17,6 @@ const CARD_SIZE_X = 2.8;
 const CARD_SIZE_Y = 1.8;
 // 1 pixel = 0.01 world units -> 240x160 virtual pixel space
 const PIXEL_SIZE = 0.01;
-const INSET_BG = "rgba(0,0,0,0.22)";
-const LABEL_COLOR = "rgba(255,255,255,0.40)";
 
 function Section({
 	label,
@@ -32,7 +30,7 @@ function Section({
 	return (
 		<Container
 			flexDirection="column"
-			backgroundColor={INSET_BG}
+			backgroundColor={currentTheme.cardInsetColor}
 			borderRadius={5}
 			padding={7}
 			gap={4}
@@ -40,7 +38,7 @@ function Section({
 			{label && (
 				<Container flexDirection="row" alignItems="center" gap={3}>
 					{icon}
-					<Text fontSize={8} color={LABEL_COLOR}>
+					<Text fontSize={8} color={currentTheme.cardMutedTextColor}>
 						{label}
 					</Text>
 				</Container>
@@ -142,8 +140,8 @@ export function GithubCard({
 				</Container>
 				{latestRelease && (
 					<Container flexDirection="row" alignItems="center" gap={3}>
-						<Tag width={9} height={9} color={LABEL_COLOR} />
-						<Text fontSize={11} color={LABEL_COLOR}>
+						<Tag width={9} height={9} color={currentTheme.cardMutedTextColor} />
+						<Text fontSize={11} color={currentTheme.cardMutedTextColor}>
 							{latestRelease}
 						</Text>
 					</Container>
@@ -153,7 +151,13 @@ export function GithubCard({
 			{/* Repo */}
 			<Section
 				label="REPO"
-				icon={<Github width={8} height={8} color={LABEL_COLOR} />}
+				icon={
+					<Github
+						width={8}
+						height={8}
+						color={currentTheme.cardMutedTextColor}
+					/>
+				}
 			>
 				{repoUrl && (
 					<Text fontSize={11} color={c}>
@@ -161,7 +165,7 @@ export function GithubCard({
 					</Text>
 				)}
 				{(primaryLanguage ?? license) && (
-					<Text fontSize={11} color={LABEL_COLOR}>
+					<Text fontSize={11} color={currentTheme.cardMutedTextColor}>
 						{[primaryLanguage, license].filter(Boolean).join(" / ")}
 					</Text>
 				)}
@@ -170,7 +174,13 @@ export function GithubCard({
 			{/* Activity */}
 			<Section
 				label="ACTIVITY"
-				icon={<Activity width={8} height={8} color={LABEL_COLOR} />}
+				icon={
+					<Activity
+						width={8}
+						height={8}
+						color={currentTheme.cardMutedTextColor}
+					/>
+				}
 			>
 				{stars !== undefined && (
 					<Container flexDirection="row" alignItems="center" gap={4}>
@@ -219,7 +229,13 @@ export function GithubCard({
 			{/* Issues / PRs */}
 			<Section
 				label="ISSUES"
-				icon={<GitPullRequest width={8} height={8} color={LABEL_COLOR} />}
+				icon={
+					<GitPullRequest
+						width={8}
+						height={8}
+						color={currentTheme.cardMutedTextColor}
+					/>
+				}
 			>
 				{openIssues !== undefined && (
 					<Container flexDirection="row" alignItems="center" gap={4}>
@@ -258,7 +274,13 @@ export function GithubCard({
 			{/* Health */}
 			<Section
 				label="HEALTH"
-				icon={<Shield width={8} height={8} color={LABEL_COLOR} />}
+				icon={
+					<Shield
+						width={8}
+						height={8}
+						color={currentTheme.cardMutedTextColor}
+					/>
+				}
 			>
 				{buildStatus && (
 					<Text fontSize={13} color={buildColor[buildStatus]}>
@@ -305,12 +327,12 @@ export function GithubCard({
 				alignItems="center"
 			>
 				{lastCommit && (
-					<Text fontSize={10} color={LABEL_COLOR}>
+					<Text fontSize={10} color={currentTheme.cardMutedTextColor}>
 						{lastCommit}
 					</Text>
 				)}
 				{linesOfCode !== undefined && (
-					<Text fontSize={10} color={LABEL_COLOR}>
+					<Text fontSize={10} color={currentTheme.cardMutedTextColor}>
 						{linesOfCode >= 1000
 							? `${Math.round(linesOfCode / 1000)}k`
 							: String(linesOfCode)}{" "}
