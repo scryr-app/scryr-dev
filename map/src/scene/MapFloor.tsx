@@ -1,39 +1,29 @@
-import { useState } from "react";
+import { useEffect, useMemo } from "react";
 import { currentTheme } from "@/theme/theme";
-import {
-	createDarkFloorCheckerTexture,
-	createLightFloorCheckerTexture,
-} from "./floorTexture";
+import { createFloorTexture } from "./floorTexture";
 
 export function MapFloor() {
-	const [lightFloorTexture] = useState(() => createLightFloorCheckerTexture());
-	const [darkFloorTexture] = useState(() => createDarkFloorCheckerTexture());
-	const isDarkDiagram = currentTheme.isDarkDiagram;
-	const floorTexture = isDarkDiagram ? darkFloorTexture : lightFloorTexture;
-
+	const floor = currentTheme.appearance.floor;
+	const texture = useMemo(() => createFloorTexture(...floor.tiles), [floor]);
+	useEffect(() => () => texture?.dispose(), [texture]);
 	return (
 		<>
 			<mesh rotation-x={-Math.PI / 2} position={[0, -0.025, 0]} receiveShadow>
 				<planeGeometry args={[52, 52]} />
 				<meshStandardMaterial
-					map={floorTexture}
+					map={texture}
 					color="#ffffff"
 					transparent
-					opacity={isDarkDiagram ? 0.52 : 0.42}
-					roughness={1}
-					metalness={0}
+					opacity={floor.opacity}
+					roughness={floor.roughness}
+					metalness={floor.metalness}
 				/>
 			</mesh>
 			<gridHelper
-				args={[
-					50,
-					50,
-					isDarkDiagram ? "#cbd5e1" : "#dbeafe",
-					isDarkDiagram ? "#475569" : "#f8fafc",
-				]}
+				args={[50, 50, floor.gridMajor, floor.gridMinor]}
 				onUpdate={(helper) => {
 					helper.material.transparent = true;
-					helper.material.opacity = isDarkDiagram ? 0.24 : 0.16;
+					helper.material.opacity = floor.gridOpacity;
 				}}
 			/>
 		</>

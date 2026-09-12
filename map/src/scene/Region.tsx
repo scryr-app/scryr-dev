@@ -1,8 +1,10 @@
 import { Text } from "@react-three/drei/core/Text";
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import type { Group } from "three";
 import * as THREE from "three";
+import { GlowFrame } from "@/components/GlowFrame";
 import { useGroundTexture } from "@/theme/textures";
+import { currentTheme } from "@/theme/theme";
 
 export interface RegionProps {
 	/** Top-left corner [x, y?, z?] - y defaults to 0, z defaults to 0 */
@@ -60,12 +62,16 @@ export function Sign({
 		<group>
 			<mesh>
 				<boxGeometry args={[signWidth, signHeight, signDepth]} />
-				<meshStandardMaterial color={color} metalness={0.1} roughness={0.7} />
+				<meshStandardMaterial
+					color={currentTheme.appearance.regions.signColor ?? color}
+					metalness={0.2}
+					roughness={0.55}
+				/>
 			</mesh>
 			<Text
 				position={[0, 0.03, signDepth / 2 + 0.001]}
 				fontSize={fontSize}
-				color={labelColor}
+				color={currentTheme.appearance.regions.labelColor ?? labelColor}
 				anchorX="center"
 				anchorY="middle"
 			>
@@ -169,6 +175,7 @@ export function Region({
 		return geo;
 	}, [width, height, color, shading]);
 
+	useEffect(() => () => planeGeometry.dispose(), [planeGeometry]);
 	const groundTexture = useGroundTexture(color, width, height);
 
 	// Block-face label: upright at the front edge, facing outward from the region.
@@ -214,19 +221,35 @@ export function Region({
 				renderOrder={zIndex}
 			>
 				<meshStandardMaterial
-					color={shading === "subtle" || groundTexture ? "#ffffff" : color}
+					color={
+						currentTheme.appearance.regions.tint ??
+						(shading === "subtle" || groundTexture ? "#ffffff" : color)
+					}
 					map={groundTexture ?? undefined}
 					side={THREE.DoubleSide}
 					transparent={opacity < 1}
 					opacity={opacity}
 					metalness={0.2}
-					roughness={0.82}
+					roughness={currentTheme.appearance.regions.roughness}
 					vertexColors={shading === "subtle"}
 					polygonOffset
 					polygonOffsetFactor={-1 - zIndex}
 					polygonOffsetUnits={-1 - zIndex * 4}
 				/>
 			</mesh>
+			{currentTheme.appearance.regions.frame > 0 && (
+				<group
+					quaternion={quaternion}
+					position={planeUp.clone().multiplyScalar(0.012 + zIndex * 0.002)}
+				>
+					<GlowFrame
+						width={width}
+						height={height}
+						color={color}
+						strength={currentTheme.appearance.regions.frame}
+					/>
+				</group>
+			)}
 			{label && (
 				<group
 					quaternion={blockFaceQuaternion}

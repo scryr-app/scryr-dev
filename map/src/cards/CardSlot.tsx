@@ -97,6 +97,7 @@ export function CardSlot({
 				height={cardHeight}
 				label={undefined}
 				color={cardColor}
+				glowColor={blockColor}
 				textColor={currentTheme.cardTextColor}
 				fontSize={0.12}
 			>

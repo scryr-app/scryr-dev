@@ -1,5 +1,6 @@
 import { Spherical, Vector3 } from "three";
 import type { OrbitControls } from "three-stdlib";
+import { currentTheme } from "@/theme/theme";
 
 interface FocusBlockOptions {
 	/** Stable block identifier used to ignore the focused block in obstruction checks. */
@@ -265,12 +266,10 @@ export const cameraStore = {
 		const ctrl = this.controls;
 		if (!ctrl) return;
 		const distance = ctrl.object.position.distanceTo(ctrl.target);
-		const horizontal = distance / Math.sqrt(3);
-		ctrl.object.position.set(
-			ctrl.target.x + horizontal,
-			ctrl.target.y + horizontal,
-			ctrl.target.z + horizontal,
-		);
+		const direction = new Vector3(
+			...currentTheme.appearance.view.position,
+		).normalize();
+		ctrl.object.position.copy(ctrl.target).addScaledVector(direction, distance);
 		ctrl.update();
 	},
 

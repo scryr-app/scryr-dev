@@ -1,5 +1,6 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import * as THREE from "three";
+import { currentTheme } from "@/theme/theme";
 
 interface GeometryDimensions {
 	hw: number; // half width
@@ -11,7 +12,8 @@ interface GeometryDimensions {
  * Creates a custom box geometry with 5 faces (no right face for card slots).
  */
 export function useBlockGeometry({ hw, hh, hd }: GeometryDimensions) {
-	return useMemo(() => {
+	const { flatFaces } = currentTheme.appearance.shapes;
+	const geometry = useMemo(() => {
 		const geo = new THREE.BufferGeometry();
 
 		const vertices = [];
@@ -50,17 +52,36 @@ export function useBlockGeometry({ hw, hh, hd }: GeometryDimensions) {
 
 		geo.setIndex(indices);
 		geo.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
+		// Separate normals and UVs keep the polished faces crisp.
 		geo.computeVertexNormals();
-
-		return geo;
-	}, [hd, hh, hw]);
+		const faces = geo.toNonIndexed();
+		geo.dispose();
+		const uvs = [];
+		const positions = faces.getAttribute("position");
+		for (let i = 0; i < positions.count; i++) {
+			const face = Math.floor(i / 6);
+			const x = positions.getX(i),
+				y = positions.getY(i),
+				z = positions.getZ(i);
+			// Project each face in its own plane so adjacent triangles share UVs.
+			const u = face === 0 ? (z + hd) / (2 * hd) : (x + hw) / (2 * hw);
+			const v =
+				face === 1 || face === 2 ? (z + hd) / (2 * hd) : (y + hh) / (2 * hh);
+			uvs.push(u, v);
+		}
+		faces.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+		if (flatFaces) faces.computeVertexNormals();
+		return faces;
+	}, [hd, hh, hw, flatFaces]);
+	useEffect(() => () => geometry.dispose(), [geometry]);
+	return geometry;
 }
 
 /**
  * Creates inner wall geometry with slight inset for visual depth.
  */
 export function useInnerWallsGeometry({ hw, hh, hd }: GeometryDimensions) {
-	return useMemo(() => {
+	const geometry = useMemo(() => {
 		const geo = new THREE.BufferGeometry();
 		const thickness = 0.05; // Wall thickness
 
@@ -102,4 +123,6 @@ export function useInnerWallsGeometry({ hw, hh, hd }: GeometryDimensions) {
 
 		return geo;
 	}, [hd, hh, hw]);
+	useEffect(() => () => geometry.dispose(), [geometry]);
+	return geometry;
 }

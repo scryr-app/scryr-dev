@@ -1,8 +1,13 @@
 import { RoundedBox } from "@react-three/drei/core/RoundedBox";
 import { Text } from "@react-three/drei/core/Text";
-import { useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import type { Group } from "three";
 import * as THREE from "three";
+import { RoundedBoxGeometry } from "three-stdlib";
+
+import { GlowFrame } from "@/components/GlowFrame";
+import { useCrystalGlowTexture } from "@/theme/textures";
+import { currentTheme } from "@/theme/theme";
 
 const CARD_DEPTH = 0.025;
 
@@ -13,6 +18,8 @@ export interface CardProps {
 	anchor?: "bottom" | "center";
 	/** Card color (hex or CSS color) */
 	color?: string;
+	/** Emission tint, supplied from the parent block before its card is lightened. */
+	glowColor?: string;
 	/** Card width */
 	width?: number;
 	/** Card height */
@@ -40,6 +47,7 @@ export function Card({
 	position,
 	anchor = "bottom",
 	color = "#f5f3f0",
+	glowColor = color,
 	width = 40,
 	height = 3,
 	children,
@@ -48,8 +56,29 @@ export function Card({
 	fontSize = 0.3,
 }: CardProps) {
 	const groupRef = useRef<Group>(null);
-	const baseColor = new THREE.Color(color);
-	const rimColor = baseColor.clone().lerp(new THREE.Color("#ffffff"), 0.22);
+	const { cards, shapes } = currentTheme.appearance;
+	// Drei's extruded RoundedBox uses world-space UVs. A glow texture needs
+	// normalized face UVs, otherwise it clamps into a dark lower-left square.
+	const surfaceGeometry = useMemo(
+		() =>
+			new RoundedBoxGeometry(width, height, CARD_DEPTH, 3, shapes.cardRadius),
+		[width, height, shapes.cardRadius],
+	);
+	useEffect(() => () => surfaceGeometry.dispose(), [surfaceGeometry]);
+	const {
+		brightness,
+		useBlockColor,
+		overlayOpacity,
+		rimHighlight,
+		...material
+	} = cards;
+	const baseColor = new THREE.Color(
+		useBlockColor ? glowColor : color,
+	).multiplyScalar(brightness);
+	const glowTexture = useCrystalGlowTexture();
+	const rimColor = (
+		useBlockColor ? new THREE.Color(glowColor) : baseColor.clone()
+	).lerp(new THREE.Color("#ffffff"), rimHighlight);
 	const shadowColor = baseColor.clone().multiplyScalar(0.58);
 
 	// Apply anchor offset so `position` refers to desired anchor point
@@ -75,18 +104,14 @@ export function Card({
 			</RoundedBox>
 
 			{/* Main card surface */}
-			<RoundedBox
-				args={[width, height, CARD_DEPTH]}
-				radius={CARD_DEPTH / 2}
-				smoothness={8}
-				position={[0, 0, 0]}
-			>
-				<meshStandardMaterial
+			<mesh geometry={surfaceGeometry}>
+				<meshPhysicalMaterial
 					color={baseColor}
-					metalness={0.16}
-					roughness={0.52}
+					{...material}
+					emissive={glowColor}
+					emissiveMap={glowTexture ?? undefined}
 				/>
-			</RoundedBox>
+			</mesh>
 
 			<RoundedBox
 				args={[width - 0.06, height - 0.06, CARD_DEPTH * 0.24]}
@@ -97,11 +122,22 @@ export function Card({
 				<meshStandardMaterial
 					color={rimColor}
 					transparent
-					opacity={0.12}
+					opacity={overlayOpacity}
 					metalness={0.08}
 					roughness={0.68}
 				/>
 			</RoundedBox>
+
+			{shapes.frameCard > 0 && (
+				<group position={[0, 0, CARD_DEPTH / 2 + 0.015]}>
+					<GlowFrame
+						width={width - 0.025}
+						height={height - 0.025}
+						color={glowColor}
+						strength={shapes.frameCard}
+					/>
+				</group>
+			)}
 
 			{/* Optional label on top */}
 			{label && (
