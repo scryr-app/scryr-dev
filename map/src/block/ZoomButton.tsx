@@ -2,30 +2,6 @@ import { RoundedBox } from "@react-three/drei/core/RoundedBox";
 import { useState } from "react";
 import { cameraStore } from "@/camera";
 
-const CARD_HEADER_TITLES = [
-	"INFO",
-	"GITHUB",
-	"METRICS",
-	"CI/CD",
-	"TESTS",
-	"DEPENDENCIES",
-	"PERFORMANCE",
-	"OTHER DIAGRAMS",
-];
-
-export function getCardHeaderZoomX(
-	activeCardIndex: number | null,
-	cardWidth: number,
-) {
-	const title = CARD_HEADER_TITLES[activeCardIndex ?? 0] ?? "CARD";
-	const titleTextStartX = -cardWidth / 2 + 0.28;
-	const estimatedTitleWidth = title.length * 0.076;
-	const gapAfterTitle = 0.13;
-	const maxX = cardWidth / 2 - 0.18;
-
-	return Math.min(maxX, titleTextStartX + estimatedTitleWidth + gapAfterTitle);
-}
-
 interface ZoomButtonProps {
 	blockId?: string;
 	x: number;
@@ -54,7 +30,7 @@ export function ZoomButton({
 	onHoverChange,
 }: ZoomButtonProps) {
 	const [isHovered, setIsHovered] = useState(false);
-	const opacity = isVisible ? (isHovered ? 0.9 : 0.72) : 0;
+	const opacity = isVisible ? 0.2 : 0;
 	const bubbleOpacity = isVisible ? (isHovered ? 0.3 : 0.2) : 0;
 
 	const focusBlock = () => {
