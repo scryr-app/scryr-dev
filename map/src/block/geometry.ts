@@ -50,9 +50,25 @@ export function useBlockGeometry({ hw, hh, hd }: GeometryDimensions) {
 
 		geo.setIndex(indices);
 		geo.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
-		geo.computeVertexNormals();
-
-		return geo;
+		// Separate normals and UVs keep the polished faces crisp.
+		const faces = geo.toNonIndexed();
+		geo.dispose();
+		const uvs = [];
+		const positions = faces.getAttribute("position");
+		for (let i = 0; i < positions.count; i++) {
+			const face = Math.floor(i / 6);
+			const x = positions.getX(i),
+				y = positions.getY(i),
+				z = positions.getZ(i);
+			// Project each face in its own plane so adjacent triangles share UVs.
+			const u = face === 0 ? (z + hd) / (2 * hd) : (x + hw) / (2 * hw);
+			const v =
+				face === 1 || face === 2 ? (z + hd) / (2 * hd) : (y + hh) / (2 * hh);
+			uvs.push(u, v);
+		}
+		faces.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+		faces.computeVertexNormals();
+		return faces;
 	}, [hd, hh, hw]);
 }
 

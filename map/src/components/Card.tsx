@@ -4,6 +4,8 @@ import { useRef } from "react";
 import type { Group } from "three";
 import * as THREE from "three";
 
+import { useCrystalGlowTexture } from "@/theme/textures";
+
 const CARD_DEPTH = 0.025;
 
 export interface CardProps {
@@ -13,6 +15,8 @@ export interface CardProps {
 	anchor?: "bottom" | "center";
 	/** Card color (hex or CSS color) */
 	color?: string;
+	/** Emission tint, supplied from the parent block before its card is lightened. */
+	glowColor?: string;
 	/** Card width */
 	width?: number;
 	/** Card height */
@@ -40,6 +44,7 @@ export function Card({
 	position,
 	anchor = "bottom",
 	color = "#f5f3f0",
+	glowColor = color,
 	width = 40,
 	height = 3,
 	children,
@@ -49,6 +54,7 @@ export function Card({
 }: CardProps) {
 	const groupRef = useRef<Group>(null);
 	const baseColor = new THREE.Color(color);
+	const glowTexture = useCrystalGlowTexture();
 	const rimColor = baseColor.clone().lerp(new THREE.Color("#ffffff"), 0.22);
 	const shadowColor = baseColor.clone().multiplyScalar(0.58);
 
@@ -81,10 +87,16 @@ export function Card({
 				smoothness={8}
 				position={[0, 0, 0]}
 			>
-				<meshStandardMaterial
+				<meshPhysicalMaterial
 					color={baseColor}
-					metalness={0.16}
-					roughness={0.52}
+					metalness={0.03}
+					roughness={0.55}
+					clearcoat={0.18}
+					clearcoatRoughness={0.5}
+					envMapIntensity={0.18}
+					emissive={glowColor}
+					emissiveMap={glowTexture ?? undefined}
+					emissiveIntensity={0.28}
 				/>
 			</RoundedBox>
 
