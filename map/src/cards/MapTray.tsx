@@ -132,7 +132,7 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 			{/* Theme dropdown — opens above the pill */}
 			{themeOpen && (
 				<div
-					className="absolute bottom-full mb-2 right-0 bg-black/70 backdrop-blur-md border border-white/15 rounded-xl p-1.5 min-w-[260px] shadow-2xl"
+					className="absolute bottom-full mb-2 right-0 max-h-[min(70vh,38rem)] min-w-[280px] overflow-y-auto rounded-xl border border-white/15 bg-black/70 p-1.5 shadow-2xl backdrop-blur-md"
 					style={{ animation: "traySlideUp 0.15s ease-out" }}
 				>
 					<ThemeOptions onSelect={() => setThemeOpen(false)} />

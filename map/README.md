@@ -106,6 +106,10 @@ The palette button selects a complete theme:
 - **Industrial Forest** includes Light Mode, the original ribbed blocks and matte cards, daylight, and the original camera view.
 - **Scholarly Grimoire** includes Dark Mode, gilt leather covers, parchment cards tinted to their blocks with ivory text, warm reading light, brass connections, and walnut floorboards.
 - **Luminous Crystal** includes Dark Mode, dark crystal materials, layered glowing edges, violet connections, a subdued grid, and an elevated camera view.
+- **Celestial Observatory** includes Dark Mode, midnight-blue precision instruments, brushed-brass orbital engravings, starlight, and a slowly moving celestial highlight.
+- **Porcelain Reverie** includes Light Mode, glazed ivory ceramic, cobalt botanical borders, delicate gold details, and kintsugi cracks.
+- **Sunken Sanctuary** includes Dark Mode, carved submerged stone, weathered copper, translucent sea-glass cards, and drifting underwater caustics.
+- **Velvet Oracle** includes Light Mode, plum and oxblood velvet, layered divination cards, embossed champagne-gold symbols, and theatrical warm light.
 
 Each preset in `src/theme/theme.ts` owns its mode and palette. Its typed
 `ThemeAppearance` in `src/theme/appearance.ts` defines textures, face and card

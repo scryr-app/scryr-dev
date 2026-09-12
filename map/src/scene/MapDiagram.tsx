@@ -2,14 +2,43 @@ import { Environment } from "@react-three/drei/core/Environment";
 import { Lightformer } from "@react-three/drei/core/Lightformer";
 import { OrbitControls } from "@react-three/drei/core/OrbitControls";
 import { PerspectiveCamera } from "@react-three/drei/core/PerspectiveCamera";
-import { Canvas as DiagramSurface } from "@react-three/fiber";
+import { Canvas as DiagramSurface, useFrame } from "@react-three/fiber";
 import { useRef } from "react";
-import type { PerspectiveCamera as PerspectiveCameraType } from "three";
+import type {
+	DirectionalLight as DirectionalLightType,
+	PerspectiveCamera as PerspectiveCameraType,
+} from "three";
 import type { OrbitControls as OrbitControlsType } from "three-stdlib";
 import { cameraStore } from "@/camera";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { currentTheme } from "@/theme/theme";
 import { MapDisplay } from "./MapDisplay";
+
+function MovingThemeLight() {
+	const light = useRef<DirectionalLightType>(null);
+	const motion = currentTheme.appearance.lighting.motion;
+	useFrame(({ clock }) => {
+		if (!light.current || !motion) return;
+		const elapsed = clock.getElapsedTime();
+		const speed = motion === "orbit" ? 0.075 : 0.18;
+		const radius = motion === "orbit" ? 13 : 8;
+		light.current.position.set(
+			Math.cos(elapsed * speed) * radius,
+			motion === "orbit" ? 12 : 15 + Math.sin(elapsed * 0.31) * 2,
+			Math.sin(elapsed * speed) * radius,
+		);
+		light.current.intensity =
+			motion === "caustic" ? 0.45 + Math.sin(elapsed * 0.7) * 0.12 : 0.25;
+	});
+	if (!motion) return null;
+	return (
+		<directionalLight
+			ref={light}
+			color={motion === "orbit" ? "#e5c47b" : "#8ee8d8"}
+			intensity={0.28}
+		/>
+	);
+}
 
 export function MapDiagram() {
 	const { lighting, view } = currentTheme.appearance;
@@ -79,6 +108,7 @@ export function MapDiagram() {
 					shadow-camera-top={30}
 					shadow-camera-bottom={-30}
 				/>
+				<MovingThemeLight />
 				<MapDisplay />
 				<OrbitControls
 					ref={handleControlsMount}

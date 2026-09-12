@@ -12,7 +12,7 @@ const TILE_SIZE = TEXTURE_SIZE / TILE_COUNT;
 export function createFloorTexture(
 	evenColor: string,
 	oddColor: string,
-	pattern?: "wood",
+	pattern?: "wood" | "stars" | "porcelain" | "seabed" | "velvet",
 ) {
 	if (typeof document === "undefined") {
 		return null;
@@ -56,6 +56,57 @@ export function createFloorTexture(
 			context.fillStyle = "rgba(0,0,0,0.35)";
 			context.fillRect(plank * 64, 0, 1, 256);
 			context.fillRect(plank * 64, plank % 2 ? 160 : 64, 64, 1);
+		}
+	} else if (pattern === "stars") {
+		context.strokeStyle = "rgba(201,170,104,0.22)";
+		context.lineWidth = 0.6;
+		for (const radius of [32, 61, 95, 119]) {
+			context.beginPath();
+			context.ellipse(128, 128, radius, radius * 0.58, -0.32, 0, Math.PI * 2);
+			context.stroke();
+		}
+		for (let i = 0; i < 90; i++) {
+			context.fillStyle =
+				i % 11 ? "rgba(220,231,246,0.5)" : "rgba(250,222,151,0.85)";
+			context.fillRect(
+				(i * 79) % 251,
+				(i * 43) % 247,
+				i % 11 ? 1 : 2,
+				i % 11 ? 1 : 2,
+			);
+		}
+	} else if (pattern === "porcelain") {
+		context.strokeStyle = "rgba(37,82,145,0.2)";
+		context.lineWidth = 1;
+		for (let i = 0; i <= TEXTURE_SIZE; i += TILE_SIZE) {
+			context.beginPath();
+			context.moveTo(i, 0);
+			context.lineTo(i, TEXTURE_SIZE);
+			context.moveTo(0, i);
+			context.lineTo(TEXTURE_SIZE, i);
+			context.stroke();
+		}
+		context.strokeStyle = "rgba(190,150,64,0.2)";
+		for (let i = 16; i < TEXTURE_SIZE; i += 64) {
+			context.beginPath();
+			context.arc(i, i, 9, 0, Math.PI * 2);
+			context.stroke();
+		}
+	} else if (pattern === "seabed") {
+		for (let i = 0; i < 850; i++) {
+			const x = (i * 67.31) % TEXTURE_SIZE;
+			const y = (i * 31.73) % TEXTURE_SIZE;
+			context.fillStyle =
+				i % 4 ? "rgba(2,18,19,0.09)" : "rgba(126,188,168,0.08)";
+			context.fillRect(x, y, 1 + (i % 3), 1);
+		}
+	} else if (pattern === "velvet") {
+		for (let i = 0; i < 2200; i++) {
+			const x = (i * 73.17) % TEXTURE_SIZE;
+			const y = (i * 41.39) % TEXTURE_SIZE;
+			context.fillStyle =
+				i % 3 ? "rgba(255,219,228,0.025)" : "rgba(25,2,15,0.035)";
+			context.fillRect(x, y, 1, 1);
 		}
 	}
 

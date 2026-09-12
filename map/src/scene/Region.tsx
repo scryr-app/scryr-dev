@@ -3,7 +3,11 @@ import { useEffect, useMemo, useRef } from "react";
 import type { Group } from "three";
 import * as THREE from "three";
 import { GlowFrame } from "@/components/GlowFrame";
-import { useGroundTexture } from "@/theme/textures";
+import {
+	useCrystalGlowTexture,
+	useGroundTexture,
+	useWallTexture,
+} from "@/theme/textures";
 import { currentTheme } from "@/theme/theme";
 
 export interface RegionProps {
@@ -57,15 +61,25 @@ export function Sign({
 	const signWidth = label.length * fontSize * 0.52 + margin * 2;
 	const signHeight = fontSize + margin * 2;
 	const signDepth = 0.04;
+	const signColor = currentTheme.appearance.regions.signColor ?? color;
+	const signTexture = useWallTexture(signColor);
+	const glowTexture = useCrystalGlowTexture();
+	const signMaterial = currentTheme.appearance.walls;
 
 	return (
 		<group>
 			<mesh>
 				<boxGeometry args={[signWidth, signHeight, signDepth]} />
-				<meshStandardMaterial
-					color={currentTheme.appearance.regions.signColor ?? color}
-					metalness={0.2}
-					roughness={0.55}
+				<meshPhysicalMaterial
+					color={signTexture ? "#ffffff" : signColor}
+					map={signTexture ?? undefined}
+					{...signMaterial}
+					emissive={signColor}
+					emissiveMap={glowTexture ?? undefined}
+					ior={1.48}
+					thickness={0.12}
+					attenuationColor={signColor}
+					attenuationDistance={0.8}
 				/>
 			</mesh>
 			<Text
@@ -176,7 +190,10 @@ export function Region({
 	}, [width, height, color, shading]);
 
 	useEffect(() => () => planeGeometry.dispose(), [planeGeometry]);
-	const groundTexture = useGroundTexture(color, width, height);
+	const regionColor = currentTheme.appearance.regions.tint ?? color;
+	const groundTexture = useGroundTexture(regionColor, width, height);
+	const regionGlowTexture = useCrystalGlowTexture();
+	const regionMaterial = currentTheme.appearance.walls;
 
 	// Block-face label: upright at the front edge, facing outward from the region.
 	// outward = direction from center toward the front edge (along edge2)
@@ -220,18 +237,21 @@ export function Region({
 				receiveShadow
 				renderOrder={zIndex}
 			>
-				<meshStandardMaterial
-					color={
-						currentTheme.appearance.regions.tint ??
-						(shading === "subtle" || groundTexture ? "#ffffff" : color)
-					}
+				<meshPhysicalMaterial
+					color={groundTexture ? "#ffffff" : regionColor}
 					map={groundTexture ?? undefined}
+					{...regionMaterial}
+					emissive={regionColor}
+					emissiveMap={regionGlowTexture ?? undefined}
+					ior={1.48}
+					thickness={0.18}
+					attenuationColor={regionColor}
+					attenuationDistance={1.2}
 					side={THREE.DoubleSide}
 					transparent={opacity < 1}
 					opacity={opacity}
-					metalness={0.2}
 					roughness={currentTheme.appearance.regions.roughness}
-					vertexColors={shading === "subtle"}
+					vertexColors={shading === "subtle" && !groundTexture}
 					polygonOffset
 					polygonOffsetFactor={-1 - zIndex}
 					polygonOffsetUnits={-1 - zIndex * 4}
