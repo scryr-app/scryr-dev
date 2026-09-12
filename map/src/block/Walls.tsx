@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { GlowFrame } from "@/components/GlowFrame";
 import { useCrystalGlowTexture, useWallTexture } from "@/theme/textures";
 import { currentTheme } from "@/theme/theme";
 import { useBlockGeometry, useInnerWallsGeometry } from "./geometry";
@@ -20,6 +21,7 @@ export interface WallsProps {
  * - Inner walls: slightly lighter color for depth effect
  */
 export function Walls({ color, hw, hh, hd }: WallsProps) {
+	const { walls, innerWalls, shapes } = currentTheme.appearance;
 	const geometry = useBlockGeometry({ hw, hh, hd });
 	const innerWallsGeometry = useInnerWallsGeometry({ hw, hh, hd });
 	const outerTexture = useWallTexture(color);
@@ -35,19 +37,13 @@ export function Walls({ color, hw, hh, hd }: WallsProps) {
 					color={outerTexture ? "#ffffff" : color}
 					map={outerTexture ?? undefined}
 					side={THREE.DoubleSide}
-					metalness={0.04}
-					roughness={0.52}
-					clearcoat={0.22}
-					clearcoatRoughness={0.48}
+					{...walls}
 					ior={1.48}
-					transmission={0.03}
 					thickness={0.35}
 					attenuationColor={color}
 					attenuationDistance={1.6}
-					envMapIntensity={0.2}
 					emissive={glowColor}
 					emissiveMap={glowTexture ?? undefined}
-					emissiveIntensity={0.7}
 				/>
 			</mesh>
 
@@ -59,13 +55,31 @@ export function Walls({ color, hw, hh, hd }: WallsProps) {
 						0.1,
 					)}
 					side={THREE.FrontSide}
-					metalness={0.02}
-					roughness={0.55}
-					clearcoat={0.15}
+					{...innerWalls}
 					emissive={glowColor}
-					emissiveIntensity={0.32}
 				/>
 			</mesh>
+			{/* Two lit bevels reveal the depth of the dark glass casing. */}
+			{shapes.frameFront > 0 && (
+				<group position={[0, 0, hd + 0.012]}>
+					<GlowFrame
+						width={hw * 2}
+						height={hh * 2}
+						color={color}
+						strength={shapes.frameFront}
+					/>
+				</group>
+			)}
+			{shapes.frameBack > 0 && (
+				<group position={[0, 0, -hd - 0.012]}>
+					<GlowFrame
+						width={hw * 2}
+						height={hh * 2}
+						color={color}
+						strength={shapes.frameBack}
+					/>
+				</group>
+			)}
 		</>
 	);
 }

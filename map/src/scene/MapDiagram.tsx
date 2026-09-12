@@ -8,9 +8,11 @@ import type { PerspectiveCamera as PerspectiveCameraType } from "three";
 import type { OrbitControls as OrbitControlsType } from "three-stdlib";
 import { cameraStore } from "@/camera";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { currentTheme } from "@/theme/theme";
 import { MapDisplay } from "./MapDisplay";
 
 export function MapDiagram() {
+	const { lighting, view } = currentTheme.appearance;
 	const cameraRef = useRef<PerspectiveCameraType>(null);
 
 	const handleControlsMount = (controls: OrbitControlsType | null) => {
@@ -36,52 +38,36 @@ export function MapDiagram() {
 				<PerspectiveCamera
 					ref={cameraRef}
 					makeDefault
-					fov={40}
-					position={[8, 6, 8]}
+					fov={view.fov}
+					position={view.position}
 					near={0.1}
 					far={1000}
 				/>
-				<ambientLight intensity={0.18} />
-				<hemisphereLight args={["#ddd6ff", "#44365c", 0.35]} />
-				<directionalLight
-					position={[-10, 8, -8]}
-					color="#b7a1ff"
-					intensity={0.45}
+				<ambientLight intensity={lighting.ambient} />
+				<hemisphereLight
+					args={[
+						lighting.hemisphere.sky,
+						lighting.hemisphere.ground,
+						lighting.hemisphere.intensity,
+					]}
 				/>
-				<directionalLight
-					position={[4, 5, -12]}
-					color="#a9e7ff"
-					intensity={0.3}
-				/>
-				{/* Capture local reflection panels once; no external HDR assets. */}
-				<Environment resolution={128} frames={1}>
-					<Lightformer
-						position={[0, 8, 2]}
-						scale={[10, 3, 1]}
-						target={[0, 0, 0]}
-						color="#e9e1ff"
-						intensity={0.8}
-					/>
-					<Lightformer
-						position={[-6, 3, -4]}
-						scale={[3, 8, 1]}
-						target={[0, 0, 0]}
-						color="#b5caff"
-						intensity={1}
-					/>
-					<Lightformer
-						position={[6, 4, 3]}
-						scale={[2, 6, 1]}
-						target={[0, 0, 0]}
-						color="#ffebd6"
-						intensity={0.65}
-					/>
-				</Environment>
+				{lighting.fill.map((light) => (
+					<directionalLight key={light.position.join(",")} {...light} />
+				))}
+				{lighting.reflections.length > 0 && (
+					<Environment resolution={128} frames={1}>
+						{lighting.reflections.map((light) => (
+							<Lightformer
+								key={light.position.join(",")}
+								{...light}
+								target={[0, 0, 0]}
+							/>
+						))}
+					</Environment>
+				)}
 				<directionalLight
 					castShadow
-					position={[12, 18, 10]}
-					color="#f4eeff"
-					intensity={0.65}
+					{...lighting.key}
 					shadow-mapSize-width={2048}
 					shadow-mapSize-height={2048}
 					shadow-bias={-0.00015}

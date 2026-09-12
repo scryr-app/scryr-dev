@@ -1,5 +1,6 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import * as THREE from "three";
+import { currentTheme } from "@/theme/theme";
 
 interface GeometryDimensions {
 	hw: number; // half width
@@ -11,7 +12,8 @@ interface GeometryDimensions {
  * Creates a custom box geometry with 5 faces (no right face for card slots).
  */
 export function useBlockGeometry({ hw, hh, hd }: GeometryDimensions) {
-	return useMemo(() => {
+	const { flatFaces } = currentTheme.appearance.shapes;
+	const geometry = useMemo(() => {
 		const geo = new THREE.BufferGeometry();
 
 		const vertices = [];
@@ -51,6 +53,7 @@ export function useBlockGeometry({ hw, hh, hd }: GeometryDimensions) {
 		geo.setIndex(indices);
 		geo.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
 		// Separate normals and UVs keep the polished faces crisp.
+		geo.computeVertexNormals();
 		const faces = geo.toNonIndexed();
 		geo.dispose();
 		const uvs = [];
@@ -67,16 +70,18 @@ export function useBlockGeometry({ hw, hh, hd }: GeometryDimensions) {
 			uvs.push(u, v);
 		}
 		faces.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
-		faces.computeVertexNormals();
+		if (flatFaces) faces.computeVertexNormals();
 		return faces;
-	}, [hd, hh, hw]);
+	}, [hd, hh, hw, flatFaces]);
+	useEffect(() => () => geometry.dispose(), [geometry]);
+	return geometry;
 }
 
 /**
  * Creates inner wall geometry with slight inset for visual depth.
  */
 export function useInnerWallsGeometry({ hw, hh, hd }: GeometryDimensions) {
-	return useMemo(() => {
+	const geometry = useMemo(() => {
 		const geo = new THREE.BufferGeometry();
 		const thickness = 0.05; // Wall thickness
 
@@ -118,4 +123,6 @@ export function useInnerWallsGeometry({ hw, hh, hd }: GeometryDimensions) {
 
 		return geo;
 	}, [hd, hh, hw]);
+	useEffect(() => () => geometry.dispose(), [geometry]);
+	return geometry;
 }

@@ -9,7 +9,7 @@ const TEXTURE_SIZE = 256;
 const TILE_COUNT = 8;
 const TILE_SIZE = TEXTURE_SIZE / TILE_COUNT;
 
-function createCheckerTexture(evenColor: string, oddColor: string) {
+export function createFloorTexture(evenColor: string, oddColor: string) {
 	if (typeof document === "undefined") {
 		return null;
 	}
@@ -44,18 +44,4 @@ function createCheckerTexture(evenColor: string, oddColor: string) {
 	texture.colorSpace = SRGBColorSpace;
 
 	return texture;
-}
-
-export function createLightFloorCheckerTexture() {
-	return createCheckerTexture(
-		"rgba(255, 255, 255, 0.72)",
-		"rgba(232, 233, 237, 0.72)",
-	);
-}
-
-export function createDarkFloorCheckerTexture() {
-	return createCheckerTexture(
-		"rgba(255, 255, 255, 0.18)",
-		"rgba(148, 163, 184, 0.18)",
-	);
 }

@@ -98,3 +98,19 @@ file when changing the SDK. Standalone builds (including Vercel) use the checked
 bundle; the SDK is never read from disk at runtime.
 Frontend state tests also run in the normal `npm test` suite; Rust source-storage
 tests exercise both SQLite and libSQL transactions and organization isolation.
+
+## Diagram themes
+
+The palette button selects a complete theme:
+
+- **Industrial Forest** includes Light Mode, the original ribbed blocks and matte cards, daylight, and the original camera view.
+- **Lightning Neon** includes Dark Mode, dark crystal materials, layered glowing edges, violet connections, a subdued grid, and an elevated camera view.
+
+Each preset in `src/theme/theme.ts` owns its mode and palette. Its typed
+`ThemeAppearance` in `src/theme/appearance.ts` defines textures, face and card
+shapes, materials, lighting, floor, regions, connections, and view. Add a preset
+and appearance definition to extend the chooser; mode is never stored separately.
+
+Selection updates immediately and persists in `selectedTheme`. Legacy palette and
+`diagramMode` settings resolve to the corresponding complete theme. Changing themes
+rebuilds the 3D scene while keeping the editor, its draft, and map selection mounted.

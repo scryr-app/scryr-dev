@@ -35,6 +35,7 @@ export function Line({
 	labelColor = currentTheme.fontColor,
 	labelSize = 0.2,
 }: LineProps) {
+	const { connections } = currentTheme.appearance;
 	const groupRef = useRef<Group>(null);
 
 	// Normalize positions to 3D coordinates (y defaults to 0, z defaults to 0)
@@ -97,8 +98,28 @@ export function Line({
 			{/* 3D cylinder line */}
 			<mesh quaternion={quaternion}>
 				<cylinderGeometry args={[thickness / 2, thickness / 2, length, 16]} />
-				<meshStandardMaterial color={color} metalness={0.3} roughness={0.6} />
+				{connections.luminous ? (
+					<meshBasicMaterial color={color} toneMapped={false} />
+				) : (
+					<meshStandardMaterial color={color} metalness={0.3} roughness={0.6} />
+				)}
 			</mesh>
+			{/* A restrained halo follows the actual connection path. */}
+			{connections.haloOpacity > 0 && (
+				<mesh quaternion={quaternion} raycast={() => {}}>
+					<cylinderGeometry
+						args={[thickness * 1.8, thickness * 1.8, length, 12]}
+					/>
+					<meshBasicMaterial
+						color={color}
+						transparent
+						opacity={connections.haloOpacity}
+						depthWrite={false}
+						blending={THREE.AdditiveBlending}
+						toneMapped={false}
+					/>
+				</mesh>
+			)}
 			{label && (
 				<Text
 					quaternion={textQuaternion}

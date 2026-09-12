@@ -9,7 +9,7 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { MapTrayProvider } from "@/cards/MapTrayContext";
-import { setDiagramMode } from "@/theme/theme";
+import { setThemePreset } from "@/theme/theme";
 import { PyodideConsole } from "./PyodideConsole";
 
 const editor = vi.hoisted(() => ({
@@ -41,7 +41,7 @@ vi.mock("./PythonCodeEditor", () => ({
 }));
 beforeEach(() => {
 	vi.clearAllMocks();
-	setDiagramMode("light");
+	setThemePreset("IndustrialForest");
 });
 afterEach(cleanup);
 
@@ -84,7 +84,7 @@ it("inherits map mode changes while keeping tray chrome separate from the code a
 	expect(code.parentElement?.classList.contains("bg-white")).toBe(true);
 	for (const token of ["bg-black/40", "border-white/15", "backdrop-blur-md"])
 		expect(panel.classList.contains(token)).toBe(true);
-	act(() => setDiagramMode("dark"));
+	act(() => setThemePreset("LightningNeon"));
 	expect(code.getAttribute("data-theme")).toBe("dark");
 	expect(code.parentElement?.classList.contains("bg-[#1e1e1e]")).toBe(true);
 	expect(panel.classList.contains("bg-black/40")).toBe(true);

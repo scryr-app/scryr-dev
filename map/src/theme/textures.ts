@@ -1,45 +1,66 @@
 import { useEffect, useMemo } from "react";
 import * as THREE from "three";
+import { currentTheme } from "./theme";
 
 /** Soft material depth with only a hint of mineral facets. */
 export function useWallTexture(color: string): THREE.CanvasTexture | null {
+	const { wall, wallBrightness } = currentTheme.appearance.textures;
 	const texture = useMemo(() => {
 		const size = 256;
 		const surface = document.createElement("canvas");
 		surface.width = surface.height = size;
 		const ctx = surface.getContext("2d");
 		if (!ctx) return null;
-		ctx.fillStyle = color;
+		ctx.fillStyle = new THREE.Color(color)
+			.multiplyScalar(wallBrightness)
+			.getStyle();
 		ctx.fillRect(0, 0, size, size);
-		const depth = ctx.createLinearGradient(0, size, size, 0);
-		depth.addColorStop(0, "rgba(0, 0, 0, 0.16)");
-		depth.addColorStop(0.48, "rgba(255, 255, 255, 0.02)");
-		depth.addColorStop(1, "rgba(255, 255, 255, 0.10)");
-		ctx.fillStyle = depth;
-		ctx.fillRect(0, 0, size, size);
-		for (const [points, alpha] of [
-			[[0, 0, 92, 0, 174, 256, 0, 198], 0.025],
-			[[92, 0, 256, 0, 256, 62, 174, 256], 0.04],
-			[[0, 198, 174, 256, 0, 256], 0.03],
-		] as const) {
-			ctx.beginPath();
-			ctx.moveTo(points[0], points[1]);
-			for (let i = 2; i < points.length; i += 2)
-				ctx.lineTo(points[i], points[i + 1]);
-			ctx.closePath();
-			ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-			ctx.fill();
+		if (wall === "ribbed") {
+			// Fine grain and vertical ribs from the original industrial blocks.
+			for (let i = 0; i < 4500; i++) {
+				const x = (i * 73.31) % size,
+					y = (i * 37.19) % size;
+				ctx.fillStyle = "rgba(255,255,255,0.035)";
+				ctx.fillRect(x, y, 1, 1);
+			}
+			for (let x = 0; x < size; x += 8) {
+				ctx.fillStyle = "rgba(255,255,255,0.04)";
+				ctx.fillRect(x, 0, 1, size);
+				ctx.fillStyle = "rgba(0,0,0,0.03)";
+				ctx.fillRect(x + 4, 0, 1, size);
+			}
+		} else {
+			const depth = ctx.createLinearGradient(0, size, size, 0);
+			depth.addColorStop(0, "rgba(0, 0, 0, 0.16)");
+			depth.addColorStop(0.48, "rgba(255, 255, 255, 0.02)");
+			depth.addColorStop(1, "rgba(255, 255, 255, 0.035)");
+			ctx.fillStyle = depth;
+			ctx.fillRect(0, 0, size, size);
+			for (const [points, alpha] of [
+				[[0, 0, 92, 0, 174, 256, 0, 198], 0.025],
+				[[92, 0, 256, 0, 256, 62, 174, 256], 0.04],
+				[[0, 198, 174, 256, 0, 256], 0.03],
+			] as const) {
+				ctx.beginPath();
+				ctx.moveTo(points[0], points[1]);
+				for (let i = 2; i < points.length; i += 2)
+					ctx.lineTo(points[i], points[i + 1]);
+				ctx.closePath();
+				ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+				ctx.fill();
+			}
 		}
 		const result = new THREE.CanvasTexture(surface);
 		result.colorSpace = THREE.SRGBColorSpace;
 		return result;
-	}, [color]);
+	}, [color, wall, wallBrightness]);
 	useEffect(() => () => texture?.dispose(), [texture]);
 	return texture;
 }
 
 /** Diffuse core and feathered inner rim, applied as emission instead of paint. */
 export function useCrystalGlowTexture(): THREE.CanvasTexture | null {
+	const { glowCore, glowRim } = currentTheme.appearance.textures;
 	const texture = useMemo(() => {
 		const size = 128;
 		const surface = document.createElement("canvas");
@@ -54,7 +75,9 @@ export function useCrystalGlowTexture(): THREE.CanvasTexture | null {
 				const edge = Math.min(u, v, 1 - u, 1 - v);
 				const core = Math.exp(-((u - 0.5) ** 2 + (v - 0.42) ** 2) * 7);
 				const rim = Math.exp(-edge * 14);
-				const value = Math.round(255 * Math.min(1, core * 0.82 + rim * 0.28));
+				const value = Math.round(
+					255 * Math.min(1, core * glowCore + rim * glowRim),
+				);
 				const i = (y * size + x) * 4;
 				pixels.data[i] = pixels.data[i + 1] = pixels.data[i + 2] = value;
 				pixels.data[i + 3] = 255;
@@ -64,7 +87,7 @@ export function useCrystalGlowTexture(): THREE.CanvasTexture | null {
 		const result = new THREE.CanvasTexture(surface);
 		result.colorSpace = THREE.SRGBColorSpace;
 		return result;
-	}, []);
+	}, [glowCore, glowRim]);
 	useEffect(() => () => texture?.dispose(), [texture]);
 	return texture;
 }
@@ -79,7 +102,7 @@ export function useGroundTexture(
 	width: number,
 	height: number,
 ): THREE.CanvasTexture | null {
-	return useMemo(() => {
+	const groundTexture = useMemo(() => {
 		const size = 512;
 		const surface = document.createElement("canvas");
 		surface.width = size;
@@ -125,4 +148,6 @@ export function useGroundTexture(
 		texture.needsUpdate = true;
 		return texture;
 	}, [color, width, height]);
+	useEffect(() => () => groundTexture?.dispose(), [groundTexture]);
+	return groundTexture;
 }

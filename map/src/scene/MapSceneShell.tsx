@@ -5,7 +5,7 @@ import { MapTrayProvider } from "@/cards/MapTrayContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PyodideConsole } from "@/components/PyodideConsole";
 import { TopCornerButtons } from "@/components/TopCornerButtons";
-import { currentTheme } from "@/theme/theme";
+import { useTheme } from "@/theme/theme";
 import { MapDiagram } from "./MapDiagram";
 
 interface MapSceneShellProps {
@@ -13,6 +13,7 @@ interface MapSceneShellProps {
 }
 
 export function MapSceneShell({ header }: MapSceneShellProps) {
+	const theme = useTheme();
 	const [isPyodideOpen, setIsPyodideOpen] = useState(true);
 	const [pyodidePanelWidth, setPyodidePanelWidth] = useState(() => {
 		if (typeof window === "undefined") {
@@ -31,7 +32,7 @@ export function MapSceneShell({ header }: MapSceneShellProps) {
 				style={{
 					width: "100vw",
 					height: "100vh",
-					background: currentTheme.background,
+					background: theme.background,
 				}}
 			>
 				<ErrorBoundary name="PyodideConsole" fallback={null}>
@@ -44,7 +45,7 @@ export function MapSceneShell({ header }: MapSceneShellProps) {
 				</ErrorBoundary>
 				<div className="relative min-w-0 h-full">
 					{header}
-					<MapDiagram />
+					<MapDiagram key={theme.id} />
 					<ErrorBoundary name="MapTray" fallback={null}>
 						<MapTray
 							isPyodideOpen={isPyodideOpen}

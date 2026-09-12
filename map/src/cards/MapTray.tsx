@@ -25,13 +25,8 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { cameraStore } from "@/camera";
 import { Button } from "@/components/button";
+import { ThemeOptions } from "@/theme/ThemeSwitcher";
 import { cn } from "@/utils";
-import {
-	getDiagramMode,
-	setDiagramMode,
-	setThemePreset,
-	ThemePresets,
-} from "../theme/theme";
 import { useMapTray } from "./MapTrayContext";
 
 const CARD_TYPES = [
@@ -111,40 +106,6 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 		| null
 	>(null);
 	const menuRef = useRef<HTMLDivElement>(null);
-	const [diagramMode, setDiagramModeState] = useState<"light" | "dark">(() => {
-		const stored = localStorage.getItem("diagramMode");
-		return stored === "dark" ? "dark" : "light";
-	});
-
-	const getCurrentTheme = (): keyof typeof ThemePresets => {
-		const stored = localStorage.getItem("selectedTheme");
-		return stored && stored in ThemePresets
-			? (stored as keyof typeof ThemePresets)
-			: "AutumnOffice";
-	};
-
-	const handleThemeSelect = (name: keyof typeof ThemePresets) => {
-		setThemeOpen(false);
-		localStorage.setItem("selectedTheme", name);
-		setThemePreset(name);
-		setTimeout(() => window.location.reload(), 300);
-	};
-
-	useEffect(() => {
-		const stored = localStorage.getItem("selectedTheme");
-		if (stored && stored in ThemePresets) {
-			setThemePreset(stored as keyof typeof ThemePresets);
-		}
-		setDiagramMode(getDiagramMode());
-	}, []);
-
-	const handleDiagramModeToggle = () => {
-		const nextMode = diagramMode === "light" ? "dark" : "light";
-		setDiagramModeState(nextMode);
-		localStorage.setItem("diagramMode", nextMode);
-		setDiagramMode(nextMode);
-		setTimeout(() => window.location.reload(), 150);
-	};
 
 	useEffect(() => {
 		if (!themeOpen) return;
@@ -156,8 +117,6 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 		document.addEventListener("mousedown", onOutside);
 		return () => document.removeEventListener("mousedown", onOutside);
 	}, [themeOpen]);
-
-	const currentSelectedTheme = getCurrentTheme();
 
 	return (
 		<div
@@ -173,67 +132,10 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 			{/* Theme dropdown — opens above the pill */}
 			{themeOpen && (
 				<div
-					className="absolute bottom-full mb-2 right-0 bg-black/70 backdrop-blur-md border border-white/15 rounded-xl p-1.5 min-w-[160px] shadow-2xl"
+					className="absolute bottom-full mb-2 right-0 bg-black/70 backdrop-blur-md border border-white/15 rounded-xl p-1.5 min-w-[260px] shadow-2xl"
 					style={{ animation: "traySlideUp 0.15s ease-out" }}
 				>
-					<p className="text-[9px] font-semibold uppercase tracking-widest text-white/30 px-2 py-1">
-						Style
-					</p>
-					{Object.keys(ThemePresets).map((name) => {
-						const key = name as keyof typeof ThemePresets;
-						const isActive = key === currentSelectedTheme;
-						return (
-							<button
-								type="button"
-								key={name}
-								onClick={() => handleThemeSelect(key)}
-								className={cn(
-									"w-full text-left px-2.5 py-1.5 rounded-lg text-xs transition-colors",
-									isActive
-										? "bg-white/20 text-white font-semibold"
-										: "text-white/60 hover:bg-white/10 hover:text-white",
-								)}
-							>
-								{name}
-							</button>
-						);
-					})}
-					<div className="my-1 border-t border-white/10" />
-					<button
-						type="button"
-						onClick={handleDiagramModeToggle}
-						role="switch"
-						aria-checked={diagramMode === "dark"}
-						aria-label={`Switch to ${diagramMode === "light" ? "dark" : "light"} mode`}
-						className="flex w-full items-center justify-between gap-4 rounded-lg px-2.5 py-1.5 text-left text-xs text-white/60 transition-colors hover:bg-white/10 hover:text-white"
-					>
-						<span>Display Brightness</span>
-						<span
-							className={cn(
-								"relative flex h-6 w-16 items-center rounded-full px-1 text-[9px] font-semibold tracking-wide transition-colors",
-								diagramMode === "dark"
-									? "justify-end bg-white/25 text-white"
-									: "justify-start bg-white/15 text-white/70",
-							)}
-						>
-							<span
-								className={cn(
-									"absolute left-1 size-4 rounded-full bg-white shadow-sm transition-transform",
-									diagramMode === "dark" && "translate-x-10",
-								)}
-							/>
-							<span
-								className={cn(
-									"z-10 px-0.5 text-[8px] font-bold",
-									diagramMode === "light"
-										? "ml-5 text-white"
-										: "mr-5 text-white",
-								)}
-							>
-								{diagramMode === "light" ? "LIGHT" : "DARK"}
-							</span>
-						</span>
-					</button>
+					<ThemeOptions onSelect={() => setThemeOpen(false)} />
 				</div>
 			)}
 
@@ -602,6 +504,8 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 							"rounded-full size-10 text-white/50 hover:text-white hover:bg-white/15 transition-all duration-150",
 							themeOpen && "bg-white/20 text-white",
 						)}
+						aria-label="Choose diagram theme"
+						aria-expanded={themeOpen}
 						onClick={() => setThemeOpen((o) => !o)}
 						onMouseEnter={() => setHoveredIndex("theme")}
 						onMouseLeave={() => setHoveredIndex(null)}

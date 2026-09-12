@@ -1,8 +1,8 @@
 import { Crosshair, LoaderCircle, Play, RefreshCw, X } from "lucide-react";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMapTray } from "@/cards/MapTrayContext";
 import { useManifestEditor } from "@/graphql/useManifestEditor";
-import { getDiagramMode, subscribeDiagramMode } from "@/theme/theme";
+import { useTheme } from "@/theme/theme";
 import {
 	PythonCodeEditor,
 	type PythonCodeEditorHandle,
@@ -23,7 +23,7 @@ export function PyodideConsole({
 	const editor = useManifestEditor(isOpen);
 	const editorRef = useRef<PythonCodeEditorHandle | null>(null);
 	const { selectedBlock } = useMapTray();
-	const theme = useSyncExternalStore(subscribeDiagramMode, getDiagramMode);
+	const theme = useTheme().diagramMode;
 	const [follow, setFollow] = useState(true);
 	const resize = useRef<{ x: number; width: number } | null>(null);
 	useEffect(() => {
