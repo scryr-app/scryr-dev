@@ -3,7 +3,7 @@
 Scryr's mise tasks follow four workflows: `contribute:*`, `verify:*`,
 `release:*`, and `deploy:*`. Component selectors match repository directories:
 `manifest` is the Python SDK and samples, `crystal` is the Rust CLI/server, and
-`map` is the Vite frontend.
+`map` is the Vite frontend. `docs` is the Astro documentation site.
 
 All task implementations live in [mise.toml](mise.toml). There are no aliases or
 external task scripts. Run commands from the repository root. `mise tasks ls`
@@ -46,6 +46,7 @@ configuration in ignored `mise.local.toml`; copy
 | `contribute:cloud:remote-map` | Local Vite HMR against the deployed Fly API | Cloud credentials and `CLOUD_GRAPHQL_URL` |
 | `contribute:oss:server` / `contribute:cloud:server` | Watch and restart only the server | Corresponding mode's setup |
 | `contribute:oss:map` / `contribute:cloud:map` | Run only Vite HMR | Corresponding mode's setup |
+| `contribute:docs` | Run the Astro documentation development server | Contributor setup |
 
 OSS mode removes cloud database/auth variables and selects local auth even when
 `mise.local.toml` contains cloud configuration. SQLite and runtime state live in

@@ -34,18 +34,20 @@ Start contributing (run mise install first):
   mise run contribute:setup       Install locked dependencies
   mise run contribute:oss         Develop with local SQLite and auth
   mise run contribute:cloud       Develop with configured Turso and Clerk
+  mise run contribute:docs        Develop the documentation site
   mise run pre-commit             Apply fixes, then run all verification
 See CONTRIBUTING.md for credentials, debugging, and targeted tasks.
 GUIDE
 """
 
 [tasks."contribute:setup"]
-description = "Install locked dependencies for crystal (Rust), manifest (Python), and map (Vite)"
+description = "Install locked dependencies for crystal, manifest, map, and docs"
 dir = "{{config_root}}"
 run = [
   "mise run internal:dependencies:crystal",
   "mise run internal:dependencies:manifest",
   "mise run internal:dependencies:map",
+  "mise run internal:dependencies:docs",
 ]
 
 [tasks."contribute:oss"]
@@ -56,6 +58,11 @@ dir = "{{config_root}}"
 [tasks."contribute:cloud"]
 description = "Contribute with Rust restart, Vite HMR, Turso and Clerk"
 depends = ["contribute:cloud:server", "contribute:cloud:map"]
+dir = "{{config_root}}"
+
+[tasks."contribute:docs"]
+description = "Run the Astro documentation development server"
+run = "npm --prefix docs run dev"
 dir = "{{config_root}}"
 
 [tasks."pre-commit"]
@@ -758,6 +765,12 @@ description = "Install TypeScript frontend dependencies"
 dir = "{{config_root}}"
 hide = true
 run = "npm --prefix map ci"
+
+[tasks."internal:dependencies:docs"]
+description = "Install documentation site dependencies"
+dir = "{{config_root}}"
+hide = true
+run = "npm --prefix docs ci"
 
 [tasks."internal:release:build:crystal"]
 description = "Build the release scryr binary"
