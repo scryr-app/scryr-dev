@@ -4,7 +4,10 @@ import { createFloorTexture } from "./floorTexture";
 
 export function MapFloor() {
 	const floor = currentTheme.appearance.floor;
-	const texture = useMemo(() => createFloorTexture(...floor.tiles), [floor]);
+	const texture = useMemo(
+		() => createFloorTexture(...floor.tiles, floor.pattern),
+		[floor],
+	);
 	useEffect(() => () => texture?.dispose(), [texture]);
 	return (
 		<>

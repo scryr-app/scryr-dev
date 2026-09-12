@@ -13,8 +13,6 @@ import { currentTheme } from "@/theme/theme";
 const CARD_SIZE_X = 2.8;
 const CARD_SIZE_Y = 1.8;
 const PIXEL_SIZE = 0.01;
-const INSET_BG = "rgba(0,0,0,0.22)";
-const LABEL_COLOR = "rgba(255,255,255,0.40)";
 
 function Section({
 	label,
@@ -28,7 +26,7 @@ function Section({
 	return (
 		<Container
 			flexDirection="column"
-			backgroundColor={INSET_BG}
+			backgroundColor={currentTheme.cardInsetColor}
 			borderRadius={5}
 			padding={7}
 			gap={4}
@@ -36,7 +34,7 @@ function Section({
 			{label && (
 				<Container flexDirection="row" alignItems="center" gap={3}>
 					{icon}
-					<Text fontSize={8} color={LABEL_COLOR}>
+					<Text fontSize={8} color={currentTheme.cardMutedTextColor}>
 						{label}
 					</Text>
 				</Container>
@@ -119,7 +117,7 @@ export function TestsCard({
 					</Text>
 				</Container>
 				{lastRun && (
-					<Text fontSize={10} color={LABEL_COLOR}>
+					<Text fontSize={10} color={currentTheme.cardMutedTextColor}>
 						{lastRun}
 					</Text>
 				)}
@@ -128,7 +126,13 @@ export function TestsCard({
 			{/* Suite */}
 			<Section
 				label="SUITE"
-				icon={<TestTube width={8} height={8} color={LABEL_COLOR} />}
+				icon={
+					<TestTube
+						width={8}
+						height={8}
+						color={currentTheme.cardMutedTextColor}
+					/>
+				}
 			>
 				{total !== undefined && (
 					<Text fontSize={13} color={c}>
@@ -145,7 +149,13 @@ export function TestsCard({
 			{/* Results */}
 			<Section
 				label="RESULTS"
-				icon={<CircleCheck width={8} height={8} color={LABEL_COLOR} />}
+				icon={
+					<CircleCheck
+						width={8}
+						height={8}
+						color={currentTheme.cardMutedTextColor}
+					/>
+				}
 			>
 				{passing !== undefined && (
 					<Container flexDirection="row" alignItems="center" gap={4}>
@@ -176,7 +186,9 @@ export function TestsCard({
 			{/* Coverage */}
 			<Section
 				label="COVERAGE"
-				icon={<Gauge width={8} height={8} color={LABEL_COLOR} />}
+				icon={
+					<Gauge width={8} height={8} color={currentTheme.cardMutedTextColor} />
+				}
 			>
 				{coverage !== undefined && (
 					<Container flexDirection="row" alignItems="center" gap={4}>
@@ -201,7 +213,11 @@ export function TestsCard({
 							<TrendingDown width={10} height={10} color="#dc2626" />
 						)}
 						{coverageTrend === "stable" && (
-							<Minus width={10} height={10} color={LABEL_COLOR} />
+							<Minus
+								width={10}
+								height={10}
+								color={currentTheme.cardMutedTextColor}
+							/>
 						)}
 					</Container>
 				)}

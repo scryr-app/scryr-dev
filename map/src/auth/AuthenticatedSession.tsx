@@ -4,36 +4,36 @@ import { Building2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect } from "react";
 import { EditorScope } from "@/graphql/useManifestEditor";
-import { currentTheme } from "@/theme/theme";
+import { useTheme } from "@/theme/theme";
 import { AccountButton } from "./AccountButton";
 import { useClerkTokenBridge } from "./useClerkTokenBridge";
 
-const organizationSwitcherAppearance = {
+const organizationSwitcherAppearance = (isDark: boolean) => ({
 	elements: {
 		organizationSwitcherTrigger:
 			"!min-h-9 !rounded-full !border-0 !bg-transparent !px-2.5 !py-1 text-slate-100 transition hover:!bg-white/10 focus:shadow-none focus:ring-2 focus:ring-cyan-400",
 		organizationPreview: "gap-2",
 		organizationPreviewAvatarBox: "h-6 w-6",
-		organizationPreviewMainIdentifier:
-			"max-w-48 truncate text-sm font-medium text-slate-100",
+		organizationPreviewMainIdentifier: `max-w-48 truncate text-sm font-medium ${isDark ? "!text-slate-100" : "!text-black"}`,
 		organizationSwitcherTriggerIcon: "text-slate-400",
 		organizationSwitcherPopoverCard:
 			"border border-white/10 bg-black/75 text-slate-100 shadow-2xl shadow-black/50 backdrop-blur-2xl",
 	},
-};
+});
 
 interface AuthenticatedSessionProps {
 	children: ReactNode;
 }
 
 export function OrganizationAccountControls() {
+	const theme = useTheme();
 	return (
 		<div className="flex items-center gap-0.5 rounded-full border border-white/15 bg-black/40 px-1.5 py-1 shadow-2xl backdrop-blur-md">
 			<OrganizationSwitcher
 				hidePersonal
 				afterCreateOrganizationUrl="/"
 				afterSelectOrganizationUrl="/"
-				appearance={organizationSwitcherAppearance}
+				appearance={organizationSwitcherAppearance(theme.isDarkDiagram)}
 			/>
 			<div className="h-6 w-px bg-white/10" />
 			<AccountButton variant="embedded" />
@@ -42,6 +42,7 @@ export function OrganizationAccountControls() {
 }
 
 export function AuthenticatedSession({ children }: AuthenticatedSessionProps) {
+	const theme = useTheme();
 	useClerkTokenBridge();
 	const { isLoaded, orgId } = useAuth();
 	const queryClient = useQueryClient();
@@ -59,7 +60,7 @@ export function AuthenticatedSession({ children }: AuthenticatedSessionProps) {
 		return (
 			<div
 				className="grid h-screen w-screen place-items-center"
-				style={{ background: currentTheme.background }}
+				style={{ background: theme.background }}
 			>
 				<div className="h-9 w-9 animate-spin rounded-full border border-white/15 border-t-cyan-300" />
 			</div>
@@ -70,7 +71,7 @@ export function AuthenticatedSession({ children }: AuthenticatedSessionProps) {
 		return (
 			<div
 				className="grid h-screen w-screen place-items-center px-6 text-slate-100"
-				style={{ background: currentTheme.background }}
+				style={{ background: theme.background }}
 			>
 				<div className="w-full max-w-sm rounded-xl border border-white/10 bg-black/50 p-5 shadow-2xl shadow-black/40 backdrop-blur-xl">
 					<div className="mb-4 flex items-center gap-3">
@@ -90,7 +91,7 @@ export function AuthenticatedSession({ children }: AuthenticatedSessionProps) {
 						hidePersonal
 						afterCreateOrganizationUrl="/"
 						afterSelectOrganizationUrl="/"
-						appearance={organizationSwitcherAppearance}
+						appearance={organizationSwitcherAppearance(theme.isDarkDiagram)}
 					/>
 				</div>
 			</div>

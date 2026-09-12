@@ -1,9 +1,16 @@
 import { useSyncExternalStore } from "react";
 import {
+	grimoireAppearance,
 	industrialAppearance,
 	neonAppearance,
 	type ThemeAppearance,
 } from "./appearance";
+import {
+	type ConsolePalette,
+	forestConsole,
+	grimoireConsole,
+	neonConsole,
+} from "./console";
 
 // Theme attributes interface
 export interface ThemeAttributes {
@@ -12,6 +19,7 @@ export interface ThemeAttributes {
 	description: string;
 	mode: DiagramMode;
 	appearance: ThemeAppearance;
+	console: ConsolePalette;
 	// Block colors (10 named colors)
 	dawn: string;
 	dusk: string;
@@ -60,6 +68,9 @@ export class Theme {
 	}
 	get appearance() {
 		return this.attributes.appearance;
+	}
+	get console() {
+		return this.attributes.console;
 	}
 
 	// Basic colors
@@ -229,7 +240,17 @@ export class Theme {
 
 	// Additional derived colors for UI elements
 	get cardTextColor(): string {
-		return "#FFFFFF";
+		return this.appearance.content?.text ?? "#FFFFFF";
+	}
+
+	get cardMutedTextColor() {
+		return this.appearance.content?.muted ?? "rgba(255,255,255,0.40)";
+	}
+	get cardLinkColor() {
+		return this.appearance.content?.link ?? "#93c5fd";
+	}
+	get cardInsetColor() {
+		return this.appearance.content?.inset ?? "rgba(0,0,0,0.22)";
 	}
 
 	get cardHighlightColor(): string {
@@ -313,16 +334,50 @@ export const ThemePresets = {
 		description: "Textured blocks and soft daylight",
 		mode: "light",
 		appearance: industrialAppearance,
+		console: forestConsole,
 	},
 	LightningNeon: {
 		...originalPalette,
 		id: "LightningNeon",
-		name: "Lightning Neon",
+		name: "Luminous Crystal",
 		description: "Dark crystal and luminous edges",
 		mode: "dark",
 		appearance: neonAppearance,
+		console: neonConsole,
 		backgroundColor: "#080611",
 		surfaceColor: "#111827",
+	},
+	ScholarsGrimoire: {
+		...originalPalette,
+		id: "ScholarsGrimoire",
+		name: "Scholarly Grimoire",
+		description: "Parchment, leather and candlelight",
+		mode: "dark",
+		appearance: grimoireAppearance,
+		console: grimoireConsole,
+		backgroundColor: "#191611",
+		surfaceColor: "#2b2118",
+		fontColor: "#fff0cf",
+		dawn: "#8a4c50",
+		dusk: "#8a6649",
+		tide: "#947846",
+		grove: "#5c704f",
+		pulse: "#985f4c",
+		flare: "#96603d",
+		ember: "#875361",
+		mist: "#75815b",
+		drift: "#4d727b",
+		slate: "#75604b",
+		regionAlpha: "#b79d70",
+		regionBeta: "#ad987a",
+		regionGamma: "#a8a28a",
+		regionDelta: "#a2aa8a",
+		regionEpsilon: "#c0a271",
+		regionZeta: "#b39a77",
+		regionEta: "#b09483",
+		regionTheta: "#a99891",
+		regionIota: "#94a399",
+		regionKappa: "#c4b18b",
 	},
 } satisfies Record<string, ThemeAttributes>;
 export type ThemeId = keyof typeof ThemePresets;
