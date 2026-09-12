@@ -102,3 +102,6 @@ htmlcov/
 
 # Vercel local project/build state
 .vercel/
+
+# Integration credentials (only references belong in index.scry).
+scryr.secrets.toml

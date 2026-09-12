@@ -43,7 +43,8 @@ scryr query request_latency --json
 ## Check, format, and lint
 
 `scryr check` checks formatting, lint, and Python types, then executes the manifest
-once, serializes JSON, and validates Scryr diagram rules. It requires at least one
+once, serializes JSON, validates Scryr diagram rules, and checks provider credentials
+in `scryr.secrets.toml` (or `SCRYR_SECRETS_FILE`). It requires at least one
 public `Diagram`, unique diagram identifiers, and valid references to public
 `Manifest` objects. Failures identify the stage and return a nonzero exit status.
 Check does not rewrite source files or contact Scryr/provider APIs. Manifest
@@ -375,6 +376,14 @@ run and attempt. Jobs enrich existing run history, and identical retries are ide
 The existing `report coverage`, `report dependencies`, and `report deployment`
 commands remain supported. All reporters support `--dry-run` and `--json`.
 
+## Typed integrations and cards
+
+Use concrete declarations such as `GrafanaPerformance(integration=grafana)` in
+`Manifest.cards`. Variable names supply IDs; category membership and default titles
+come from the concrete types. Integrations can exist without cards, and categories
+can contain multiple providers' cards. See the [typed integration guide](../../docs/typed-integrations.md)
+for configuration, TOML secrets, category setup, and JSON credential migration.
+
 ## Query declared providers
 
 ```bash
@@ -383,12 +392,12 @@ scryr query request_latency --manifest api
 scryr query page_views --json --endpoint https://your-scryr.example/graphql
 ```
 
-Query names come from `metrics.provider.queries` and `analytics.queries` in the
-local manifest. Listing executes the manifest but makes no provider request.
-Duplicate query names require a manifest selector; use `--provider prometheus` or
-`--provider posthog` when both providers on one manifest use the same query name. Queries execute through a
-running Scryr server and its organization-scoped `SCRYR_METRICS_CONNECTIONS_FILE`
-connections; they do not publish the local manifest. Provider failures return a
+Query names come from concrete views such as `GrafanaPerformance` and
+`PostHogPerformance`, with legacy `metrics.provider` and `analytics` support.
+Listing executes the manifest but makes no provider request. Use `--manifest api`
+and `--card grafana_performance` to disambiguate queries. Queries execute through a
+running Scryr server and its organization-scoped TOML credentials; they do not
+publish the local manifest. Provider failures return a
 nonzero exit status. JSON output includes timestamps, status, values, and units.
 Grafana support uses Prometheus-compatible data sources; PostHog uses declared
 HogQL aggregates. Credentials remain in server connections, outside artifacts.

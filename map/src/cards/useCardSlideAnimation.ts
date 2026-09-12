@@ -109,7 +109,8 @@ export function useCardSlideAnimation({
 	useFrame((_state, delta) => {
 		if (!cardRef.current) return;
 
-		const speed = delta * animationSpeed;
+		// Keep interpolation bounded even after a slow frame or a suspended tab.
+		const speed = 1 - Math.exp(-delta * animationSpeed);
 
 		switch (phase) {
 			// ── Docking ──────────────────────────────────────────────────────

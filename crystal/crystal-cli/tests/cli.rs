@@ -43,6 +43,8 @@ fn cli_command() -> Result<Command, Box<dyn Error>> {
     let mut command =
         Command::cargo_bin("scryr").map_err(|error| format!("binary should build: {error}"))?;
     command.env_remove("SCRYR_GRAPHQL_URL");
+    command.env_remove("SCRYR_SECRETS_FILE");
+    command.env_remove("SCRYR_METRICS_CONNECTIONS_FILE");
     command.env_remove("SCRYR_CLERK_ORG_ID");
     command.env_remove("SCRYR_DIR");
     command.env_remove("SCRYR_ORGANIZATION");
@@ -649,5 +651,69 @@ fn workflow_commands_have_help_and_serve_requires_explicit_server_only()
         .assert()
         .failure();
     cli_command()?.args(["query"]).assert().failure();
+    Ok(())
+}
+
+#[test]
+/// Typed source IDs, per-card query selection, and redacted TOML checks use the native workflow.
+fn typed_cards_and_toml_credentials_are_checked() -> Result<(), Box<dyn Error>> {
+    let folder = tempfile::tempdir()?;
+    let source = folder.path().join("index.scry");
+    fs::copy(
+        manifest_dir()?.join("examples/typed_integrations/index.scry"),
+        &source,
+    )?;
+    let secrets = folder.path().join("scryr.secrets.toml");
+    fs::write(
+        &secrets,
+        "[authentication.grafana_authentication]\nusername = \"test-user\"\ntoken = \"sensitive-test-value\"\n[authentication.posthog_authentication]\napi_key = \"test-api-key\"\n",
+    )?;
+    for command in ["format", "check"] {
+        cli_command()?
+            .args([command, "--path"])
+            .arg(&source)
+            .arg("--manifest-dir")
+            .arg(manifest_dir()?)
+            .arg("--scryr-dir")
+            .arg(scryr_dir()?)
+            .env("SCRYR_SECRETS_FILE", &secrets)
+            .assert()
+            .success();
+    }
+    let listing = cli_command()?
+        .args(["query", "--list", "--json", "--path"])
+        .arg(&source)
+        .arg("--manifest-dir")
+        .arg(manifest_dir()?)
+        .arg("--scryr-dir")
+        .arg(scryr_dir()?)
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let rows: Value = serde_json::from_slice(&listing)?;
+    assert!(rows.as_array().is_some_and(|rows| {
+        rows.iter()
+            .any(|r| r["card"] == "grafana_performance" && r["manifestId"] == "api")
+    }));
+    fs::write(
+        &secrets,
+        "[authentication.grafana_authentication]\ntoken = \"sensitive-test-value\"\n",
+    )?;
+    cli_command()?
+        .args(["check", "--path"])
+        .arg(&source)
+        .arg("--manifest-dir")
+        .arg(manifest_dir()?)
+        .arg("--scryr-dir")
+        .arg(scryr_dir()?)
+        .env("SCRYR_SECRETS_FILE", &secrets)
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            "authentication.grafana_authentication",
+        ))
+        .stderr(predicate::str::contains("sensitive-test-value").not());
     Ok(())
 }

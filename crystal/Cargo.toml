@@ -3,6 +3,7 @@ members = ["crystal-core", "crystal-server", "crystal-cli"]
 resolver = "3"
 
 [workspace.dependencies]
+toml_edit = { version = "0.25", default-features = false, features = ["parse", "serde"] }
 roxmltree = "0.21"
 actix-cors = "0.7"
 actix-web = "4.7"

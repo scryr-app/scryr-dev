@@ -56,25 +56,62 @@ struct Entry {
 type Slot = Arc<Mutex<Entry>>;
 
 pub(crate) struct RuntimeMetrics {
+    local: Option<crate::editor::LocalWorkspace>,
     connections: BTreeMap<String, BTreeMap<String, Connection>>,
     cache: Mutex<BTreeMap<String, Slot>>,
     client: reqwest::Client,
 }
 impl RuntimeMetrics {
-    pub(crate) fn from_env() -> std::io::Result<Self> {
-        let connections = if let Some(path) = std::env::var_os("SCRYR_METRICS_CONNECTIONS_FILE") {
-            let text = std::fs::read(path)?;
-            serde_json::from_slice(&text)
-                .map_err(|_| std::io::Error::other("invalid metrics connection file"))?
+    pub(crate) fn from_workspace(
+        workspace: Option<&crate::editor::LocalWorkspace>,
+    ) -> std::io::Result<Self> {
+        use crystal_core::integration_secrets::{Authentication, SecretsFile, secrets_path};
+        let entrypoint =
+            workspace.map_or_else(|| std::path::Path::new("index.scry"), |w| w.file.as_path());
+        let path = secrets_path(entrypoint);
+        if std::env::var_os("SCRYR_METRICS_CONNECTIONS_FILE").is_some() {
+            return Err(std::io::Error::other(
+                "Migrate JSON connections to scryr.secrets.toml and use SCRYR_SECRETS_FILE",
+            ));
+        }
+        let secrets = if path.exists() || std::env::var_os("SCRYR_SECRETS_FILE").is_some() {
+            SecretsFile::read(&path).map_err(std::io::Error::other)?
         } else {
-            BTreeMap::new()
+            SecretsFile::default()
         };
+        let mut connections: BTreeMap<String, BTreeMap<String, Connection>> = BTreeMap::new();
+        let mut orgs: Vec<_> = secrets.organizations.keys().cloned().collect();
+        orgs.push("local-dev-org".into());
+        for org in orgs {
+            let scope = secrets.scope(&org);
+            let approvals = scope.connections;
+            for (name, approval) in approvals {
+                let Some(auth) = scope.authentication.get(&name) else {
+                    continue;
+                };
+                let (username, token) = match auth {
+                    Authentication::Grafana(s) => (s.username.clone(), s.token.clone()),
+                    Authentication::PostHog(s) => (String::new(), s.api_key.clone()),
+                    Authentication::GitHub(_) => continue,
+                };
+                connections.entry(org.clone()).or_default().insert(
+                    name,
+                    Connection {
+                        endpoint: approval.endpoint,
+                        project_id: approval.project_id,
+                        username,
+                        token,
+                    },
+                );
+            }
+        }
         let client = reqwest::Client::builder()
             .redirect(reqwest::redirect::Policy::none())
             .timeout(Duration::from_secs(8))
             .build()
             .map_err(std::io::Error::other)?;
         Ok(Self {
+            local: workspace.cloned(),
             connections,
             cache: Mutex::new(BTreeMap::new()),
             client,
@@ -154,6 +191,30 @@ impl RuntimeMetrics {
                 result.insert(id, snapshot);
             }
         }
+        if let Some(manifests) = manifests.as_array() {
+            let pending = manifests.iter().filter_map(|manifest| {
+                let id = manifest["manifestId"].as_str()?;
+                let cards = manifest["cards"].as_array()?;
+                Some(async move {
+                    let pending =
+                        cards.iter().filter_map(|card| {
+                            let card_id = card["id"].as_str()?;
+                            let source = card.get("source").filter(|s| !s.is_null())?;
+                            Some(async move {
+                                (card_id.to_owned(), self.snapshot(org, id, source).await)
+                            })
+                        });
+                    let cards: serde_json::Map<_, _> = futures_util::future::join_all(pending)
+                        .await
+                        .into_iter()
+                        .collect();
+                    (id.to_owned(), Value::Object(cards))
+                })
+            });
+            for (id, cards) in futures_util::future::join_all(pending).await {
+                result.entry(id).or_insert_with(|| json!({}))["cards"] = cards;
+            }
+        }
         Value::Object(result)
     }
     async fn snapshot(&self, org: &str, id: &str, config: &Value) -> Value {
@@ -208,10 +269,21 @@ impl RuntimeMetrics {
     }
     #[allow(clippy::literal_string_with_formatting_args)] // These are documented HogQL template tokens.
     async fn collect(&self, org: &str, source: &Source) -> Result<Value, &'static str> {
-        let connection = self
-            .connections
-            .get(org)
-            .and_then(|connections| connections.get(&source.credentials.name))
+        let local_connection = if org == "local-dev-org" {
+            self.local
+                .as_ref()
+                .map(|local| local_connection(local, &source.credentials.name))
+                .transpose()?
+        } else {
+            None
+        };
+        let connection = local_connection
+            .as_ref()
+            .or_else(|| {
+                self.connections
+                    .get(org)
+                    .and_then(|connections| connections.get(&source.credentials.name))
+            })
             .ok_or("Metric connection is not configured for this organization")?;
         let endpoint = approved_endpoint(connection, source)?;
         let end = chrono::Utc::now().timestamp() - i64::from(source.ingestion_delay);
@@ -280,6 +352,83 @@ impl RuntimeMetrics {
         )
     }
 }
+/// Resolve credentials against the latest *natively checked* local source, never browser input.
+fn local_connection(
+    local: &crate::editor::LocalWorkspace,
+    name: &str,
+) -> Result<Connection, &'static str> {
+    use crystal_core::integration_secrets::{
+        Authentication, ConnectionApproval, SecretsFile, secrets_path,
+    };
+    let secrets = SecretsFile::read(&secrets_path(&local.file))
+        .map_err(|_| "Local TOML credentials are unavailable or invalid")?;
+    let auth = secrets
+        .authentication
+        .get(name)
+        .ok_or("Local authentication is not configured")?;
+    let envelope = local
+        .integrations
+        .read()
+        .map_err(|_| "Local integration configuration unavailable")?;
+    let mut selected: Option<ConnectionApproval> = None;
+    for manifest in envelope["manifests"].as_array().into_iter().flatten() {
+        let mut sources = vec![
+            manifest["metrics"]["provider"].clone(),
+            manifest["analytics"].clone(),
+        ];
+        for integration in manifest["integrations"].as_array().into_iter().flatten() {
+            sources.push(
+                json!({"credentials":{"name":integration["authentication"]["id"]},
+                "queryEndpoint":integration["endpoint"], "projectId":integration["projectId"]}),
+            );
+        }
+        for source in sources {
+            if source["credentials"]["name"].as_str() != Some(name) {
+                continue;
+            }
+            // Legacy provider models serialize Python field names; typed integrations
+            // above use the public JSON aliases. Accept both checked representations.
+            let Some(endpoint) = source
+                .get("queryEndpoint")
+                .or_else(|| source.get("query_endpoint"))
+                .and_then(Value::as_str)
+            else {
+                continue;
+            };
+            let approval = ConnectionApproval {
+                endpoint: endpoint.into(),
+                project_id: source
+                    .get("projectId")
+                    .or_else(|| source.get("project_id"))
+                    .and_then(Value::as_u64),
+            };
+            if let Some(previous) = &selected
+                && (previous.endpoint != approval.endpoint
+                    || previous.project_id != approval.project_id)
+            {
+                return Err(
+                    "Use separate authentication declarations for different integration destinations",
+                );
+            }
+            selected = Some(approval);
+        }
+    }
+    drop(envelope);
+    let approval =
+        selected.ok_or("Integration destination is not approved by the checked local source")?;
+    let (username, token) = match auth {
+        Authentication::Grafana(s) => (s.username.clone(), s.token.clone()),
+        Authentication::PostHog(s) => (String::new(), s.api_key.clone()),
+        Authentication::GitHub(_) => return Err("Incompatible metric authentication"),
+    };
+    Ok(Connection {
+        endpoint: approval.endpoint,
+        project_id: approval.project_id,
+        username,
+        token,
+    })
+}
+
 fn unavailable(message: &str) -> Value {
     json!({"status":"error","error":message,"values":{}})
 }
@@ -446,6 +595,61 @@ mod tests {
     use super::*;
     use std::sync::atomic::{AtomicUsize, Ordering};
 
+    #[test]
+    fn local_credentials_resolve_checked_legacy_and_typed_destinations()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let folder = tempfile::tempdir()?;
+        let file = folder.path().join("index.scry");
+        std::fs::write(&file, "")?;
+        std::fs::write(
+            folder.path().join("scryr.secrets.toml"),
+            "[authentication.grafana]\nusername = '123'\ntoken = 'metrics-read'\n\
+             [authentication.posthog]\napi_key = 'query-read'\n",
+        )?;
+        let workspace = crate::editor::LocalWorkspace::new(
+            folder.path(),
+            &file,
+            Arc::new(|_, _| Err("Unused validator".into())),
+        )?;
+        assert!(local_connection(&workspace, "grafana").is_err());
+        // These snake_case fields are emitted by legacy PrometheusSource/PostHogSource.
+        let legacy = json!({"manifests":[{
+            "metrics":{"provider":{"credentials":{"name":"grafana"},
+                "query_endpoint":"https://metrics.example/api/prom"}},
+            "analytics":{"credentials":{"name":"posthog"},
+                "query_endpoint":"https://us.posthog.com", "project_id":598_963}
+        }]});
+        let aliases = json!({"manifests":[{
+            "metrics":{"provider":{"credentials":{"name":"grafana"},
+                "queryEndpoint":"https://metrics.example/api/prom"}},
+            "analytics":{"credentials":{"name":"posthog"},
+                "queryEndpoint":"https://us.posthog.com", "projectId":598_963}
+        }]});
+        let typed = json!({"manifests":[{"integrations":[
+            {"authentication":{"id":"grafana"},"endpoint":"https://metrics.example/api/prom"},
+            {"authentication":{"id":"posthog"},"endpoint":"https://us.posthog.com","projectId":598_963}
+        ]}]});
+        for envelope in [legacy.clone(), aliases, typed] {
+            workspace.set_integrations(envelope)?;
+            let grafana = local_connection(&workspace, "grafana")?;
+            assert_eq!(grafana.endpoint, "https://metrics.example/api/prom");
+            assert_eq!(grafana.username, "123");
+            assert_eq!(grafana.token, "metrics-read");
+            let posthog = local_connection(&workspace, "posthog")?;
+            assert_eq!(posthog.endpoint, "https://us.posthog.com");
+            assert_eq!(posthog.project_id, Some(598_963));
+            assert_eq!(posthog.token, "query-read");
+            assert!(local_connection(&workspace, "undeclared").is_err());
+        }
+        let mut conflicting = legacy;
+        conflicting["manifests"][0]["integrations"] = json!([
+            {"authentication":{"id":"posthog"},"endpoint":"https://us.posthog.com","projectId":42}
+        ]);
+        workspace.set_integrations(conflicting)?;
+        assert!(local_connection(&workspace, "posthog").is_err());
+        Ok(())
+    }
+
     async fn expire(runtime: &RuntimeMetrics) {
         for slot in runtime.cache.lock().await.values() {
             slot.lock().await.attempted = Instant::now().checked_sub(Duration::from_secs(2));
@@ -477,6 +681,7 @@ mod tests {
         let handle = server.handle();
         actix_web::rt::spawn(server);
         let runtime = RuntimeMetrics {
+            local: None,
             connections: BTreeMap::from([(
                 "org".into(),
                 BTreeMap::from([(
@@ -503,6 +708,32 @@ mod tests {
         assert_eq!(a["api"]["values"]["requestRate"]["value"], 12.5);
         runtime.load("org", &manifests).await;
         assert_eq!(calls.load(Ordering::SeqCst), 1);
+        // Two views sharing an identical query retain separate card IDs and one cached fetch.
+        let typed = json!([{"manifestId":"api","cards":[
+            {"id":"grafana_performance","source":source},
+            {"id":"grafana_uptime","source":source},
+            {"id":"posthog_performance","source":null}
+        ]}]);
+        let typed_result = runtime.load("org", &typed).await;
+        assert_eq!(
+            typed_result["api"]["cards"]["grafana_performance"]["values"]["requestRate"]["value"],
+            12.5
+        );
+        assert_eq!(
+            typed_result["api"]["cards"]["grafana_uptime"]["status"],
+            "ready"
+        );
+        assert!(
+            typed_result["api"]["cards"]
+                .get("posthog_performance")
+                .is_none()
+        );
+        assert_eq!(calls.load(Ordering::SeqCst), 1);
+        let denied_cards = runtime.load("other", &typed).await;
+        assert_eq!(
+            denied_cards["api"]["cards"]["grafana_uptime"]["status"],
+            "error"
+        );
         let denied = runtime.load("other", &manifests).await;
         assert_eq!(denied["api"]["status"], "error");
         assert_eq!(calls.load(Ordering::SeqCst), 1);
@@ -571,6 +802,7 @@ mod tests {
         let handle = server.handle();
         actix_web::rt::spawn(server);
         let runtime = RuntimeMetrics {
+            local: None,
             connections: BTreeMap::from([(
                 "org".into(),
                 BTreeMap::from([(

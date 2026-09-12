@@ -30,6 +30,9 @@ async fn attach_action_history(
         .ok_or("generated manifest block must be an object")?
         .entry("cicd")
         .or_insert_with(|| serde_json::json!({}));
+    if cicd.is_null() {
+        *cicd = serde_json::json!({});
+    }
     let cicd = cicd
         .as_object_mut()
         .ok_or("generated manifest cicd section must be an object")?;

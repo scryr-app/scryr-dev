@@ -8,10 +8,18 @@ import {
 	TestsCard,
 } from "@/cards";
 import type { BlockCardData } from "@/cards/blockCardData";
+import { IntegrationCard } from "../cards/IntegrationCard";
+import { SetupCard } from "../cards/IntegrationSetup";
+import { integrationCategories } from "../cards/integrationCatalog";
 import { ReportCard } from "../cards/ReportCard";
 import { RuntimeMetricsCard } from "../cards/RuntimeMetricsCard";
 
-export type BlockCardGroup = Array<{ components: ReactNode[] }>;
+export type BlockCardGroup = Array<{
+	categoryIndex?: number;
+	id?: string;
+	label?: string;
+	components: ReactNode[];
+}>;
 
 function hasData(props: object): boolean {
 	return Object.values(props).some((value) =>
@@ -36,19 +44,11 @@ function reportKey(
 }
 
 export function createBlockDataCards(cardData: BlockCardData): BlockCardGroup {
-	return [
+	const legacy: BlockCardGroup = [
 		{
 			components: [
 				...(hasData(cardData.github)
 					? [<GithubCard key="github-card" {...cardData.github} />]
-					: []),
-				...(cardData.runtimeAnalytics
-					? [
-							<RuntimeMetricsCard
-								key="analytics-card"
-								snapshot={cardData.runtimeAnalytics}
-							/>,
-						]
 					: []),
 			],
 		},
@@ -121,5 +121,58 @@ export function createBlockDataCards(cardData: BlockCardData): BlockCardGroup {
 						]
 					: [],
 		},
+		{ components: [] },
+		{
+			components: cardData.runtimeAnalytics
+				? [
+						<RuntimeMetricsCard
+							key="analytics-card"
+							snapshot={cardData.runtimeAnalytics}
+						/>,
+					]
+				: [],
+		},
 	];
+	return integrationCategories
+		.map((category, index) => {
+			const declared = cardData.cards?.filter(
+				(card) => card.category === category.id,
+			);
+			const components = declared?.length
+				? declared.map((card) => (
+						<IntegrationCard
+							key={card.id}
+							card={card}
+							snapshot={cardData.runtimeCards?.[card.id]}
+							runs={cardData.actionRuns}
+						/>
+					))
+				: cardData.cards !== undefined &&
+						!["repository", "tests", "dependencies"].includes(category.id)
+					? []
+					: (legacy[index]?.components ?? []);
+			const visible =
+				!cardData.cardCategories ||
+				cardData.cardCategories.includes(category.id);
+			return {
+				categoryIndex: index < 6 ? index + 1 : index + 2,
+				id: category.id,
+				label: category.label,
+				components: !visible
+					? []
+					: components.length
+						? components
+						: [
+								<SetupCard
+									key={`setup-${category.id}`}
+									category={category.id}
+								/>,
+							],
+			};
+		})
+		.sort((a, b) => {
+			const order =
+				cardData.cardCategories ?? integrationCategories.map((c) => c.id);
+			return order.indexOf(a.id) - order.indexOf(b.id);
+		});
 }

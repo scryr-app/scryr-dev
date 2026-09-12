@@ -20,7 +20,9 @@ pub type ValidateLocal =
 /// Local disk access is limited to the entrypoint explicitly selected by scryr serve.
 #[derive(Clone)]
 pub struct LocalWorkspace {
-    file: PathBuf,
+    pub(crate) file: PathBuf,
+    /// Declarations loaded from the explicitly selected local source.
+    pub(crate) integrations: Arc<std::sync::RwLock<serde_json::Value>>,
     folder: String,
     /// Serializes the watch pipeline with browser saves.
     pub gate: Arc<Mutex<()>>,
@@ -41,11 +43,23 @@ impl LocalWorkspace {
             .to_string_lossy()
             .replace('\\', "/");
         Ok(Self {
+            integrations: Arc::new(std::sync::RwLock::new(serde_json::Value::Null)),
             file,
             folder,
             gate: Arc::new(Mutex::new(())),
             validate,
         })
+    }
+    /// Register destinations from a successfully checked local manifest.
+    ///
+    /// # Errors
+    /// Returns an error if the local configuration lock was poisoned.
+    pub fn set_integrations(&self, envelope: serde_json::Value) -> Result<(), String> {
+        *self
+            .integrations
+            .write()
+            .map_err(|_| "Local integration lock is unavailable")? = envelope;
+        Ok(())
     }
     fn matches(&self, doc: &ManifestDocument) -> bool {
         doc.folder_path == self.folder
@@ -198,6 +212,7 @@ impl EditorService {
             return Err("Source changed while preparing the save. Reload before saving.".into());
         }
         let mut restore = None;
+        let mut trusted_envelope = None;
         if let Some(local) = &self.local {
             let previous = doc
                 .files
@@ -227,6 +242,7 @@ impl EditorService {
                 .ok_or("Missing validated entrypoint source")?;
             local.write(next)?;
             restore = Some((previous, next.to_owned()));
+            trusted_envelope = Some(validated);
         }
         if let Err(error) = documents::save_document(pool, context, &stored, &inputs).await {
             if let (Some(local), Some((previous, written))) = (&self.local, restore) {
@@ -240,6 +256,9 @@ impl EditorService {
                     .map_err(|restore| format!("{error}; restoring source failed: {restore}"))?;
             }
             return Err(error);
+        }
+        if let (Some(local), Some(validated)) = (&self.local, trusted_envelope) {
+            local.set_integrations(validated)?;
         }
         let selected = inputs
             .iter()

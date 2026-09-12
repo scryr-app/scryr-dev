@@ -78,7 +78,7 @@ impl InspectArgs {
 pub(crate) struct QueryArgs {
     #[command(flatten)]
     pub common: GenerateCommonArgs,
-    /// Query name from a metrics or analytics declaration.
+    /// Query name from a typed card or a legacy metrics/analytics declaration.
     #[arg(required_unless_present = "list", conflicts_with = "list")]
     pub name: Option<String>,
     /// List available queries without contacting a provider.
@@ -87,6 +87,9 @@ pub(crate) struct QueryArgs {
     /// Select a public manifest variable, name, or manifest ID.
     #[arg(long)]
     pub manifest: Option<String>,
+    /// Select the card by its source variable name.
+    #[arg(long)]
+    pub card: Option<String>,
     /// Restrict selection when a manifest uses the same query name in both providers.
     #[arg(long, value_parser = ["prometheus", "posthog"])]
     pub provider: Option<String>,
@@ -119,4 +122,14 @@ pub(crate) fn default_endpoint() -> String {
             .unwrap_or(8000);
         format!("http://127.0.0.1:{port}/graphql")
     })
+}
+
+/// Explicit one-time migration of the old server connection file.
+#[derive(Args, Debug, Clone)]
+pub(crate) struct MigrateSecretsArgs {
+    /// Existing organization-scoped JSON connection file.
+    pub input: std::path::PathBuf,
+    /// New TOML file; must not already exist.
+    #[arg(long, default_value = "scryr.secrets.toml")]
+    pub output: std::path::PathBuf,
 }

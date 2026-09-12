@@ -2,7 +2,16 @@
 
 from datetime import datetime
 
-from scryr import CICD, Diagram, Github, GithubActionRun, GithubActionsLog, Info, Manifest
+from scryr import (
+    Diagram,
+    Github,
+    GithubActionRun,
+    GitHubActions,
+    GithubActionsLog,
+    GitHubActionsPipeline,
+    Info,
+    Manifest,
+)
 
 # Illustrative GitHub payloads, deliberately static so generation requires no credentials.
 run_payload = {
@@ -38,16 +47,17 @@ actions.record(
     recorded_at=datetime.fromisoformat(run_payload["updated_at"]),
 )
 
+github_actions = GitHubActions(repository="example/api")
+github_pipeline = GitHubActionsPipeline(
+    integration=github_actions, observations=actions, branch="main"
+)
+
 api = Manifest(
-    manifest_id="services/api",
+    integrations=[github_actions],
+    cards=[github_pipeline],
     name="API",
     info=Info(description="API with an attached GitHub Actions status history"),
     github=Github(repo_url="https://github.com/example/api"),
-    cicd=CICD(
-        platform="github_actions",
-        github_actions=actions,
-        build_status=actions.build_status(repository="example/api"),
-    ),
 )
 
 actions_demo = Diagram(name="GitHub Actions", manifests=[api])

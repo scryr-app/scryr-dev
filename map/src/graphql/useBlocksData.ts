@@ -248,7 +248,12 @@ export function useBlocksData(variables?: GetBlocksQueryVariables) {
 	);
 	const configured = normalized.some((block) => {
 		const raw = parseRawJsonString(block.rawJsonString);
-		return Boolean(asRecord(raw?.metrics)?.provider || raw?.analytics);
+		return Boolean(
+			asRecord(raw?.metrics)?.provider ||
+				raw?.analytics ||
+				(Array.isArray(raw?.cards) &&
+					raw.cards.some((c) => asRecord(c)?.source)),
+		);
 	});
 	const runtime = useDiagramMetrics(
 		variables,
@@ -258,7 +263,12 @@ export function useBlocksData(variables?: GetBlocksQueryVariables) {
 		() =>
 			normalized.map((block) => {
 				const raw = parseRawJsonString(block.rawJsonString);
-				if (!raw || (!asRecord(raw.metrics)?.provider && !raw.analytics))
+				if (
+					!raw ||
+					(!asRecord(raw.metrics)?.provider &&
+						!raw.analytics &&
+						!Array.isArray(raw.cards))
+				)
 					return block;
 				const id = typeof raw.manifestId === "string" ? raw.manifestId : "";
 				const unavailable = {
@@ -277,6 +287,19 @@ export function useBlocksData(variables?: GetBlocksQueryVariables) {
 					...block,
 					rawJsonString: JSON.stringify({
 						...raw,
+						runtimeCards: Object.fromEntries(
+							(Array.isArray(raw.cards) ? raw.cards : []).flatMap((card) => {
+								const declaration = asRecord(card);
+								return declaration?.source && typeof declaration.id === "string"
+									? [
+											[
+												declaration.id,
+												snapshot?.cards?.[declaration.id] ?? unavailable,
+											],
+										]
+									: [];
+							}),
+						),
 						...(asRecord(raw.metrics)?.provider
 							? { runtimeMetrics: snapshot ?? unavailable }
 							: {}),

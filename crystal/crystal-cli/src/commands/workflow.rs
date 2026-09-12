@@ -18,6 +18,8 @@ pub(crate) struct Project {
     pub root: PathBuf,
     /// Manifest entrypoint.
     pub file: PathBuf,
+    /// Credentials remain at the original entrypoint when editing staged source.
+    pub secrets_file: PathBuf,
     /// Managed Python adapter.
     pub executor: ManifestExecutor,
 }
@@ -38,10 +40,12 @@ impl Project {
             .map_err(|e| e.to_string())?;
         let file = resolve_manifest_file(&root, &args.manifest_file)?;
         let executor = prepare_manifest_executor(&args, &root)?;
+        let secrets_file = crystal_core::integration_secrets::secrets_path(&file);
         Ok(Self {
             args,
             root,
             file,
+            secrets_file,
             executor,
         })
     }
@@ -76,11 +80,22 @@ impl Project {
         let json = self.json()?;
         let key = derive_manifest_artifact_key(&self.root, &self.file);
         let maps = validate_json(&json, &key)?;
+        let envelope = serde_json::from_str(&json).map_err(|e| e.to_string())?;
+        let secrets =
+            if self.secrets_file.exists() || std::env::var_os("SCRYR_SECRETS_FILE").is_some() {
+                crystal_core::integration_secrets::SecretsFile::read(&self.secrets_file)?
+            } else {
+                crystal_core::integration_secrets::SecretsFile::default()
+            };
+        secrets.validate(
+            &envelope,
+            self.args.clerk_org_id.as_deref().unwrap_or("local-dev-org"),
+        )?;
         let schema = self
             .executor
             .run(&self.root, &self.file, ManifestPythonMode::Schema)?;
         eprintln!(
-            "Checked {}: formatting, lint, types, execution, and Scryr rules passed",
+            "Checked {}: formatting, lint, types, execution, Scryr rules, and TOML credentials passed",
             self.file.display()
         );
         Ok(Checked { json, maps, schema })

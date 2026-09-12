@@ -19,7 +19,23 @@ pub(crate) async fn run(args: QueryArgs) -> Result<(), String> {
         {
             continue;
         }
-        for config in [&manifest["metrics"]["provider"], &manifest["analytics"]] {
+        let mut sources = Vec::new();
+        if args.card.is_none() {
+            sources.extend([
+                (&manifest["metrics"]["provider"], None),
+                (&manifest["analytics"], None),
+            ]);
+        }
+        for card in manifest["cards"].as_array().into_iter().flatten() {
+            if args
+                .card
+                .as_deref()
+                .is_none_or(|id| card["id"].as_str() == Some(id))
+            {
+                sources.push((&card["source"], card["id"].as_str()));
+            }
+        }
+        for (config, card_id) in sources {
             if args
                 .provider
                 .as_deref()
@@ -29,20 +45,23 @@ pub(crate) async fn run(args: QueryArgs) -> Result<(), String> {
             }
             if let Some(queries) = config["queries"].as_object() {
                 for name in queries.keys() {
-                    choices.push((manifest, config, name));
+                    choices.push((manifest, config, name, card_id));
                 }
             }
         }
     }
     if args.list {
-        let rows: Vec<Value> = choices.iter().map(|(m, c, n)| json!({
-            "manifest": m["variable_name"], "manifestId":m["manifestId"], "name": n, "provider":c["kind"]
+        let rows: Vec<Value> = choices.iter().map(|(m, c, n, card)| json!({
+            "manifest": m["variable_name"], "manifestId":m["manifestId"], "name": n, "provider":c["kind"], "card":card
         })).collect();
         if args.json {
             println!("{}", json!(rows));
         } else {
             for row in rows {
-                println!("{}  {}  {}", row["manifest"], row["name"], row["provider"]);
+                println!(
+                    "{}  {}  {}  {}",
+                    row["manifest"], row["card"], row["name"], row["provider"]
+                );
             }
         }
         return Ok(());
@@ -53,14 +72,14 @@ pub(crate) async fn run(args: QueryArgs) -> Result<(), String> {
         .ok_or("Provide a query name or --list")?;
     let selected: Vec<_> = choices
         .into_iter()
-        .filter(|(_, _, n)| n.as_str() == name)
+        .filter(|(_, _, n, _)| n.as_str() == name)
         .collect();
-    let (_, config, _) = match selected.as_slice() {
+    let (_, config, _, _) = match selected.as_slice() {
         [choice] => choice,
         [] => return Err(format!("No query named {name}; use scryr query --list")),
         _ => {
             return Err(format!(
-                "Query {name} is ambiguous; select --manifest and, if needed, --provider"
+                "Query {name} is ambiguous; select --manifest and --card (or --provider for legacy sources)"
             ));
         }
     };

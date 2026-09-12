@@ -70,11 +70,12 @@ pub async fn start_with_workspace(
         db_pool,
     };
 
+    let metrics = crate::runtime_metrics::RuntimeMetrics::from_workspace(workspace.as_ref())?;
     let schema = Schema::build(QueryRoot, MutationRoot::default(), EmptySubscription)
         .data(crate::editor::EditorService { local: workspace })
         .data(app_state.clone())
         .data(app_state.db_pool.clone())
-        .data(crate::runtime_metrics::RuntimeMetrics::from_env()?)
+        .data(metrics)
         .finish();
 
     let schema_data = web::Data::new(schema);

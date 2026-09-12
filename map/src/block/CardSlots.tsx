@@ -4,7 +4,12 @@ import { CardSlot, getCardLayout } from "@/cards";
 
 export interface CardSlotsProps {
 	/** Card configuration with components for each card */
-	cards: Array<{ components: ReactNode[] }>;
+	cards: Array<{
+		categoryIndex?: number;
+		id?: string;
+		label?: string;
+		components: ReactNode[];
+	}>;
 	/** Width of individual cards */
 	cardWidth: number;
 	/** Height of individual cards */
@@ -81,7 +86,7 @@ export function CardSlots({
 			return getComponentTypeName(component.type);
 		});
 
-		return `card-slot-${componentIds.join("-")}-${cardConfig.zOffset}`;
+		return cardConfig.id ?? `card-slot-${componentIds.join("-")}`;
 	};
 
 	return (
@@ -111,7 +116,7 @@ export function CardSlots({
 							blockColor={blockColor}
 							blockHalfWidth={blockHalfWidth}
 							blockHalfDepth={blockHalfDepth}
-							isActive={activeCardIndex === index}
+							isActive={activeCardIndex === (cardConfig.categoryIndex ?? index)}
 							isSlotHovered={hoveredSlotIndex === index}
 							onSelect={onBlockSelect}
 							onFrontHoverStart={onFrontFaceHoverStart}

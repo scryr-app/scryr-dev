@@ -16,6 +16,7 @@ from pathlib import Path
 from types import CodeType, UnionType
 from typing import TYPE_CHECKING, Any, Union, cast, get_args, get_origin
 
+from scryr.integrations import _Declaration
 from scryr.manifest import Diagram, Forge, Manifest
 
 if TYPE_CHECKING:
@@ -333,12 +334,48 @@ def load_module_from_path(
                 spec.loader.exec_module(module)
         else:
             spec.loader.exec_module(module)
+    bind_declarations(module)
     return module
 
 
 def load_manifest_module(py_file: str | Path) -> ModuleType:
     """Import a manifest Python or `.scry` file and suppress stdout during execution."""
     return load_module_from_path(py_file, suppress_stdout=True)
+
+
+def bind_declarations(module: ModuleType) -> None:
+    """Derive identities from unique public bindings and reject anonymous references."""
+    bindings: dict[int, list[str]] = {}
+    declarations: dict[int, _Declaration] = {}
+    for variable, obj in vars(module).items():
+        if not variable.startswith("_") and isinstance(obj, _Declaration | Manifest):
+            bindings.setdefault(id(obj), []).append(scryr_variable_name(module, variable))
+            if isinstance(obj, _Declaration):
+                declarations[id(obj)] = obj
+    for identity, obj in declarations.items():
+        names = bindings[identity]
+        if len(names) != 1:
+            msg = f"Ambiguous declaration bindings: {', '.join(names)}"
+            raise ValueError(msg)
+        obj._declaration_name = names[0]
+    for _, manifest in iter_manifest_objects(module):
+        if manifest.cards is None and not manifest.integrations:
+            continue
+        Manifest.model_validate(manifest)
+        names = bindings[id(manifest)]
+        if len(names) != 1:
+            msg = f"Ambiguous manifest bindings: {', '.join(names)}"
+            raise ValueError(msg)
+        if manifest.manifest_id is not None and manifest.manifest_id != names[0]:
+            msg = "Typed manifest IDs must equal their variable names; omit manifest_id"
+            raise ValueError(msg)
+        manifest.manifest_id = names[0]
+        required = [*manifest.integrations, *(manifest.cards or [])]
+        required.extend(i.authentication for i in manifest.integrations if i.authentication)
+        for declaration in required:
+            if id(declaration) not in declarations:
+                msg = f"Assign {type(declaration).__name__} to a unique public variable"
+                raise ValueError(msg)
 
 
 def iter_manifest_objects(module: ModuleType) -> Iterator[tuple[str, Manifest]]:
