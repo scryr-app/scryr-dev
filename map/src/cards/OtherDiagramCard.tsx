@@ -6,8 +6,6 @@ import { currentTheme } from "@/theme/theme";
 const CARD_SIZE_X = 2.8;
 const CARD_SIZE_Y = 1.8;
 const PIXEL_SIZE = 0.01;
-const INSET_BG = "rgba(0,0,0,0.22)";
-const LABEL_COLOR = "rgba(255,255,255,0.40)";
 
 function DiagramRow({ name }: { name: string }) {
 	const c = currentTheme.cardTextColor;
@@ -17,15 +15,19 @@ function DiagramRow({ name }: { name: string }) {
 			flexDirection="row"
 			alignItems="center"
 			gap={8}
-			backgroundColor={INSET_BG}
+			backgroundColor={currentTheme.cardInsetColor}
 			borderRadius={5}
 			padding={7}
 		>
 			{/* Left column: diagram name */}
 			<Container flexGrow={1} flexDirection="column" gap={2}>
 				<Container flexDirection="row" alignItems="center" gap={4}>
-					<Layers width={9} height={9} color={LABEL_COLOR} />
-					<Text fontSize={10} color={LABEL_COLOR}>
+					<Layers
+						width={9}
+						height={9}
+						color={currentTheme.cardMutedTextColor}
+					/>
+					<Text fontSize={10} color={currentTheme.cardMutedTextColor}>
 						DIAGRAM
 					</Text>
 				</Container>
@@ -69,7 +71,7 @@ export function OtherDiagramCard({ diagrams = [] }: OtherDiagramCardProps) {
 
 			{diagrams.length === 0 ? (
 				<Container flexGrow={1} alignItems="center" justifyContent="center">
-					<Text fontSize={11} color={LABEL_COLOR}>
+					<Text fontSize={11} color={currentTheme.cardMutedTextColor}>
 						No diagrams found
 					</Text>
 				</Container>

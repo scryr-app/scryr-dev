@@ -11,8 +11,6 @@ import { currentTheme } from "@/theme/theme";
 const CARD_SIZE_X = 2.8;
 const CARD_SIZE_Y = 1.8;
 const PIXEL_SIZE = 0.01;
-const INSET_BG = "rgba(0,0,0,0.22)";
-const LABEL_COLOR = "rgba(255,255,255,0.40)";
 
 function Section({
 	label,
@@ -26,7 +24,7 @@ function Section({
 	return (
 		<Container
 			flexDirection="column"
-			backgroundColor={INSET_BG}
+			backgroundColor={currentTheme.cardInsetColor}
 			borderRadius={5}
 			padding={7}
 			gap={4}
@@ -34,7 +32,7 @@ function Section({
 			{label && (
 				<Container flexDirection="row" alignItems="center" gap={3}>
 					{icon}
-					<Text fontSize={8} color={LABEL_COLOR}>
+					<Text fontSize={8} color={currentTheme.cardMutedTextColor}>
 						{label}
 					</Text>
 				</Container>
@@ -125,7 +123,13 @@ export function DependenciesCard({
 			{/* Packages */}
 			<Section
 				label="PACKAGES"
-				icon={<Package width={8} height={8} color={LABEL_COLOR} />}
+				icon={
+					<Package
+						width={8}
+						height={8}
+						color={currentTheme.cardMutedTextColor}
+					/>
+				}
 			>
 				{totalDeps !== undefined && (
 					<Text fontSize={13} color={c}>
@@ -133,12 +137,12 @@ export function DependenciesCard({
 					</Text>
 				)}
 				{directDeps !== undefined && (
-					<Text fontSize={13} color={LABEL_COLOR}>
+					<Text fontSize={13} color={currentTheme.cardMutedTextColor}>
 						{directDeps} direct
 					</Text>
 				)}
 				{transitiveDeps !== undefined && (
-					<Text fontSize={13} color={LABEL_COLOR}>
+					<Text fontSize={13} color={currentTheme.cardMutedTextColor}>
 						{transitiveDeps} trans
 					</Text>
 				)}
@@ -147,7 +151,13 @@ export function DependenciesCard({
 			{/* Freshness */}
 			<Section
 				label="FRESHNESS"
-				icon={<RefreshCw width={8} height={8} color={LABEL_COLOR} />}
+				icon={
+					<RefreshCw
+						width={8}
+						height={8}
+						color={currentTheme.cardMutedTextColor}
+					/>
+				}
 			>
 				{outdatedDeps !== undefined && (
 					<Container flexDirection="row" alignItems="center" gap={4}>
@@ -180,7 +190,13 @@ export function DependenciesCard({
 			{/* Security */}
 			<Section
 				label="SECURITY"
-				icon={<ShieldAlert width={8} height={8} color={LABEL_COLOR} />}
+				icon={
+					<ShieldAlert
+						width={8}
+						height={8}
+						color={currentTheme.cardMutedTextColor}
+					/>
+				}
 			>
 				{vulnerableDeps !== undefined && (
 					<Container flexDirection="row" alignItems="center" gap={4}>
@@ -214,7 +230,9 @@ export function DependenciesCard({
 			{licenseCompliance && (
 				<Section
 					label="LICENSE"
-					icon={<Key width={8} height={8} color={LABEL_COLOR} />}
+					icon={
+						<Key width={8} height={8} color={currentTheme.cardMutedTextColor} />
+					}
 				>
 					<Container flexDirection="row" alignItems="center" gap={4}>
 						<Container

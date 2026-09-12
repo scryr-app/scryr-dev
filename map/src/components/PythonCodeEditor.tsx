@@ -6,13 +6,8 @@ import {
 	indentWithTab,
 } from "@codemirror/commands";
 import { python } from "@codemirror/lang-python";
-import {
-	defaultHighlightStyle,
-	indentOnInput,
-	syntaxHighlighting,
-} from "@codemirror/language";
+import { indentOnInput } from "@codemirror/language";
 import { Compartment, EditorState } from "@codemirror/state";
-import { oneDark, oneDarkHighlightStyle } from "@codemirror/theme-one-dark";
 import {
 	drawSelection,
 	dropCursor,
@@ -23,107 +18,17 @@ import {
 } from "@codemirror/view";
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import { pythonEnumCompletionSource } from "@/pyodide/pythonEnumCompletions";
+import type { Theme } from "@/theme/theme";
+import { createThemeExtensions } from "./pythonEditorTheme";
 
 interface PythonCodeEditorProps {
 	value: string;
 	onChange: (value: string) => void;
-	theme: "dark" | "light";
+	theme: Theme;
 }
 
 export interface PythonCodeEditorHandle {
 	moveToLine: (lineNumber: number) => void;
-}
-
-function createEditorTheme(mode: "dark" | "light") {
-	const isDark = mode === "dark";
-
-	return EditorView.theme(
-		{
-			"&": {
-				height: "100%",
-				backgroundColor: "transparent",
-				color: isDark ? "#e2e8f0" : "#0f172a",
-				fontSize: "12px",
-			},
-			".cm-scroller": {
-				backgroundColor: "transparent",
-				fontFamily:
-					'"SFMono-Regular", "SF Mono", "Cascadia Code", "Fira Code", Menlo, Consolas, monospace',
-				lineHeight: "20px",
-				overflow: "auto",
-			},
-			".cm-content": {
-				minHeight: "100%",
-				padding: "0",
-				caretColor: isDark ? "#f8fafc" : "#0f172a",
-			},
-			".cm-line": {
-				padding: "0 0 0 8px",
-			},
-			".cm-focused": {
-				outline: "none",
-			},
-			".cm-editor.cm-focused": {
-				outline: "none",
-			},
-			".cm-gutters": {
-				backgroundColor: "transparent",
-				border: "none",
-				color: isDark ? "rgba(226, 232, 240, 0.35)" : "rgba(15, 23, 42, 0.35)",
-			},
-			".cm-activeLine": {
-				backgroundColor: isDark
-					? "rgba(255, 255, 255, 0.04)"
-					: "rgba(15, 23, 42, 0.04)",
-			},
-			".cm-activeLineGutter": {
-				backgroundColor: "transparent",
-			},
-			".cm-selectionBackground, &.cm-focused .cm-selectionBackground, ::selection":
-				{
-					backgroundColor: isDark
-						? "rgba(56, 189, 248, 0.22)"
-						: "rgba(14, 165, 233, 0.2)",
-				},
-			".cm-cursor, .cm-dropCursor": {
-				borderLeftColor: isDark ? "#f8fafc" : "#0f172a",
-			},
-			".cm-tooltip": {
-				border: isDark
-					? "1px solid rgba(255, 255, 255, 0.12)"
-					: "1px solid rgba(15, 23, 42, 0.12)",
-				backgroundColor: isDark
-					? "rgba(3, 7, 18, 0.92)"
-					: "rgba(255, 255, 255, 0.96)",
-				backdropFilter: "blur(20px)",
-				color: isDark ? "#e2e8f0" : "#0f172a",
-			},
-			".cm-tooltip-autocomplete ul li[aria-selected]": {
-				backgroundColor: isDark
-					? "rgba(255, 255, 255, 0.08)"
-					: "rgba(15, 23, 42, 0.06)",
-			},
-			".cm-tooltip-autocomplete": {
-				maxWidth: "320px",
-			},
-		},
-		{ dark: isDark },
-	);
-}
-
-function createThemeExtensions(mode: "dark" | "light") {
-	if (mode === "dark") {
-		return [
-			oneDark,
-			syntaxHighlighting(oneDarkHighlightStyle),
-			createEditorTheme("dark"),
-		];
-	}
-
-	return [
-		syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
-		createEditorTheme("light"),
-	];
 }
 
 export const PythonCodeEditor = forwardRef<

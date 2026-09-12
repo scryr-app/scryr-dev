@@ -6,7 +6,7 @@ import * as THREE from "three";
 import { RoundedBoxGeometry } from "three-stdlib";
 
 import { GlowFrame } from "@/components/GlowFrame";
-import { useCrystalGlowTexture } from "@/theme/textures";
+import { useCardTexture, useCrystalGlowTexture } from "@/theme/textures";
 import { currentTheme } from "@/theme/theme";
 
 const CARD_DEPTH = 0.025;
@@ -73,9 +73,11 @@ export function Card({
 		...material
 	} = cards;
 	const baseColor = new THREE.Color(
-		useBlockColor ? glowColor : color,
+		currentTheme.appearance.textures.paperColor ??
+			(useBlockColor ? glowColor : color),
 	).multiplyScalar(brightness);
 	const glowTexture = useCrystalGlowTexture();
+	const paperTexture = useCardTexture();
 	const rimColor = (
 		useBlockColor ? new THREE.Color(glowColor) : baseColor.clone()
 	).lerp(new THREE.Color("#ffffff"), rimHighlight);
@@ -107,6 +109,7 @@ export function Card({
 			<mesh geometry={surfaceGeometry}>
 				<meshPhysicalMaterial
 					color={baseColor}
+					map={paperTexture}
 					{...material}
 					emissive={glowColor}
 					emissiveMap={glowTexture ?? undefined}

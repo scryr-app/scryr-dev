@@ -10,11 +10,8 @@ const CARD_SIZE_X = 2.8;
 const CARD_SIZE_Y = 1.8;
 // 1 pixel = 0.01 world units -> 240x160 virtual pixel space
 const PIXEL_SIZE = 0.01;
-const INSET_BG = "rgba(0,0,0,0.22)";
-const LABEL_COLOR = "rgba(255,255,255,0.40)";
 const TOOLTIP_BG = "rgba(13,17,23,0.5)";
 const TOOLTIP_BORDER = "rgba(255,255,255,0.22)";
-const LINK_COLOR = "#93c5fd";
 const LINK_CHIP_BG = "rgba(147,197,253,0.16)";
 const LINK_CHIP_BORDER = "rgba(147,197,253,0.34)";
 const META_CHIP_BG = "rgba(255,255,255,0.10)";
@@ -205,13 +202,24 @@ function EnumTooltip({
 			depthWrite={false}
 			pointerEvents="listener"
 		>
-			<Text fontSize={9} color={currentTheme.cardTextColor}>
+			<Text
+				fontSize={9}
+				color={
+					currentTheme.appearance.content
+						? "#f3e8cf"
+						: currentTheme.cardTextColor
+				}
+			>
 				{label}
 			</Text>
 			{docUrl && (
 				<Text
 					fontSize={8}
-					color={LINK_COLOR}
+					color={
+						currentTheme.appearance.content
+							? "#c9b6ed"
+							: currentTheme.cardLinkColor
+					}
 					cursor="pointer"
 					onClick={() => window.open(docUrl, "_blank")}
 				>
@@ -239,7 +247,15 @@ function DescriptionTooltip({ description }: { description: string }) {
 			depthWrite={false}
 			pointerEvents="none"
 		>
-			<Text fontSize={8.5} lineHeight={10.5} color={currentTheme.cardTextColor}>
+			<Text
+				fontSize={8.5}
+				lineHeight={10.5}
+				color={
+					currentTheme.appearance.content
+						? "#f3e8cf"
+						: currentTheme.cardTextColor
+				}
+			>
 				{description}
 			</Text>
 		</Container>
@@ -408,7 +424,9 @@ function EnumChip({
 			) : (
 				<Text
 					fontSize={8}
-					color={muted ? LABEL_COLOR : currentTheme.cardTextColor}
+					color={
+						muted ? currentTheme.cardMutedTextColor : currentTheme.cardTextColor
+					}
 				>
 					{getShortEnumLabel(value)}
 				</Text>
@@ -452,7 +470,7 @@ function EnumMetaPill({
 			onHoverChange={setIsHovered}
 			onClick={docUrl ? () => window.open(docUrl, "_blank") : undefined}
 		>
-			<Text fontSize={6.5} color={LABEL_COLOR}>
+			<Text fontSize={6.5} color={currentTheme.cardMutedTextColor}>
 				{prefix}
 			</Text>
 			{iconContent ? (
@@ -467,13 +485,15 @@ function EnumMetaPill({
 					opacity={muted ? MUTED_ENUM_ICON_OPACITY : ENUM_ICON_OPACITY}
 				/>
 			) : (
-				<Text fontSize={7} color={LABEL_COLOR}>
+				<Text fontSize={7} color={currentTheme.cardMutedTextColor}>
 					{getShortEnumLabel(value)}
 				</Text>
 			)}
 			<Text
 				fontSize={7.5}
-				color={muted ? LABEL_COLOR : currentTheme.cardTextColor}
+				color={
+					muted ? currentTheme.cardMutedTextColor : currentTheme.cardTextColor
+				}
 			>
 				{label}
 			</Text>
@@ -516,7 +536,7 @@ function RowLabel({ label, icon }: { label: string; icon: ReactNode }) {
 			gap={3}
 		>
 			{icon}
-			<Text fontSize={7} color={LABEL_COLOR}>
+			<Text fontSize={7} color={currentTheme.cardMutedTextColor}>
 				{label}
 			</Text>
 		</Container>
@@ -538,7 +558,7 @@ function Panel({
 		<Container
 			flexDirection="column"
 			height={height}
-			backgroundColor={INSET_BG}
+			backgroundColor={currentTheme.cardInsetColor}
 			borderRadius={5}
 			padding={SECTION_PADDING}
 			gap={3}
@@ -547,7 +567,7 @@ function Panel({
 			{label && (
 				<Container flexDirection="row" alignItems="center" gap={3}>
 					{icon}
-					<Text fontSize={7} color={LABEL_COLOR}>
+					<Text fontSize={7} color={currentTheme.cardMutedTextColor}>
 						{label}
 					</Text>
 				</Container>
@@ -571,7 +591,7 @@ function DetailRow({
 			height={DETAIL_ROW_HEIGHT}
 			flexDirection="row"
 			alignItems="center"
-			backgroundColor={INSET_BG}
+			backgroundColor={currentTheme.cardInsetColor}
 			borderRadius={5}
 			padding={SECTION_PADDING}
 			gap={5}
@@ -599,7 +619,7 @@ function LinkChip({ label, url }: { label: string; url: string }) {
 			cursor="pointer"
 			onClick={() => window.open(url, "_blank")}
 		>
-			<Text fontSize={8.5} color={LINK_COLOR}>
+			<Text fontSize={8.5} color={currentTheme.cardLinkColor}>
 				{label}
 			</Text>
 		</Container>
@@ -621,7 +641,7 @@ function OwnerChip({ ownerTeam }: { ownerTeam: string }) {
 			gap={3}
 			overflow="hidden"
 		>
-			<Users width={7} height={7} color={LABEL_COLOR} />
+			<Users width={7} height={7} color={currentTheme.cardMutedTextColor} />
 			<Text fontSize={8} color={currentTheme.cardTextColor}>
 				{ownerTeam}
 			</Text>
@@ -760,7 +780,7 @@ export function InfoCard({
 					overflow="hidden"
 				>
 					{version && (
-						<Text fontSize={10} color={LABEL_COLOR}>
+						<Text fontSize={10} color={currentTheme.cardMutedTextColor}>
 							v{version}
 						</Text>
 					)}
@@ -854,7 +874,7 @@ export function InfoCard({
 						<Code
 							width={ROW_LABEL_ICON_SIZE}
 							height={ROW_LABEL_ICON_SIZE}
-							color={LABEL_COLOR}
+							color={currentTheme.cardMutedTextColor}
 						/>
 					}
 				>
@@ -870,7 +890,7 @@ export function InfoCard({
 						<Activity
 							width={ROW_LABEL_ICON_SIZE}
 							height={ROW_LABEL_ICON_SIZE}
-							color={LABEL_COLOR}
+							color={currentTheme.cardMutedTextColor}
 						/>
 					}
 				>

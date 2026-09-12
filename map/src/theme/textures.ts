@@ -29,6 +29,31 @@ export function useWallTexture(color: string): THREE.CanvasTexture | null {
 				ctx.fillStyle = "rgba(0,0,0,0.03)";
 				ctx.fillRect(x + 4, 0, 1, size);
 			}
+		} else if (wall === "leather") {
+			// Fine pores and shallow creases, with restrained gilt tooling.
+			for (let i = 0; i < 7000; i++) {
+				const x = (i * 67.13) % size,
+					y = (i * 31.79) % size;
+				ctx.fillStyle =
+					i % 3 === 0 ? "rgba(240,215,164,0.09)" : "rgba(10,6,3,0.1)";
+				ctx.fillRect(x, y, 1.5, 0.7);
+			}
+			ctx.strokeStyle = "rgba(210,169,91,0.48)";
+			ctx.lineWidth = 1.2;
+			ctx.strokeRect(10, 10, size - 20, size - 20);
+			ctx.strokeStyle = "rgba(210,169,91,0.22)";
+			ctx.strokeRect(15, 15, size - 30, size - 30);
+			for (const x of [24, size - 24]) {
+				for (const y of [24, size - 24]) {
+					ctx.beginPath();
+					ctx.moveTo(x, y - 4);
+					ctx.lineTo(x + 3, y);
+					ctx.lineTo(x, y + 4);
+					ctx.lineTo(x - 3, y);
+					ctx.closePath();
+					ctx.stroke();
+				}
+			}
 		} else {
 			const depth = ctx.createLinearGradient(0, size, size, 0);
 			depth.addColorStop(0, "rgba(0, 0, 0, 0.16)");
@@ -150,4 +175,47 @@ export function useGroundTexture(
 	}, [color, width, height]);
 	useEffect(() => () => groundTexture?.dispose(), [groundTexture]);
 	return groundTexture;
+}
+
+/** Paper fibers, darkened margins and a fine manuscript border; no image downloads. */
+export function useCardTexture(): THREE.CanvasTexture | null {
+	const style = currentTheme.appearance.textures.card;
+	const texture = useMemo(() => {
+		if (style !== "parchment") return null;
+		const size = 512;
+		const surface = document.createElement("canvas");
+		surface.width = surface.height = size;
+		const ctx = surface.getContext("2d");
+		if (!ctx) return null;
+		// Neutral paper shading preserves the parent block’s hue.
+		const wash = ctx.createRadialGradient(256, 225, 50, 256, 256, 350);
+		wash.addColorStop(0, "#ffffff");
+		wash.addColorStop(0.75, "#eeeeee");
+		wash.addColorStop(1, "#b7b7b7");
+		ctx.fillStyle = wash;
+		ctx.fillRect(0, 0, size, size);
+		for (let i = 0; i < 9000; i++) {
+			const x = (i * 71.17) % size,
+				y = (i * 43.73) % size;
+			ctx.fillStyle = i % 2 ? "rgba(20,20,20,0.045)" : "rgba(255,255,255,0.14)";
+			ctx.fillRect(x, y, 1 + (i % 4), 0.6);
+		}
+		ctx.strokeStyle = "rgba(86,59,28,0.4)";
+		ctx.lineWidth = 1;
+		ctx.strokeRect(10, 10, size - 20, size - 20);
+		ctx.strokeStyle = "rgba(86,59,28,0.16)";
+		ctx.strokeRect(14, 14, size - 28, size - 28);
+		// Small corner ornaments remain outside the reading area.
+		for (const x of [18, size - 18])
+			for (const y of [18, size - 18]) {
+				ctx.beginPath();
+				ctx.arc(x, y, 3, 0, Math.PI * 2);
+				ctx.stroke();
+			}
+		const paper = new THREE.CanvasTexture(surface);
+		paper.colorSpace = THREE.SRGBColorSpace;
+		return paper;
+	}, [style]);
+	useEffect(() => () => texture?.dispose(), [texture]);
+	return texture;
 }

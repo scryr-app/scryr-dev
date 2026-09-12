@@ -13,8 +13,6 @@ import { currentTheme } from "@/theme/theme";
 const CARD_SIZE_X = 2.8;
 const CARD_SIZE_Y = 1.8;
 const PIXEL_SIZE = 0.01;
-const INSET_BG = "rgba(0,0,0,0.22)";
-const LABEL_COLOR = "rgba(255,255,255,0.40)";
 
 function Section({
 	label,
@@ -28,7 +26,7 @@ function Section({
 	return (
 		<Container
 			flexDirection="column"
-			backgroundColor={INSET_BG}
+			backgroundColor={currentTheme.cardInsetColor}
 			borderRadius={5}
 			padding={7}
 			gap={4}
@@ -36,7 +34,7 @@ function Section({
 			{label && (
 				<Container flexDirection="row" alignItems="center" gap={3}>
 					{icon}
-					<Text fontSize={8} color={LABEL_COLOR}>
+					<Text fontSize={8} color={currentTheme.cardMutedTextColor}>
 						{label}
 					</Text>
 				</Container>
@@ -114,7 +112,9 @@ export function MetricsCard({
 			{/* Latency */}
 			<Section
 				label="LATENCY"
-				icon={<Timer width={8} height={8} color={LABEL_COLOR} />}
+				icon={
+					<Timer width={8} height={8} color={currentTheme.cardMutedTextColor} />
+				}
 			>
 				{responseTimeP50 !== undefined && (
 					<Text fontSize={13} color={c}>
@@ -145,7 +145,9 @@ export function MetricsCard({
 			{/* Throughput */}
 			<Section
 				label="THROUGHPUT"
-				icon={<Zap width={8} height={8} color={LABEL_COLOR} />}
+				icon={
+					<Zap width={8} height={8} color={currentTheme.cardMutedTextColor} />
+				}
 			>
 				{requestRate !== undefined && (
 					<Text fontSize={13} color={c}>
@@ -162,7 +164,13 @@ export function MetricsCard({
 			{/* Reliability */}
 			<Section
 				label="RELIABILITY"
-				icon={<ShieldCheck width={8} height={8} color={LABEL_COLOR} />}
+				icon={
+					<ShieldCheck
+						width={8}
+						height={8}
+						color={currentTheme.cardMutedTextColor}
+					/>
+				}
 			>
 				{uptime !== undefined && (
 					<Text fontSize={13} color={uptime < 99.9 ? "#f59e0b" : "#34d399"}>
@@ -184,7 +192,9 @@ export function MetricsCard({
 			{/* Resources */}
 			<Section
 				label="RESOURCES"
-				icon={<Cpu width={8} height={8} color={LABEL_COLOR} />}
+				icon={
+					<Cpu width={8} height={8} color={currentTheme.cardMutedTextColor} />
+				}
 			>
 				{cpuUsage !== undefined && (
 					<Container flexDirection="row" alignItems="center" gap={4}>

@@ -2,6 +2,7 @@ import { Crosshair, LoaderCircle, Play, RefreshCw, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useMapTray } from "@/cards/MapTrayContext";
 import { useManifestEditor } from "@/graphql/useManifestEditor";
+import { consoleTextColor } from "@/theme/console";
 import { useTheme } from "@/theme/theme";
 import {
 	PythonCodeEditor,
@@ -14,6 +15,31 @@ interface PyodideConsoleProps {
 	onOpenChange: (isOpen: boolean) => void;
 	onPanelWidthChange: (width: number) => void;
 }
+
+type PanelPosition = { x: number; y: number };
+type PanelGesture = {
+	pointerId: number;
+	x: number;
+	y: number;
+	left: number;
+	top: number;
+	width: number;
+	kind: "drag" | "resize";
+	cursor: string;
+	userSelect: string;
+};
+
+function constrainPosition(position: PanelPosition, panel: HTMLElement) {
+	const bounds = panel.getBoundingClientRect();
+	return {
+		x: Math.max(8, Math.min(position.x, window.innerWidth - bounds.width - 8)),
+		y: Math.max(
+			8,
+			Math.min(position.y, window.innerHeight - bounds.height - 8),
+		),
+	};
+}
+
 export function PyodideConsole({
 	isOpen,
 	panelWidth,
@@ -23,48 +49,113 @@ export function PyodideConsole({
 	const editor = useManifestEditor(isOpen);
 	const editorRef = useRef<PythonCodeEditorHandle | null>(null);
 	const { selectedBlock } = useMapTray();
-	const theme = useTheme().diagramMode;
+	const theme = useTheme();
+	const palette = theme.console;
 	const [follow, setFollow] = useState(true);
-	const resize = useRef<{ x: number; width: number } | null>(null);
+	const [position, setPosition] = useState<PanelPosition>({ x: 16, y: 72 });
+	const panelRef = useRef<HTMLElement | null>(null);
+	const gesture = useRef<PanelGesture | null>(null);
+	const startGesture = (
+		event: React.PointerEvent<HTMLElement>,
+		kind: PanelGesture["kind"],
+	) => {
+		if (event.button !== 0 || gesture.current) return;
+		event.preventDefault();
+		event.currentTarget.setPointerCapture(event.pointerId);
+		gesture.current = {
+			pointerId: event.pointerId,
+			x: event.clientX,
+			y: event.clientY,
+			left: position.x,
+			top: position.y,
+			width: panelRef.current?.getBoundingClientRect().width ?? panelWidth,
+			kind,
+			cursor: document.body.style.cursor,
+			userSelect: document.body.style.userSelect,
+		};
+		document.body.style.cursor = kind === "drag" ? "grabbing" : "col-resize";
+		document.body.style.userSelect = "none";
+	};
 	useEffect(() => {
 		if (isOpen && follow && selectedBlock?.lineNumber)
 			editorRef.current?.moveToLine(selectedBlock.lineNumber);
 	}, [isOpen, follow, selectedBlock?.lineNumber]);
 	useEffect(() => {
+		if (!isOpen) return;
 		const move = (event: PointerEvent) => {
-			if (resize.current)
-				onPanelWidthChange(
-					Math.max(
-						320,
-						Math.min(
-							window.innerWidth - 80,
-							resize.current.width + event.clientX - resize.current.x,
-						),
+			const active = gesture.current;
+			if (!active || event.pointerId !== active.pointerId || !panelRef.current)
+				return;
+			if (active.kind === "drag") {
+				setPosition(
+					constrainPosition(
+						{
+							x: active.left + event.clientX - active.x,
+							y: active.top + event.clientY - active.y,
+						},
+						panelRef.current,
 					),
 				);
+			} else {
+				onPanelWidthChange(
+					Math.min(
+						window.innerWidth - active.left - 8,
+						Math.max(320, active.width + event.clientX - active.x),
+					),
+				);
+			}
 		};
 		const stop = () => {
-			resize.current = null;
-			document.body.style.cursor = "";
-			document.body.style.userSelect = "";
+			if (!gesture.current) return;
+			document.body.style.cursor = gesture.current.cursor;
+			document.body.style.userSelect = gesture.current.userSelect;
+			gesture.current = null;
 		};
 		window.addEventListener("pointermove", move);
 		window.addEventListener("pointerup", stop);
+		window.addEventListener("pointercancel", stop);
+		window.addEventListener("blur", stop);
 		return () => {
 			window.removeEventListener("pointermove", move);
 			window.removeEventListener("pointerup", stop);
+			window.removeEventListener("pointercancel", stop);
+			window.removeEventListener("blur", stop);
 			stop();
 		};
-	}, [onPanelWidthChange]);
+	}, [onPanelWidthChange, isOpen]);
+	useEffect(() => {
+		if (!isOpen) return;
+		const keepVisible = () => {
+			const panel = panelRef.current;
+			if (panel) setPosition((current) => constrainPosition(current, panel));
+		};
+		keepVisible();
+		window.addEventListener("resize", keepVisible);
+		return () => window.removeEventListener("resize", keepVisible);
+	}, [isOpen]);
 	if (!isOpen) return null;
 	return (
 		<section
+			ref={panelRef}
 			aria-label="Manifest source editor"
-			style={{ width: panelWidth }}
-			className="absolute left-4 top-18 z-[920] flex h-[calc(100vh-6rem)] max-h-[46rem] overflow-hidden rounded-[28px] border border-white/15 bg-black/40 text-slate-100 shadow-2xl backdrop-blur-md"
+			style={{
+				left: position.x,
+				top: position.y,
+				width: panelWidth,
+				backgroundColor: palette.panel,
+				color: consoleTextColor(palette.text),
+			}}
+			className="fixed z-[920] flex h-[calc(100vh-6rem)] max-h-[46rem] max-w-[calc(100vw-1rem)] overflow-hidden rounded-[28px] border border-current/15 shadow-2xl backdrop-blur-md"
 		>
 			<div className="flex min-w-0 flex-1 flex-col">
-				<header className="flex flex-wrap items-center gap-2 border-b border-current/15 p-3">
+				<header
+					className="flex cursor-grab touch-none select-none flex-wrap items-center gap-2 border-b border-current/15 p-3 active:cursor-grabbing"
+					title="Drag to move console"
+					onPointerDown={(event) => {
+						if ((event.target as HTMLElement).closest("button")) return;
+						startGesture(event, "drag");
+					}}
+				>
 					<button
 						type="button"
 						aria-label="Hide terminal file"
@@ -111,7 +202,8 @@ export function PyodideConsole({
 					</div>
 				)}
 				<div
-					className={`min-h-0 flex-1 overflow-hidden ${theme === "dark" ? "bg-[#1e1e1e]" : "bg-white"}`}
+					className="min-h-0 flex-1 overflow-hidden"
+					style={{ backgroundColor: palette.background }}
 				>
 					<PythonCodeEditor
 						ref={editorRef}
@@ -126,18 +218,22 @@ export function PyodideConsole({
 							<button
 								type="button"
 								onClick={editor.cancel}
-								className="mr-auto inline-flex items-center rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 font-medium text-slate-300 transition-colors hover:border-white/20 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/70"
+								className="mr-auto inline-flex items-center rounded-lg border border-current/15 bg-white/5 px-2.5 py-1.5 font-medium transition-colors hover:border-current/30 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current"
 							>
 								Cancel run
 							</button>
 						)}
 						<div className="ml-auto flex flex-wrap items-center justify-end gap-2">
 							<label
-								className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 py-1.5 font-medium shadow-sm transition-colors focus-within:ring-2 focus-within:ring-cyan-400/70 ${
-									follow
-										? "border-cyan-300/25 bg-cyan-400/15 text-cyan-100 hover:bg-cyan-400/20"
-										: "border-white/10 bg-white/5 text-slate-300 hover:border-white/20 hover:bg-white/10 hover:text-white"
-								}`}
+								className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-current/20 px-2.5 py-1.5 font-medium shadow-sm transition-colors focus-within:ring-2 focus-within:ring-current"
+								style={{
+									color: consoleTextColor(
+										follow ? palette.accent : palette.text,
+									),
+									backgroundColor: follow
+										? palette.selection
+										: palette.activeLine,
+								}}
 							>
 								<input
 									type="checkbox"
@@ -160,7 +256,7 @@ export function PyodideConsole({
 									)
 										void editor.reload();
 								}}
-								className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 font-medium text-slate-300 shadow-sm transition-colors hover:border-white/20 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/70 disabled:cursor-not-allowed disabled:opacity-40"
+								className="inline-flex items-center gap-1.5 rounded-lg border border-current/15 bg-white/5 px-2.5 py-1.5 font-medium shadow-sm transition-colors hover:border-current/30 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current disabled:cursor-not-allowed disabled:opacity-40"
 							>
 								<RefreshCw size={14} strokeWidth={2} aria-hidden="true" />
 								Reload source
@@ -184,12 +280,8 @@ export function PyodideConsole({
 			<button
 				type="button"
 				aria-label="Resize terminal panel"
-				className="w-3 shrink-0 cursor-col-resize hover:bg-white/10"
-				onPointerDown={(event) => {
-					resize.current = { x: event.clientX, width: panelWidth };
-					document.body.style.cursor = "col-resize";
-					document.body.style.userSelect = "none";
-				}}
+				className="w-3 shrink-0 touch-none cursor-col-resize hover:bg-white/10"
+				onPointerDown={(event) => startGesture(event, "resize")}
 			/>
 		</section>
 	);
