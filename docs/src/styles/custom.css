@@ -1,0 +1,139 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Source+Code+Pro:wght@400;500;600;700&display=swap');
+
+:root,
+:root[data-theme='light'],
+:root[data-theme='dark'] {
+  --sl-font: 'Source Code Pro', ui-monospace, monospace;
+  --sl-font-system: 'Source Code Pro', ui-monospace, monospace;
+  --sl-font-system-mono: 'Source Code Pro', ui-monospace, monospace;
+  --sl-color-accent-low: #27133f;
+  --sl-color-accent: #a85cff;
+  --sl-color-accent-high: #ead5ff;
+  --sl-color-white: #f5efff;
+  --sl-color-gray-1: #e9dff4;
+  --sl-color-gray-2: #c5b8d4;
+  --sl-color-gray-3: #9485a5;
+  --sl-color-gray-4: #564762;
+  --sl-color-gray-5: #2b2035;
+  --sl-color-gray-6: #171020;
+  --sl-color-black: #090611;
+  --sl-color-bg: #090611;
+  --sl-color-bg-nav: rgba(9, 6, 17, .91);
+  --sl-color-bg-sidebar: #0d0815;
+  --sl-color-hairline-light: rgba(215, 168, 83, .24);
+  --sl-color-hairline: rgba(215, 168, 83, .2);
+  --sl-color-hairline-shade: rgba(215, 168, 83, .14);
+  --sl-content-width: 52rem;
+}
+
+html { background: #090611; }
+body {
+  background-color: #090611;
+  background-image:
+    radial-gradient(circle at 18% 3%, rgba(113, 48, 189, .2), transparent 31rem),
+    linear-gradient(rgba(255,255,255,.014) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.014) 1px, transparent 1px);
+  background-size: auto, 44px 44px, 44px 44px;
+}
+
+h1, h2, .site-title {
+  font-family: 'Cinzel Decorative', Georgia, serif;
+  letter-spacing: -.025em;
+}
+
+header.header {
+  border-bottom-color: rgba(215, 168, 83, .24);
+  backdrop-filter: blur(18px);
+}
+
+.site-title img {
+  width: 2.4rem;
+  height: 2.4rem;
+  filter: drop-shadow(0 0 12px rgba(168, 92, 255, .48));
+}
+
+.sidebar-pane { border-right-color: rgba(215, 168, 83, .18); }
+.right-sidebar { border-left-color: rgba(215, 168, 83, .18); }
+
+.sidebar-content a[aria-current='page'] {
+  color: #f1d697;
+  background: linear-gradient(90deg, rgba(168,92,255,.17), transparent);
+  border-inline-start-color: #a85cff;
+}
+
+.sl-markdown-content a:not(.sl-link-button) { color: #d19bff; }
+.sl-markdown-content a:not(.sl-link-button):hover { color: #fff; }
+.sl-markdown-content h2 { margin-top: 3.2rem; }
+.sl-markdown-content h2::after {
+  content: '';
+  display: block;
+  width: 4.5rem;
+  height: 1px;
+  margin-top: .85rem;
+  background: linear-gradient(90deg, #d7a853, transparent);
+}
+
+.hero {
+  position: relative;
+  padding-block: clamp(4.5rem, 9vw, 8rem);
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: -5rem -50vw;
+  z-index: -1;
+  background: radial-gradient(circle at 72% 48%, rgba(126,45,219,.25), transparent 28rem);
+}
+.hero h1 {
+  font-size: clamp(2.9rem, 7vw, 6.4rem);
+  line-height: 1.04;
+  color: #f5efff;
+  text-shadow: 0 0 55px rgba(168,92,255,.18);
+}
+.hero .tagline { color: #c8bbd6; font-size: clamp(1.05rem, 1.8vw, 1.25rem); }
+.hero img {
+  border: 1px solid rgba(215,168,83,.38);
+  padding: 8px;
+  background: rgba(15,9,28,.75);
+  box-shadow: 0 40px 100px rgba(0,0,0,.62), 0 0 70px rgba(131,58,212,.17);
+  clip-path: polygon(18px 0,calc(100% - 18px) 0,100% 18px,100% calc(100% - 18px),calc(100% - 18px) 100%,18px 100%,0 calc(100% - 18px),0 18px);
+}
+
+.sl-link-button.primary {
+  color: white;
+  border-color: #a85cff;
+  background: linear-gradient(135deg, #7130bd, #a85cff);
+  box-shadow: 0 12px 34px rgba(113,48,189,.28), inset 0 0 0 1px rgba(255,255,255,.15);
+}
+.sl-link-button:not(.primary) { border-color: rgba(215,168,83,.3); background: rgba(255,255,255,.025); }
+
+.card-grid > * {
+  border-color: rgba(215,168,83,.24);
+  border-radius: 0;
+  background: linear-gradient(155deg, rgba(31,17,50,.86), rgba(12,8,21,.72));
+}
+.card-grid .card:hover { border-color: rgba(168,92,255,.55); }
+.card-grid .title { color: #f1d697; }
+
+.feature-links {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-block: 2rem;
+}
+
+.expressive-code { margin-block: 1.5rem; }
+.expressive-code figure { border: 1px solid rgba(215,168,83,.24) !important; border-radius: 0 !important; box-shadow: 0 25px 60px rgba(0,0,0,.28) !important; }
+.expressive-code .frame.has-title:not(.is-terminal) figcaption { color: #f1d697 !important; }
+
+starlight-menu-button button { border-color: rgba(215,168,83,.28); }
+
+@media (max-width: 50rem) {
+  .hero { text-align: center; }
+  .hero img { margin-top: 2rem; }
+  .feature-links { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

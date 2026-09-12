@@ -1,0 +1,50 @@
+# Scryr documentation
+
+Scryr is actionable architecture: define a codebase in typed Python `.scry` manifests, explore it in a React/Three.js map, and generate artifacts with the Rust `scryr` CLI.
+
+Canonical links:
+- Documentation: https://scryr.dev/docs/
+- LLM manifest prompt: https://scryr.dev/prompt/
+- Live map: https://scryr.app
+- Source: https://github.com/scryr-app/scryr-dev
+
+Install:
+```sh
+brew install scryr-app/tap/scryr
+# or
+npm install --global @scryr/cli
+# or
+cargo install crystal-cli
+```
+
+Primary local workflow:
+```sh
+scryr check
+scryr serve --watch
+```
+
+Manifest rules:
+- The default entrypoint is `index.scry`.
+- `.scry` is Python syntax and may import `.scry` or `.py` modules.
+- Declare public `Manifest` objects and at least one public `Diagram`.
+- Connections reference the exact name of another manifest.
+- Use stable `manifest_id` values for components that receive operational history.
+- A `Diagram` uses either explicit manifests or a `ManifestQuery`, never both.
+- Only run trusted manifests because they execute Python code.
+
+CLI commands:
+- `scryr check`: non-writing format, lint, type, execution, serialization, and diagram validation.
+- `scryr format`: format the entrypoint and reachable local imports.
+- `scryr lint --fix`: apply safe lint fixes.
+- `scryr serve --watch`: serve the embedded map and reload valid source changes.
+- `scryr push`: validate and upload artifacts.
+- `scryr inspect types`: output declared/runtime field metadata.
+- `scryr inspect schema`: output top-level model JSON schema.
+- `scryr export mise|compose|devcontainer`: generate developer-environment artifacts from a `Forge`.
+- `scryr report tests|actions`: attach durable JUnit or GitHub Actions observations.
+- `scryr query`: run declared Prometheus-compatible or PostHog queries through the server.
+
+Editor support:
+Associate `*.scry` with Python. In VS Code use `"files.associations": { "*.scry": "python" }`.
+
+This summary is for agents. Use the documentation and repository as the authority for complete, version-specific behavior.
