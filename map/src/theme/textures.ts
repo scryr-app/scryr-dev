@@ -54,6 +54,77 @@ export function useWallTexture(color: string): THREE.CanvasTexture | null {
 					ctx.stroke();
 				}
 			}
+		} else if (wall === "celestial") {
+			// Radial instrument engraving, fine brass rulings and fixed star points.
+			ctx.strokeStyle = "rgba(222,184,105,0.34)";
+			ctx.lineWidth = 0.8;
+			for (const radius of [34, 62, 94, 118]) {
+				ctx.beginPath();
+				ctx.ellipse(128, 128, radius, radius * 0.62, -0.34, 0, Math.PI * 2);
+				ctx.stroke();
+			}
+			for (let i = 0; i < 80; i++) {
+				const angle = (i * 2.39996) % (Math.PI * 2);
+				const radius = 12 + ((i * 47) % 112);
+				const x = 128 + Math.cos(angle) * radius;
+				const y = 128 + Math.sin(angle) * radius * 0.72;
+				ctx.fillStyle =
+					i % 9 === 0 ? "rgba(255,239,184,0.9)" : "rgba(210,224,244,0.55)";
+				ctx.beginPath();
+				ctx.arc(x, y, i % 9 === 0 ? 1.25 : 0.55, 0, Math.PI * 2);
+				ctx.fill();
+			}
+			for (let y = 0; y < size; y += 3) {
+				ctx.fillStyle = "rgba(232,199,126,0.022)";
+				ctx.fillRect(0, y, size, 1);
+			}
+		} else if (wall === "porcelain") {
+			const glaze = ctx.createRadialGradient(86, 64, 8, 128, 128, 190);
+			glaze.addColorStop(0, "rgba(255,255,255,0.32)");
+			glaze.addColorStop(1, "rgba(177,192,207,0.08)");
+			ctx.fillStyle = glaze;
+			ctx.fillRect(0, 0, size, size);
+			ctx.strokeStyle = "rgba(30,77,139,0.52)";
+			ctx.lineWidth = 2;
+			ctx.strokeRect(8, 8, size - 16, size - 16);
+			ctx.strokeStyle = "rgba(192,151,66,0.32)";
+			ctx.lineWidth = 0.8;
+			ctx.beginPath();
+			ctx.moveTo(168, 8);
+			ctx.lineTo(160, 34);
+			ctx.lineTo(172, 54);
+			ctx.lineTo(165, 78);
+			ctx.lineTo(183, 101);
+			ctx.stroke();
+			for (const [x, y] of [
+				[28, 30],
+				[222, 222],
+				[34, 218],
+				[220, 35],
+			]) {
+				ctx.strokeStyle = "rgba(32,80,145,0.42)";
+				ctx.beginPath();
+				ctx.arc(x, y, 7, 0, Math.PI * 2);
+				ctx.moveTo(x - 12, y);
+				ctx.quadraticCurveTo(x, y - 10, x + 12, y);
+				ctx.stroke();
+			}
+		} else if (wall === "sunkenStone") {
+			for (let i = 0; i < 5200; i++) {
+				const x = (i * 71.91) % size;
+				const y = (i * 29.47) % size;
+				ctx.fillStyle = i % 5 ? "rgba(0,12,13,0.11)" : "rgba(119,181,165,0.1)";
+				ctx.fillRect(x, y, 1 + (i % 3), 1);
+			}
+		} else if (wall === "velvet") {
+			// A soft, unpatterned pile without borders or divination flourishes.
+			for (let i = 0; i < 5200; i++) {
+				const x = (i * 73.17) % size;
+				const y = (i * 41.39) % size;
+				ctx.fillStyle =
+					i % 3 ? "rgba(255,220,230,0.035)" : "rgba(22,3,15,0.045)";
+				ctx.fillRect(x, y, 0.8, 0.8);
+			}
 		} else {
 			const depth = ctx.createLinearGradient(0, size, size, 0);
 			depth.addColorStop(0, "rgba(0, 0, 0, 0.16)");
@@ -127,6 +198,7 @@ export function useGroundTexture(
 	width: number,
 	height: number,
 ): THREE.CanvasTexture | null {
+	const wallStyle = currentTheme.appearance.textures.wall;
 	const groundTexture = useMemo(() => {
 		const size = 512;
 		const surface = document.createElement("canvas");
@@ -165,6 +237,83 @@ export function useGroundTexture(
 			ctx.fillRect(0, y, size, 1);
 		}
 
+		// Carry the selected theme's surface language onto every region plane.
+		if (wallStyle === "ribbed") {
+			for (let x = 0; x < size; x += 16) {
+				ctx.fillStyle = "rgba(255,255,255,0.045)";
+				ctx.fillRect(x, 0, 1, size);
+				ctx.fillStyle = "rgba(0,0,0,0.035)";
+				ctx.fillRect(x + 7, 0, 1, size);
+			}
+		} else if (wallStyle === "crystal") {
+			ctx.strokeStyle = "rgba(219,211,255,0.12)";
+			ctx.lineWidth = 1;
+			for (let x = -128; x < size; x += 96) {
+				ctx.beginPath();
+				ctx.moveTo(x, 0);
+				ctx.lineTo(x + 160, size);
+				ctx.lineTo(x + 230, 0);
+				ctx.stroke();
+			}
+		} else if (wallStyle === "leather") {
+			ctx.strokeStyle = "rgba(210,169,91,0.2)";
+			ctx.lineWidth = 2;
+			ctx.strokeRect(14, 14, size - 28, size - 28);
+			ctx.strokeRect(22, 22, size - 44, size - 44);
+			for (let i = 0; i < 1800; i++) {
+				ctx.fillStyle = i % 3 ? "rgba(10,6,3,0.055)" : "rgba(240,215,164,0.04)";
+				ctx.fillRect((i * 67.13) % size, (i * 31.79) % size, 1.4, 0.7);
+			}
+		} else if (wallStyle === "celestial") {
+			ctx.strokeStyle = "rgba(222,184,105,0.24)";
+			ctx.lineWidth = 1;
+			for (const radius of [68, 122, 182, 232]) {
+				ctx.beginPath();
+				ctx.ellipse(256, 256, radius, radius * 0.58, -0.34, 0, Math.PI * 2);
+				ctx.stroke();
+			}
+			for (let i = 0; i < 76; i++) {
+				ctx.fillStyle =
+					i % 9 ? "rgba(220,231,246,0.42)" : "rgba(250,222,151,0.72)";
+				ctx.fillRect(
+					(i * 157) % 503,
+					(i * 89) % 499,
+					i % 9 ? 1 : 2,
+					i % 9 ? 1 : 2,
+				);
+			}
+		} else if (wallStyle === "porcelain") {
+			ctx.strokeStyle = "rgba(30,77,139,0.24)";
+			ctx.lineWidth = 2;
+			ctx.strokeRect(12, 12, size - 24, size - 24);
+			for (const [x, y] of [
+				[54, 54],
+				[458, 458],
+				[54, 458],
+				[458, 54],
+			]) {
+				ctx.beginPath();
+				ctx.arc(x, y, 13, 0, Math.PI * 2);
+				ctx.moveTo(x - 22, y);
+				ctx.quadraticCurveTo(x, y - 18, x + 22, y);
+				ctx.stroke();
+			}
+			ctx.strokeStyle = "rgba(193,151,62,0.07)";
+			ctx.beginPath();
+			ctx.moveTo(350, 12);
+			ctx.lineTo(338, 70);
+			ctx.lineTo(354, 116);
+			ctx.stroke();
+		} else if (wallStyle === "velvet") {
+			for (let i = 0; i < 4400; i++) {
+				const x = (i * 73.17) % size;
+				const y = (i * 41.39) % size;
+				ctx.fillStyle =
+					i % 3 ? "rgba(255,220,230,0.025)" : "rgba(22,3,15,0.035)";
+				ctx.fillRect(x, y, 1, 1);
+			}
+		}
+
 		const texture = new THREE.CanvasTexture(surface);
 		texture.wrapS = THREE.RepeatWrapping;
 		texture.wrapT = THREE.RepeatWrapping;
@@ -172,7 +321,7 @@ export function useGroundTexture(
 		texture.colorSpace = THREE.SRGBColorSpace;
 		texture.needsUpdate = true;
 		return texture;
-	}, [color, width, height]);
+	}, [color, width, height, wallStyle]);
 	useEffect(() => () => groundTexture?.dispose(), [groundTexture]);
 	return groundTexture;
 }
@@ -181,37 +330,79 @@ export function useGroundTexture(
 export function useCardTexture(): THREE.CanvasTexture | null {
 	const style = currentTheme.appearance.textures.card;
 	const texture = useMemo(() => {
-		if (style !== "parchment") return null;
+		if (!style) return null;
 		const size = 512;
 		const surface = document.createElement("canvas");
 		surface.width = surface.height = size;
 		const ctx = surface.getContext("2d");
 		if (!ctx) return null;
-		// Neutral paper shading preserves the parent block’s hue.
+		// Neutral surface shading preserves the material color applied by Three.js.
 		const wash = ctx.createRadialGradient(256, 225, 50, 256, 256, 350);
 		wash.addColorStop(0, "#ffffff");
-		wash.addColorStop(0.75, "#eeeeee");
-		wash.addColorStop(1, "#b7b7b7");
+		wash.addColorStop(0.75, style === "seaGlass" ? "#d9eeee" : "#eeeeee");
+		wash.addColorStop(1, style === "seaGlass" ? "#80aaa7" : "#b7b7b7");
 		ctx.fillStyle = wash;
 		ctx.fillRect(0, 0, size, size);
-		for (let i = 0; i < 9000; i++) {
+		const grainCount = style === "oracle" ? 3500 : 9000;
+		for (let i = 0; i < grainCount; i++) {
 			const x = (i * 71.17) % size,
 				y = (i * 43.73) % size;
 			ctx.fillStyle = i % 2 ? "rgba(20,20,20,0.045)" : "rgba(255,255,255,0.14)";
 			ctx.fillRect(x, y, 1 + (i % 4), 0.6);
 		}
-		ctx.strokeStyle = "rgba(86,59,28,0.4)";
-		ctx.lineWidth = 1;
-		ctx.strokeRect(10, 10, size - 20, size - 20);
-		ctx.strokeStyle = "rgba(86,59,28,0.16)";
-		ctx.strokeRect(14, 14, size - 28, size - 28);
-		// Small corner ornaments remain outside the reading area.
-		for (const x of [18, size - 18])
-			for (const y of [18, size - 18]) {
+		if (style === "parchment" || style === "porcelain") {
+			ctx.strokeStyle =
+				style === "porcelain" ? "rgba(24,71,140,0.68)" : "rgba(86,59,28,0.4)";
+			ctx.lineWidth = 1;
+			ctx.strokeRect(10, 10, size - 20, size - 20);
+			ctx.strokeStyle =
+				style === "porcelain" ? "rgba(190,145,55,0.52)" : "rgba(86,59,28,0.16)";
+			ctx.strokeRect(14, 14, size - 28, size - 28);
+			// Small corner ornaments remain outside the reading area.
+			for (const x of [18, size - 18])
+				for (const y of [18, size - 18]) {
+					ctx.beginPath();
+					ctx.arc(x, y, 3, 0, Math.PI * 2);
+					ctx.stroke();
+				}
+		}
+		if (style === "porcelain") {
+			// Painted cobalt sprigs and restrained gold-filled cracks.
+			ctx.strokeStyle = "rgba(28,77,145,0.52)";
+			for (const side of [-1, 1]) {
 				ctx.beginPath();
-				ctx.arc(x, y, 3, 0, Math.PI * 2);
+				ctx.moveTo(256 + side * 210, 390);
+				ctx.bezierCurveTo(
+					256 + side * 160,
+					350,
+					256 + side * 190,
+					280,
+					256 + side * 135,
+					245,
+				);
 				ctx.stroke();
+				for (let i = 0; i < 4; i++) {
+					ctx.beginPath();
+					ctx.ellipse(
+						256 + side * (180 - i * 12),
+						350 - i * 30,
+						12,
+						5,
+						side * 0.6,
+						0,
+						Math.PI * 2,
+					);
+					ctx.stroke();
+				}
 			}
+			ctx.strokeStyle = "rgba(193,151,62,0.1)";
+			ctx.beginPath();
+			ctx.moveTo(350, 10);
+			ctx.lineTo(342, 53);
+			ctx.lineTo(356, 84);
+			ctx.lineTo(347, 120);
+			ctx.stroke();
+		}
 		const paper = new THREE.CanvasTexture(surface);
 		paper.colorSpace = THREE.SRGBColorSpace;
 		return paper;

@@ -85,6 +85,10 @@ it("updates the console palette with each theme without remounting the editor", 
 		"IndustrialForest",
 		"LightningNeon",
 		"ScholarsGrimoire",
+		"CelestialObservatory",
+		"PorcelainReverie",
+		"SunkenSanctuary",
+		"VelvetOracle",
 	] as const) {
 		act(() => setThemePreset(id));
 		const palette = getTheme().console;

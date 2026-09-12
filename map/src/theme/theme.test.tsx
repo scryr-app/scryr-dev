@@ -69,6 +69,10 @@ it("switches the whole appearance and persists it without remounting the draft",
 it.each([
 	["LightningNeon", "light", "LightningNeon"],
 	["ScholarsGrimoire", "light", "ScholarsGrimoire"],
+	["CelestialObservatory", "light", "CelestialObservatory"],
+	["PorcelainReverie", "dark", "PorcelainReverie"],
+	["SunkenSanctuary", "light", "SunkenSanctuary"],
+	["VelvetOracle", "dark", "VelvetOracle"],
 	["IndustrialForest", "dark", "IndustrialForest"],
 	["AutumnOffice", "dark", "LightningNeon"],
 	["ForestFactory", "light", "IndustrialForest"],
@@ -80,6 +84,23 @@ it.each([
 	"resolves saved theme %s with legacy brightness %s",
 	(selected, mode, expected) => {
 		expect(resolveThemeId(selected, mode)).toBe(expected);
+	},
+);
+
+it.each([
+	["CelestialObservatory", "dark", "celestial", "orbit"],
+	["PorcelainReverie", "light", "porcelain", undefined],
+	["SunkenSanctuary", "dark", "sunkenStone", "caustic"],
+	["VelvetOracle", "light", "velvet", undefined],
+] as const)(
+	"defines the complete %s scene and editor theme",
+	(id, mode, wall, motion) => {
+		setThemePreset(id);
+		const theme = getTheme();
+		expect(theme.diagramMode).toBe(mode);
+		expect(theme.appearance.textures.wall).toBe(wall);
+		expect(theme.appearance.lighting.motion).toBe(motion);
+		expect(theme.console.background).not.toBe(theme.background);
 	},
 );
 

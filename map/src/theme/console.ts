@@ -72,3 +72,71 @@ export const grimoireConsole: ConsolePalette = {
 	selection: "rgba(207,173,105,0.24)",
 	activeLine: "rgba(207,173,105,0.08)",
 };
+
+export const celestialConsole: ConsolePalette = {
+	background: "#071225",
+	panel: "rgba(7,18,37,0.93)",
+	text: "#edf2e7",
+	muted: "#91a2bd",
+	comment: "#7f91ab",
+	keyword: "#e7c77f",
+	string: "#a8d7cf",
+	number: "#e8ad78",
+	type: "#9dbde8",
+	function: "#d9c990",
+	operator: "#bac9dc",
+	accent: "#d8b66d",
+	selection: "rgba(216,182,109,0.24)",
+	activeLine: "rgba(130,160,204,0.09)",
+};
+
+export const porcelainConsole: ConsolePalette = {
+	background: "#fffaf0",
+	panel: "rgba(255,250,240,0.94)",
+	text: "#17385f",
+	muted: "#68778a",
+	comment: "#778779",
+	keyword: "#1f5592",
+	string: "#477a68",
+	number: "#9c672d",
+	type: "#356f9b",
+	function: "#7d4f74",
+	operator: "#8c713d",
+	accent: "#b28a3f",
+	selection: "rgba(37,91,148,0.18)",
+	activeLine: "rgba(37,91,148,0.055)",
+};
+
+export const sunkenConsole: ConsolePalette = {
+	background: "#09343b",
+	panel: "rgba(9,52,59,0.93)",
+	text: "#e1f3eb",
+	muted: "#9fc4be",
+	comment: "#8fba9e",
+	keyword: "#e0b68f",
+	string: "#8fe0bd",
+	number: "#efbd80",
+	type: "#80cbea",
+	function: "#d7a8bd",
+	operator: "#b4c8df",
+	accent: "#83dfd0",
+	selection: "rgba(91,190,175,0.22)",
+	activeLine: "rgba(91,190,175,0.075)",
+};
+
+export const velvetConsole: ConsolePalette = {
+	background: "#fff5e8",
+	panel: "rgba(255,245,232,0.94)",
+	text: "#421936",
+	muted: "#806276",
+	comment: "#817263",
+	keyword: "#852b53",
+	string: "#557246",
+	number: "#a45d36",
+	type: "#654d87",
+	function: "#76365e",
+	operator: "#96713f",
+	accent: "#a27635",
+	selection: "rgba(121,43,78,0.18)",
+	activeLine: "rgba(121,43,78,0.055)",
+};
