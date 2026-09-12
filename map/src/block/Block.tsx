@@ -9,7 +9,7 @@ import { CardSlots } from "./CardSlots";
 import { type BlockCardGroup, createBlockDataCards } from "./defaultCards";
 import { TopLabel } from "./TopLabel";
 import { Walls } from "./Walls";
-import { getCardHeaderZoomX, ZoomButton } from "./ZoomButton";
+import { ZoomButton } from "./ZoomButton";
 
 export interface BlockLink {
 	siteName?: string | null;
@@ -107,7 +107,6 @@ export function Block({
 	const CARD_MARGIN = 0.1; // world-unit margin around all edges
 	const cardWidth = width - 2 * CARD_MARGIN;
 	const cardHeight = height - 2 * CARD_MARGIN;
-	const zoomButtonX = getCardHeaderZoomX(activeCardIndex, cardWidth);
 	const zoomButtonY = cardHeight / 2 - 0.13;
 
 	const overviewCard = (
@@ -223,7 +222,7 @@ export function Block({
 
 			<ZoomButton
 				blockId={blockFocusId}
-				x={zoomButtonX}
+				x={0}
 				y={zoomButtonY}
 				z={hd + 0.13}
 				blockPosition={position}
