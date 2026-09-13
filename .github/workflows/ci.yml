@@ -2,6 +2,12 @@ name: CI
 
 on:
   workflow_call:
+    inputs:
+      release_cli:
+        description: Run the standalone release CLI smoke test
+        required: false
+        default: true
+        type: boolean
   workflow_dispatch:
   pull_request:
   push:
@@ -78,6 +84,7 @@ jobs:
 
   release-cli:
     name: Release CLI smoke
+    if: github.event_name != 'workflow_call' || inputs.release_cli
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     needs: [quality, manifest, crystal, map]

@@ -184,10 +184,11 @@ profiles. `release:build:docker` builds a local server image and needs Docker.
    manifest project `pyproject.toml` files, and map's `package.json` and
    `package-lock.json`. Refresh affected dependency lockfiles and merge the
    version change into `main` with verification passing.
-2. Create and push the corresponding `vX.Y.Z` tag on that commit. The tag-triggered
-   Release workflow runs `release:validate`, the shared CI checks, and then
-   `verify:release` plus `release:package` on Linux and macOS, each for x86_64
-   and ARM64.
+2. Create and push the corresponding `vX.Y.Z` tag on that commit. After
+   `release:validate`, the tag-triggered Release workflow runs the shared CI
+   checks alongside `verify:release` plus `release:package` on Linux and macOS,
+   each for x86_64 and ARM64. The release-specific CI call skips its redundant
+   standalone build because every platform package is already smoke-tested.
 3. GitHub Actions collects the four archives and checksums in `dist/release`
    and calls `release:draft`. Review its notes and artifacts, then publish the
    stable draft on GitHub.
