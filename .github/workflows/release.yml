@@ -33,10 +33,12 @@ jobs:
   checks:
     needs: validate
     uses: ./.github/workflows/ci.yml
+    with:
+      release_cli: false
 
   package:
     name: Package ${{ matrix.platform }}
-    needs: checks
+    needs: validate
     strategy:
       fail-fast: false
       matrix:
@@ -66,7 +68,7 @@ jobs:
 
   draft:
     name: Create draft release
-    needs: package
+    needs: [checks, package]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:

@@ -608,17 +608,42 @@ dir = "{{config_root}}"
 run = """
 cat <<'GUIDE'
 Release the standalone CLI:
+  mise run release:start vX.Y.Z   Validate main, create the tag, and push it
+  mise run release:brew vX.Y.Z    Wait, verify assets, publish, and distribute
+  mise run release:status vX.Y.Z  Inspect workflows and GitHub Releases
+The normal release uses the two start and brew commands above. Maintenance stages:
   mise run release:build          Build the embedded CLI locally
   mise run verify:release:smoke    Test that build outside the checkout
   mise run release:validate       Check RELEASE_TAG, checkout, ancestry, versions
   mise run release:package        Archive the tested binary on each platform
   mise run release:draft          Create a draft from all four platform archives
-Review and publish the draft on GitHub, then:
   mise run release:distribute     Publish the Homebrew formula
 Pushing a vX.Y.Z tag starts validation, checks, packaging, and draft creation.
-Publishing the GitHub draft starts distribution. See CONTRIBUTING.md for inputs.
+release:brew safely publishes that generated draft and waits for distribution.
+See CONTRIBUTING.md for inputs and recovery details.
 GUIDE
 """
+
+[tasks."release:start"]
+description = "Validate main, create a version tag, and push it to start the release"
+usage = 'arg "<tag>"'
+run = 'RELEASE_TAG="$usage_tag" mise run internal:release:process start'
+tools = { "gh" = "2.92.0" }
+dir = "{{config_root}}"
+
+[tasks."release:brew"]
+description = "Wait for a tagged build, safely publish its verified draft, and wait for Homebrew"
+usage = 'arg "<tag>"'
+run = 'RELEASE_TAG="$usage_tag" mise run internal:release:process brew'
+tools = { "gh" = "2.92.0" }
+dir = "{{config_root}}"
+
+[tasks."release:status"]
+description = "Show release and distribution status for a version tag"
+usage = 'arg "<tag>"'
+run = 'RELEASE_TAG="$usage_tag" mise run internal:release:process status'
+tools = { "gh" = "2.92.0" }
+dir = "{{config_root}}"
 
 [tasks."release:build"]
 description = "Build the self-contained open-source scryr CLI with embedded SDK and UI"
@@ -1264,7 +1289,7 @@ PYTHON
 description = "Shared release validation, packaging and publisher operations"
 hide = true
 dir = "{{config_root}}"
-usage = "arg \"<action>\" { choices \"validate\" \"package\" \"draft\" \"prepare\" \"homebrew\" \"preflight\" }"
+usage = "arg \"<action>\" { choices \"start\" \"brew\" \"status\" \"validate\" \"package\" \"draft\" \"prepare\" \"homebrew\" \"preflight\" }"
 run = '''
 python - "$usage_action" <<'PYTHON'
 """Build handoff and distribution of tested, versioned standalone binaries."""
@@ -1278,6 +1303,7 @@ import shutil
 import subprocess
 import sys
 import tarfile
+import time
 from pathlib import Path
 
 import tomllib
@@ -1308,6 +1334,141 @@ def tag_version():
     if not re.fullmatch(r"v\d+\.\d+\.\d+", tag):
         raise SystemExit("Use a vX.Y.Z release tag")
     return tag, tag[1:]
+
+
+def github_repo():
+    configured = os.environ.get("GH_REPO", "")
+    if configured:
+        return configured
+    return run(
+        "gh", "repo", "view", "--json", "nameWithOwner", "--jq",
+        ".nameWithOwner", capture_output=True, text=True,
+    ).stdout.strip()
+
+
+def release_records(tag):
+    response = run(
+        "gh", "api", f"repos/{github_repo()}/releases?per_page=100",
+        capture_output=True, text=True,
+    )
+    return [item for item in json.loads(response.stdout) if item["tag_name"] == tag]
+
+
+def expected_assets():
+    archives = [f"scryr-{target}.tar.gz" for target in PLATFORMS]
+    return {"SHA256SUMS", *archives, *(f"{name}.sha256" for name in archives)}
+
+
+def verified_release(tag, *, draft):
+    matches = [item for item in release_records(tag) if item["draft"] is draft]
+    if len(matches) != 1:
+        state = "draft" if draft else "published"
+        raise SystemExit(f"Expected exactly one {state} release for {tag}; found {len(matches)}")
+    release = matches[0]
+    assets = {item["name"] for item in release["assets"] if item["size"] > 0}
+    missing = expected_assets() - assets
+    extra = assets - expected_assets()
+    if missing or extra:
+        raise SystemExit(
+            f"Release assets are not publishable; missing={sorted(missing)}, extra={sorted(extra)}"
+        )
+    return release
+
+
+def tagged_commit(tag):
+    return run(
+        "git", "rev-parse", tag + "^{commit}", capture_output=True, text=True
+    ).stdout.strip()
+
+
+def workflow_run(tag, workflow, event):
+    sha = tagged_commit(tag)
+    for _ in range(40):
+        response = run(
+            "gh", "run", "list", "--repo", github_repo(), "--workflow", workflow,
+            "--branch", tag, "--event", event, "--limit", "10", "--json",
+            "databaseId,headSha,status,conclusion,url", capture_output=True, text=True,
+        )
+        matches = [item for item in json.loads(response.stdout) if item["headSha"] == sha]
+        if matches:
+            return matches[0]
+        time.sleep(3)
+    raise SystemExit(f"No {workflow} run appeared for {tag}")
+
+
+def wait_workflow(tag, workflow, event):
+    workflow = workflow_run(tag, workflow, event)
+    print(f"Watching {workflow['url']}")
+    run(
+        "gh", "run", "watch", str(workflow["databaseId"]), "--repo", github_repo(),
+        "--compact", "--exit-status",
+    )
+
+
+def start():
+    tag, version = tag_version()
+    if run("git", "status", "--porcelain", capture_output=True, text=True).stdout:
+        raise SystemExit("Commit or stash all changes before starting a release")
+    branch = run(
+        "git", "branch", "--show-current", capture_output=True, text=True
+    ).stdout.strip()
+    if branch != "main":
+        raise SystemExit("Start releases from the main branch")
+    run("git", "fetch", "origin", "main", "--tags")
+    head = run("git", "rev-parse", "HEAD", capture_output=True, text=True).stdout.strip()
+    upstream = run(
+        "git", "rev-parse", "origin/main", capture_output=True, text=True
+    ).stdout.strip()
+    if head != upstream:
+        raise SystemExit("Local main must exactly match origin/main")
+    if subprocess.run(
+        ["git", "rev-parse", "--verify", "--quiet", f"refs/tags/{tag}"], cwd=ROOT
+    ).returncode == 0:
+        raise SystemExit(f"Tag already exists: {tag}")
+    version_paths = list((ROOT / "crystal").glob("*/Cargo.toml"))
+    version_paths += list((ROOT / "manifest").glob("*/pyproject.toml"))
+    version_paths += [ROOT / "manifest/pyproject.toml"]
+    for path in version_paths:
+        data = tomllib.loads(path.read_text())
+        actual = data.get("package", data.get("project", {})).get("version")
+        if actual != version:
+            raise SystemExit(f"{path.relative_to(ROOT)}: {actual} != {version}")
+    for file in ["map/package.json", "map/package-lock.json"]:
+        if json.loads((ROOT / file).read_text())["version"] != version:
+            raise SystemExit(f"{file} must have version {version}")
+    run("git", "tag", "-a", tag, "-m", f"Scryr {tag}")
+    run("git", "push", "origin", f"refs/tags/{tag}")
+    print(f"Started {tag}; run `mise run release:brew {tag}` to finish")
+
+
+def status():
+    tag, _ = tag_version()
+    print(json.dumps({"tag": tag, "releases": release_records(tag)}, indent=2))
+    run("gh", "run", "list", "--repo", github_repo(), "--branch", tag, "--limit", "10")
+
+
+def publish():
+    tag, _ = tag_version()
+    published = [item for item in release_records(tag) if not item["draft"]]
+    if published:
+        verified_release(tag, draft=False)
+        print(f"{tag} is already published with all expected assets")
+        return
+    release = verified_release(tag, draft=True)
+    run(
+        "gh", "api", "--method", "PATCH",
+        f"repos/{github_repo()}/releases/{release['id']}",
+        "-F", "draft=false", "-f", "make_latest=true",
+    )
+    print(f"Published verified release {tag}")
+
+
+def brew():
+    tag, _ = tag_version()
+    wait_workflow(tag, "release.yml", "push")
+    publish()
+    wait_workflow(tag, "distribute.yml", "release")
+    print(f"Homebrew release complete: brew install {github_repo().split('/')[0]}/tap/scryr")
 
 
 def validate():
@@ -1374,6 +1535,10 @@ def verify():
 def draft():
     tag, _ = tag_version()
     verify()
+    if release_records(tag):
+        raise SystemExit(
+            f"A release already exists for {tag}; do not create one manually before the workflow"
+        )
     assets = sorted(str(path) for path in OUT.glob("*.tar.gz*")) + [
         str(OUT / "SHA256SUMS")
     ]
@@ -1506,6 +1671,9 @@ if __name__ == "__main__":
     actions = {
         fn.__name__: fn
         for fn in [
+            start,
+            brew,
+            status,
             validate,
             package,
             draft,
@@ -1862,6 +2030,35 @@ class AutomationTests(unittest.TestCase):
             formula = (Path(directory) / "scryr.rb").read_text()
             self.assertEqual(formula.count("sha256"), 4)
             self.assertIn("/releases/download/v1.2.3/", formula)
+
+    def test_release_publish_targets_the_verified_draft_id(self):
+        draft = {
+            "id": 42,
+            "draft": True,
+            "assets": [
+                {"name": name, "size": 1} for name in release.expected_assets()
+            ],
+        }
+        with (
+            patch.dict(os.environ, {"RELEASE_TAG": "v1.2.3"}, clear=True),
+            patch.object(release, "release_records", return_value=[draft]),
+            patch.object(release, "github_repo", return_value="example/scryr"),
+            patch.object(release, "run") as run,
+        ):
+            release.publish()
+        self.assertIn("repos/example/scryr/releases/42", run.call_args.args)
+        self.assertIn("draft=false", run.call_args.args)
+
+    def test_release_publish_rejects_incomplete_assets(self):
+        draft = {"id": 42, "draft": True, "assets": []}
+        with (
+            patch.dict(os.environ, {"RELEASE_TAG": "v1.2.3"}, clear=True),
+            patch.object(release, "release_records", return_value=[draft]),
+            patch.object(release, "run") as run,
+            self.assertRaises(SystemExit),
+        ):
+            release.publish()
+        run.assert_not_called()
 
 
 class WorkflowPolicyTests(unittest.TestCase):
