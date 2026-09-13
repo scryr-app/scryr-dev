@@ -154,8 +154,25 @@ local verification.
 
 ## Release the standalone CLI
 
-Run `mise run release` for the command guide. Building locally, creating a GitHub
-draft, and distributing a published release are separate stages.
+Run `mise run release` for the command guide. The normal maintainer path is:
+
+```bash
+mise run release:start vX.Y.Z
+mise run release:brew vX.Y.Z
+```
+
+`release:start` requires a clean `main` checkout that exactly matches
+`origin/main`. It verifies every release-managed package version, creates an
+annotated tag, and pushes it. `release:brew` may be started immediately: it waits
+for the tag-triggered Release workflow, requires exactly one draft containing
+the four archives, their four checksums, and `SHA256SUMS`, publishes that draft
+by its numeric GitHub release ID, and waits for Homebrew distribution to finish.
+It is safe to rerun after a correctly populated release has been published.
+
+Do not create a GitHub Release or draft manually. The Release workflow owns draft
+creation; pre-creating one can produce duplicate releases for the same tag. Use
+`mise run release:status vX.Y.Z` for a read-only view of the matching workflows
+and release records.
 
 ### Build and install locally
 
@@ -184,14 +201,14 @@ profiles. `release:build:docker` builds a local server image and needs Docker.
    manifest project `pyproject.toml` files, and map's `package.json` and
    `package-lock.json`. Refresh affected dependency lockfiles and merge the
    version change into `main` with verification passing.
-2. Create and push the corresponding `vX.Y.Z` tag on that commit. After
+2. Run `mise run release:start vX.Y.Z`. After
    `release:validate`, the tag-triggered Release workflow runs the shared CI
    checks alongside `verify:release` plus `release:package` on Linux and macOS,
    each for x86_64 and ARM64. The release-specific CI call skips its redundant
    standalone build because every platform package is already smoke-tested.
-3. GitHub Actions collects the four archives and checksums in `dist/release`
-   and calls `release:draft`. Review its notes and artifacts, then publish the
-   stable draft on GitHub.
+3. Run `mise run release:brew vX.Y.Z`. GitHub Actions collects the four archives
+   and checksums in `dist/release` and calls `release:draft`; the task verifies
+   and publishes that generated draft, then waits for distribution.
 
 For local stage execution, check out the exact tag and set `RELEASE_TAG=vX.Y.Z`.
 `release:validate` requires the tag, `HEAD`, `origin/main`, and package versions
