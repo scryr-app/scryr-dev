@@ -26,16 +26,19 @@ jobs:
           fetch-depth: 0
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
         with:
+          version: 2026.9.5
           install_args: python
       - run: mise run release:validate
 
   checks:
     needs: validate
     uses: ./.github/workflows/ci.yml
+    with:
+      release_cli: false
 
   package:
     name: Package ${{ matrix.platform }}
-    needs: checks
+    needs: validate
     strategy:
       fail-fast: false
       matrix:
@@ -52,6 +55,7 @@ jobs:
           persist-credentials: false
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
         with:
+          version: 2026.9.5
           install_args: rust python uv node
       - run: mise run verify:release
       - run: mise run release:package
@@ -64,7 +68,7 @@ jobs:
 
   draft:
     name: Create draft release
-    needs: package
+    needs: [checks, package]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
@@ -75,6 +79,7 @@ jobs:
           persist-credentials: false
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
         with:
+          version: 2026.9.5
           install_args: python
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
