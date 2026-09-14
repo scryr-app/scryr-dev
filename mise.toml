@@ -50,6 +50,51 @@ run = [
   "mise run internal:dependencies:docs",
 ]
 
+[tasks."contribute:agent"]
+description = "Launch interactive Codex only from a linked Git worktree"
+dir = "{{config_root}}"
+run = """
+set -e
+mise run verify:worktree
+exec codex -C "$PWD"
+"""
+
+[tasks."verify:worktree"]
+description = "Reject the primary checkout before an agent editing session"
+dir = "{{config_root}}"
+run = '''
+python - <<'PYTHON'
+import subprocess
+from pathlib import Path
+
+
+def require_worktree(cwd):
+    def git_path(option):
+        result = subprocess.run(
+            ["git", "rev-parse", "--path-format=absolute", option],
+            cwd=cwd, check=True, text=True, capture_output=True,
+        )
+        return Path(result.stdout.strip()).resolve()
+
+    try:
+        git_dir = git_path("--git-dir")
+        common_dir = git_path("--git-common-dir")
+    except subprocess.CalledProcessError as error:
+        raise SystemExit("Agent editing requires a linked Git worktree.") from error
+    if git_dir == common_dir:
+        raise SystemExit(
+            "Refusing agent edits in the primary checkout. Create a task worktree "
+            "with git worktree add -b agent/<task> <path> HEAD, then run "
+            "mise run contribute:agent there. See CONTRIBUTING.md."
+        )
+
+
+if __name__ == "__main__":
+    require_worktree(Path.cwd())
+    print("Linked worktree verified.")
+PYTHON
+'''
+
 [tasks."contribute:oss"]
 description = "Contribute with Rust restart, Vite HMR, local SQLite and local auth"
 depends = ["contribute:oss:server", "contribute:oss:map"]
@@ -1891,6 +1936,71 @@ dev, cloud, release, workflows = (
         "internal:release:process", "internal:verify:workflows",
     )
 )
+
+
+class WorktreeTests(unittest.TestCase):
+    def test_fixture_ignores_inherited_git_settings(self):
+        with patch.dict(os.environ, {
+            "GIT_DIR": "/nonexistent/scryr-test-git-dir",
+            "GIT_WORK_TREE": "/nonexistent/scryr-test-work-tree",
+            "GIT_CONFIG_COUNT": "2",
+            "GIT_CONFIG_KEY_0": "init.defaultBranch",
+            "GIT_CONFIG_VALUE_0": "agent/test",
+            "GIT_CONFIG_KEY_1": "core.hooksPath",
+            "GIT_CONFIG_VALUE_1": "/nonexistent/scryr-test-hooks",
+        }):
+            self.test_primary_rejected_and_linked_worktrees_accepted()
+
+    def test_primary_rejected_and_linked_worktrees_accepted(self):
+        import subprocess
+
+        guard = task_module("verify:worktree")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            primary = root / "primary repo"
+            template = root / "empty-template"
+            template.mkdir()
+            # Keep fixture repositories independent of developer config, hooks,
+            # and Git variables inherited from hooks or other agent sessions.
+            env = {key: value for key, value in os.environ.items()
+                   if not key.startswith("GIT_")}
+            env.update(
+                GIT_CONFIG_GLOBAL=os.devnull,
+                GIT_CONFIG_NOSYSTEM="1",
+                GIT_TEMPLATE_DIR=str(template),
+            )
+            with patch.dict(os.environ, env, clear=True):
+
+                def git(*args):
+                    result = subprocess.run(
+                        ["git", *args], capture_output=True, text=True,
+                    )
+                    if result.returncode:
+                        self.fail(
+                            f"Git fixture command {args!r} failed ({result.returncode}):\n"
+                            f"{result.stderr}{result.stdout}"
+                        )
+
+                git("init", "--initial-branch=fixture", str(primary))
+                git("-C", str(primary), "-c", "user.name=Test", "-c",
+                    "user.email=test@example.invalid", "-c", "commit.gpgsign=false",
+                    "commit", "--allow-empty", "-m", "initial")
+                with self.assertRaisesRegex(SystemExit, "primary checkout"):
+                    guard.require_worktree(primary)
+                nested = primary / "nested"
+                nested.mkdir()
+                with self.assertRaises(SystemExit):
+                    guard.require_worktree(nested)
+                with self.assertRaises(SystemExit):
+                    guard.require_worktree(root)
+                for name, options in (("branch tree", ["-b", "agent/test"]),
+                                      ("detached tree", ["--detach"])):
+                    linked = root / name
+                    git("-C", str(primary), "worktree", "add", *options,
+                        str(linked), "HEAD")
+                    guard.require_worktree(linked)
+                    (linked / "nested").mkdir()
+                    guard.require_worktree(linked / "nested")
 
 
 class AutomationTests(unittest.TestCase):
