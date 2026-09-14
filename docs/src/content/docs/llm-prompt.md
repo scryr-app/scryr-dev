@@ -1,9 +1,11 @@
 ---
 title: Generate index.scry with an LLM
-description: Copy this repository-grounded prompt into a coding agent to create and validate an accurate Scryr manifest.
+description: Give humans a reviewable map of agent-written software with a repository-grounded Scryr manifest.
 ---
 
-Use a coding agent that can read your repository. Paste the prompt below; it asks the agent to inspect real runtime boundaries before authoring and to avoid fabricated architecture.
+AI agents can create software faster than a reviewer can reconstruct its runtime shape from a diff. A generated `index.scry` gives that reviewer a typed, explorable account of the system: its components, connections, owners, deployment targets, source links, and operational evidence.
+
+Use a coding agent that can read your repository. Paste the prompt below; it asks the agent to inspect real runtime boundaries before authoring and to avoid fabricated architecture. The resulting `.scry` file belongs in the same review as the code it describes.
 
 ```text title="Prompt of manifest conjuration"
 You are working inside my software repository. Examine the repository thoroughly and create an accurate Scryr architecture manifest at index.scry.
@@ -56,6 +58,8 @@ Begin by inspecting the repository; do not ask me to describe architecture that 
 :::caution[Review before execution]
 A `.scry` manifest is Python. Inspect agent-written code before running it, especially in an unfamiliar repository.
 :::
+
+That review boundary is intentional: Scryr lets an agent do the high-volume repository investigation while leaving a plain-text, typed artifact for a human to verify.
 
 After the agent finishes:
 

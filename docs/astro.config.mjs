@@ -6,9 +6,9 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'Scryr',
-      description: 'Actionable architecture for humans and coding agents.',
+      description: 'Open-source architecture tooling for humans investigating AI-generated software.',
       favicon: '/favicon.svg',
-      logo: { src: './src/assets/scryr-logo.png' },
+      logo: { src: './public/favicon.svg', alt: 'Scryr' },
       customCss: ['./src/styles/custom.css'],
       social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/scryr-app/scryr-dev' }],
       editLink: { baseUrl: 'https://github.com/scryr-app/scryr-dev/edit/main/docs/' },
