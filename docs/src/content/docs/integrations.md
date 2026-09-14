@@ -52,11 +52,32 @@ scryr report actions --manifest api --event-file workflow-run.json
 
 ## Prometheus-compatible metrics
 
-`PrometheusSource` declares bounded queries against a Prometheus-compatible backend. Grafana installations work when they expose a compatible data source/API.
+`PrometheusSource` declares bounded queries against a Prometheus-compatible backend. Grafana installations work when they expose a compatible data source/API. This lets an investigation move directly from a component on the map to the production signals that explain its behavior, without treating a dashboard and an architecture diagram as separate worlds.
+
+```python title="index.scry"
+from scryr import CredentialRef, Manifest, Metrics, PrometheusSource
+
+api = Manifest(
+    name="Public API",
+    metrics=Metrics(
+        provider=PrometheusSource(
+            credentials=CredentialRef(name="production-prometheus"),
+            environment="production",
+            queries={
+                "request_rate": "sum(rate(http_requests_total[5m]))",
+                "error_rate": "sum(rate(http_requests_total{status=~'5..'}[5m]))",
+            },
+            units={"request_rate": "req/s", "error_rate": "errors/s"},
+        )
+    ),
+)
+```
+
+Credentials are referenced by name rather than stored in the `.scry` file. Query windows, steps, cache duration, and result size are bounded by the SDK.
 
 ```sh
 scryr query --list
-scryr query request_latency --manifest api
+scryr query request_rate --manifest api
 ```
 
 Queries execute through Scryr's GraphQL server, allowing credentials to remain server-side.

@@ -1,6 +1,6 @@
 # Scryr documentation
 
-Scryr is actionable architecture: define a codebase in typed Python `.scry` manifests, explore it in a React/Three.js map, and generate artifacts with the Rust `scryr` CLI.
+Scryr is open-source software for investigating the systems humans and AI agents build. Define a codebase in typed Python `.scry` files, explore it in an interactive architecture map, query production metrics in context, and generate artifacts with the Rust `scryr` CLI. Scryr is MIT-licensed and its full local workflow does not require a hosted account.
 
 Canonical links:
 - Documentation: https://scryr.dev/docs/

@@ -55,7 +55,18 @@ header.header {
 .site-title img {
   width: 2.4rem;
   height: 2.4rem;
-  filter: drop-shadow(0 0 12px rgba(168, 92, 255, .48));
+  padding: .25rem;
+  border: 1px solid rgba(183, 143, 255, .28);
+  border-radius: .7rem;
+  background: radial-gradient(circle, rgba(168, 92, 255, .34), rgba(33, 18, 55, .82));
+  box-shadow: 0 0 1.4rem rgba(168, 92, 255, .34), inset 0 0 .7rem rgba(211, 183, 255, .18);
+  filter: drop-shadow(0 0 8px rgba(190, 143, 255, .42));
+  animation: nav-logo-glow 3s ease-in-out infinite alternate;
+}
+
+@keyframes nav-logo-glow {
+  from { box-shadow: 0 0 .8rem rgba(168, 92, 255, .26), inset 0 0 .5rem rgba(211, 183, 255, .12); }
+  to { box-shadow: 0 0 1.8rem rgba(168, 92, 255, .62), 0 0 .65rem rgba(105, 227, 255, .24), inset 0 0 .9rem rgba(211, 183, 255, .24); }
 }
 
 .sidebar-pane { border-right-color: rgba(215, 168, 83, .18); }
@@ -142,4 +153,5 @@ starlight-menu-button button { border-color: rgba(215,168,83,.28); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  .site-title img { animation: none; }
 }

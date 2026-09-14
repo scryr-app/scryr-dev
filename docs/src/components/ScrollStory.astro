@@ -1,78 +1,231 @@
 ---
-const chapters = ['Scryr', 'Old maps', 'Spellbook', 'Metrics', 'CI / CD', 'index.scry'];
+const outcomes = [
+  {
+    number: '01',
+    eyebrow: 'Review AI-written systems',
+    title: 'Give humans a map of the code an agent just changed.',
+    body: 'An agent can inspect a repository and generate a typed architecture model. A human can then explore the real runtime boundaries, dependencies, owners, source links, and operational context instead of reviewing a diff without a map.',
+    link: '/llm-prompt/',
+    label: 'Generate a map with an agent',
+  },
+  {
+    number: '02',
+    eyebrow: 'Debug with production evidence',
+    title: 'Ask your metrics about the component in front of you.',
+    body: 'Declare bounded Prometheus-compatible queries beside each component. Scryr runs them through its server and brings latency, errors, traffic, and other runtime signals back to the architecture you are investigating.',
+    link: '/integrations/#prometheus-compatible-metrics',
+    label: 'Connect your metrics',
+  },
+  {
+    number: '03',
+    eyebrow: 'Script the rest of the stack',
+    title: 'Use a Python dialect that agents already know how to write.',
+    body: 'A .scry file is executable, typed Python. Compose architecture with ordinary imports, review it like code, and use the same language to describe developer tooling and infrastructure such as Kubernetes and Helm deployments.',
+    link: '/manifests/',
+    label: 'Explore the .scry language',
+  },
+];
 ---
 
-<main class="spell-scroll" data-scroll-story aria-label="The Scryr story">
-  <nav class="chapter-rail" aria-label="Story chapters">
-    {chapters.map((chapter, index) => <a href={`#chapter-${index + 1}`} data-chapter-link={index} aria-label={`Chapter ${index + 1}: ${chapter}`}><i></i><span>{chapter}</span></a>)}
-  </nav>
+<main class="product-page">
+  <section class="hero" aria-labelledby="product-title">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <div class="hero-mark" aria-hidden="true"><img src="/favicon.svg" alt="" width="72" height="72" /></div>
+        <p class="brand-tagline">Actionable Architecture</p>
+        <p class="kicker"><span>Open source</span> · MIT licensed</p>
+        <h1 id="product-title">See the system<br/>your AI just changed.</h1>
+        <p class="hero-lede">Scryr turns a codebase into an interactive architecture map, then connects that map to the evidence you need to review agent-written code and debug production.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="/getting-started/">Install Scryr</a>
+          <a class="button secondary" href="https://scryr.app">Open scryr.app <span aria-hidden="true">↗</span></a>
+        </div>
+        <p class="install-line"><code>brew install scryr-app/tap/scryr</code></p>
+      </div>
 
-  <section id="chapter-1" class="scene hero" data-scene="0" aria-labelledby="story-title">
-    <div class="stars" aria-hidden="true"></div><div class="orbit" aria-hidden="true"><i></i><b>✦</b><b>◇</b><b>⌁</b></div>
-    <div class="copy hero-copy"><img src="/favicon.svg" alt="Scryr" width="196" height="196"/><p class="eyebrow">The architecture grimoire</p><h1 id="story-title">Scryr</h1><p class="lede">Actionable architecture.</p></div>
-    <a class="scroll-cue" href="#chapter-2">Turn the page <b>↓</b></a>
-  </section>
-
-  <section id="chapter-2" class="scene old-world" data-scene="1" aria-labelledby="diagram-title">
-    <div class="grid" aria-hidden="true"></div>
-    <div class="copy centered"><p class="eyebrow">01 / The old world</p><h2 id="diagram-title">AI agents have transformed software.</h2><p class="lede">Why do software diagrams still look like this?</p>
-      <figure class="mermaid-mess" aria-label="An overcrowded Mermaid diagram"><figcaption><span>● ● ●</span> architecture-final-v7-updated.mmd</figcaption>
-        <svg viewBox="0 0 880 390" role="img" aria-label="A tangled diagram with crossing connections">
-          <g class="mess-lines"><path d="M132 78C330 28 520 360 748 284"/><path d="M138 86C308 325 578 34 742 282"/><path d="M135 82L442 196 742 96"/><path d="M273 288C412 24 604 348 744 92"/><path d="M281 284L442 196 603 286"/><path d="M276 286C312 128 655 170 744 96"/><path d="M132 82C284 210 600 206 746 284"/><path d="M442 196C514 76 658 72 744 96"/><path d="M442 196C518 314 604 312 746 284"/></g>
-          <g class="nodes"><rect x="58" y="46" width="150" height="72"/><text x="133" y="88">Frontend??</text><rect x="205" y="248" width="152" height="72"/><text x="281" y="290">API v2</text><rect x="365" y="158" width="154" height="74"/><text x="442" y="201">Service</text><rect x="527" y="249" width="152" height="72"/><text x="603" y="291">Database</text><rect x="670" y="55" width="150" height="72"/><text x="745" y="97">Queue?</text><rect x="670" y="247" width="150" height="72"/><text x="745" y="289">Everything</text></g><text class="note" x="410" y="360">who owns this?</text>
-        </svg><pre><code>graph TD
-  A --&gt; B &amp; C &amp; D
-  B -- maybe? --&gt; F
-  C --&gt; A --&gt; E --&gt; C</code></pre>
+      <figure class="hero-product">
+        <img src="/assets/scryr-product-map.png" alt="Scryr showing the Northwind Commerce architecture as connected service blocks" width="1440" height="900" />
+        <figcaption><span>Northwind Commerce</span><span>Actual Scryr product</span></figcaption>
       </figure>
+    </div>
+
+    <div class="proof-strip" aria-label="Scryr product facts">
+      <div><strong>MIT</strong><span>Use, inspect, and modify it</span></div>
+      <div><strong>Local-first</strong><span>No hosted account required</span></div>
+      <div><strong>Python-native</strong><span>Readable by humans and agents</span></div>
+      <div><strong>Operational</strong><span>Architecture connected to metrics</span></div>
     </div>
   </section>
 
-  <section id="chapter-3" class="scene spellbook" data-scene="2" aria-labelledby="spellbook-title"><div class="spellbook-image" aria-hidden="true"></div><div class="flare" aria-hidden="true"></div><div class="copy"><p class="eyebrow">02 / A living map</p><h2 id="spellbook-title">Make your codebase<br/><em>a spellbook.</em></h2><p class="lede">A system you can read, explore, and interrogate—not a picture that starts going stale the moment it is exported.</p><a class="text-link" href="/getting-started/">Open the grimoire ↗</a></div></section>
+  <section class="product-evidence" aria-labelledby="source-view-title">
+    <figure>
+      <img src="/assets/scryr-product-editor.png" alt="Scryr with the editable index.scry source open beside the Northwind architecture map" width="1440" height="900" loading="lazy" />
+    </figure>
+    <div>
+      <p class="section-label">Source and system, side by side</p>
+      <h2 id="source-view-title">Inspect the map. Then inspect the file that made it.</h2>
+      <p>Open the real <code>index.scry</code> behind a diagram without leaving the product. The same architecture a human explores stays readable, editable, and reviewable as typed Python.</p>
+    </div>
+  </section>
 
-  <section id="chapter-4" class="scene evidence metrics" data-scene="3" aria-labelledby="metrics-title"><div class="copy split"><div><p class="eyebrow">03 / Runtime evidence</p><h2 id="metrics-title">Examine what is happening <em>now.</em></h2><p class="lede">Bring metrics into the architecture. Trace latency, traffic, and errors back to the service that produced them.</p></div>
-    <div class="artifact metric-window" aria-label="Live service metrics"><header><span>northwind-api</span><b class="live">● LIVE</b></header><div class="metric-total"><small>Requests / minute</small><strong>24,891</strong><span>+12.4%</span></div><svg class="chart" viewBox="0 0 560 210" role="img" aria-label="Request rate trending upward"><defs><linearGradient id="fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#69e3ff" stop-opacity=".42"/><stop offset="1" stop-color="#69e3ff" stop-opacity="0"/></linearGradient></defs><g class="chart-grid"><path d="M0 35H560M0 87H560M0 139H560M0 191H560"/></g><path class="area" d="M0 172C38 158 49 165 84 144S146 169 179 127 236 144 271 107 335 121 369 83 421 108 457 62 518 81 560 24V210H0Z"/><path class="line" d="M0 172C38 158 49 165 84 144S146 169 179 127 236 144 271 107 335 121 369 83 421 108 457 62 518 81 560 24"/><circle cx="560" cy="24" r="6"/></svg><div class="metric-row"><span>p95 latency <b>184ms</b></span><span>error rate <b>0.08%</b></span></div></div>
-  </div></section>
+  <section class="problem" aria-labelledby="problem-title">
+    <p class="section-label">The review gap</p>
+    <h2 id="problem-title">AI can produce more code than a human can hold in their head.</h2>
+    <p>A diff tells you what text changed. Scryr helps you investigate what the changed software <em>is</em>: where it runs, what it calls, who owns it, how it is delivered, and whether production agrees with the model.</p>
+    <div class="questions" aria-label="Questions Scryr helps answer">
+      <span>What depends on this?</span><span>Where is it deployed?</span><span>Who owns it?</span><span>What is failing now?</span>
+    </div>
+  </section>
 
-  <section id="chapter-5" class="scene evidence cicd" data-scene="4" aria-labelledby="cicd-title"><div class="copy split reverse"><div class="artifact pipeline-window" aria-label="A failed deployment pipeline"><header><span>deploy-production.yml</span><b class="failed">FAILED</b></header><div class="commit"><i>⌁</i><span><strong>feat: route checkout through payments-v2</strong><small>7f3a1c8 · 4 minutes ago</small></span></div><div class="pipeline"><div class="step ok"><i>✓</i><span>Build<small>42s</small></span></div><b></b><div class="step ok"><i>✓</i><span>Test<small>1m 08s</small></span></div><b class="broken"></b><div class="step bad"><i>×</i><span>Deploy<small>exit 1</small></span></div></div><div class="failure-card"><b>×</b><span><strong>stripe-integration</strong><small>Health check failed after revision 38</small></span><code>503</code></div></div><div><p class="eyebrow">04 / Delivery evidence</p><h2 id="cicd-title">Examine what build <em>broke.</em></h2><p class="lede">Connect CI/CD history to the map. See the commit, pipeline, and affected service in one place.</p></div></div></section>
+  <section class="outcomes" aria-label="Why teams install Scryr">
+    {outcomes.map((outcome) => (
+      <article class="outcome">
+        <div class="outcome-index"><span>{outcome.number}</span><p>{outcome.eyebrow}</p></div>
+        <div class="outcome-copy"><h2>{outcome.title}</h2><p>{outcome.body}</p><a href={outcome.link}>{outcome.label} <span aria-hidden="true">→</span></a></div>
+      </article>
+    ))}
+  </section>
 
-  <section id="chapter-6" class="scene code-scene" data-scene="5" aria-labelledby="code-title"><div class="runes" aria-hidden="true">λ　◇　{ }　✦　→　⌁</div><div class="copy centered"><p class="eyebrow">05 / Source of truth</p><h2 id="code-title">Generate it from a typed Python file.</h2><p class="filename">◆ index.scry</p><div class="code-book"><div class="gutter" aria-hidden="true">1<br/>2<br/>3<br/>4<br/>5<br/>6<br/>7<br/>8<br/>9<br/>10<br/>11</div><pre><code><span class="kw">from</span> scryr <span class="kw">import</span> Diagram, Manifest, Info, Metrics, CICD
+  <section class="scry-language" aria-labelledby="scry-title">
+    <div class="language-copy">
+      <p class="section-label">A source file, not a drawing</p>
+      <h2 id="scry-title">Architecture becomes something you can generate, diff, check, and run.</h2>
+      <p>Keep <code>index.scry</code> with the code it describes. Let an AI agent draft it from repository evidence, then review the result before execution. Scryr formats, lints, type-checks, executes, and validates the model.</p>
+      <ul>
+        <li>Use normal Python composition and imports.</li>
+        <li>Declare components, relationships, metrics, and diagrams.</li>
+        <li>Model reusable tooling and infrastructure workflows.</li>
+      </ul>
+    </div>
+    <div class="code-panel" aria-label="Example index.scry file">
+      <header><span>index.scry</span><span>Python</span></header>
+      <pre><code><span class="violet">from</span> scryr <span class="violet">import</span> Diagram, Info, Manifest
+<span class="violet">from</span> scryr.types <span class="violet">import</span> DeploymentTarget
 
 api = Manifest(
-    name=<span class="str">"northwind-api"</span>,
+    manifest_id=<span class="gold">"services/api"</span>,
+    name=<span class="gold">"Public API"</span>,
+    connections=[Manifest(name=<span class="gold">"Postgres"</span>)],
     info=Info(
-        owner_team=<span class="str">"Commerce"</span>,
-        language=ProgrammingLanguage.python,
+        owner_team=<span class="gold">"Platform"</span>,
+        deployment=DeploymentTarget.k8s_cluster,
     ),
-    metrics=Metrics(provider=MetricsProvider.prometheus),
-    cicd=CICD(provider=CICDProvider.github_actions),
 )
 
-Diagram(name=<span class="str">"Northwind"</span>, manifests=[api])</code></pre></div><div class="actions"><a href="/getting-started/">Create your spellbook →</a><a href="/llm-prompt/">Generate with an agent</a></div></div><img class="closing" src="/favicon.svg" alt="" width="64" height="64"/></section>
+system = Diagram(
+    name=<span class="gold">"Production"</span>, manifests=[api]
+)</code></pre>
+    </div>
+  </section>
+
+  <section class="open-source" aria-labelledby="oss-title">
+    <div><p class="section-label">Own the map of your system</p><h2 id="oss-title">Open source is a product feature.</h2></div>
+    <div class="oss-copy"><p>Your architecture can expose sensitive details about how software is built and operated. Scryr is MIT-licensed, so your team can inspect the implementation, run the complete workflow locally, keep manifests in its own repositories, and adapt the software instead of sending its system model into an opaque tool.</p><a href="https://github.com/scryr-app/scryr-dev">View the source on GitHub <span aria-hidden="true">↗</span></a></div>
+  </section>
+
+  <section class="final-cta" aria-labelledby="cta-title">
+    <p class="section-label">Start with one repository</p>
+    <h2 id="cta-title">Give the next code review a map.</h2>
+    <p>Install Scryr, ask your coding agent to generate <code>index.scry</code>, and inspect the result locally.</p>
+    <div class="hero-actions"><a class="button primary" href="/getting-started/">Get started locally</a><a class="button secondary" href="https://scryr.app">Try the hosted app <span aria-hidden="true">↗</span></a></div>
+  </section>
 </main>
 
-<script>
-  const root = document.querySelector<HTMLElement>('[data-scroll-story]');
-  const scenes = [...document.querySelectorAll<HTMLElement>('[data-scene]')];
-  const links = [...document.querySelectorAll<HTMLElement>('[data-chapter-link]')];
-  let ticking = false;
-  const paint = () => { const middle = innerHeight / 2; let active=0, near=Infinity; scenes.forEach((scene,index)=>{const box=scene.getBoundingClientRect();const p=Math.max(-1,Math.min(1,(middle-box.top-box.height/2)/innerHeight));scene.style.setProperty('--p',String(p));const d=Math.abs(box.top+box.height/2-middle);if(d<near){near=d;active=index}});root?.style.setProperty('--active',String(active));links.forEach((link,index)=>link.toggleAttribute('data-active',index===active));ticking=false };
-  const update=()=>{if(!ticking){requestAnimationFrame(paint);ticking=true}};paint();addEventListener('scroll',update,{passive:true});addEventListener('resize',update);
-</script>
-
 <style>
-  :global(.content-panel),:global(.main-frame){padding:0!important}:global(.sl-container){max-width:none!important}:global(header.header){background:rgba(7,4,13,.68);backdrop-filter:blur(18px)}
-  .spell-scroll{width:100vw;margin-left:calc(50% - 50vw);margin-top:calc(var(--sl-nav-height)*-1);color:var(--story-ink);background:var(--story-void);overflow:clip}.scene{--p:0;position:relative;min-height:100svh;display:grid;place-items:center;padding:clamp(6rem,9vw,9rem) clamp(1.25rem,7vw,7rem);isolation:isolate;perspective:1200px}.scene:after{content:'';position:absolute;inset:auto 8vw 0;height:1px;background:linear-gradient(90deg,transparent,#d7a85355,transparent)}.copy{width:min(100%,76rem);z-index:2;transform:translateY(calc(var(--p)*-2rem));opacity:calc(1 - max(var(--p),calc(var(--p)*-1))*.42)}
-  .eyebrow{margin:0 0 1.15rem;color:var(--story-gold);letter-spacing:.24em;text-transform:uppercase;font-size:.78rem}.scene h2{max-width:15ch;margin:0;color:var(--story-ink);font-size:clamp(2.6rem,6.2vw,5.8rem);line-height:.98;text-wrap:balance}.scene h2 em{color:var(--story-gold);font-style:normal;text-shadow:0 0 2.5rem #e7c77c44}.lede{max-width:43rem;margin:1.4rem 0 0;color:var(--story-muted);font-size:clamp(1rem,1.6vw,1.25rem);line-height:1.7}.centered{text-align:center;display:grid;justify-items:center}.centered h2{max-width:19ch}
-  .chapter-rail{position:fixed;right:clamp(.7rem,2vw,2rem);top:50%;z-index:20;display:flex;flex-direction:column;gap:.7rem;transform:translateY(-50%)}.chapter-rail a{display:flex;flex-direction:row-reverse;align-items:center;gap:.6rem;color:var(--story-muted);text-decoration:none}.chapter-rail i{width:.45rem;aspect-ratio:1;border:1px solid currentColor;transform:rotate(45deg);transition:.3s}.chapter-rail span{max-width:0;overflow:hidden;opacity:0;white-space:nowrap;font-size:.68rem;text-transform:uppercase;transition:.3s}.chapter-rail a:hover span,.chapter-rail a:focus-visible span{max-width:7rem;opacity:1}.chapter-rail a[data-active]{color:var(--story-gold)}.chapter-rail a[data-active] i{background:currentColor;box-shadow:0 0 1rem currentColor;transform:rotate(225deg) scale(1.4)}
-  .hero{text-align:center;background:radial-gradient(circle at 50% 44%,#9a4bff3d,transparent 24rem),radial-gradient(circle at 50% 48%,#5ce5ff14,transparent 42rem)}.hero-copy{display:grid;justify-items:center}.hero-copy img{width:clamp(8rem,18vw,12rem);height:auto;margin-bottom:1.4rem;filter:drop-shadow(0 0 2.5rem #a759ff99);animation:float 4s ease-in-out infinite}.hero h1{margin:0;font-size:clamp(4.5rem,14vw,11rem);line-height:.78;text-shadow:0 0 4rem #a85cff55}.hero .lede{font-size:clamp(1.15rem,2.4vw,1.8rem)}.stars{position:absolute;inset:0;z-index:-2;background-image:radial-gradient(circle,#fff 0 1px,transparent 1.5px),radial-gradient(circle,#bc80ff 0 1px,transparent 1.5px);background-size:83px 83px,131px 131px;opacity:.55;transform:translateY(calc(var(--p)*7rem))}.orbit{position:absolute;width:min(72vw,48rem);aspect-ratio:1;border:1px solid #d7a85344;border-radius:50%;transform:rotate(calc(var(--p)*80deg));animation:spin 30s linear infinite}.orbit i{position:absolute;inset:15%;border:1px dashed #a85cff55;border-radius:50%}.orbit b{position:absolute;color:var(--story-gold);text-shadow:0 0 1rem currentColor}.orbit b:nth-of-type(1){top:4%;left:50%}.orbit b:nth-of-type(2){right:3%;top:48%}.orbit b:nth-of-type(3){bottom:8%;left:20%}.scroll-cue{position:absolute;bottom:2rem;display:flex;flex-direction:column;color:var(--story-muted)!important;font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;text-decoration:none;animation:bob 2s ease-in-out infinite}.scroll-cue b{color:var(--story-gold);font-size:1.1rem}
-  .old-world{background:radial-gradient(circle at 75% 30%,#ff486917,transparent 30rem),#09070f}.grid{position:absolute;inset:0;background-image:linear-gradient(#ffffff0a 1px,transparent 1px),linear-gradient(90deg,#ffffff0a 1px,transparent 1px);background-size:44px 44px;opacity:.4;mask-image:linear-gradient(transparent,#000)}.mermaid-mess{position:relative;width:min(100%,62rem);margin:3rem 0 0;border:1px solid #ffffff1f;background:#0e0d12e8;box-shadow:0 2.5rem 8rem #0008;transform:rotateX(calc(var(--p)*-4deg)) rotateZ(calc(var(--p)*1.5deg))}.mermaid-mess figcaption{padding:.8rem 1rem;color:#8f8997;border-bottom:1px solid #ffffff18;font-size:.72rem;text-align:left}.mermaid-mess figcaption span{color:#ff607c;margin-right:.8rem}.mermaid-mess svg{display:block;width:100%}.mess-lines{fill:none;stroke:#ff607c88;stroke-width:2.5;stroke-dasharray:7 5;stroke-dashoffset:calc(var(--p)*80)}.nodes rect{fill:#1c1822;stroke:#8e8299;stroke-width:2}.nodes text{fill:#e5dce9;font:16px 'Source Code Pro';text-anchor:middle}.note{fill:#ff607c;font:italic 18px 'Source Code Pro'}.mermaid-mess pre{position:absolute;left:1rem;bottom:1rem;margin:0;padding:.7rem;color:#817887;background:#050407cc;font-size:.58rem;text-align:left}
-  .spellbook{justify-items:start;min-height:115svh}.spellbook-image{position:absolute;inset:0;z-index:-2;background:linear-gradient(90deg,#07040df5,#07040dae 38%,#07040d0d 72%),linear-gradient(0deg,#07040d,transparent 22% 80%,#07040d),url('/assets/scryr-spellbook-map.png') center/cover;transform:scale(calc(1.08 + max(var(--p),calc(var(--p)*-1))*.06))}.flare{position:absolute;left:57%;top:49%;width:2px;height:2px;background:#fff;box-shadow:0 0 2rem 1rem #fff,0 0 7rem 3rem #a85cff,0 0 16rem 7rem #69e3ff44}.spellbook .copy{margin-left:4vw}.spellbook h2{max-width:12ch}.spellbook .lede{max-width:33rem}.text-link{display:inline-block;margin-top:2rem;color:var(--story-gold)!important;text-decoration:none;border-bottom:1px solid #e7c77c66;padding-bottom:.3rem}
-  .evidence{background:radial-gradient(circle at 70% 45%,#69e3ff1a,transparent 30rem),#080711}.split{display:grid;grid-template-columns:minmax(0,.8fr) minmax(28rem,1.2fr);align-items:center;gap:clamp(2rem,7vw,7rem)}.artifact{padding:clamp(1rem,2.5vw,2rem);border:1px solid #69e3ff42;background:linear-gradient(145deg,#121d2aed,#0a0814f5);box-shadow:0 2.5rem 8rem #0008,0 0 4rem #69e3ff14;clip-path:polygon(0 0,calc(100% - 1.3rem) 0,100% 1.3rem,100% 100%,1.3rem 100%,0 calc(100% - 1.3rem));transform:translateX(calc(var(--p)*4rem)) rotateY(calc(var(--p)*-7deg))}.artifact header{display:flex;justify-content:space-between;font-size:.82rem}.live{color:#5ee5b6;font-size:.68rem;letter-spacing:.14em}.metric-total{display:grid;grid-template-columns:1fr auto;align-items:end;margin-top:2rem}.metric-total small{grid-column:1/-1;color:#8191a5}.metric-total strong{font-size:clamp(2.5rem,5vw,4.5rem);line-height:1}.metric-total span{color:#5ee5b6}.chart{width:100%;margin-top:1.4rem;overflow:visible}.chart-grid{stroke:#ffffff14}.area{fill:url(#fill)}.line{fill:none;stroke:#69e3ff;stroke-width:4;filter:drop-shadow(0 0 7px #69e3ffaa);stroke-dasharray:800;stroke-dashoffset:calc(max(var(--p),0)*550)}.chart circle{fill:#fff;stroke:#69e3ff;stroke-width:4}.metric-row{display:flex;gap:1rem}.metric-row span{flex:1;padding:.8rem;color:#8998aa;background:#ffffff09;font-size:.72rem}.metric-row b{display:block;color:#fff;font-size:1rem;margin-top:.2rem}
-  .cicd{background:radial-gradient(circle at 25% 50%,#ff526f1a,transparent 30rem),#0b070e}.reverse{grid-template-columns:minmax(28rem,1.2fr) minmax(0,.8fr)}.pipeline-window{border-color:#ff5c7a40;transform:translateX(calc(var(--p)*-4rem)) rotateY(calc(var(--p)*7deg))}.failed{color:#ff607c;border:1px solid;padding:.2rem .5rem;font-size:.64rem}.commit{display:flex;gap:.8rem;align-items:center;margin:1.5rem 0;padding:1rem;background:#ffffff09}.commit i{display:grid;place-items:center;width:2.3rem;aspect-ratio:1;border:1px solid #a85cff66;border-radius:50%}.commit strong,.commit small{display:block}.commit strong{font-size:.78rem}.commit small{color:#817787;font-size:.66rem;margin-top:.25rem}.pipeline{display:flex;align-items:flex-start;justify-content:center;padding:1.4rem 0}.step{display:grid;justify-items:center;gap:.4rem;min-width:4.8rem}.step i{display:grid;place-items:center;width:2.5rem;aspect-ratio:1;border-radius:50%;font-style:normal}.step span{font-size:.7rem;text-align:center}.step small{display:block;color:#776f7e}.step.ok i{color:#5ee5b6;border:1px solid}.step.bad i{color:#ff607c;border:1px solid;box-shadow:0 0 1.4rem #ff607c44;animation:pulse 1.6s infinite}.pipeline>b{width:clamp(2rem,6vw,6rem);height:1px;margin-top:1.25rem;background:#5ee5b6}.pipeline>b.broken{background:linear-gradient(90deg,#5ee5b6 42%,transparent 42% 58%,#ff607c 58%)}.failure-card{display:flex;align-items:center;gap:.8rem;padding:1rem;border:1px solid #ff607c33;background:#ff607c0f}.failure-card>b{color:#ff607c;font-size:1.4rem}.failure-card span{flex:1}.failure-card strong,.failure-card small{display:block}.failure-card small{color:#a28e96;font-size:.66rem}.failure-card code{color:#ff8098}
-  .code-scene{text-align:center;min-height:112svh;background:radial-gradient(circle at 50% 45%,#a85cff26,transparent 32rem),linear-gradient(#090611,#050308)}.filename{color:var(--story-gold);font-size:.82rem;margin:1.5rem 0 .8rem}.code-book{display:grid;grid-template-columns:2.8rem 1fr;width:min(100%,52rem);text-align:left;border:1px solid #d7a85347;background:linear-gradient(145deg,#150c1ff5,#08060dfa);box-shadow:0 2.8rem 8rem #0009;transform:translateY(calc(var(--p)*-2rem)) rotateX(calc(var(--p)*5deg));overflow:hidden}.gutter{padding:1.2rem .7rem;color:#574b62;background:#0003;border-right:1px solid #ffffff0f;font-size:.72rem;line-height:1.68}.code-book pre{margin:0;padding:1.2rem;overflow:auto;background:transparent;color:#d6cddd;font-size:clamp(.67rem,1.2vw,.88rem);line-height:1.68}.code-book code{font:inherit}.kw{color:#c285ff}.str{color:#e7c77c}.actions{display:flex;justify-content:center;gap:1rem;flex-wrap:wrap;margin-top:2rem}.actions a{padding:.85rem 1.15rem;text-decoration:none!important;font-size:.82rem;border:1px solid #e7c77c4d;color:var(--story-muted)!important}.actions a:first-child{color:#fff!important;border-color:#a85cff;background:linear-gradient(135deg,#7130bd,#a85cff);box-shadow:0 1rem 3rem #7130bd4d}.runes{position:absolute;color:#a85cff2b;font:clamp(2rem,6vw,5rem) 'Cinzel Decorative';word-spacing:6vw;transform:translateY(calc(var(--p)*-8rem)) rotate(calc(var(--p)*5deg))}.closing{position:absolute;bottom:1rem;width:3rem;opacity:.35;filter:drop-shadow(0 0 1rem #a85cff)}
-  @keyframes float{50%{transform:translateY(-.5rem) scale(1.035)}}@keyframes spin{to{transform:rotate(360deg)}}@keyframes bob{50%{transform:translateY(.5rem)}}@keyframes pulse{50%{box-shadow:0 0 2.4rem #ff607c88}}
-  @media(max-width:56rem){.chapter-rail{display:none}.scene{min-height:auto;padding-block:7rem}.split,.reverse{grid-template-columns:1fr}.reverse>div:last-child{order:-1}.spellbook{min-height:100svh;align-content:end}.spellbook-image{background:linear-gradient(0deg,#07040dfc,#07040d44 62%,#07040d14),url('/assets/scryr-spellbook-map.png') 64% center/cover}.spellbook .copy{margin:0}.artifact{margin-top:1rem}.mermaid-mess pre{display:none}}
-  @media(max-width:34rem){.scene{padding-inline:1.1rem}.scene h2{font-size:2.6rem}.orbit{width:34rem}.mermaid-mess{width:calc(100% + 1rem)}.artifact{padding:1rem}.pipeline>b{width:1.5rem}.step{min-width:3.8rem}.code-book{grid-template-columns:2.1rem 1fr}.code-book pre,.gutter{font-size:.59rem;padding:.8rem .45rem}}
-  @media(prefers-reduced-motion:reduce){.hero-copy img,.orbit,.scroll-cue,.step.bad i{animation:none}.copy,.stars,.orbit,.spellbook-image,.artifact,.code-book,.runes{transform:none!important}.copy{opacity:1!important}.line{stroke-dashoffset:0!important}}
+  :global(.content-panel), :global(.main-frame) { padding: 0 !important; }
+  :global(.sl-container) { max-width: none !important; }
+  :global(header.header) { background: rgba(7, 8, 15, .82); backdrop-filter: blur(18px); }
+  .product-page { width: 100vw; margin-left: calc(50% - 50vw); margin-top: calc(var(--sl-nav-height) * -1); color: #f6f4fb; background-color: #080911; background-image: linear-gradient(rgba(255,255,255,.012) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.012) 1px, transparent 1px); background-size: 52px 52px; overflow: hidden; animation: grid-drift 24s linear infinite; }
+  .hero { position: relative; padding: clamp(8rem, 13vw, 12rem) clamp(1.25rem, 7vw, 7rem) 0; background: radial-gradient(circle at 74% 24%, rgba(109, 76, 255, .18), transparent 32rem), linear-gradient(180deg, rgba(8,9,17,.78), #0b0c14); isolation: isolate; }
+  .hero::before { content: ''; position: absolute; width: 34rem; aspect-ratio: 1; top: -12rem; left: -12rem; z-index: -1; border-radius: 50%; background: radial-gradient(circle, rgba(91, 220, 255, .12), rgba(126, 72, 255, .08) 45%, transparent 70%); filter: blur(1rem); animation: aura-drift 11s ease-in-out infinite alternate; }
+  .hero-grid { width: min(100%, 84rem); margin: auto; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(30rem, .95fr); align-items: center; gap: clamp(3rem, 8vw, 8rem); }
+  .brand-tagline { margin: 0 0 .65rem; color: #e8cc8d; font-family: 'Cinzel Decorative', Georgia, serif; font-size: clamp(.86rem, 1.4vw, 1.05rem); font-weight: 700; letter-spacing: .09em; text-transform: uppercase; text-shadow: 0 0 1.25rem rgba(232, 204, 141, .34); animation: rise-in .8s .16s ease-out both; }
+  .kicker, .section-label { margin: 0 0 1.25rem; color: #a9a2b9; font-size: .76rem; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; }
+  .kicker span { color: #7fe0ba; }
+  .hero-mark { position: relative; width: 4.5rem; height: 4.5rem; margin-bottom: 1.5rem; display: grid; place-items: center; border: 1px solid rgba(165, 132, 255, .34); border-radius: 1.15rem; background: radial-gradient(circle, rgba(160, 104, 255, .38), rgba(50, 28, 86, .68) 58%, rgba(13, 14, 24, .94)); box-shadow: 0 0 2.5rem rgba(139, 88, 255, .42), inset 0 0 1.5rem rgba(189, 149, 255, .2); animation: mark-float 4.2s ease-in-out infinite, mark-glow 2.8s ease-in-out infinite alternate; }
+  .hero-mark::before { content: ''; position: absolute; inset: -.72rem; z-index: -1; border-radius: 1.65rem; background: conic-gradient(from 0deg, transparent, rgba(105,227,255,.55), transparent 35%, rgba(168,92,255,.62), transparent 72%); filter: blur(.35rem); animation: halo-spin 7s linear infinite; }
+  .hero-mark::after { content: ''; position: absolute; inset: -1.4rem; z-index: -2; border-radius: 50%; background: radial-gradient(circle, rgba(168,92,255,.3), transparent 68%); animation: halo-breathe 2.8s ease-in-out infinite; }
+  .hero-mark img { width: 3.35rem; height: 3.35rem; filter: drop-shadow(0 0 .8rem rgba(205, 175, 255, .82)); animation: icon-pulse 2.8s ease-in-out infinite; }
+  h1, h2 { font-family: 'Cinzel Decorative', Georgia, serif; letter-spacing: -.04em; text-wrap: balance; }
+  h1 { max-width: 11ch; margin: 0; font-size: clamp(3.7rem, 7.6vw, 7.2rem); line-height: .93; }
+  .hero-copy .kicker { animation: rise-in .8s .24s ease-out both; }
+  .hero h1 { animation: rise-in .9s .32s cubic-bezier(.2,.75,.2,1) both; }
+  .hero-lede { max-width: 43rem; margin: 1.75rem 0 0; color: #c2bdcc; font-size: clamp(1.05rem, 1.6vw, 1.28rem); line-height: 1.65; animation: rise-in .8s .46s ease-out both; }
+  .hero-actions { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 2.2rem; animation: rise-in .8s .58s ease-out both; }
+  .button { display: inline-flex; align-items: center; justify-content: center; min-height: 3.1rem; padding: 0 1.2rem; border: 1px solid #373443; color: #f8f6fb !important; font-size: .84rem; font-weight: 700; text-decoration: none; transition: border-color .2s, background .2s, transform .2s; }
+  .button:hover { transform: translateY(-3px); border-color: #8f86ff; box-shadow: 0 .8rem 2.4rem rgba(113,102,242,.22); }
+  .button.primary { border-color: #786ef5; background: #7166f2; box-shadow: 0 1rem 3rem rgba(113, 102, 242, .22); }
+  .button.secondary { background: rgba(255, 255, 255, .025); }
+  .install-line { margin: 1rem 0 0; color: #827d8d; font-size: .76rem; animation: rise-in .8s .68s ease-out both; }
+  .install-line code { padding: .3rem .45rem; border: 1px solid #272531; background: #0d0e17; color: #a9a4b2; }
+  .hero-product { margin: 0; border: 1px solid #353143; background: #0b0c15; box-shadow: 0 2.5rem 7rem rgba(0, 0, 0, .5), 0 0 5rem rgba(111, 79, 221, .12); transform: perspective(1100px) rotateY(-3deg); overflow: hidden; animation: product-enter 1s .35s cubic-bezier(.2,.75,.2,1) both, product-float 7s 1.35s ease-in-out infinite; }
+  .hero-product img { display: block; width: 100%; height: auto; transition: transform .8s cubic-bezier(.2,.75,.2,1), filter .8s; }
+  .hero-product:hover img { transform: scale(1.035); filter: saturate(1.12) brightness(1.04); }
+  .hero-product figcaption { display: flex; justify-content: space-between; padding: .75rem 1rem; border-top: 1px solid #302d3a; color: #8f899d; font-size: .68rem; }
+  .proof-strip { width: min(100%, 84rem); margin: clamp(5rem, 9vw, 8rem) auto 0; display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid #292731; border-bottom: 1px solid #292731; }
+  .proof-strip div { min-height: 7.5rem; display: flex; flex-direction: column; justify-content: center; padding: 1.25rem; border-right: 1px solid #292731; transition: background .3s, transform .3s; }
+  .proof-strip div:hover { background: rgba(113,102,242,.07); transform: translateY(-.25rem); }
+  .proof-strip div:last-child { border-right: 0; }
+  .proof-strip strong { font-size: .88rem; }
+  .proof-strip span { margin-top: .4rem; color: #837e8c; font-size: .68rem; line-height: 1.5; }
+  .product-evidence { width: min(100% - 2.5rem, 84rem); margin: auto; padding: clamp(6rem, 10vw, 10rem) 0; display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(18rem, .65fr); align-items: center; gap: clamp(2rem, 6vw, 6rem); }
+  .product-evidence figure { margin: 0; border: 1px solid #353143; background: #10111b; box-shadow: 0 2rem 6rem rgba(0, 0, 0, .38); overflow: hidden; transition: transform .65s cubic-bezier(.2,.75,.2,1), box-shadow .65s; }
+  .product-evidence figure:hover { transform: translateY(-.6rem) rotateX(1deg); box-shadow: 0 3rem 7rem rgba(0,0,0,.5), 0 0 4rem rgba(105,227,255,.09); }
+  .product-evidence img { display: block; width: 100%; height: auto; transition: transform .8s cubic-bezier(.2,.75,.2,1); }
+  .product-evidence figure:hover img { transform: scale(1.02); }
+  .product-evidence h2 { margin: 0; font-size: clamp(2.2rem, 4vw, 4rem); line-height: 1.04; }
+  .product-evidence div > p:not(.section-label) { color: #aaa5b3; line-height: 1.75; }
+  .problem { width: min(100% - 2.5rem, 72rem); margin: auto; padding: clamp(7rem, 12vw, 12rem) 0; text-align: center; }
+  .problem h2 { max-width: 18ch; margin: auto; font-size: clamp(2.8rem, 6vw, 5.8rem); line-height: 1; }
+  .problem > p:not(.section-label) { max-width: 48rem; margin: 1.7rem auto 0; color: #a9a4b2; font-size: 1.05rem; line-height: 1.8; }
+  .problem em { color: #f4d38a; font-style: normal; }
+  .questions { display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem; margin-top: 2.3rem; }
+  .questions span { padding: .6rem .8rem; border: 1px solid #322f3b; color: #a8a2b3; background: #0d0e16; font-size: .7rem; animation: chip-float 4s ease-in-out infinite; }
+  .questions span:nth-child(2) { animation-delay: -.9s; } .questions span:nth-child(3) { animation-delay: -1.8s; } .questions span:nth-child(4) { animation-delay: -2.7s; }
+  .outcomes { border-top: 1px solid #292731; }
+  .outcome { width: min(100% - 2.5rem, 84rem); margin: auto; padding: clamp(4.5rem, 8vw, 8rem) 0; display: grid; grid-template-columns: minmax(13rem, .36fr) 1fr; gap: 3rem; border-bottom: 1px solid #292731; }
+  .outcome-index span { color: #7166f2; font-size: .72rem; font-weight: 700; }
+  .outcome-index p { margin: .65rem 0 0; color: #a7a1b1; font-size: .73rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+  .outcome-copy h2 { max-width: 18ch; margin: 0; font-size: clamp(2.25rem, 4.5vw, 4.5rem); line-height: 1.04; }
+  .outcome-copy p { max-width: 49rem; margin: 1.5rem 0 0; color: #9f9aa9; line-height: 1.8; }
+  .outcome-copy a, .oss-copy a { display: inline-block; margin-top: 1.6rem; color: #bcb6ff !important; font-size: .78rem; font-weight: 700; text-decoration: none; transition: color .25s, transform .25s; }
+  .outcome-copy a:hover, .oss-copy a:hover { color: #fff !important; transform: translateX(.35rem); }
+  .scry-language { padding: clamp(6rem, 11vw, 11rem) max(1.25rem, calc((100vw - 84rem) / 2)); display: grid; grid-template-columns: .8fr 1.2fr; align-items: center; gap: clamp(3rem, 8vw, 8rem); background: #0c0d16; }
+  .language-copy h2, .open-source h2, .final-cta h2 { margin: 0; font-size: clamp(2.5rem, 5vw, 5rem); line-height: 1.02; }
+  .language-copy > p:not(.section-label), .language-copy li { color: #aaa5b3; line-height: 1.75; }
+  .language-copy ul { padding-left: 1.2rem; }
+  .code-panel { position: relative; min-width: 0; border: 1px solid #383443; background: #090a11; box-shadow: 0 2rem 6rem rgba(0, 0, 0, .35); overflow: hidden; animation: code-glow 4.5s ease-in-out infinite alternate; }
+  .code-panel::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(105deg, transparent 35%, rgba(181,168,255,.07) 50%, transparent 65%); transform: translateX(-130%); animation: code-scan 7s ease-in-out infinite; }
+  .code-panel header { display: flex; justify-content: space-between; padding: .85rem 1rem; border-bottom: 1px solid #292631; color: #8c8696; font-size: .68rem; }
+  .code-panel pre { margin: 0; padding: clamp(1rem, 3vw, 2rem); overflow-x: auto; background: transparent; color: #d7d2df; font-size: clamp(.68rem, 1.1vw, .84rem); line-height: 1.75; }
+  .violet { color: #b5a8ff; } .gold { color: #e8cc8d; }
+  .open-source { padding: clamp(6rem, 11vw, 11rem) max(1.25rem, calc((100vw - 84rem) / 2)); display: grid; grid-template-columns: 1fr 1fr; gap: clamp(3rem, 9vw, 9rem); background: linear-gradient(120deg, #151326, #0b1018, #18122a); background-size: 220% 220%; animation: gradient-shift 12s ease infinite; }
+  .oss-copy p { margin: 0; color: #b5afbd; font-size: 1.03rem; line-height: 1.85; }
+  .final-cta { padding: clamp(7rem, 13vw, 13rem) 1.25rem; display: grid; justify-items: center; text-align: center; background: radial-gradient(circle at 50% 45%, rgba(113, 102, 242, .2), transparent 30rem); animation: cta-breathe 6s ease-in-out infinite alternate; }
+  .final-cta p:not(.section-label) { max-width: 42rem; margin: 1.5rem 0 0; color: #a6a0af; }
+  .final-cta .hero-actions { justify-content: center; }
+  @media (max-width: 62rem) { .hero-grid, .product-evidence, .scry-language, .open-source { grid-template-columns: 1fr; } .hero-product { max-width: 48rem; transform: none; } .product-evidence div { max-width: 42rem; } .proof-strip { grid-template-columns: 1fr 1fr; } .proof-strip div:nth-child(2) { border-right: 0; } .proof-strip div:nth-child(-n+2) { border-bottom: 1px solid #292731; } }
+  @media (max-width: 42rem) { .hero { padding-top: 7.5rem; } h1 { font-size: 3.65rem; } .outcome { grid-template-columns: 1fr; gap: 1.5rem; } .proof-strip { grid-template-columns: 1fr; } .proof-strip div { min-height: 6rem; border-right: 0; border-bottom: 1px solid #292731; } .proof-strip div:last-child { border-bottom: 0; } .summary-head span:last-child { display: none; } }
+  @supports (animation-timeline: view()) {
+    .product-evidence, .problem, .outcome, .scry-language, .open-source, .final-cta { animation: section-reveal linear both; animation-timeline: view(); animation-range: entry 8% cover 28%; }
+    .outcome:nth-child(even) { animation-name: section-reveal-alt; }
+  }
+  @keyframes rise-in { from { opacity: 0; transform: translateY(1.4rem); } to { opacity: 1; transform: none; } }
+  @keyframes product-enter { from { opacity: 0; transform: perspective(1100px) rotateY(-8deg) translateX(3rem); } to { opacity: 1; transform: perspective(1100px) rotateY(-3deg); } }
+  @keyframes product-float { 0%,100% { transform: perspective(1100px) rotateY(-3deg) translateY(0); } 50% { transform: perspective(1100px) rotateY(-1deg) translateY(-.7rem); } }
+  @keyframes mark-float { 0%,100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-.45rem) rotate(1deg); } }
+  @keyframes mark-glow { from { box-shadow: 0 0 1.8rem rgba(139,88,255,.32), inset 0 0 1rem rgba(189,149,255,.15); } to { box-shadow: 0 0 3.8rem rgba(139,88,255,.68), 0 0 1.2rem rgba(105,227,255,.22), inset 0 0 1.8rem rgba(189,149,255,.28); } }
+  @keyframes halo-spin { to { transform: rotate(360deg); } }
+  @keyframes halo-breathe { 50% { transform: scale(1.18); opacity: .55; } }
+  @keyframes icon-pulse { 50% { transform: scale(1.07); filter: drop-shadow(0 0 1.25rem rgba(205,175,255,1)); } }
+  @keyframes aura-drift { to { transform: translate(8rem, 5rem) scale(1.18); } }
+  @keyframes grid-drift { to { background-position: 52px 52px; } }
+  @keyframes chip-float { 50% { transform: translateY(-.22rem); border-color: #4d4661; } }
+  @keyframes code-glow { to { border-color: #665b89; box-shadow: 0 2rem 6rem rgba(0,0,0,.35), 0 0 3rem rgba(168,92,255,.12); } }
+  @keyframes code-scan { 0%,35% { transform: translateX(-130%); } 65%,100% { transform: translateX(130%); } }
+  @keyframes gradient-shift { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+  @keyframes cta-breathe { to { background-size: 118% 118%; } }
+  @keyframes section-reveal { from { opacity: .25; transform: translateY(3rem); } to { opacity: 1; transform: none; } }
+  @keyframes section-reveal-alt { from { opacity: .25; transform: translateX(-2rem); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .product-page, .hero::before, .hero-copy *, .hero-mark, .hero-mark::before, .hero-mark::after, .hero-mark img, .hero-product, .questions span, .code-panel, .code-panel::after, .open-source, .final-cta, .product-evidence, .problem, .outcome, .scry-language { animation: none !important; } .button, .hero-product img, .product-evidence figure, .product-evidence img { transition: none; } .hero-product { transform: none; } }
 </style>
