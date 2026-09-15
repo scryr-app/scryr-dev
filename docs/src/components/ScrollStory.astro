@@ -1,231 +1,132 @@
 ---
-const outcomes = [
-  {
-    number: '01',
-    eyebrow: 'Review AI-written systems',
-    title: 'Give humans a map of the code an agent just changed.',
-    body: 'An agent can inspect a repository and generate a typed architecture model. A human can then explore the real runtime boundaries, dependencies, owners, source links, and operational context instead of reviewing a diff without a map.',
-    link: '/llm-prompt/',
-    label: 'Generate a map with an agent',
-  },
-  {
-    number: '02',
-    eyebrow: 'Debug with production evidence',
-    title: 'Ask your metrics about the component in front of you.',
-    body: 'Declare bounded Prometheus-compatible queries beside each component. Scryr runs them through its server and brings latency, errors, traffic, and other runtime signals back to the architecture you are investigating.',
-    link: '/integrations/#prometheus-compatible-metrics',
-    label: 'Connect your metrics',
-  },
-  {
-    number: '03',
-    eyebrow: 'Script the rest of the stack',
-    title: 'Use a Python dialect that agents already know how to write.',
-    body: 'A .scry file is executable, typed Python. Compose architecture with ordinary imports, review it like code, and use the same language to describe developer tooling and infrastructure such as Kubernetes and Helm deployments.',
-    link: '/manifests/',
-    label: 'Explore the .scry language',
-  },
-];
----
+import MapPortal from './MapPortal.astro';
+import '../styles/story.css';
+const particles = Array.from({ length: 64 }, (_, i) => ({ x: (i * 73 + 11) % 100, y: (i * 47 + 7) % 100, size: i % 5 === 0 ? 3 : 2, delay: -i * 1.3, duration: 9 + (i % 7) * 2 }));
+const chapters = [{id:'old-magic', name:'The old world'}, {id:'the-spell', name:'The spell'}, {id:'the-signal', name:'The signal'}, {id:'the-forge', name:'The forge'}, {id:'the-revelation', name:'The revelation'}];
+const scryCode = `from scryr import Diagram, Info, Manifest
+from scryr.types import ProgrammingLanguage
 
-<main class="product-page">
-  <section class="hero" aria-labelledby="product-title">
-    <div class="hero-grid">
-      <div class="hero-copy">
-        <div class="hero-mark" aria-hidden="true"><img src="/favicon.svg" alt="" width="72" height="72" /></div>
-        <p class="brand-tagline">Actionable Architecture</p>
-        <p class="kicker"><span>Open source</span> · MIT licensed</p>
-        <h1 id="product-title">See the system<br/>your AI just changed.</h1>
-        <p class="hero-lede">Scryr turns a codebase into an interactive architecture map, then connects that map to the evidence you need to review agent-written code and debug production.</p>
-        <div class="hero-actions">
-          <a class="button primary" href="/getting-started/">Install Scryr</a>
-          <a class="button secondary" href="https://scryr.app">Open scryr.app <span aria-hidden="true">↗</span></a>
-        </div>
-        <p class="install-line"><code>brew install scryr-app/tap/scryr</code></p>
-      </div>
-
-      <figure class="hero-product">
-        <img src="/assets/scryr-product-map.png" alt="Scryr showing the Northwind Commerce architecture as connected service blocks" width="1440" height="900" />
-        <figcaption><span>Northwind Commerce</span><span>Actual Scryr product</span></figcaption>
-      </figure>
-    </div>
-
-    <div class="proof-strip" aria-label="Scryr product facts">
-      <div><strong>MIT</strong><span>Use, inspect, and modify it</span></div>
-      <div><strong>Local-first</strong><span>No hosted account required</span></div>
-      <div><strong>Python-native</strong><span>Readable by humans and agents</span></div>
-      <div><strong>Operational</strong><span>Architecture connected to metrics</span></div>
-    </div>
-  </section>
-
-  <section class="product-evidence" aria-labelledby="source-view-title">
-    <figure>
-      <img src="/assets/scryr-product-editor.png" alt="Scryr with the editable index.scry source open beside the Northwind architecture map" width="1440" height="900" loading="lazy" />
-    </figure>
-    <div>
-      <p class="section-label">Source and system, side by side</p>
-      <h2 id="source-view-title">Inspect the map. Then inspect the file that made it.</h2>
-      <p>Open the real <code>index.scry</code> behind a diagram without leaving the product. The same architecture a human explores stays readable, editable, and reviewable as typed Python.</p>
-    </div>
-  </section>
-
-  <section class="problem" aria-labelledby="problem-title">
-    <p class="section-label">The review gap</p>
-    <h2 id="problem-title">AI can produce more code than a human can hold in their head.</h2>
-    <p>A diff tells you what text changed. Scryr helps you investigate what the changed software <em>is</em>: where it runs, what it calls, who owns it, how it is delivered, and whether production agrees with the model.</p>
-    <div class="questions" aria-label="Questions Scryr helps answer">
-      <span>What depends on this?</span><span>Where is it deployed?</span><span>Who owns it?</span><span>What is failing now?</span>
-    </div>
-  </section>
-
-  <section class="outcomes" aria-label="Why teams install Scryr">
-    {outcomes.map((outcome) => (
-      <article class="outcome">
-        <div class="outcome-index"><span>{outcome.number}</span><p>{outcome.eyebrow}</p></div>
-        <div class="outcome-copy"><h2>{outcome.title}</h2><p>{outcome.body}</p><a href={outcome.link}>{outcome.label} <span aria-hidden="true">→</span></a></div>
-      </article>
-    ))}
-  </section>
-
-  <section class="scry-language" aria-labelledby="scry-title">
-    <div class="language-copy">
-      <p class="section-label">A source file, not a drawing</p>
-      <h2 id="scry-title">Architecture becomes something you can generate, diff, check, and run.</h2>
-      <p>Keep <code>index.scry</code> with the code it describes. Let an AI agent draft it from repository evidence, then review the result before execution. Scryr formats, lints, type-checks, executes, and validates the model.</p>
-      <ul>
-        <li>Use normal Python composition and imports.</li>
-        <li>Declare components, relationships, metrics, and diagrams.</li>
-        <li>Model reusable tooling and infrastructure workflows.</li>
-      </ul>
-    </div>
-    <div class="code-panel" aria-label="Example index.scry file">
-      <header><span>index.scry</span><span>Python</span></header>
-      <pre><code><span class="violet">from</span> scryr <span class="violet">import</span> Diagram, Info, Manifest
-<span class="violet">from</span> scryr.types <span class="violet">import</span> DeploymentTarget
-
+cache = Manifest(name="northwind_redis")
 api = Manifest(
-    manifest_id=<span class="gold">"services/api"</span>,
-    name=<span class="gold">"Public API"</span>,
-    connections=[Manifest(name=<span class="gold">"Postgres"</span>)],
+    manifest_id="services/api",
+    name="nwapi",
+    connections=[cache],
     info=Info(
-        owner_team=<span class="gold">"Platform"</span>,
-        deployment=DeploymentTarget.k8s_cluster,
+        language=ProgrammingLanguage.python,
+        owner_team="Platform",
     ),
 )
 
-system = Diagram(
-    name=<span class="gold">"Production"</span>, manifests=[api]
-)</code></pre>
+commerce = Diagram(
+    name="Northwind Commerce",
+    manifests=[api, cache],
+)`;
+const metricsCode = `metrics=Metrics(
+    provider=PrometheusSource(
+        credentials=CredentialRef(
+            name="production-prometheus"
+        ),
+        environment="production",
+        queries={
+            "requestRate":
+                "sum(rate(http_requests_total[5m]))",
+        },
+        units={"requestRate": "req/s"},
+    ),
+)`;
+const forgeCode = `from scryr import Forge
+
+local = Forge(
+    name="Developer environment",
+    tools={
+        "python": "3.14", "node": "24",
+        "postgres": "17",
+    },
+    tasks={
+        "install": "uv sync && npm install",
+        "dev": "npm run dev",
+        "test": "pytest",
+        "debug": "python -m pdb app.py",
+    },
+)`;
+---
+<noscript><style>body:has(.scryr-story) header.header { visibility: visible; transform: none; }</style></noscript>
+<div class="scryr-story not-content" data-motion="on" data-toolbar="hidden">
+  <div class="enchanted-sky" aria-hidden="true">{particles.map(p => <span style={`--x:${p.x}%;--y:${p.y}%;--size:${p.size}px;--delay:${p.delay}s;--duration:${p.duration}s`}></span>)}</div>
+  <MapPortal />
+  <nav class="chapter-nav" aria-label="The Scryr story">{chapters.map((chapter, i) => <a href={`#${chapter.id}`} aria-label={`${i + 1}. ${chapter.name}`}><span>0{i + 1}</span><i>{chapter.name}</i></a>)}</nav>
+
+  <section class="story-chapter old-world" id="old-magic" aria-labelledby="old-title">
+    <div class="chapter-sticky">
+      <div class="chapter-heading" data-reveal><p class="eyebrow">I · The old world</p><h2 id="old-title">We’re conjuring software.<br />Why do our diagrams<br /><em>still look like 1995?</em></h2><p>Your agent just changed twelve services.<br />Here’s a rectangle. And another rectangle.</p></div>
+      <div class="retro-desktop" data-reveal>
+        <div class="retro-window">
+          <div class="retro-title"><span>▧ architecture_final_FINAL_v7.mmd</span><span aria-hidden="true">_ □ ×</span></div>
+          <div class="retro-menu">File&nbsp;&nbsp; Edit&nbsp;&nbsp; View&nbsp;&nbsp; Help</div>
+          <div class="retro-content">
+            <pre><code>graph TD
+  Web --> API
+  API --> DB
+  API --> Cache
+  API --> Queue
+  Queue --> Worker
+  Worker --> DB
+  Worker --> API
+  Web --> Auth
+  Auth --> API</code></pre>
+            <svg viewBox="0 0 530 350" role="img" aria-labelledby="retro-diagram-title"><title id="retro-diagram-title">A deliberately retro Mermaid-style flowchart: Web, API, database, cache, queue, worker and authentication, tangled together.</title><defs><marker id="retro-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8Z" fill="#555"/></marker></defs><g class="retro-lines"><path d="M245 55 V104 M245 144 V255 H90 V290 M245 144 V180 H425 V215 M245 144 V215 M245 255 V280 H400 V290 M400 330 H90 V330 M400 290 V85 H245 V104 M245 35 H440 V105 M440 145 H300 V124 H290" /></g><g class="retro-boxes"><rect x="200" y="15" width="90" height="40"/><rect x="200" y="104" width="90" height="40"/><rect x="45" y="290" width="90" height="40"/><rect x="380" y="215" width="90" height="40"/><rect x="200" y="215" width="90" height="40"/><rect x="355" y="290" width="90" height="40"/><rect x="395" y="105" width="90" height="40"/></g><g class="retro-labels"><text x="245" y="40">Web</text><text x="245" y="130">API</text><text x="90" y="316">DB</text><text x="425" y="241">Cache</text><text x="245" y="241">Queue</text><text x="400" y="316">Worker</text><text x="440" y="131">Auth</text></g></svg>
+          </div>
+          <div class="retro-status">Ready. &nbsp; Context: not found. <span>INS</span></div>
+        </div>
+        <p class="retro-note">A loving roast of the static diagram. Yes, even this one is code.</p>
+      </div>
+      <p class="chapter-turn" data-reveal>A diagram can show the shape.<br /><strong>You need to investigate the system.</strong></p>
     </div>
   </section>
 
-  <section class="open-source" aria-labelledby="oss-title">
-    <div><p class="section-label">Own the map of your system</p><h2 id="oss-title">Open source is a product feature.</h2></div>
-    <div class="oss-copy"><p>Your architecture can expose sensitive details about how software is built and operated. Scryr is MIT-licensed, so your team can inspect the implementation, run the complete workflow locally, keep manifests in its own repositories, and adapt the software instead of sending its system model into an opaque tool.</p><a href="https://github.com/scryr-app/scryr-dev">View the source on GitHub <span aria-hidden="true">↗</span></a></div>
+  <section class="story-chapter spell-chapter" id="the-spell" aria-labelledby="spell-title">
+    <div class="chapter-sticky">
+      <div class="chapter-heading" data-reveal><p class="eyebrow">II · Write the spell</p><h2 id="spell-title">Your LLM already<br />speaks <em>Python.</em></h2><p>Give it a repository. Ask for <code>index.scry</code>.<br />Turn its understanding into something you can examine.</p></div>
+      <div class="spell-workbench">
+        <div class="grimoire" data-reveal><div class="panel-label"><span>✧ index.scry</span><span>Typed Python</span></div><pre><code>{scryCode}</code></pre><div class="spell-checks"><span>Imports</span><span>Types</span><span>Connections</span><span>Ownership</span></div></div>
+        <div class="conjure-arrow" aria-hidden="true"><span>✧</span><i></i></div>
+        <figure class="product-vision" data-reveal><img src="/assets/scryr-product-editor.png" alt="Actual Scryr product with index.scry open beside the Northwind Commerce architecture map" width="1440" height="900" loading="lazy" /><figcaption>The source and its world, side by side. <span>Actual Scryr product</span></figcaption></figure>
+      </div>
+      <div class="spell-reasons"><article data-reveal><span>01</span><h3>Familiar to the agent.</h3><p>Normal Python imports and composition. Typed declarations an LLM can generate from repository evidence.</p></article><article data-reveal><span>02</span><h3>Reviewable by you.</h3><p>Diff the file. Check the types. Inspect the connections, ownership, source links, and runtime boundaries.</p></article><article data-reveal><span>03</span><h3>Checked before the map.</h3><p><code>scryr check</code> checks formatting, lint, types, execution, and diagram rules. Review generated Python before running it.</p></article></div>
+      <a class="chapter-link" href="/llm-prompt/">Give your agent the spell <span aria-hidden="true">↗</span></a>
+    </div>
   </section>
 
-  <section class="final-cta" aria-labelledby="cta-title">
-    <p class="section-label">Start with one repository</p>
-    <h2 id="cta-title">Give the next code review a map.</h2>
-    <p>Install Scryr, ask your coding agent to generate <code>index.scry</code>, and inspect the result locally.</p>
-    <div class="hero-actions"><a class="button primary" href="/getting-started/">Get started locally</a><a class="button secondary" href="https://scryr.app">Try the hosted app <span aria-hidden="true">↗</span></a></div>
+  <section class="story-chapter signal-chapter" id="the-signal" aria-labelledby="signal-title">
+    <div class="chapter-sticky split-stage">
+      <div class="chapter-heading" data-reveal><p class="eyebrow">III · Listen beyond the map</p><h2 id="signal-title">The system<br />has a <em>pulse.</em></h2><p>The model tells you what should be connected. Production tells you what is happening.</p><p>Declare a Prometheus-compatible query beside its component. Pull performance evidence through Scryr’s server, with credentials kept on the server.</p><a class="chapter-link" href="/integrations/#prometheus-compatible-metrics">Connect your source of truth <span aria-hidden="true">↗</span></a></div>
+      <div class="signal-visual" data-reveal><div class="scrying-orb" aria-hidden="true"><div class="orb-ring"></div><svg viewBox="0 0 500 220" fill="none"><path class="pulse-line" d="M0 115 H75 L95 100 L115 130 L145 112 H195 L215 45 L240 180 L265 90 L290 115 H345 L365 95 L390 126 L410 115 H500" /></svg><span>Production → Scryr → Your map</span></div><div class="grimoire metrics-code"><div class="panel-label"><span>✧ Attach to a Manifest</span><span>PrometheusSource</span></div><pre><code>{metricsCode}</code></pre></div><p class="visual-note">Named queries. Bounded windows. Provider-backed snapshots.</p></div>
+    </div>
   </section>
-</main>
 
-<style>
-  :global(.content-panel), :global(.main-frame) { padding: 0 !important; }
-  :global(.sl-container) { max-width: none !important; }
-  :global(header.header) { background: rgba(7, 8, 15, .82); backdrop-filter: blur(18px); }
-  .product-page { width: 100vw; margin-left: calc(50% - 50vw); margin-top: calc(var(--sl-nav-height) * -1); color: #f6f4fb; background-color: #080911; background-image: linear-gradient(rgba(255,255,255,.012) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.012) 1px, transparent 1px); background-size: 52px 52px; overflow: hidden; animation: grid-drift 24s linear infinite; }
-  .hero { position: relative; padding: clamp(8rem, 13vw, 12rem) clamp(1.25rem, 7vw, 7rem) 0; background: radial-gradient(circle at 74% 24%, rgba(109, 76, 255, .18), transparent 32rem), linear-gradient(180deg, rgba(8,9,17,.78), #0b0c14); isolation: isolate; }
-  .hero::before { content: ''; position: absolute; width: 34rem; aspect-ratio: 1; top: -12rem; left: -12rem; z-index: -1; border-radius: 50%; background: radial-gradient(circle, rgba(91, 220, 255, .12), rgba(126, 72, 255, .08) 45%, transparent 70%); filter: blur(1rem); animation: aura-drift 11s ease-in-out infinite alternate; }
-  .hero-grid { width: min(100%, 84rem); margin: auto; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(30rem, .95fr); align-items: center; gap: clamp(3rem, 8vw, 8rem); }
-  .brand-tagline { margin: 0 0 .65rem; color: #e8cc8d; font-family: 'Cinzel Decorative', Georgia, serif; font-size: clamp(.86rem, 1.4vw, 1.05rem); font-weight: 700; letter-spacing: .09em; text-transform: uppercase; text-shadow: 0 0 1.25rem rgba(232, 204, 141, .34); animation: rise-in .8s .16s ease-out both; }
-  .kicker, .section-label { margin: 0 0 1.25rem; color: #a9a2b9; font-size: .76rem; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; }
-  .kicker span { color: #7fe0ba; }
-  .hero-mark { position: relative; width: 4.5rem; height: 4.5rem; margin-bottom: 1.5rem; display: grid; place-items: center; border: 1px solid rgba(165, 132, 255, .34); border-radius: 1.15rem; background: radial-gradient(circle, rgba(160, 104, 255, .38), rgba(50, 28, 86, .68) 58%, rgba(13, 14, 24, .94)); box-shadow: 0 0 2.5rem rgba(139, 88, 255, .42), inset 0 0 1.5rem rgba(189, 149, 255, .2); animation: mark-float 4.2s ease-in-out infinite, mark-glow 2.8s ease-in-out infinite alternate; }
-  .hero-mark::before { content: ''; position: absolute; inset: -.72rem; z-index: -1; border-radius: 1.65rem; background: conic-gradient(from 0deg, transparent, rgba(105,227,255,.55), transparent 35%, rgba(168,92,255,.62), transparent 72%); filter: blur(.35rem); animation: halo-spin 7s linear infinite; }
-  .hero-mark::after { content: ''; position: absolute; inset: -1.4rem; z-index: -2; border-radius: 50%; background: radial-gradient(circle, rgba(168,92,255,.3), transparent 68%); animation: halo-breathe 2.8s ease-in-out infinite; }
-  .hero-mark img { width: 3.35rem; height: 3.35rem; filter: drop-shadow(0 0 .8rem rgba(205, 175, 255, .82)); animation: icon-pulse 2.8s ease-in-out infinite; }
-  h1, h2 { font-family: 'Cinzel Decorative', Georgia, serif; letter-spacing: -.04em; text-wrap: balance; }
-  h1 { max-width: 11ch; margin: 0; font-size: clamp(3.7rem, 7.6vw, 7.2rem); line-height: .93; }
-  .hero-copy .kicker { animation: rise-in .8s .24s ease-out both; }
-  .hero h1 { animation: rise-in .9s .32s cubic-bezier(.2,.75,.2,1) both; }
-  .hero-lede { max-width: 43rem; margin: 1.75rem 0 0; color: #c2bdcc; font-size: clamp(1.05rem, 1.6vw, 1.28rem); line-height: 1.65; animation: rise-in .8s .46s ease-out both; }
-  .hero-actions { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 2.2rem; animation: rise-in .8s .58s ease-out both; }
-  .button { display: inline-flex; align-items: center; justify-content: center; min-height: 3.1rem; padding: 0 1.2rem; border: 1px solid #373443; color: #f8f6fb !important; font-size: .84rem; font-weight: 700; text-decoration: none; transition: border-color .2s, background .2s, transform .2s; }
-  .button:hover { transform: translateY(-3px); border-color: #8f86ff; box-shadow: 0 .8rem 2.4rem rgba(113,102,242,.22); }
-  .button.primary { border-color: #786ef5; background: #7166f2; box-shadow: 0 1rem 3rem rgba(113, 102, 242, .22); }
-  .button.secondary { background: rgba(255, 255, 255, .025); }
-  .install-line { margin: 1rem 0 0; color: #827d8d; font-size: .76rem; animation: rise-in .8s .68s ease-out both; }
-  .install-line code { padding: .3rem .45rem; border: 1px solid #272531; background: #0d0e17; color: #a9a4b2; }
-  .hero-product { margin: 0; border: 1px solid #353143; background: #0b0c15; box-shadow: 0 2.5rem 7rem rgba(0, 0, 0, .5), 0 0 5rem rgba(111, 79, 221, .12); transform: perspective(1100px) rotateY(-3deg); overflow: hidden; animation: product-enter 1s .35s cubic-bezier(.2,.75,.2,1) both, product-float 7s 1.35s ease-in-out infinite; }
-  .hero-product img { display: block; width: 100%; height: auto; transition: transform .8s cubic-bezier(.2,.75,.2,1), filter .8s; }
-  .hero-product:hover img { transform: scale(1.035); filter: saturate(1.12) brightness(1.04); }
-  .hero-product figcaption { display: flex; justify-content: space-between; padding: .75rem 1rem; border-top: 1px solid #302d3a; color: #8f899d; font-size: .68rem; }
-  .proof-strip { width: min(100%, 84rem); margin: clamp(5rem, 9vw, 8rem) auto 0; display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid #292731; border-bottom: 1px solid #292731; }
-  .proof-strip div { min-height: 7.5rem; display: flex; flex-direction: column; justify-content: center; padding: 1.25rem; border-right: 1px solid #292731; transition: background .3s, transform .3s; }
-  .proof-strip div:hover { background: rgba(113,102,242,.07); transform: translateY(-.25rem); }
-  .proof-strip div:last-child { border-right: 0; }
-  .proof-strip strong { font-size: .88rem; }
-  .proof-strip span { margin-top: .4rem; color: #837e8c; font-size: .68rem; line-height: 1.5; }
-  .product-evidence { width: min(100% - 2.5rem, 84rem); margin: auto; padding: clamp(6rem, 10vw, 10rem) 0; display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(18rem, .65fr); align-items: center; gap: clamp(2rem, 6vw, 6rem); }
-  .product-evidence figure { margin: 0; border: 1px solid #353143; background: #10111b; box-shadow: 0 2rem 6rem rgba(0, 0, 0, .38); overflow: hidden; transition: transform .65s cubic-bezier(.2,.75,.2,1), box-shadow .65s; }
-  .product-evidence figure:hover { transform: translateY(-.6rem) rotateX(1deg); box-shadow: 0 3rem 7rem rgba(0,0,0,.5), 0 0 4rem rgba(105,227,255,.09); }
-  .product-evidence img { display: block; width: 100%; height: auto; transition: transform .8s cubic-bezier(.2,.75,.2,1); }
-  .product-evidence figure:hover img { transform: scale(1.02); }
-  .product-evidence h2 { margin: 0; font-size: clamp(2.2rem, 4vw, 4rem); line-height: 1.04; }
-  .product-evidence div > p:not(.section-label) { color: #aaa5b3; line-height: 1.75; }
-  .problem { width: min(100% - 2.5rem, 72rem); margin: auto; padding: clamp(7rem, 12vw, 12rem) 0; text-align: center; }
-  .problem h2 { max-width: 18ch; margin: auto; font-size: clamp(2.8rem, 6vw, 5.8rem); line-height: 1; }
-  .problem > p:not(.section-label) { max-width: 48rem; margin: 1.7rem auto 0; color: #a9a4b2; font-size: 1.05rem; line-height: 1.8; }
-  .problem em { color: #f4d38a; font-style: normal; }
-  .questions { display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem; margin-top: 2.3rem; }
-  .questions span { padding: .6rem .8rem; border: 1px solid #322f3b; color: #a8a2b3; background: #0d0e16; font-size: .7rem; animation: chip-float 4s ease-in-out infinite; }
-  .questions span:nth-child(2) { animation-delay: -.9s; } .questions span:nth-child(3) { animation-delay: -1.8s; } .questions span:nth-child(4) { animation-delay: -2.7s; }
-  .outcomes { border-top: 1px solid #292731; }
-  .outcome { width: min(100% - 2.5rem, 84rem); margin: auto; padding: clamp(4.5rem, 8vw, 8rem) 0; display: grid; grid-template-columns: minmax(13rem, .36fr) 1fr; gap: 3rem; border-bottom: 1px solid #292731; }
-  .outcome-index span { color: #7166f2; font-size: .72rem; font-weight: 700; }
-  .outcome-index p { margin: .65rem 0 0; color: #a7a1b1; font-size: .73rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
-  .outcome-copy h2 { max-width: 18ch; margin: 0; font-size: clamp(2.25rem, 4.5vw, 4.5rem); line-height: 1.04; }
-  .outcome-copy p { max-width: 49rem; margin: 1.5rem 0 0; color: #9f9aa9; line-height: 1.8; }
-  .outcome-copy a, .oss-copy a { display: inline-block; margin-top: 1.6rem; color: #bcb6ff !important; font-size: .78rem; font-weight: 700; text-decoration: none; transition: color .25s, transform .25s; }
-  .outcome-copy a:hover, .oss-copy a:hover { color: #fff !important; transform: translateX(.35rem); }
-  .scry-language { padding: clamp(6rem, 11vw, 11rem) max(1.25rem, calc((100vw - 84rem) / 2)); display: grid; grid-template-columns: .8fr 1.2fr; align-items: center; gap: clamp(3rem, 8vw, 8rem); background: #0c0d16; }
-  .language-copy h2, .open-source h2, .final-cta h2 { margin: 0; font-size: clamp(2.5rem, 5vw, 5rem); line-height: 1.02; }
-  .language-copy > p:not(.section-label), .language-copy li { color: #aaa5b3; line-height: 1.75; }
-  .language-copy ul { padding-left: 1.2rem; }
-  .code-panel { position: relative; min-width: 0; border: 1px solid #383443; background: #090a11; box-shadow: 0 2rem 6rem rgba(0, 0, 0, .35); overflow: hidden; animation: code-glow 4.5s ease-in-out infinite alternate; }
-  .code-panel::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(105deg, transparent 35%, rgba(181,168,255,.07) 50%, transparent 65%); transform: translateX(-130%); animation: code-scan 7s ease-in-out infinite; }
-  .code-panel header { display: flex; justify-content: space-between; padding: .85rem 1rem; border-bottom: 1px solid #292631; color: #8c8696; font-size: .68rem; }
-  .code-panel pre { margin: 0; padding: clamp(1rem, 3vw, 2rem); overflow-x: auto; background: transparent; color: #d7d2df; font-size: clamp(.68rem, 1.1vw, .84rem); line-height: 1.75; }
-  .violet { color: #b5a8ff; } .gold { color: #e8cc8d; }
-  .open-source { padding: clamp(6rem, 11vw, 11rem) max(1.25rem, calc((100vw - 84rem) / 2)); display: grid; grid-template-columns: 1fr 1fr; gap: clamp(3rem, 9vw, 9rem); background: linear-gradient(120deg, #151326, #0b1018, #18122a); background-size: 220% 220%; animation: gradient-shift 12s ease infinite; }
-  .oss-copy p { margin: 0; color: #b5afbd; font-size: 1.03rem; line-height: 1.85; }
-  .final-cta { padding: clamp(7rem, 13vw, 13rem) 1.25rem; display: grid; justify-items: center; text-align: center; background: radial-gradient(circle at 50% 45%, rgba(113, 102, 242, .2), transparent 30rem); animation: cta-breathe 6s ease-in-out infinite alternate; }
-  .final-cta p:not(.section-label) { max-width: 42rem; margin: 1.5rem 0 0; color: #a6a0af; }
-  .final-cta .hero-actions { justify-content: center; }
-  @media (max-width: 62rem) { .hero-grid, .product-evidence, .scry-language, .open-source { grid-template-columns: 1fr; } .hero-product { max-width: 48rem; transform: none; } .product-evidence div { max-width: 42rem; } .proof-strip { grid-template-columns: 1fr 1fr; } .proof-strip div:nth-child(2) { border-right: 0; } .proof-strip div:nth-child(-n+2) { border-bottom: 1px solid #292731; } }
-  @media (max-width: 42rem) { .hero { padding-top: 7.5rem; } h1 { font-size: 3.65rem; } .outcome { grid-template-columns: 1fr; gap: 1.5rem; } .proof-strip { grid-template-columns: 1fr; } .proof-strip div { min-height: 6rem; border-right: 0; border-bottom: 1px solid #292731; } .proof-strip div:last-child { border-bottom: 0; } .summary-head span:last-child { display: none; } }
-  @supports (animation-timeline: view()) {
-    .product-evidence, .problem, .outcome, .scry-language, .open-source, .final-cta { animation: section-reveal linear both; animation-timeline: view(); animation-range: entry 8% cover 28%; }
-    .outcome:nth-child(even) { animation-name: section-reveal-alt; }
-  }
-  @keyframes rise-in { from { opacity: 0; transform: translateY(1.4rem); } to { opacity: 1; transform: none; } }
-  @keyframes product-enter { from { opacity: 0; transform: perspective(1100px) rotateY(-8deg) translateX(3rem); } to { opacity: 1; transform: perspective(1100px) rotateY(-3deg); } }
-  @keyframes product-float { 0%,100% { transform: perspective(1100px) rotateY(-3deg) translateY(0); } 50% { transform: perspective(1100px) rotateY(-1deg) translateY(-.7rem); } }
-  @keyframes mark-float { 0%,100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-.45rem) rotate(1deg); } }
-  @keyframes mark-glow { from { box-shadow: 0 0 1.8rem rgba(139,88,255,.32), inset 0 0 1rem rgba(189,149,255,.15); } to { box-shadow: 0 0 3.8rem rgba(139,88,255,.68), 0 0 1.2rem rgba(105,227,255,.22), inset 0 0 1.8rem rgba(189,149,255,.28); } }
-  @keyframes halo-spin { to { transform: rotate(360deg); } }
-  @keyframes halo-breathe { 50% { transform: scale(1.18); opacity: .55; } }
-  @keyframes icon-pulse { 50% { transform: scale(1.07); filter: drop-shadow(0 0 1.25rem rgba(205,175,255,1)); } }
-  @keyframes aura-drift { to { transform: translate(8rem, 5rem) scale(1.18); } }
-  @keyframes grid-drift { to { background-position: 52px 52px; } }
-  @keyframes chip-float { 50% { transform: translateY(-.22rem); border-color: #4d4661; } }
-  @keyframes code-glow { to { border-color: #665b89; box-shadow: 0 2rem 6rem rgba(0,0,0,.35), 0 0 3rem rgba(168,92,255,.12); } }
-  @keyframes code-scan { 0%,35% { transform: translateX(-130%); } 65%,100% { transform: translateX(130%); } }
-  @keyframes gradient-shift { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
-  @keyframes cta-breathe { to { background-size: 118% 118%; } }
-  @keyframes section-reveal { from { opacity: .25; transform: translateY(3rem); } to { opacity: 1; transform: none; } }
-  @keyframes section-reveal-alt { from { opacity: .25; transform: translateX(-2rem); } to { opacity: 1; transform: none; } }
-  @media (prefers-reduced-motion: reduce) { .product-page, .hero::before, .hero-copy *, .hero-mark, .hero-mark::before, .hero-mark::after, .hero-mark img, .hero-product, .questions span, .code-panel, .code-panel::after, .open-source, .final-cta, .product-evidence, .problem, .outcome, .scry-language { animation: none !important; } .button, .hero-product img, .product-evidence figure, .product-evidence img { transition: none; } .hero-product { transform: none; } }
-</style>
+  <section class="story-chapter forge-chapter" id="the-forge" aria-labelledby="forge-title">
+    <div class="chapter-sticky">
+      <div class="chapter-heading" data-reveal><p class="eyebrow">IV · Enter the forge</p><h2 id="forge-title">Don’t stop at<br />summoning a <em>map.</em></h2><p>Describe the tools that bring the system to life.<br />One Python declaration. A developer environment you can export.</p></div>
+      <div class="forge-workbench"><div class="grimoire" data-reveal><div class="panel-label"><span>⚒ Developer environment</span><span>Forge</span></div><pre><code>{forgeCode}</code></pre></div><div class="forge-outputs"><article data-reveal><span>01 / TOOLCHAIN</span><h3>mise.toml</h3><p>Language versions, environment, and tasks. Declare dependency installation and debugger commands alongside your tools.</p><code>scryr export mise</code></article><article data-reveal><span>02 / WORKSPACE</span><h3>devcontainer.json</h3><p>Generate a container workspace with tool-aware editor extensions and environment setup.</p><code>scryr export devcontainer</code></article><article data-reveal><span>03 / SERVICES</span><h3>compose.yaml</h3><p>Bring supported databases and caches into your development environment from the same Forge.</p><code>scryr export compose</code></article></div></div>
+      <div class="terminal-spell" data-reveal><div class="panel-label"><span>✧ Your terminal is a wand.</span><span>scryr cli</span></div><pre><code><span>$</span> scryr check
+<span>$</span> scryr export devcontainer --forge "Developer environment"
+<span>$</span> scryr serve --watch</code></pre><p>Check the spell. Export your environment. Watch the map change with your source.</p></div>
+      <a class="chapter-link" href="/cli/">Learn the commands <span aria-hidden="true">↗</span></a>
+    </div>
+  </section>
+
+  <section class="story-chapter revelation-chapter" id="the-revelation" aria-labelledby="revelation-title">
+    <div class="chapter-sticky">
+      <div class="chapter-heading" data-reveal><p class="eyebrow">V · See what the system reveals</p><h2 id="revelation-title">A map you can read.<br />Evidence you can <em>follow.</em></h2><p>Open a component’s metrics and performance cards.<br />Put latency, traffic, errors, and resource usage back in context.</p></div>
+      <div class="revelation-map" data-reveal><figure><img src="/assets/scryr-product-map.png" alt="Actual Northwind Commerce map in Scryr, with connected API, cache, web and Stripe blocks" width="1440" height="900" loading="lazy" /><figcaption>Northwind Commerce · Actual Scryr product</figcaption></figure><div class="metric-readings" aria-label="Illustrative metric values"><article><span>Request rate</span><strong>248 <small>req/s</small></strong><svg viewBox="0 0 240 48" aria-hidden="true"><path d="M0 37 L20 31 L40 35 L60 20 L80 25 L100 17 L120 23 L140 11 L160 18 L180 8 L200 13 L220 6 L240 11"/></svg></article><article><span>P95 response time</span><strong>124 <small>ms</small></strong><svg viewBox="0 0 240 48" aria-hidden="true"><path d="M0 11 L20 13 L40 8 L60 19 L80 15 L100 22 L120 19 L140 28 L160 22 L180 31 L200 27 L220 34 L240 30"/></svg></article><article><span>Error rate</span><strong>0.2 <small>%</small></strong><svg viewBox="0 0 240 48" aria-hidden="true"><path d="M0 35 H25 L35 28 L45 35 H80 L90 32 L100 35 H140 L150 20 L160 35 H190 L200 32 L210 35 H240"/></svg></article><p>Illustrative readings · Scryr loads provider snapshots when you open a diagram.</p></div></div>
+      <div class="revelation-copy"><p data-reveal>Your AI can propose the architecture.<br />Your tools can supply the evidence.<br /><strong>You get to see how it all connects.</strong></p><div data-reveal><code>scryr query requestRate --manifest api</code><p>Take the same named query back to your terminal.</p><a class="chapter-link" href="/integrations/">Explore the integrations <span aria-hidden="true">↗</span></a></div></div>
+    </div>
+  </section>
+
+  <section class="story-ending" aria-labelledby="ending-title"><div class="ending-rings" aria-hidden="true"><i></i><i></i><i></i></div><div data-reveal><p class="eyebrow">The next chapter is yours</p><img src="/favicon.svg" alt="" width="80" height="80" loading="lazy"/><h2 id="ending-title">Build with AI.<br /><em>See with Scryr.</em></h2><p>One repository. One <code>index.scry</code>.<br />A whole world worth understanding.</p><div class="story-actions"><a class="spell-button" href="/getting-started/">Begin your journey <span aria-hidden="true">↗</span></a><a class="quiet-link" href="https://scryr.app">Open Scryr <span aria-hidden="true">↗</span></a></div><p class="ending-install"><code>brew install scryr-app/tap/scryr</code></p><p class="ending-license">Open source · MIT licensed · Local-first</p><a class="chapter-link" href="https://github.com/scryr-app/scryr-dev">Explore the source ↗</a></div></section>
+</div>
+
+<script>
+  import { initStory } from '../scripts/story';
+  initStory();
+</script>

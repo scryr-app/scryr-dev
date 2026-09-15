@@ -1,0 +1,47 @@
+---
+import Search from '@astrojs/starlight/components/Search.astro';
+import SocialIcons from '@astrojs/starlight/components/SocialIcons.astro';
+import ScryrLogo from './ScryrLogo.astro';
+const { siteTitleHref } = Astro.locals.starlightRoute;
+const links = [
+  { label: 'Getting Started', href: '/getting-started/' },
+  { label: 'Docs', href: '/manifests/' },
+  { label: 'Login', href: 'https://scryr.app' },
+];
+---
+<div class="scryr-toolbar">
+  <a class="toolbar-brand" href={siteTitleHref} aria-label="Scryr home"><span class="toolbar-mark"><ScryrLogo /></span><span class="toolbar-wordmark">Scryr</span></a>
+  <div class="toolbar-search"><Search /></div>
+  <div class="toolbar-desktop">
+    <nav aria-label="Main navigation">{links.map(link => <a href={link.href}>{link.label}</a>)}</nav>
+    <SocialIcons />
+  </div>
+  <details class="toolbar-menu">
+    <summary>Links <span aria-hidden="true">⌄</span></summary>
+    <nav aria-label="Main navigation">{links.map(link => <a href={link.href}>{link.label}</a>)}<a href="https://github.com/scryr-app/scryr-dev">GitHub ↗</a></nav>
+  </details>
+</div>
+
+<style>
+  .scryr-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; height: 100%; }
+  .toolbar-brand { display: inline-flex; align-items: center; gap: 1rem; color: #f5edff; text-decoration: none; padding-inline: .4rem; }
+  .toolbar-mark { --mark-size: 30px; display: block; }
+  .toolbar-wordmark { font-family: 'Cinzel Decorative', Georgia, serif; font-weight: 400; font-size: 1.6rem; letter-spacing: -.065em; line-height: 1.15; text-shadow: var(--scryr-title-shadow); }
+  .toolbar-search { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: clamp(14rem, 26vw, 24rem); }
+  .toolbar-search :global(site-search) { display: block; width: 100%; }
+  .toolbar-search :global(button[data-open-modal]) { width: 100%; max-width: none; }
+  .toolbar-desktop, .toolbar-desktop nav { display: flex; align-items: center; gap: 1.4rem; }
+  nav a { color: #ddcde9; font-size: .73rem; text-decoration: none; white-space: nowrap; }
+  nav a:hover { color: #fff; }
+  a:focus-visible, summary:focus-visible { outline: 2px solid #e7c77c; outline-offset: 5px; }
+  .toolbar-menu { display: none; position: relative; }
+  summary { list-style: none; color: #ddcde9; cursor: pointer; font-size: .75rem; padding: .5rem; }
+  summary::-webkit-details-marker { display: none; }
+  summary span { margin-left: .4rem; }
+  .toolbar-menu nav { position: absolute; right: 0; top: calc(100% + .75rem); display: grid; gap: .25rem; min-width: 12rem; padding: .65rem; border: 1px solid #b788df55; border-radius: .4rem; background: #10091c; box-shadow: 0 1rem 3rem #0008; }
+  .toolbar-menu nav a { padding: .65rem; border-radius: .2rem; }
+  .toolbar-menu nav a:hover { background: #b789e51a; }
+  @media (max-width: 1099px) { .toolbar-desktop { display: none; } .toolbar-menu { display: block; } }
+  @media (max-width: 799px) { .toolbar-search { width: auto; } }
+  @media (max-width: 420px) { .toolbar-wordmark { display: none; } }
+</style>

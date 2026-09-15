@@ -9,6 +9,11 @@ export default defineConfig({
       description: 'Open-source architecture tooling for humans investigating AI-generated software.',
       favicon: '/favicon.svg',
       logo: { src: './public/favicon.svg', alt: 'Scryr' },
+      components: {
+        Header: './src/components/Header.astro',
+        ThemeProvider: './src/components/DarkTheme.astro',
+        ThemeSelect: './src/components/NoThemeSelect.astro',
+      },
       customCss: ['./src/styles/custom.css'],
       social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/scryr-app/scryr-dev' }],
       editLink: { baseUrl: 'https://github.com/scryr-app/scryr-dev/edit/main/docs/' },

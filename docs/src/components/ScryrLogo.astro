@@ -1,0 +1,14 @@
+<span class="scryr-logo" aria-hidden="true">
+  <img src="/favicon.svg" alt="" width="96" height="96" />
+  <i></i><i></i>
+</span>
+
+<style>
+  .scryr-logo { position: relative; display: grid; place-items: center; width: var(--mark-size, 106px); height: var(--mark-size, 106px); }
+  img { display: block; width: 90.566%; height: 90.566%; filter: drop-shadow(0 0 calc(var(--mark-size, 106px) * .236) #b277ee80); animation: logo-float 5s ease-in-out infinite; }
+  i { position: absolute; inset: -9.434%; border: 1px solid #caa0f04a; border-radius: 50%; box-shadow: 0 0 calc(var(--mark-size, 106px) * .377) #9955ce22; }
+  i:last-child { inset: -20.755%; border-style: dashed; opacity: .5; animation: logo-orbit 65s linear infinite; }
+  @keyframes logo-float { 50% { transform: translateY(-7.292%); } }
+  @keyframes logo-orbit { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { img, i { animation: none; } }
+</style>
