@@ -80,12 +80,11 @@ body:has(.scryr-story) { overflow-x: clip; }
 .scryr-story .scryr-sigil { position: relative; width: 106px; height: 106px; margin: 2.5rem auto 1.6rem; display: grid; place-items: center; }
 .scryr-story .portal-copy h1 { font-size: clamp(4.5rem, 7.5vw, 8rem); font-family: 'Cinzel Decorative', Georgia, serif; font-weight: 400; letter-spacing: -.065em; line-height: 1.15; color: #f5edff; text-shadow: var(--scryr-title-shadow); }
 .scryr-story .portal-tagline { margin-top: .1rem; font-family: 'Source Code Pro', ui-monospace, monospace; color: var(--gold); font-size: clamp(.9rem, 1.5vw, 1.2rem); letter-spacing: .13em; }
-.scryr-story .portal-discovery { position: absolute; isolation: isolate; left: clamp(1.5rem, 5vw, 6rem); top: 50%; width: min(35vw, 30rem); opacity: 0; pointer-events: none; z-index: 2; }
+.scryr-story .portal-discovery { position: absolute; isolation: isolate; left: clamp(1.5rem, 5vw, 6rem); top: 50%; width: min(43vw, 40rem); opacity: 0; pointer-events: none; z-index: 2; }
 .scryr-story .portal-discovery::before { content: ''; position: absolute; inset: -5rem; z-index: -1; background: radial-gradient(ellipse, #080610f5 20%, #080610c9 45%, transparent 73%); }
 .scryr-story.is-ready[data-motion='on'] .portal-discovery { opacity: var(--discovery, 0); transform: translateY(calc(-50% + (1 - var(--discovery, 0)) * 35px)); }
-.scryr-story .portal-discovery h2 { font-size: clamp(2.1rem, 3.3vw, 3.5rem); text-shadow: 0 2px 22px #080610; }
-.scryr-story .portal-discovery .eyebrow { font-size: clamp(.9rem, 1.1vw, 1.1rem); letter-spacing: .14em; line-height: 1.6; }
-.scryr-story .portal-discovery p:last-child { color: #e0d5ec; margin-top: 1.2rem; font-size: clamp(1rem, 1.2vw, 1.2rem); line-height: 1.75; text-shadow: 0 2px 8px #080610; }
+.scryr-story .portal-discovery h2 { font-size: clamp(2.7rem, 4.4vw, 4.8rem); line-height: 1.12; letter-spacing: -.04em; text-shadow: 0 2px 22px #080610; }
+.scryr-story .portal-discovery .eyebrow { color: var(--ink); max-width: 26rem; margin-bottom: clamp(1.6rem, 3vw, 2.8rem); font-size: clamp(1.17rem, 1.8vw, 1.8rem); letter-spacing: .06em; line-height: 1.45; }
 .scryr-story .portal-caption { position: absolute; bottom: 2rem; left: 5%; right: 5%; display: flex; justify-content: flex-end; color: #b5a3ca; font-size: .58rem; letter-spacing: .08em; }
 .scryr-story .portal-caption b { padding-left: 1rem; color: var(--gold); }
 /* Each chapter gets space to unfold; short screens retain normal document flow. */
@@ -108,7 +107,29 @@ body:has(.scryr-story) { overflow-x: clip; }
 .scryr-story .retro-lines path { stroke: #555; fill: none; stroke-width: 1.4; marker-end: url(#retro-arrow); }
 .scryr-story .retro-boxes rect { fill: #ececff; stroke: #9990bb; }.scryr-story .retro-labels { fill: #333; font: 16px Arial, sans-serif; text-anchor: middle; }
 .scryr-story .retro-status { display: flex; justify-content: space-between; margin-top: 4px; border: 1px inset #eee; padding: 3px 6px; font-size: 11px; }
-.scryr-story .retro-note { text-align: center; margin-top: 1.8rem; color: #a398b2; font-size: .6rem; }
+/* Pencil annotations connect the punchlines to actual nodes in the retro diagram. */
+.scryr-story .retro-desktop { position: relative; }
+.scryr-story .old-world .retro-desktop { margin-top: 1.5rem; }
+.scryr-story .rectangle-story { position: absolute; inset: 0; z-index: 2; text-align: center; pointer-events: none; }
+.scryr-story .old-world .agent-change { margin: 3rem auto 0; text-align: center; color: var(--muted); font-size: clamp(1rem, 2vw, 1.4rem); }
+.scryr-story .agent-change strong { color: var(--gold); font-weight: 500; }
+.scryr-story .rectangle-punchline { position: absolute; inset: 0; font-size: clamp(.85rem, 2vw, 1.5rem); }
+.scryr-story .pencil-caption { --entry-x: -70vw; --entry-angle: -12deg; --pencil-color: #7638ae; text-shadow: 0 1px 2px #fff; position: absolute; top: 30%; left: 27%; display: block; width: max-content; max-width: 65%; padding: .15em .45em; color: var(--pencil-color); font-family: 'Segoe Print', 'Bradley Hand', cursive; font-style: italic; }
+.scryr-story .pencil-caption + .pencil-caption { --entry-x: 70vw; --entry-angle: 12deg; --pencil-color: #087767; top: 51%; left: 32%; }
+.scryr-story .pencil-words { display: block; }
+.scryr-story.is-ready[data-motion='on'] .pencil-caption { opacity: var(--arrival, 0); transform: translateX(calc((1 - var(--arrival, 0)) * var(--entry-x))) translateY(calc((1 - var(--arrival, 0)) * -35px)) rotate(calc((1 - var(--arrival, 0)) * var(--entry-angle))); }
+.scryr-story .writing-pencil { display: none; position: absolute; left: calc(var(--writing, 1) * 100%); bottom: -.15em; font-size: 1.8em; line-height: 1; transform: translateX(-.12em) rotate(-20deg); }
+.scryr-story.is-ready[data-motion='on'] .pencil-words { clip-path: inset(0 calc((1 - var(--writing, 0)) * 100%) 0 0); }
+.scryr-story.is-ready[data-motion='on'] .writing-pencil { display: block; opacity: var(--pencil-visible, 0); }
+.scryr-story .rectangle-arrows { z-index: 1; position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.scryr-story .annotation-arrow { fill: none; stroke: #c49aff; stroke-width: 2; stroke-linecap: round; marker-end: url(#pencil-arrow); opacity: 0; }
+.scryr-story .annotation-arrow + .annotation-arrow { stroke: #7de2d1; }
+.scryr-story.is-ready .annotation-arrow { opacity: var(--arrow-visible, 0); stroke-dasharray: 1; stroke-dashoffset: calc(1 - var(--arrow-progress, 0)); }
+@media (prefers-reduced-motion: reduce) {
+  .scryr-story .pencil-caption { opacity: 1 !important; transform: none !important; }
+  .scryr-story .pencil-words { clip-path: none !important; }
+  .scryr-story .writing-pencil { display: none !important; }
+}
 .scryr-story .spell-chapter { background: radial-gradient(ellipse at 30% 50%, #65399330, transparent 70%); }
 .scryr-story .spell-workbench { display: grid; grid-template-columns: 1fr 55px 1.12fr; align-items: center; margin-top: 4rem; }
 .scryr-story .grimoire { min-width: 0; position: relative; border: 1px solid #ac7ed35e; background: linear-gradient(145deg, #21112ff0, #0b0a13); box-shadow: 0 0 55px #9d57d513, 0 25px 65px #0004; border-radius: 8px; overflow: hidden; }
@@ -202,7 +223,6 @@ body:has(.scryr-story) { overflow-x: clip; }
 @keyframes pulse-trace { 0% { stroke-dashoffset: 650; opacity: .4; } 65%, 90% { stroke-dashoffset: 0; opacity: 1; } 100% { stroke-dashoffset: -650; opacity: .4; } }
 .scryr-story[data-motion='off'] *, .scryr-story[data-motion='off'] *::before, .scryr-story[data-motion='off'] *::after { animation: none !important; transition: none !important; }
 .scryr-story[data-motion='off'] .enchanted-sky span { opacity: .35; }
-@media (min-width: 1100px) and (min-height: 850px) { .scryr-story.is-ready[data-motion='on'] .old-world { min-height: 145svh; } .scryr-story.is-ready[data-motion='on'] .old-world .chapter-sticky { position: sticky; top: 6rem; } }
 @media (max-width: 1050px) {
   .scryr-story .story-chapter { padding: 6rem 3.5rem; }.scryr-story .chapter-nav { left: .8rem; }
   .scryr-story .spell-workbench { grid-template-columns: 1fr 30px 1fr; }.scryr-story .split-stage { gap: 2.5rem; }.scryr-story .forge-workbench { gap: 3rem; }
@@ -218,7 +238,7 @@ body:has(.scryr-story) { overflow-x: clip; }
   .scryr-story .conjure-arrow { height: 25px; }.scryr-story .conjure-arrow i { height: 100%; width: 1px; }
   .scryr-story .grimoire pre { font-size: .66rem; }.scryr-story .spell-reasons { grid-template-columns: 1fr; gap: 1.5rem; }
   .scryr-story .retro-content { grid-template-columns: 1fr; }.scryr-story .retro-content pre { display: none; }.scryr-story .retro-title { font-size: 9px; }.scryr-story .retro-title > span:last-child { letter-spacing: 1px; }
-  .scryr-story .retro-menu { font-size: 11px; }.scryr-story .retro-status { font-size: 9px; }.scryr-story .retro-note { font-size: .54rem; }.scryr-story .chapter-turn { font-size: .8rem; }
+  .scryr-story .retro-menu { font-size: 11px; }.scryr-story .retro-status { font-size: 9px; }.scryr-story .chapter-turn { font-size: .8rem; }
   .scryr-story .forge-outputs { padding-left: 1.5rem; }.scryr-story .forge-outputs::before { left: .2rem; }.scryr-story .forge-outputs article::before { left: -1.65rem; }
   .scryr-story .terminal-spell pre { font-size: .61rem; padding: 1rem; }.scryr-story .terminal-spell p { padding-inline: 1rem; }
   .scryr-story .revelation-map figure { width: 100%; }.scryr-story .metric-readings { width: 100%; margin-top: 1rem; gap: .45rem; }
@@ -260,4 +280,27 @@ body:has(.scryr-story) { overflow-x: clip; }
   .scryr-story .map-world { zoom: var(--map-fit, .3); }
   .scryr-story .portal-discovery { display: none; }
   .scryr-story .portal-caption { bottom: 1.5rem; justify-content: center; text-align: center; }
+}
+
+.scryr-story .architecture-statement { font-family: 'Source Code Pro', monospace; max-width: 700px; margin: 5rem auto 0; text-align: center; font-size: 2.25rem; line-height: 1.9; letter-spacing: normal; }
+.scryr-story .architecture-statement > span { display: block; }
+.scryr-story.is-ready[data-motion='on'] .architecture-statement.is-visible > span { animation: statement-arrive .9s cubic-bezier(.2,.7,.2,1) both; }
+.scryr-story.is-ready[data-motion='on'] .architecture-statement.is-visible > span:nth-child(2) { animation-delay: .2s; }
+.scryr-story.is-ready[data-motion='on'] .architecture-statement.is-visible > span:nth-child(3) { animation-delay: .4s; }
+@keyframes statement-arrive { from { opacity: 0; transform: translateY(30px) scale(.96); filter: blur(5px); } to { opacity: 1; transform: none; filter: none; } }
+@media (max-width: 720px) {
+  .scryr-story .pencil-caption { left: 5%; top: 32%; }
+  .scryr-story .pencil-caption + .pencil-caption { left: 9%; top: 51%; }
+}
+
+/* A final skeptical flourish, drawn around the whole retro window. */
+.scryr-story .yay-circle { position: absolute; inset: -6% -5%; width: 110%; height: 112%; pointer-events: none; z-index: 3; overflow: visible; }
+.scryr-story .yay-circle path { fill: none; stroke: var(--gold); stroke-width: 2.5; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.scryr-story .yay-caption { position: absolute; top: calc(100% + 1.3rem); left: 50%; transform: translateX(-50%) rotate(-7deg); color: var(--gold); font: italic clamp(1.8rem, 3vw, 2.8rem)/1.2 'Segoe Print', 'Bradley Hand', cursive; }
+.scryr-story.is-ready[data-motion='on'] .yay-circle path { stroke-dasharray: 1; stroke-dashoffset: calc(1 - var(--celebration, 0)); opacity: clamp(0, calc(var(--celebration, 0) * 10), 1); }
+.scryr-story.is-ready[data-motion='on'] .yay-caption { clip-path: inset(0 calc((1 - var(--yay-writing, 0)) * 100%) 0 0); }
+.scryr-story .old-world .architecture-statement { margin-top: 8rem; }
+@media (prefers-reduced-motion: reduce) {
+  .scryr-story .yay-circle path { stroke-dashoffset: 0 !important; opacity: 1 !important; }
+  .scryr-story .yay-caption { clip-path: none !important; }
 }

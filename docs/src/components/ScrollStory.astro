@@ -58,7 +58,8 @@ local = Forge(
 
   <section class="story-chapter old-world" id="old-magic" aria-labelledby="old-title">
     <div class="chapter-sticky">
-      <div class="chapter-heading" data-reveal><p class="eyebrow">I · The old world</p><h2 id="old-title">We’re conjuring software.<br />Why do our diagrams<br /><em>still look like 1995?</em></h2><p>Your agent just changed twelve services.<br />Here’s a rectangle. And another rectangle.</p></div>
+      <div class="chapter-heading" data-reveal><h2 id="old-title">Why do software diagrams<br /><em>Look Like 1995?</em></h2></div>
+      <p class="agent-change" data-reveal>Your agent just changed <strong>twelve services.</strong></p>
       <div class="retro-desktop" data-reveal>
         <div class="retro-window">
           <div class="retro-title"><span>▧ architecture_final_FINAL_v7.mmd</span><span aria-hidden="true">_ □ ×</span></div>
@@ -74,13 +75,21 @@ local = Forge(
   Worker --> API
   Web --> Auth
   Auth --> API</code></pre>
-            <svg viewBox="0 0 530 350" role="img" aria-labelledby="retro-diagram-title"><title id="retro-diagram-title">A deliberately retro Mermaid-style flowchart: Web, API, database, cache, queue, worker and authentication, tangled together.</title><defs><marker id="retro-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8Z" fill="#555"/></marker></defs><g class="retro-lines"><path d="M245 55 V104 M245 144 V255 H90 V290 M245 144 V180 H425 V215 M245 144 V215 M245 255 V280 H400 V290 M400 330 H90 V330 M400 290 V85 H245 V104 M245 35 H440 V105 M440 145 H300 V124 H290" /></g><g class="retro-boxes"><rect x="200" y="15" width="90" height="40"/><rect x="200" y="104" width="90" height="40"/><rect x="45" y="290" width="90" height="40"/><rect x="380" y="215" width="90" height="40"/><rect x="200" y="215" width="90" height="40"/><rect x="355" y="290" width="90" height="40"/><rect x="395" y="105" width="90" height="40"/></g><g class="retro-labels"><text x="245" y="40">Web</text><text x="245" y="130">API</text><text x="90" y="316">DB</text><text x="425" y="241">Cache</text><text x="245" y="241">Queue</text><text x="400" y="316">Worker</text><text x="440" y="131">Auth</text></g></svg>
+            <svg viewBox="0 0 530 350" role="img" aria-labelledby="retro-diagram-title"><title id="retro-diagram-title">A deliberately retro Mermaid-style flowchart: Web, API, database, cache, queue, worker and authentication, tangled together.</title><defs><marker id="retro-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8Z" fill="#555"/></marker></defs><g class="retro-lines"><path d="M245 55 V104 M245 144 V255 H90 V290 M245 144 V180 H425 V215 M245 144 V215 M245 255 V280 H400 V290 M400 330 H90 V330 M400 290 V85 H245 V104 M245 35 H440 V105 M440 145 H300 V124 H290" /></g><g class="retro-boxes"><rect x="200" y="15" width="90" height="40"/><rect x="200" y="104" width="90" height="40"/><rect data-rectangle-target="first" x="45" y="290" width="90" height="40"/><rect x="380" y="215" width="90" height="40"/><rect x="200" y="215" width="90" height="40"/><rect data-rectangle-target="second" x="355" y="290" width="90" height="40"/><rect x="395" y="105" width="90" height="40"/></g><g class="retro-labels"><text x="245" y="40">Web</text><text x="245" y="130">API</text><text x="90" y="316">DB</text><text x="425" y="241">Cache</text><text x="245" y="241">Queue</text><text x="400" y="316">Worker</text><text x="440" y="131">Auth</text></g></svg>
           </div>
           <div class="retro-status">Ready. &nbsp; Context: not found. <span>INS</span></div>
         </div>
-        <p class="retro-note">A loving roast of the static diagram. Yes, even this one is code.</p>
+      <div class="rectangle-story">
+        <p class="rectangle-punchline">
+          <span class="pencil-caption"><span class="pencil-words">Here’s a rectangle.</span><span class="writing-pencil" aria-hidden="true">✎</span></span>
+          <span class="pencil-caption"><span class="pencil-words">Another One.</span><span class="writing-pencil" aria-hidden="true">✎</span></span>
+        </p>
       </div>
-      <p class="chapter-turn" data-reveal>A diagram can show the shape.<br /><strong>You need to investigate the system.</strong></p>
+        <svg class="rectangle-arrows" aria-hidden="true"><defs><marker id="pencil-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1 L9 5 L1 9" fill="none" stroke="context-stroke" stroke-width="1.5" /></marker></defs><path class="annotation-arrow" pathLength="1"/><path class="annotation-arrow" pathLength="1"/></svg>
+        <svg class="yay-circle" viewBox="0 0 1000 600" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M510 578 C270 590 65 570 35 495 C8 410 12 175 38 91 C61 10 238 17 491 20 C746 11 946 15 970 104 C992 197 988 428 963 505 C935 583 706 587 492 576" /></svg>
+        <p class="yay-caption">Yay?</p>
+      </div>
+      <h2 class="architecture-statement" data-reveal><span>Your architecture diagram</span> <span>should <em>do things</em></span> <span>for you and your agents.</span></h2>
     </div>
   </section>
 
