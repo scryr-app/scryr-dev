@@ -1,0 +1,58 @@
+---
+import ScryrLogo from './ScryrLogo.astro';
+
+const blocks = [
+  { name: 'stripe-integration', role: 'External service', color: '#a6c954', x: 110, y: 100, body: 'Stripe integration for payments and checkout.', tools: 'Python · HTTP' },
+  { name: 'redis', role: 'Cache', color: '#efb449', x: 550, y: 110, body: 'Redis cache used by the API for low-latency workflows.', tools: 'Redis · Docker' },
+  { name: 'rest-api', role: 'API service', color: '#7bc8ef', x: 300, y: 430, body: 'FastAPI service for the Northwind product catalog, orders, and inventory.', tools: 'Python · FastAPI' },
+  { name: 'web-server', role: 'Web application', color: '#ee8a54', x: 840, y: 350, body: 'React / Vite application for browsing products and checking out.', tools: 'TypeScript · React' },
+];
+// Connections terminate at the casing, on the same ground plane as the product.
+const connections = [
+  'M300 470 H230 V180',
+  'M540 470 H590 V250 H670 V190',
+  'M960 430 V550 H575 V490 H540',
+];
+---
+<section class="map-portal" id="the-map" aria-labelledby="product-title">
+  <div class="portal-stage">
+    <div class="portal-nebula" aria-hidden="true"></div>
+    <div class="map-camera" aria-hidden="true">
+      <div class="map-world">
+        <div class="map-region"></div>
+        <svg class="map-connections" viewBox="0 0 1100 700" fill="none">
+          <defs><marker id="portal-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M2 1 L8 5 L2 9" fill="none" stroke="#dab0ff" stroke-width="1.6" stroke-linejoin="round" /></marker></defs>
+          {connections.map(d => <g>
+            <path class="map-link" d={d} marker-end="url(#portal-arrow)" />
+            <path class="map-energy" d={d} />
+          </g>)}
+        </svg>
+        {blocks.map((block) => <div class="map-block" style={`--block-color:${block.color};left:${block.x}px;top:${block.y}px`}>
+          <div class="block-base"></div>
+          <div class="block-back"></div>
+          <div class="block-wall block-wall-left"></div>
+          <div class="block-wall block-wall-right"></div>
+          <div class="block-roof">{block.name}</div>
+          {[18, 39, 60].map(offset => <div class="block-layer" style={`--slot-offset:${offset}px`}><span></span></div>)}
+          <div class="block-front-frame"></div>
+          <div class="block-face">
+            <div class="block-info">ⓘ INFO <small>v0.1.0</small></div>
+            <p>{block.body}</p>
+            <div class="block-tags"><span>{block.role}</span><span>Northwind</span></div>
+            <div class="block-divider"></div>
+            <footer><span class="block-tools">{block.tools}</span><span class="block-links"><b>Docs</b><b>Source</b></span></footer>
+          </div>
+        </div>)}
+      </div>
+    </div>
+    <div class="portal-shade" aria-hidden="true"></div>
+    <div class="portal-copy">
+      <div class="scryr-sigil"><ScryrLogo /></div>
+      <h1 id="product-title" tabindex="-1">Scryr</h1>
+      <p class="portal-tagline">Actionable Architecture</p>
+      <div class="story-actions"><a class="spell-button" href="/getting-started/">Enter the world <span aria-hidden="true">↗</span></a><a class="quiet-link" href="#old-magic">Discover why <span aria-hidden="true">↓</span></a></div>
+    </div>
+    <div class="portal-discovery"><p class="eyebrow">AI agents generate a lot of code.</p><h2>Know your software.<br />Inside and out.</h2><p>Explore your architecture. Trace connections, inspect code, and find problems—with the context to fix what AI gets wrong.</p></div>
+    <div class="portal-caption"><span>Scroll to change your perspective <b aria-hidden="true">↓</b></span></div>
+  </div>
+</section>
