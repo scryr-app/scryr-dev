@@ -11,6 +11,11 @@ export function initStory() {
   if (skipLink) skipLink.href = '#product-title';
 
   const chapters = [...story.querySelectorAll<HTMLElement>('.story-chapter')];
+  const rectanglePunchline = story.querySelector<HTMLElement>('.rectangle-punchline');
+  const rectangles = [...story.querySelectorAll<HTMLElement>('.pencil-caption')];
+  const annotationStage = story.querySelector<HTMLElement>('.retro-desktop');
+  const annotationTargets = [...story.querySelectorAll<SVGRectElement>('[data-rectangle-target]')];
+  const annotationArrows = [...story.querySelectorAll<SVGPathElement>('.annotation-arrow')];
   const chapterLinks = [...story.querySelectorAll<HTMLAnchorElement>('.chapter-nav a')];
   const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
   const events = new AbortController();
@@ -43,6 +48,35 @@ export function initStory() {
         setProgress(chapter, '--progress', clamp((height - box.top) / (height + box.height)));
         setProgress(chapter, '--chart', clamp((height - box.top - box.height * .28) / (height * .55)));
       }
+    }
+    if (rectanglePunchline && annotationStage) {
+      const stage = annotationStage.getBoundingClientRect();
+      const top = rectanglePunchline.getBoundingClientRect().top;
+      const celebration = motion ? clamp(((height * .95 - stage.top) / (height * .72) - .9) / .4) : 1;
+      setProgress(annotationStage, '--celebration', celebration);
+      setProgress(annotationStage, '--yay-writing', clamp(celebration * 2));
+      rectangles.forEach((caption, index) => {
+        const progress = motion ? clamp((height * .95 - top) / (height * .72) - index * .22) : 1;
+        const arrival = clamp(progress / .55);
+        setProgress(caption, '--arrival', 1 - Math.pow(1 - arrival, 3));
+        const writing = clamp(progress / .7);
+        setProgress(caption, '--writing', writing);
+        setProgress(caption, '--pencil-visible', progress > 0 && writing < 1 ? 1 : 0);
+        const target = annotationTargets[index];
+        const arrow = annotationArrows[index];
+        if (!target || !arrow) return;
+        const label = caption.getBoundingClientRect();
+        const node = target.getBoundingClientRect();
+        const x = label.left + label.width / 2 - stage.left;
+        const y = label.bottom + 5 - stage.top;
+        const endX = node.left + node.width / 2 - stage.left;
+        const endY = node.top - stage.top;
+        const bendX = index === 0 ? Math.min(x, endX) - 35 : Math.max(x, endX) + 35;
+        arrow.setAttribute('d', `M${x} ${y} C${bendX} ${y}, ${bendX} ${endY - 35}, ${endX} ${endY}`);
+        const draw = clamp((progress - .7) / .3);
+        arrow.style.setProperty('--arrow-progress', draw.toFixed(4));
+        arrow.style.setProperty('--arrow-visible', draw > 0 ? '1' : '0');
+      });
     }
     for (const link of chapterLinks) {
       if (link.hash === `#${current}`) link.setAttribute('aria-current', 'step');
