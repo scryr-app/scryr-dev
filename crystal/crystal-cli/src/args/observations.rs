@@ -10,7 +10,7 @@ pub(crate) struct ReportsArgs {
 }
 #[derive(Clone, Debug, Subcommand)]
 pub(crate) enum ReportCommand {
-    /// Report a GitHub workflow event (compatible with `report-action-status`).
+    /// Report a GitHub workflow event.
     Actions(super::ReportArgs),
     /// Import `JUnit` XML results from one complete suite/shard.
     Tests(ObservationArgs),

@@ -44,7 +44,7 @@ from labels import service_name
 api = Manifest(name=f"{service_name} API")
 ```
 
-When `scryr generate` executes manifests, the Rust CLI manages its own Python
+When the Scryr CLI executes manifests, the Rust CLI manages its own Python
 runtime. It installs Scryr's pinned `uv` into `<scryr-dir>/bin`, installs
 uv-managed Python into `<scryr-dir>/python`, and runs each manifest project in
 an isolated virtual environment under

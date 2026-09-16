@@ -75,7 +75,8 @@ fn reporter_prefers_main_then_master_and_posts_to_crystal() -> Result<(), Box<dy
         let mut command = assert_cmd::cargo::cargo_bin_cmd!("scryr");
         command
             .args([
-                "report-action-status",
+                "report",
+                "actions",
                 "--manifest-id",
                 "services/api",
                 "--event-file",

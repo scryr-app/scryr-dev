@@ -40,16 +40,8 @@ pub(crate) async fn run(command: ResolvedCommand) -> Result<(), String> {
         }
         ResolvedCommand::Query(args) => query::run(args).await,
         ResolvedCommand::Report(args) => observations::run(&args).await,
-        ResolvedCommand::ReportActionStatus(args) => {
-            eprintln!("Deprecated: use scryr report actions");
-            report::run(&args).await
-        }
         ResolvedCommand::Migrate => migrate::run().await,
         ResolvedCommand::Serve(args) => serve::run(&args).await,
-        ResolvedCommand::Generate(args) => {
-            eprintln!("Deprecated: use scryr push, scryr export, or scryr inspect");
-            generate::run(&args).await
-        }
         ResolvedCommand::Auth(args) => auth::run(&args).await,
     }
 }

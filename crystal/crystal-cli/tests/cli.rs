@@ -68,27 +68,31 @@ fn help_lists_supported_commands() -> Result<(), Box<dyn Error>> {
         .assert()
         .success()
         .stdout(predicate::str::contains("serve"))
-        .stdout(predicate::str::contains("generate"))
+        .stdout(predicate::str::contains("export"))
         .stdout(predicate::str::contains("auth"))
-        .stdout(predicate::str::contains("scryr generate"));
+        .stdout(predicate::str::contains("scryr export"));
     Ok(())
 }
 
 #[test]
-/// Verify generate help shows the default index.scry invocation.
-fn generate_help_shows_index_scry_examples() -> Result<(), Box<dyn Error>> {
-    cli_command()?
-        .args(["generate", "--help"])
-        .assert()
-        .success()
-        .stdout(predicate::str::contains("Usage: scryr generate"))
-        .stdout(predicate::str::contains("Examples:"))
-        .stdout(predicate::str::contains(
-            "scryr generate upload --path index.scry",
-        ))
-        .stdout(predicate::str::contains(
-            "scryr generate devcontainer --path index.scry",
-        ));
+/// Verify removed command names fail instead of invoking compatibility paths.
+fn deprecated_commands_are_rejected() -> Result<(), Box<dyn Error>> {
+    for args in [
+        vec!["generate", "upload"],
+        vec!["generate", "types"],
+        vec!["generate", "schema"],
+        vec!["generate", "mise"],
+        vec!["generate", "compose"],
+        vec!["generate", "devcontainer"],
+        vec!["generate", "artifact-json"],
+        vec!["report-action-status"],
+    ] {
+        cli_command()?
+            .args(args)
+            .assert()
+            .failure()
+            .stderr(predicate::str::contains("unrecognized subcommand"));
+    }
     Ok(())
 }
 
@@ -100,7 +104,7 @@ fn no_args_prints_help() -> Result<(), Box<dyn Error>> {
         .success()
         .stdout(predicate::str::contains("Usage: scryr"))
         .stdout(predicate::str::contains("serve"))
-        .stdout(predicate::str::contains("generate"))
+        .stdout(predicate::str::contains("export"))
         .stdout(predicate::str::contains("auth"));
     Ok(())
 }
@@ -121,8 +125,8 @@ fn serve_help_shows_server_options() -> Result<(), Box<dyn Error>> {
 
 #[cfg(unix)]
 #[test]
-/// Verify `generate` uses index.scry when the manifest file is omitted.
-fn generate_defaults_to_index_scry() -> Result<(), Box<dyn Error>> {
+/// Verify `inspect` uses index.scry when the manifest file is omitted.
+fn inspect_defaults_to_index_scry() -> Result<(), Box<dyn Error>> {
     let temp_dir = TempDir::new()?;
     let manifest_dir = temp_dir.path().join("manifest");
     let scryr_dir = temp_dir.path().join(".scryr");
@@ -136,7 +140,7 @@ fn generate_defaults_to_index_scry() -> Result<(), Box<dyn Error>> {
     cli_command()?
         .env("SCRYR_UV_INSTALLER", &uv_installer_path)
         .args([
-            "generate",
+            "inspect",
             "types",
             "--manifest-dir",
             &manifest_dir.to_string_lossy(),
@@ -225,13 +229,13 @@ chmod +x "$UV_UNMANAGED_INSTALL/uv"
 }
 
 #[test]
-/// Verify `generate types` emits JSON metadata for a real manifest sample.
-fn generate_types_emits_json_metadata_for_sample_manifest() -> Result<(), Box<dyn Error>> {
+/// Verify `inspect types` emits JSON metadata for a real manifest sample.
+fn inspect_types_emits_json_metadata_for_sample_manifest() -> Result<(), Box<dyn Error>> {
     let manifest_dir = manifest_dir()?;
     let scryr_dir = scryr_dir()?;
     let output = cli_command()?
         .args([
-            "generate",
+            "inspect",
             "types",
             "--path",
             sample_manifest(),
@@ -278,13 +282,13 @@ fn generate_types_emits_json_metadata_for_sample_manifest() -> Result<(), Box<dy
 }
 
 #[test]
-/// Verify `generate mise` emits the selected Forge as mise.toml.
-fn generate_mise_toml_emits_sample_forge() -> Result<(), Box<dyn Error>> {
+/// Verify `export mise` emits the selected Forge as mise.toml.
+fn export_mise_toml_emits_sample_forge() -> Result<(), Box<dyn Error>> {
     let manifest_dir = manifest_dir()?;
     let scryr_dir = scryr_dir()?;
     let output = cli_command()?
         .args([
-            "generate",
+            "export",
             "mise",
             "--path",
             "tests/samples/mern/index.scry",
@@ -315,13 +319,13 @@ fn generate_mise_toml_emits_sample_forge() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-/// Verify `generate compose` emits Docker Compose services from the selected Forge.
-fn generate_compose_emits_sample_forge_services() -> Result<(), Box<dyn Error>> {
+/// Verify `export compose` emits Docker Compose services from the selected Forge.
+fn export_compose_emits_sample_forge_services() -> Result<(), Box<dyn Error>> {
     let manifest_dir = manifest_dir()?;
     let scryr_dir = scryr_dir()?;
     let output = cli_command()?
         .args([
-            "generate",
+            "export",
             "compose",
             "--path",
             "tests/samples/mern/index.scry",
@@ -353,13 +357,13 @@ fn generate_compose_emits_sample_forge_services() -> Result<(), Box<dyn Error>> 
 }
 
 #[test]
-/// Verify `generate devcontainer` emits valid devcontainer JSON from the selected Forge.
-fn generate_devcontainer_emits_sample_forge_json() -> Result<(), Box<dyn Error>> {
+/// Verify `export devcontainer` emits valid devcontainer JSON from the selected Forge.
+fn export_devcontainer_emits_sample_forge_json() -> Result<(), Box<dyn Error>> {
     let manifest_dir = manifest_dir()?;
     let scryr_dir = scryr_dir()?;
     let output = cli_command()?
         .args([
-            "generate",
+            "export",
             "devcontainer",
             "--path",
             "tests/samples/mern/index.scry",
@@ -398,7 +402,7 @@ fn generate_devcontainer_emits_sample_forge_json() -> Result<(), Box<dyn Error>>
 
 #[test]
 /// Verify Forge-backed generators have explicit success/failure behavior across samples.
-fn generate_forge_backed_targets_have_expected_sample_behavior() -> Result<(), Box<dyn Error>> {
+fn export_forge_backed_targets_have_expected_sample_behavior() -> Result<(), Box<dyn Error>> {
     let manifest_dir = manifest_dir()?;
     let scryr_dir = scryr_dir()?;
     for entry in fs::read_dir(manifest_dir.join("tests/samples"))? {
@@ -415,7 +419,7 @@ fn generate_forge_backed_targets_have_expected_sample_behavior() -> Result<(), B
 
         let mut devcontainer = cli_command()?;
         devcontainer.args([
-            "generate",
+            "export",
             "devcontainer",
             "--path",
             &relative,
@@ -429,7 +433,7 @@ fn generate_forge_backed_targets_have_expected_sample_behavior() -> Result<(), B
             devcontainer.assert().success();
             cli_command()?
                 .args([
-                    "generate",
+                    "export",
                     "compose",
                     "--path",
                     &relative,
@@ -457,7 +461,7 @@ fn generate_forge_backed_targets_have_expected_sample_behavior() -> Result<(), B
 #[cfg(unix)]
 #[test]
 /// Verify generation defaults to the local GraphQL endpoint before persistence.
-fn generate_without_graphql_url_uses_default_local_endpoint() -> Result<(), Box<dyn Error>> {
+fn push_without_graphql_url_uses_default_local_endpoint() -> Result<(), Box<dyn Error>> {
     let temp_dir = TempDir::new()?;
     let manifest_dir = temp_dir.path().join("manifest");
     let scryr_dir = temp_dir.path().join(".scryr");
@@ -474,8 +478,7 @@ fn generate_without_graphql_url_uses_default_local_endpoint() -> Result<(), Box<
         .env("SCRYR_UV_INSTALLER", &uv_installer_path)
         .env("PORT", port.to_string())
         .args([
-            "generate",
-            "upload",
+            "push",
             "--path",
             "sample.py",
             "--manifest-dir",
@@ -514,7 +517,7 @@ fn generate_without_graphql_url_uses_default_local_endpoint() -> Result<(), Box<
 #[cfg(unix)]
 #[test]
 /// Only scryr.toml opts generation into the manifest directory's Python project.
-fn generate_requires_scryr_toml_to_use_project_dependencies() -> Result<(), Box<dyn Error>> {
+fn inspect_requires_scryr_toml_to_use_project_dependencies() -> Result<(), Box<dyn Error>> {
     for (has_pyproject, has_scryr, expected_project_mode) in [
         (false, false, false),
         (true, false, false),
@@ -542,7 +545,7 @@ fn generate_requires_scryr_toml_to_use_project_dependencies() -> Result<(), Box<
         let (installer, log_path) = fake_uv_installer(&temp_dir)?;
         cli_command()?
             .env("SCRYR_UV_INSTALLER", installer)
-            .args(["generate", "types", "--manifest-dir"])
+            .args(["inspect", "types", "--manifest-dir"])
             .arg(&manifest_dir)
             .arg("--scryr-dir")
             .arg(&state_dir)
@@ -592,7 +595,7 @@ fn scryr_project_requires_its_own_python_metadata() -> Result<(), Box<dyn Error>
     let (installer, log_path) = fake_uv_installer(&temp_dir)?;
     cli_command()?
         .env("SCRYR_UV_INSTALLER", installer)
-        .args(["generate", "types", "--manifest-dir"])
+        .args(["inspect", "types", "--manifest-dir"])
         .arg(&manifest_dir)
         .arg("--scryr-dir")
         .arg(temp_dir.path().join(".scryr"))
