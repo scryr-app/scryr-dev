@@ -6,8 +6,7 @@ your session starts at the root.
 
 ## Worktree requirement
 
-- Start every new editing task in a linked Git worktree dedicated to that task.
-  The primary checkout is for inspection and user-controlled integration.
+- Only create a worktree if I ask you to
 - Before editing, run `mise run verify:worktree`. If it fails, create or select a
   linked worktree and continue there. Do not bypass the check or reset, stash,
   move, or overwrite the user's uncommitted work to make it pass.
