@@ -6,10 +6,10 @@ const { sidebar } = Astro.locals.starlightRoute;
 <button class="page-menu-toggle" type="button" popovertarget="scryr-page-menu" aria-controls="scryr-page-menu" aria-label="Pages" title="Pages">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
 </button>
-<aside id="scryr-page-menu" popover="auto" aria-labelledby="page-menu-title">
+<aside id="scryr-page-menu" popover="auto" aria-label="Site pages">
   <div class="page-menu-heading">
-    <h2 id="page-menu-title">Explore Scryr</h2>
-    <button type="button" popovertarget="scryr-page-menu" popovertargetaction="hide" aria-label="Close page menu">
+    <button class="page-menu-pin" type="button" aria-pressed="false" hidden><span aria-hidden="true">⌖</span><span data-pin-label>Pin menu</span></button>
+    <button class="page-menu-close" type="button" popovertarget="scryr-page-menu" popovertargetaction="hide" aria-label="Close page menu">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6" /></svg>
     </button>
   </div>
@@ -18,6 +18,10 @@ const { sidebar } = Astro.locals.starlightRoute;
 
 <style>
   button { display: inline-flex; align-items: center; justify-content: center; gap: .45rem; min-height: 2.5rem; padding: .4rem .65rem; border: 1px solid #b58cda40; border-radius: .3rem; background: #ffffff04; color: #eadff5; font: inherit; font-size: .8rem; cursor: pointer; }
+  .page-menu-pin[hidden] { display: none; }
+  .page-menu-pin[aria-pressed="true"] { color:#ecd397;border-color:#e7c77c70; }
+  .page-menu-pin:disabled { opacity:.55;cursor:default; }
+  #scryr-page-menu[data-pinned] { display:block;box-shadow:none; }
   button:hover { background: #b789e51a; color: white; }
   .page-menu-toggle { flex: none; width: 2.5rem; padding: .6rem; border: 0; background: transparent; color: var(--sl-color-gray-2); }
   button:focus-visible { outline: 2px solid #e7c77c; outline-offset: 3px; }
@@ -25,10 +29,66 @@ const { sidebar } = Astro.locals.starlightRoute;
   #scryr-page-menu { position: fixed; inset: var(--sl-nav-height) auto 0 0; width: min(20rem, 100vw); max-width: 100vw; height: calc(100dvh - var(--sl-nav-height)); max-height: calc(100dvh - var(--sl-nav-height)); margin: 0; padding: 1.5rem; box-sizing: border-box; overflow-y: auto; overscroll-behavior: contain; white-space: normal; color: var(--sl-color-white); background: var(--sl-color-bg-sidebar); border: 0; border-right: 1px solid var(--sl-color-hairline-light); box-shadow: 1rem 1rem 3rem #0006; }
   #scryr-page-menu::backdrop { background: #03010855; }
   .page-menu-heading { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-bottom: 1.5rem; }
-  .page-menu-heading h2 { margin: 0; font: 600 1rem/1.5 var(--sl-font); letter-spacing: normal; }
-  .page-menu-heading button { flex: none; padding: .4rem; width: 2.5rem; }
+  .page-menu-close { margin-inline-start:auto; flex: none; padding: .4rem; width: 2.5rem; }
   @media (prefers-reduced-motion: no-preference) {
     #scryr-page-menu:popover-open { animation: page-menu-enter .2s ease-out; }
     @keyframes page-menu-enter { from { opacity: 0; transform: translateX(-1rem); } to { opacity: 1; transform: translateX(0); } }
   }
 </style>
+
+<script>
+  const menu = document.querySelector<HTMLElement>('#scryr-page-menu');
+  const toggle = document.querySelector<HTMLButtonElement>('.page-menu-toggle');
+  const pin = menu?.querySelector<HTMLButtonElement>('.page-menu-pin');
+  const close = menu?.querySelector<HTMLButtonElement>('.page-menu-close');
+  if (menu && toggle && pin && close) {
+    const storageKey = 'scryr-page-menu-pinned';
+    const wideScreen = window.matchMedia('(min-width: 64rem)');
+    let preferredPinned = false;
+    try { preferredPinned = localStorage.getItem(storageKey) === 'true'; } catch { /* Pinning also works without storage. */ }
+    function updateExpanded() {
+      toggle!.setAttribute('aria-expanded', String(menu!.hasAttribute('data-pinned') || menu!.matches(':popover-open')));
+    }
+    function applyPreference() {
+      const pinned = preferredPinned && wideScreen.matches;
+      if (pinned) {
+        if (menu!.matches(':popover-open')) menu!.hidePopover();
+        menu!.removeAttribute('popover');
+        menu!.setAttribute('data-pinned', '');
+      } else if (menu!.hasAttribute('data-pinned')) {
+        menu!.removeAttribute('data-pinned');
+        menu!.setAttribute('popover', 'auto');
+      }
+      document.documentElement.toggleAttribute('data-pages-pinned', pinned);
+      pin!.setAttribute('aria-pressed', String(pinned));
+      pin!.disabled = !wideScreen.matches;
+      pin!.querySelector('[data-pin-label]')!.textContent = pinned ? 'Unpin menu' : 'Pin menu';
+      pin!.title = wideScreen.matches ? 'Keep page navigation visible' : 'Pinning is available on wider screens';
+      close!.setAttribute('aria-label', pinned ? 'Unpin and close page menu' : 'Close page menu');
+      updateExpanded();
+    }
+    function savePreference(value: boolean) {
+      preferredPinned = value;
+      try { localStorage.setItem(storageKey, String(value)); } catch { /* Keep the current-page preference. */ }
+      applyPreference();
+    }
+    pin.hidden = false;
+    pin.addEventListener('click', () => {
+      const wasPinned = menu.hasAttribute('data-pinned');
+      savePreference(!wasPinned);
+      if (wasPinned) menu.showPopover();
+      pin.focus({ preventScroll: true });
+    });
+    function closePinned(event: MouseEvent) {
+      if (!menu!.hasAttribute('data-pinned')) return;
+      event.preventDefault();
+      savePreference(false);
+      toggle!.focus({ preventScroll: true });
+    }
+    toggle.addEventListener('click', closePinned);
+    close.addEventListener('click', closePinned);
+    menu.addEventListener('toggle', updateExpanded);
+    wideScreen.addEventListener('change', applyPreference);
+    applyPreference();
+  }
+</script>

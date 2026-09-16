@@ -75,12 +75,12 @@ const findings = [
 ---
 <article class="why-research">
   <header class="research-intro">
-    <h1>The Method</h1>
+    <h1>Case for Scryr</h1>
     <p class="research-deck">Turn code into shared understanding.</p>
     <p>Generating a change is only part of delivering software. Engineers still need to understand its place in the system, verify its behavior, and investigate it when something goes wrong. Research across AI-assisted programming, software comprehension, and operations makes the case for investing in that work. Scryr turns shared understanding into a coded model connected to engineering evidence.</p>
   </header>
   <div class="research-layout">
-    <nav class="research-nav" aria-label="On this page">{findings.map(finding => <a href={`#${finding.id}`}>{finding.nav}</a>)}<a href="#engineering-foundations">Engineering Foundations</a></nav>
+    <nav class="research-nav" aria-label="On this page">{findings.map(finding => <a href={`#${finding.id}`}>{finding.nav}</a>)}<a href="/philosophy-of-scryr/">Philosophy of Scryr ↗</a></nav>
     <div class="research-main">
       {findings.map(finding => <section class="research-finding" id={finding.id} aria-labelledby={`heading-${finding.id}`}>
         <h2 id={`heading-${finding.id}`}>{finding.title}</h2>
@@ -92,45 +92,7 @@ const findings = [
           <aside class="scryr-response" aria-label={`Improve with Scryr: ${finding.responseTitle}`}><span class="response-label">Improve with Scryr</span><h3>{finding.responseTitle}</h3><p>{finding.response}</p><div class="research-docs">{finding.docs.map(doc => <a href={doc.url}>{doc.label} <span aria-hidden="true">↗</span></a>)}</div></aside>
         </div>
       </section>)}
-      <section class="research-foundations" id="engineering-foundations" aria-labelledby="foundations-title">
-        <h2 id="foundations-title">Engineering Foundations</h2>
-        <p>A shared model is more useful when it fits into the way you already build software. Scryr makes the model executable, portable, and reusable beyond a single view.</p>
-        <div class="foundation-item">
-          <h3>Typed Python. Separate dependencies.</h3>
-          <p>Describe your system in <code>index.scry</code> using typed Python, imports, and functions. Scryr’s CLI manages its own runtime and dependencies, leaving your application’s virtual environment unchanged.</p>
-          <p>Project mode uses your declared, locked dependencies in Scryr’s managed environment.</p>
-          <div class="research-docs"><a href="/manifests/">Explore the typed SDK ↗</a><a href="/manifests/#python-project-mode">Configure project dependencies ↗</a></div>
-        </div>
-        <div class="foundation-item">
-          <h3>Integrate through JSON Schema</h3>
-          <p>Use JSON model data in your own catalogs, checks, and status tools. Scryr exposes JSON Schema for <code>Manifest</code>, <code>Forge</code>, and <code>Diagram</code> so consumers can validate their structure.</p>
-          <pre><code>scryr inspect schema --path index.scry</code></pre>
-          <p>The command returns individual schemas under <code>models</code>. Select the matching schema for your data; your integration supplies the behavior.</p>
-          <p>Generate types for your application from JSON Schema with these code generators:</p>
-          <ul class="schema-generators">
-            <li><strong>TypeScript</strong><a href="https://github.com/bcherny/json-schema-to-typescript">json-schema-to-typescript ↗</a></li>
-            <li><strong>Go</strong><a href="https://github.com/glideapps/quicktype">quicktype ↗</a></li>
-            <li><strong>Java</strong><a href="https://github.com/glideapps/quicktype">quicktype ↗</a></li>
-            <li><strong>Rust</strong><a href="https://github.com/oxidecomputer/typify">typify ↗</a></li>
-            <li><strong>Swift</strong><a href="https://github.com/glideapps/quicktype">quicktype ↗</a></li>
-            <li><strong>Python</strong><a href="https://github.com/datamodel-code-generator/datamodel-code-generator">datamodel-code-generator ↗</a></li>
-            <li><strong>C++</strong><a href="https://github.com/glideapps/quicktype">quicktype ↗</a></li>
-          </ul>
-          <div class="research-docs"><a href="/cli/#inspect">Inspect Scryr’s model schemas ↗</a><a href="https://json-schema.org/overview/what-is-jsonschema">How JSON Schema supports interoperability ↗</a></div>
-        </div>
-        <div class="foundation-item">
-          <h3>Build views around your questions</h3>
-          <p>Focus a diagram on a request path, a team’s services, or an incident. Typed queries select components; metrics and reports provide service-status evidence.</p>
-          <p>For custom investigations, use the structured model in your own visualization or reporting code. Scryr’s built-in diagrams and metric snapshots are available today.</p>
-          <div class="research-docs"><a href="/manifests/#query-selected-diagrams">Build focused diagrams ↗</a><a href="/integrations/#prometheus-compatible-metrics">Connect service metrics ↗</a><a href="/integrations/#graphql-api">Access the model through GraphQL ↗</a></div>
-        </div>
-        <div class="foundation-item">
-          <h3>Generate the developer environment</h3>
-          <p>Declare tools, environment variables, and tasks in a Forge. Export to mise, Docker Compose, or a devcontainer to turn the model into a working environment.</p>
-          <div class="research-docs"><a href="/integrations/#mise-docker-compose-and-devcontainers">Generate developer environments ↗</a></div>
-        </div>
-      </section>
-      <footer class="research-footer"><h2>Try the approach on a system you know.</h2><p>Build a model, check it against the code, and attach the evidence your team uses to make decisions.</p><a href="/getting-started/">Get started with Scryr <span aria-hidden="true">↗</span></a><p class="research-position">The findings above motivate Scryr’s design. The connections to product features are our interpretation; these sources do not evaluate Scryr itself.</p></footer>
+      <footer class="research-footer"><h2>Try the approach on a system you know.</h2><p>Build a model, check it against the code, and attach the evidence your team uses to make decisions.</p><a href="/getting-started/">Get started with Scryr <span aria-hidden="true">↗</span></a><p id="engineering-foundations" class="companion-link">Explore the design principles behind the approach in <a href="/philosophy-of-scryr/">Philosophy of Scryr ↗</a>.</p><p class="research-position">The findings above motivate Scryr’s design. The connections to product features are our interpretation; these sources do not evaluate Scryr itself.</p></footer>
     </div>
   </div>
 </article>

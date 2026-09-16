@@ -3,6 +3,7 @@ import starlight from '@astrojs/starlight';
 
 export default defineConfig({
   site: 'https://scryr.dev',
+  redirects: { '/why': '/case-for-scryr/' },
   integrations: [
     starlight({
       title: 'Scryr',
@@ -21,13 +22,15 @@ export default defineConfig({
       sidebar: [
         { label: 'Start Here', items: [
           { label: 'Overview', slug: 'index' },
-          { label: 'The Method', slug: 'why' },
+          { label: 'Case for Scryr', slug: 'case-for-scryr' },
+          { label: 'Philosophy of Scryr', slug: 'philosophy-of-scryr' },
           { label: 'Getting started', slug: 'getting-started' },
           { label: 'Generate with an LLM', slug: 'llm-prompt' },
         ] },
         { label: 'Use Scryr', items: [
           { label: 'Manifest language', slug: 'manifests' },
           { label: 'CLI reference', slug: 'cli' },
+          { label: 'Generate code from JSON Schema', slug: 'code-generation' },
           { label: 'Integrations', slug: 'integrations' },
           { label: 'Editor highlighting', slug: 'editors' },
         ] },
