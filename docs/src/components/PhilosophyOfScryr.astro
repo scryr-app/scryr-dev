@@ -1,0 +1,74 @@
+---
+import '../styles/why.css';
+const principles = [
+  { id: 'model-as-code', label: 'Make understanding maintainable' },
+  { id: 'separate-dependencies', label: 'Fit into existing projects' },
+  { id: 'open-model', label: 'Keep the model portable' },
+  { id: 'purposeful-views', label: 'Start with a question' },
+  { id: 'shared-declarations', label: 'Put declarations to work' },
+  { id: 'develop-in-the-open', label: 'Develop in the open' },
+];
+---
+<article class="why-research philosophy-page">
+  <header class="research-intro">
+    <h1>Philosophy of Scryr</h1>
+    <p class="research-deck">Understanding should be something you can build on.</p>
+    <p>A shared model is more useful when it fits into the way you already build software. Scryr makes the model executable, portable, and reusable beyond a single view. These principles guide what we build and how we develop it.</p>
+    <p class="companion-link">For the research behind these choices, read <a href="/case-for-scryr/">Case for Scryr ↗</a>.</p>
+  </header>
+  <div class="research-layout">
+    <nav class="research-nav" aria-label="On this page">{principles.map(principle => <a href={`#${principle.id}`}>{principle.label}</a>)}<a href="/case-for-scryr/">Case for Scryr ↗</a></nav>
+    <div class="research-main">
+      <div class="philosophy-principles" id="engineering-foundations">
+        <section class="foundation-item" id="model-as-code" aria-labelledby="model-title">
+          <h2 id="model-title">Make understanding maintainable.</h2>
+          <p>Architecture knowledge should be easy to review and revise alongside the software it describes. A typed <code>.scry</code> model gives that knowledge a durable home in code.</p>
+          <p>We use Python so teams can compose models with familiar imports, functions, and packages. Scryr’s checks cover formatting, lint, types, serialization, and diagram rules.</p>
+          <div class="research-docs"><a href="/manifests/">Explore the typed SDK ↗</a><a href="/cli/#check-format-and-lint">Check a model ↗</a></div>
+        </section>
+        <section class="foundation-item" id="separate-dependencies" aria-labelledby="dependencies-title">
+          <h2 id="dependencies-title">Fit into the project you already have.</h2>
+          <p>Adopting architecture tooling should not require reorganizing your application. Scryr’s CLI manages its own Python runtime and dependencies, leaving your application’s virtual environment unchanged.</p>
+          <p>When your model needs additional packages, project mode uses your declared, locked dependencies in Scryr’s managed environment.</p>
+          <div class="research-docs"><a href="/manifests/#python-project-mode">Configure project dependencies ↗</a></div>
+        </section>
+        <section class="foundation-item" id="open-model" aria-labelledby="portable-title">
+          <h2 id="portable-title">Keep the model useful outside Scryr.</h2>
+          <p>Your system model should be available to the rest of your tools. JSON carries its data; JSON Schema makes its structure available to consumers in other languages.</p>
+          <p>Scryr exposes schemas for <code>Manifest</code>, <code>Forge</code>, and <code>Diagram</code>. Use them in your own catalogs, configuration checks, and status tools.</p>
+          <pre><code>scryr inspect schema --path index.scry</code></pre>
+          <p>The command returns individual schemas under <code>models</code>. Select the matching schema, then generate types for your application:</p>
+          <ul class="schema-generators">
+            <li><strong>TypeScript</strong><a href="https://github.com/bcherny/json-schema-to-typescript">json-schema-to-typescript ↗</a></li>
+            <li><strong>Go</strong><a href="https://github.com/glideapps/quicktype">quicktype ↗</a></li>
+            <li><strong>Java</strong><a href="https://github.com/glideapps/quicktype">quicktype ↗</a></li>
+            <li><strong>Rust</strong><a href="https://github.com/oxidecomputer/typify">typify ↗</a></li>
+            <li><strong>Swift</strong><a href="https://github.com/glideapps/quicktype">quicktype ↗</a></li>
+            <li><strong>Python</strong><a href="https://github.com/datamodel-code-generator/datamodel-code-generator">datamodel-code-generator ↗</a></li>
+            <li><strong>C++</strong><a href="https://github.com/glideapps/quicktype">quicktype ↗</a></li>
+          </ul>
+          <div class="research-docs"><a href="/cli/#inspect">Inspect model schemas ↗</a><a href="https://json-schema.org/overview/what-is-jsonschema">Explore JSON Schema ↗</a></div>
+        </section>
+        <section class="foundation-item" id="purposeful-views" aria-labelledby="views-title">
+          <h2 id="views-title">Start with a question, then choose the view.</h2>
+          <p>A useful view helps someone investigate: follow a request, identify a service’s dependencies, or understand an incident. Named diagrams and typed queries let teams choose the right scope.</p>
+          <p>Metrics and reports connect that view to service-status evidence. The same structured data can also power your own visualizations and investigation tools.</p>
+          <div class="research-docs"><a href="/manifests/#query-selected-diagrams">Build focused diagrams ↗</a><a href="/integrations/#prometheus-compatible-metrics">Connect service metrics ↗</a><a href="/integrations/#graphql-api">Access the model through GraphQL ↗</a></div>
+        </section>
+        <section class="foundation-item" id="shared-declarations" aria-labelledby="declarations-title">
+          <h2 id="declarations-title">Put shared declarations to work.</h2>
+          <p>The model should help engineers work on the system as well as understand it. A Forge declares tools, environment variables, and tasks, then exports them to mise, Docker Compose, or a devcontainer.</p>
+          <p>This keeps the developer environment connected to the architecture and gives teams a declaration they can review and reuse.</p>
+          <div class="research-docs"><a href="/integrations/#mise-docker-compose-and-devcontainers">Generate developer environments ↗</a></div>
+        </section>
+        <section class="foundation-item" id="develop-in-the-open" aria-labelledby="development-title">
+          <h2 id="development-title">Develop in the open. Check the boundaries.</h2>
+          <p>Scryr is built from a Python SDK, a Rust CLI and server, and a React map. Changes to the model must stay consistent across the code that produces it and the tools that consume it.</p>
+          <p>Our contribution workflow uses isolated worktrees, shared mise tasks, and component checks. Cross-component changes coordinate serialization, API types, and generated frontend contracts so the pieces can evolve together.</p>
+          <div class="research-docs"><a href="https://github.com/scryr-app/scryr-dev">Explore the source ↗</a><a href="https://github.com/scryr-app/scryr-dev/blob/main/CONTRIBUTING.md">Read the contribution guide ↗</a></div>
+        </section>
+      </div>
+      <footer class="research-footer"><h2>Build on your understanding.</h2><p>Start with a model of a system you know, then put it to work in your own tools.</p><a href="/getting-started/">Get started with Scryr <span aria-hidden="true">↗</span></a></footer>
+    </div>
+  </div>
+</article>

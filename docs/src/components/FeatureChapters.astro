@@ -1,4 +1,5 @@
 ---
+import SchemaLanguages from './SchemaLanguages.astro';
 const forgeCode = `from scryr import Forge
 
 local = Forge(
@@ -73,15 +74,11 @@ local = Forge(
     <article>
       <div class="feature-evidence-copy" data-reveal>
         <h3>What can your tools build from it?</h3>
-        <p>Export Scryr’s JSON Schema to power code generation, editor tooling, validation, and CI checks from the same typed model as your map.</p>
-        <a class="chapter-link" href="/cli/#inspect">Inspect the model <span aria-hidden="true">↗</span></a>
+        <p>One schema. Seven languages. Bring Scryr’s typed model into your own tools.</p>
+        <a class="chapter-link" href="/code-generation/">Generate code from the model <span aria-hidden="true">↗</span></a>
       </div>
       <div class="feature-example" data-reveal>
-        <div class="terminal-spell">
-          <div class="panel-label"><span>Inputs for your own tooling</span><span>terminal</span></div>
-          <pre><code><span>$</span> scryr export json &gt; architecture.json
-<span>$</span> scryr inspect schema &gt; scryr-schema.json</code></pre>
-        </div>
+        <SchemaLanguages overview />
       </div>
     </article>
   </div>

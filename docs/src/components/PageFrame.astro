@@ -8,7 +8,12 @@
   .page { display: flex; flex-direction: column; min-height: 100vh; }
   .header { z-index: var(--sl-z-index-navbar); position: fixed; inset-inline-start: 0; inset-block-start: 0; width: 100%; height: var(--sl-nav-height); padding: var(--sl-nav-pad-y) var(--sl-nav-pad-x); border-bottom: 1px solid var(--sl-color-hairline-shade); background: var(--sl-color-bg-nav); }
   .main-frame { --sl-content-inline-start: 0rem; padding-top: calc(var(--sl-nav-height) + var(--sl-mobile-toc-height)); }
+  @media (min-width: 64rem) {
+    :global(html[data-pages-pinned]) .main-frame { margin-inline-start:20rem; }
+    :global(html[data-pages-pinned]) .header { opacity:1 !important;transform:none !important;visibility:visible !important; }
+  }
   @media print {
+    :global(html[data-pages-pinned]) .main-frame { margin-inline-start:0; }
     .header { display: none; }
     .main-frame { padding: 0; }
   }

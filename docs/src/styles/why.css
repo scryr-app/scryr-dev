@@ -65,3 +65,8 @@ body:has(.why-research) .sl-container { max-width: none; }
 .schema-generators strong { font-weight:500;color:#e2d3ee; }
 .schema-generators a { overflow-wrap:anywhere; }
 @media(max-width:540px) { .schema-generators>li { grid-template-columns:5.5rem minmax(0,1fr);gap:.5rem;font-size:.875rem; } }
+
+.philosophy-principles { padding-bottom:3rem; }
+.philosophy-principles .foundation-item { scroll-margin-top:calc(var(--sl-nav-height) + 2rem); }
+.philosophy-principles .foundation-item>h2 { color:#e4c9fa; }
+.companion-link { font-size:.95rem; }

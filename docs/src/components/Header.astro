@@ -4,7 +4,6 @@ import ScryrLogo from './ScryrLogo.astro';
 import PageMenu from './PageMenu.astro';
 const { siteTitleHref } = Astro.locals.starlightRoute;
 const links = [
-  { label: 'The Method', href: '/why/', icon: 'M4 4h16v12H4zM12 16v5m-4 0 4-5 4 5' },
   { label: 'Open Source', href: '/getting-started/', icon: 'M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5' },
   { label: 'Docs', href: '/manifests/', icon: 'M12 5v16M12 5C9 3 5 3 2 4v15c3-1 7-1 10 2 3-3 7-3 10-2V4c-3-1-7-1-10 1Z' },
   { label: 'App Login', href: 'https://scryr.app', icon: 'M3 3h7v7H3V3Zm11 0h7v7h-7V3ZM3 14h7v7H3v-7Zm11 0h7v7h-7v-7Z' },
@@ -51,7 +50,7 @@ const links = [
   .toolbar-menu nav { position: absolute; right: 0; top: calc(100% + .75rem); display: grid; gap: .25rem; min-width: 12rem; padding: .65rem; border: 1px solid #b788df55; border-radius: .4rem; background: #10091c; box-shadow: 0 1rem 3rem #0008; }
   .toolbar-menu nav a { display: flex; align-items: center; padding: .65rem; border-radius: .2rem; }
   .toolbar-menu nav a:hover { background: #b789e51a; }
-  @media (max-width: 1099px) {
+  @media (max-width: 1599px) {
     .toolbar-search { position: static; order: 2; flex: none; transform: none; }
     .toolbar-actions { order: 1; }
     .toolbar-search :global(site-search) { width: 2rem; }
@@ -59,6 +58,6 @@ const links = [
     .toolbar-search :global(button[data-open-modal] > span),
     .toolbar-search :global(button[data-open-modal] > kbd) { display: none !important; }
   }
-  @media (max-width: 640px) { .toolbar-desktop { display: none; } .toolbar-menu { display: block; } .toolbar-actions { gap: .35rem; } }
+  @media (max-width: 1199px) { .toolbar-desktop { display: none; } .toolbar-menu { display: block; } .toolbar-actions { gap: .35rem; } }
   @media (max-width: 420px) { .toolbar-wordmark { display: none; } }
 </style>
