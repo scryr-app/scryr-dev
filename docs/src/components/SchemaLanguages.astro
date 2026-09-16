@@ -1,0 +1,36 @@
+---
+interface Props { overview?: boolean }
+const { overview = false } = Astro.props;
+const languages = [
+  { id: 'typescript', name: 'TypeScript', icon: 'typescript', sentence: 'Type your dashboards.' },
+  { id: 'go', name: 'Go', icon: 'go', sentence: 'Build service tooling.' },
+  { id: 'java', name: 'Java', icon: 'java', sentence: 'Connect JVM services.' },
+  { id: 'rust', name: 'Rust', icon: 'rust', sentence: 'Build typed CLIs.' },
+  { id: 'swift', name: 'Swift', icon: 'swift', sentence: 'Create native inspectors.' },
+  { id: 'python', name: 'Python', icon: 'python', sentence: 'Automate investigations.' },
+  { id: 'c', name: 'C++', icon: 'cplusplus', sentence: 'Integrate native tools.' },
+];
+---
+<nav class:list={['schema-languages', { 'schema-languages-overview': overview }]} aria-label="Code generation by language">
+  {languages.map(language => (
+    <a href={`${overview ? '/code-generation/' : ''}#${language.id}`}>
+      <span class="language-logo"><img src={`/assets/languages/${language.icon}.svg`} width="40" height="40" alt="" loading="lazy" /></span>
+      <span><strong>{language.name}</strong>{overview && <span class="language-purpose">{language.sentence}</span>}</span>
+    </a>
+  ))}
+</nav>
+<style>
+  .schema-languages { display:flex;flex-wrap:wrap;gap:.75rem;margin-block:1.75rem 2.5rem; }
+  .schema-languages a { display:flex;flex-direction:column;align-items:center;gap:.65rem;min-width:5.5rem;padding:.85rem;color:var(--sl-color-text-accent, #e7c77c);text-decoration:none;border-radius:.6rem;background:#b889d90b; }
+  .schema-languages a:hover { background:#b889d921; }
+  .schema-languages a:focus-visible { outline:2px solid currentColor;outline-offset:3px; }
+  .language-logo { display:grid;place-items:center;width:3.2rem;height:3.2rem;background:#f5f0fa;border-radius:.6rem;flex-shrink:0; }
+  .language-logo img { display:block;width:2.5rem;height:2.5rem;margin:0;object-fit:contain; }
+  .schema-languages strong { font-size:.8rem;font-weight:600; }
+  .schema-languages-overview { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem;margin:0; }
+  .schema-languages-overview a { flex-direction:row;justify-content:flex-start;min-width:0;padding:.7rem;gap:.75rem; }
+  .schema-languages-overview .language-logo { width:2.25rem;height:2.25rem; }
+  .schema-languages-overview img { width:1.65rem;height:1.65rem; }
+  .language-purpose { display:block;color:#c4b6d2;font-size:.72rem;line-height:1.6;margin-top:.15rem; }
+  @media(max-width:400px) { .schema-languages-overview { grid-template-columns:1fr; } }
+</style>

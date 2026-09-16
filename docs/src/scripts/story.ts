@@ -33,7 +33,8 @@ export function initStory() {
     const camera = clamp(-rect.top / Math.max(1, rect.height - height));
     // Reveal the toolbar gradually as the hero leaves the viewport.
     const toolbarProgress = clamp((height * .9 - rect.bottom) / (height * .6));
-    const toolbarReveal = toolbar?.querySelector(':popover-open') ? 1 : motion ? toolbarProgress : Number(toolbarProgress > 0);
+    const menuPinned = document.documentElement.hasAttribute('data-pages-pinned');
+    const toolbarReveal = menuPinned || toolbar?.querySelector(':popover-open') ? 1 : motion ? toolbarProgress : Number(toolbarProgress > 0);
     story.dataset.toolbar = toolbarReveal > 0 ? 'visible' : 'hidden';
     if (toolbar) {
       setProgress(toolbar, '--toolbar-reveal', toolbarReveal);
@@ -110,12 +111,15 @@ export function initStory() {
   setMotion(motion);
   fitMap();
   update();
+  const pinObserver = new MutationObserver(() => { fitMap(); update(); });
+  pinObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-pages-pinned'] });
   preference.addEventListener('change', event => setMotion(!event.matches), { signal: events.signal });
   window.addEventListener('scroll', schedule, { passive: true, signal: events.signal });
   window.addEventListener('resize', fitMap, { signal: events.signal });
   document.addEventListener('astro:before-swap', () => {
     events.abort();
     observer.disconnect();
+    pinObserver.disconnect();
     cancelAnimationFrame(frame);
   }, { once: true });
 }

@@ -51,7 +51,7 @@ const links = [
   .toolbar-menu nav { position: absolute; right: 0; top: calc(100% + .75rem); display: grid; gap: .25rem; min-width: 12rem; padding: .65rem; border: 1px solid #b788df55; border-radius: .4rem; background: #10091c; box-shadow: 0 1rem 3rem #0008; }
   .toolbar-menu nav a { display: flex; align-items: center; padding: .65rem; border-radius: .2rem; }
   .toolbar-menu nav a:hover { background: #b789e51a; }
-  @media (max-width: 1099px) {
+  @media (max-width: 1599px) {
     .toolbar-search { position: static; order: 2; flex: none; transform: none; }
     .toolbar-actions { order: 1; }
     .toolbar-search :global(site-search) { width: 2rem; }
@@ -59,6 +59,6 @@ const links = [
     .toolbar-search :global(button[data-open-modal] > span),
     .toolbar-search :global(button[data-open-modal] > kbd) { display: none !important; }
   }
-  @media (max-width: 640px) { .toolbar-desktop { display: none; } .toolbar-menu { display: block; } .toolbar-actions { gap: .35rem; } }
+  @media (max-width: 1199px) { .toolbar-desktop { display: none; } .toolbar-menu { display: block; } .toolbar-actions { gap: .35rem; } }
   @media (max-width: 420px) { .toolbar-wordmark { display: none; } }
 </style>

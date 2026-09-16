@@ -1,0 +1,118 @@
+---
+title: Generate code from JSON Schema
+description: Turn Scryr’s model schema into TypeScript, Go, Java, Rust, Swift, Python, and C++ types for your own tools.
+---
+
+import SchemaLanguages from '../../components/SchemaLanguages.astro';
+
+Bring Scryr’s architecture model into the language your tools already use. Generate types for dashboards, service integrations, and investigation scripts from one shared schema.
+
+<SchemaLanguages />
+
+## Generate the schema
+
+With the [Scryr CLI installed](/getting-started/), run this from your manifest project:
+
+```sh
+scryr generate schema --path index.scry > scryr-schema.json
+```
+
+The output contains three model schemas: `Manifest`, `Forge`, and `Diagram`. Select the one your tool needs with [jq](https://jqlang.org/). These examples use `Manifest`, keeping its nested definitions together:
+
+```sh
+jq '.models.Manifest' scryr-schema.json > manifest.schema.json
+mkdir -p generated
+```
+
+Use `.models.Forge` or `.models.Diagram` to generate those models instead. The schema describes Scryr’s data types; the generators below turn those definitions into source files for your project.
+
+## TypeScript
+
+Use [json-schema-to-typescript](https://github.com/bcherny/json-schema-to-typescript). It produces TypeScript declarations from schema properties, references, and enums—useful for giving Scryr dashboards and editor tools autocomplete and compile-time checks without maintaining interfaces by hand.
+
+```sh
+npm install --save-dev json-schema-to-typescript
+npx json2ts -i manifest.schema.json -o generated/manifest.d.ts
+```
+
+Import the generated types in your frontend or Node.js tooling.
+
+## Go
+
+Use [quicktype](https://github.com/glideapps/quicktype). Its Go output provides structs and JSON conversion helpers, making Scryr’s model straightforward to consume in service inventory tools and operational CLIs.
+
+```sh
+npx --yes --package quicktype quicktype \
+  --src-lang schema --lang go --top-level Manifest \
+  --package architecture \
+  --out generated/manifest.go manifest.schema.json
+```
+
+Use the generated `architecture` package in your Go project.
+
+## Java
+
+Use [quicktype](https://github.com/glideapps/quicktype). It generates Java model classes with Jackson serialization support, a useful fit for bringing Scryr’s architecture data into JVM services and internal tooling.
+
+```sh
+mkdir -p generated/java
+npx --yes --package quicktype quicktype \
+  --src-lang schema --lang java --top-level Manifest \
+  --package com.example.architecture \
+  --out generated/java/Manifest.java manifest.schema.json
+```
+
+Add the generated Java files to your project’s source tree and include the Jackson dependencies described in the generated converter.
+
+## Rust
+
+Use [Typify](https://github.com/oxidecomputer/typify), through its [cargo-typify CLI](https://github.com/oxidecomputer/typify/tree/main/cargo-typify). It creates Rust structs and enums with Serde support, giving Scryr-based CLIs typed model access and JSON serialization within the Rust ecosystem.
+
+```sh
+rustup component add rustfmt
+cargo install cargo-typify --locked
+cargo typify manifest.schema.json --output generated/manifest.rs
+```
+
+Include the generated module in your crate and add the crates referenced by its generated types, including `serde` and `serde_json`.
+
+## Swift
+
+Use [quicktype](https://github.com/glideapps/quicktype). Its Swift output uses Codable models, making Scryr architecture data convenient to load in native macOS investigation tools or iOS service dashboards.
+
+```sh
+npx --yes --package quicktype quicktype \
+  --src-lang schema --lang swift --top-level Manifest \
+  --out generated/Manifest.swift manifest.schema.json
+```
+
+Add `Manifest.swift` to your app target and decode model JSON with Swift’s `JSONDecoder`.
+
+## Python
+
+Use [datamodel-code-generator](https://github.com/datamodel-code-generator/datamodel-code-generator). It generates Pydantic models from JSON Schema, bringing typed fields and runtime validation to scripts that consume Scryr data in a separate Python project.
+
+```sh
+uvx --from datamodel-code-generator datamodel-codegen \
+  --input manifest.schema.json --input-file-type jsonschema \
+  --output-model-type pydantic_v2.BaseModel \
+  --output generated/manifest.py
+```
+
+Run the generator with [uv](https://docs.astral.sh/uv/guides/tools/), then use the generated models in a project with Pydantic v2 installed.
+
+## C++
+
+Use [quicktype](https://github.com/glideapps/quicktype). It generates C++ model types and JSON conversion code for [nlohmann/json](https://github.com/nlohmann/json), giving native tools a convenient way to read Scryr’s architecture data.
+
+```sh
+npx --yes --package quicktype quicktype \
+  --src-lang schema --lang c++ --top-level Manifest \
+  --out generated/manifest.hpp manifest.schema.json
+```
+
+Include the generated header in your project and make nlohmann’s `json.hpp` available on its include path.
+
+## Keep the code in sync
+
+Regenerate the schema and source files when you update the Scryr SDK. Put these commands in your build tasks so your tools follow the same model definitions as Scryr.
