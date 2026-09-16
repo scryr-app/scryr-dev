@@ -30,7 +30,13 @@ Use `.models.Forge` or `.models.Diagram` to generate those models instead. The s
 
 Use [json-schema-to-typescript](https://github.com/bcherny/json-schema-to-typescript). It produces TypeScript declarations from schema properties, references, and enums—useful for giving Scryr dashboards and editor tools autocomplete and compile-time checks without maintaining interfaces by hand.
 
+With the [Scryr CLI installed](/getting-started/) and [jq](https://jqlang.org/) available, run these commands from your manifest project. `scryr inspect schema` exports the JSON schemas; `jq` selects `Manifest` with its nested definitions. Replace `index.scry` with your manifest entrypoint.
+
 ```sh
+scryr inspect schema --path index.scry > scryr-schema.json
+jq '.models.Manifest' scryr-schema.json > manifest.schema.json
+mkdir -p generated
+
 npm install --save-dev json-schema-to-typescript
 npx json2ts -i manifest.schema.json -o generated/manifest.d.ts
 ```
@@ -41,7 +47,13 @@ Import the generated types in your frontend or Node.js tooling.
 
 Use [quicktype](https://github.com/glideapps/quicktype). Its Go output provides structs and JSON conversion helpers, making Scryr’s model straightforward to consume in service inventory tools and operational CLIs.
 
+With the [Scryr CLI installed](/getting-started/) and [jq](https://jqlang.org/) available, run these commands from your manifest project. `scryr inspect schema` exports the JSON schemas; `jq` selects `Manifest` with its nested definitions. Replace `index.scry` with your manifest entrypoint.
+
 ```sh
+scryr inspect schema --path index.scry > scryr-schema.json
+jq '.models.Manifest' scryr-schema.json > manifest.schema.json
+mkdir -p generated
+
 npx --yes --package quicktype quicktype \
   --src-lang schema --lang go --top-level Manifest \
   --package architecture \
@@ -54,8 +66,13 @@ Use the generated `architecture` package in your Go project.
 
 Use [quicktype](https://github.com/glideapps/quicktype). It generates Java model classes with Jackson serialization support, a useful fit for bringing Scryr’s architecture data into JVM services and internal tooling.
 
+With the [Scryr CLI installed](/getting-started/) and [jq](https://jqlang.org/) available, run these commands from your manifest project. `scryr inspect schema` exports the JSON schemas; `jq` selects `Manifest` with its nested definitions. Replace `index.scry` with your manifest entrypoint.
+
 ```sh
+scryr inspect schema --path index.scry > scryr-schema.json
+jq '.models.Manifest' scryr-schema.json > manifest.schema.json
 mkdir -p generated/java
+
 npx --yes --package quicktype quicktype \
   --src-lang schema --lang java --top-level Manifest \
   --package com.example.architecture \
@@ -68,7 +85,13 @@ Add the generated Java files to your project’s source tree and include the Jac
 
 Use [Typify](https://github.com/oxidecomputer/typify), through its [cargo-typify CLI](https://github.com/oxidecomputer/typify/tree/main/cargo-typify). It creates Rust structs and enums with Serde support, giving Scryr-based CLIs typed model access and JSON serialization within the Rust ecosystem.
 
+With the [Scryr CLI installed](/getting-started/) and [jq](https://jqlang.org/) available, run these commands from your manifest project. `scryr inspect schema` exports the JSON schemas; `jq` selects `Manifest` with its nested definitions. Replace `index.scry` with your manifest entrypoint.
+
 ```sh
+scryr inspect schema --path index.scry > scryr-schema.json
+jq '.models.Manifest' scryr-schema.json > manifest.schema.json
+mkdir -p generated
+
 rustup component add rustfmt
 cargo install cargo-typify --locked
 cargo typify manifest.schema.json --output generated/manifest.rs
@@ -80,7 +103,13 @@ Include the generated module in your crate and add the crates referenced by its 
 
 Use [quicktype](https://github.com/glideapps/quicktype). Its Swift output uses Codable models, making Scryr architecture data convenient to load in native macOS investigation tools or iOS service dashboards.
 
+With the [Scryr CLI installed](/getting-started/) and [jq](https://jqlang.org/) available, run these commands from your manifest project. `scryr inspect schema` exports the JSON schemas; `jq` selects `Manifest` with its nested definitions. Replace `index.scry` with your manifest entrypoint.
+
 ```sh
+scryr inspect schema --path index.scry > scryr-schema.json
+jq '.models.Manifest' scryr-schema.json > manifest.schema.json
+mkdir -p generated
+
 npx --yes --package quicktype quicktype \
   --src-lang schema --lang swift --top-level Manifest \
   --out generated/Manifest.swift manifest.schema.json
@@ -92,7 +121,13 @@ Add `Manifest.swift` to your app target and decode model JSON with Swift’s `JS
 
 Use [datamodel-code-generator](https://github.com/datamodel-code-generator/datamodel-code-generator). It generates Pydantic models from JSON Schema, bringing typed fields and runtime validation to scripts that consume Scryr data in a separate Python project.
 
+With the [Scryr CLI installed](/getting-started/) and [jq](https://jqlang.org/) available, run these commands from your manifest project. `scryr inspect schema` exports the JSON schemas; `jq` selects `Manifest` with its nested definitions. Replace `index.scry` with your manifest entrypoint.
+
 ```sh
+scryr inspect schema --path index.scry > scryr-schema.json
+jq '.models.Manifest' scryr-schema.json > manifest.schema.json
+mkdir -p generated
+
 uvx --from datamodel-code-generator datamodel-codegen \
   --input manifest.schema.json --input-file-type jsonschema \
   --output-model-type pydantic_v2.BaseModel \
@@ -105,7 +140,13 @@ Run the generator with [uv](https://docs.astral.sh/uv/guides/tools/), then use t
 
 Use [quicktype](https://github.com/glideapps/quicktype). It generates C++ model types and JSON conversion code for [nlohmann/json](https://github.com/nlohmann/json), giving native tools a convenient way to read Scryr’s architecture data.
 
+With the [Scryr CLI installed](/getting-started/) and [jq](https://jqlang.org/) available, run these commands from your manifest project. `scryr inspect schema` exports the JSON schemas; `jq` selects `Manifest` with its nested definitions. Replace `index.scry` with your manifest entrypoint.
+
 ```sh
+scryr inspect schema --path index.scry > scryr-schema.json
+jq '.models.Manifest' scryr-schema.json > manifest.schema.json
+mkdir -p generated
+
 npx --yes --package quicktype quicktype \
   --src-lang schema --lang c++ --top-level Manifest \
   --out generated/manifest.hpp manifest.schema.json
