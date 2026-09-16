@@ -1,0 +1,168 @@
+---
+const forgeCode = `from scryr import Forge
+
+local = Forge(
+    name="Developer environment",
+    tools={"python": "3.14", "postgres": "17"},
+    tasks={"test": "pytest"},
+)`;
+---
+
+<section class="story-chapter feature-chapter" id="the-signal" aria-labelledby="signal-title">
+  <div class="chapter-heading" data-reveal>
+    <h2 id="signal-title">Find the service.<br /><em>Follow the context.</em></h2>
+    <p>Trace connections. Open a component’s Info card for its stack, owner, docs, and source.<br />Keep the architecture beside you while you change the code.</p>
+  </div>
+  <div class="feature-explore">
+    <figure class="product-vision" data-reveal>
+      <a href="https://scryr.app" aria-label="Open Scryr"><img src="/assets/scryr-product-map.png" alt="Scryr’s Northwind Commerce diagram: API connected to Redis, Stripe, and the web app, with Info cards and Docs and Source links" width="1440" height="900" loading="lazy" /></a>
+      <figcaption>Northwind Commerce in Scryr<span>Connected services with their Info cards visible.</span></figcaption>
+    </figure>
+    <div class="feature-side" data-reveal>
+      <h3>Review the model as you edit.</h3>
+      <p>Check types and diagram references, then open the local map. Watch mode rebuilds it when your manifest changes.</p>
+      <div class="terminal-spell">
+        <div class="panel-label"><span>Local development</span><span>terminal</span></div>
+        <pre><code><span>$</span> scryr check
+<span>$</span> scryr serve --watch</code></pre>
+      </div>
+      <a class="chapter-link" href="/cli/#serve-locally">Run your own map <span aria-hidden="true">↗</span></a>
+    </div>
+  </div>
+</section>
+
+<section class="story-chapter feature-chapter" id="the-revelation" aria-labelledby="revelation-title">
+  <div class="chapter-heading" data-reveal>
+    <h2 id="revelation-title">A service is more<br />than <em>its name.</em></h2>
+    <p>Connect test results and runtime evidence to each service.<br />Reuse the same architecture model in your own tools.</p>
+  </div>
+  <div class="feature-evidence">
+    <article>
+      <div class="feature-evidence-copy" data-reveal>
+      <h3>Did this service pass?</h3>
+      <p>Publish JUnit results and completed GitHub Actions runs. See pass/fail counts and workflow status in the diagram.</p>
+      <a class="chapter-link" href="/integrations/#github-actions-and-test-reports">Connect CI evidence <span aria-hidden="true">↗</span></a>
+      </div>
+      <div class="feature-example" data-reveal>
+      <div class="terminal-spell">
+        <div class="panel-label"><span>Report completed runs</span><span>terminal</span></div>
+        <pre><code><span>$</span> scryr report tests --manifest api \
+    --run-id "$GITHUB_RUN_ID" \
+    --observed-at "$RESULTS_COMPLETED_AT"
+<span>$</span> scryr report actions --manifest api \
+    --event-file workflow-run.json --branch main</code></pre>
+      </div>
+      </div>
+    </article>
+    <article>
+      <div class="feature-evidence-copy" data-reveal>
+      <h3>What’s happening at runtime?</h3>
+      <p>Open a component’s provider-backed snapshot. Run its named query from the CLI and export JSON for a script or investigation.</p>
+      <a class="chapter-link" href="/integrations/#prometheus-compatible-metrics">Connect runtime metrics <span aria-hidden="true">↗</span></a>
+      </div>
+      <div class="feature-example" data-reveal>
+      <div class="terminal-spell">
+        <div class="panel-label"><span>Query the same source</span><span>terminal</span></div>
+        <pre><code><span>$</span> scryr query --list
+<span>$</span> scryr query requestRate --manifest api
+<span>$</span> scryr query requestRate --manifest api \
+    --json &gt; request-rate.json</code></pre>
+      </div>
+      </div>
+    </article>
+    <article>
+      <div class="feature-evidence-copy" data-reveal>
+        <h3>What can your tools build from it?</h3>
+        <p>Export Scryr’s JSON Schema to power code generation, editor tooling, validation, and CI checks from the same typed model as your map.</p>
+        <a class="chapter-link" href="/cli/#inspect">Inspect the model <span aria-hidden="true">↗</span></a>
+      </div>
+      <div class="feature-example" data-reveal>
+        <div class="terminal-spell">
+          <div class="panel-label"><span>Inputs for your own tooling</span><span>terminal</span></div>
+          <pre><code><span>$</span> scryr export json &gt; architecture.json
+<span>$</span> scryr inspect schema &gt; scryr-schema.json</code></pre>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<section class="story-chapter feature-chapter" id="the-forge" aria-labelledby="forge-title">
+  <div class="chapter-heading" data-reveal>
+    <h2 id="forge-title">Declare the tools.<br /><em>Export the setup.</em></h2>
+    <p>A Forge keeps tool versions and tasks in your architecture manifest.<br />Generate the files a developer needs to work on the system.</p>
+  </div>
+  <div class="feature-forge">
+    <div class="grimoire" data-reveal>
+      <div class="panel-label"><span>Developer environment</span><span>index.scry</span></div>
+      <pre><code>{forgeCode}</code></pre>
+    </div>
+    <div class="terminal-spell" data-reveal>
+      <div class="panel-label"><span>From the same Forge</span><span>terminal</span></div>
+      <pre><code><span>$</span> scryr export mise \
+    --forge "Developer environment" &gt; mise.toml
+<span>$</span> scryr export compose \
+    --forge "Developer environment" &gt; compose.yaml
+<span>$</span> scryr export devcontainer \
+    --forge "Developer environment" &gt; devcontainer.json</code></pre>
+    </div>
+  </div>
+  <div class="feature-outputs">
+    <p data-reveal><strong>mise.toml</strong>Tool versions and runnable tasks.</p>
+    <p data-reveal><strong>compose.yaml</strong>Local services, including PostgreSQL and Redis.</p>
+    <p data-reveal><strong>devcontainer.json</strong>A container workspace with editor extensions.</p>
+  </div>
+  <a class="chapter-link" href="/integrations/#mise-docker-compose-and-devcontainers">Build your development environment <span aria-hidden="true">↗</span></a>
+</section>
+
+<div class="chapter-divider" aria-hidden="true"></div>
+
+<style is:global>
+  .scryr-story .feature-chapter { padding-block: clamp(7rem, 14vw, 12rem); border-top: 1px solid #b889d922; background: radial-gradient(ellipse at 65% 45%, #66438518, transparent 70%); }
+  .scryr-story .feature-chapter .chapter-heading::after { content: ''; display: block; width: 7rem; height: 1px; margin: 2.5rem auto 0; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+  .scryr-story #the-signal .chapter-heading::after { content: none; }
+  .scryr-story .feature-chapter h2 { font-size: clamp(2.4rem, 4.5vw, 4.2rem); }
+  .scryr-story .feature-chapter .chapter-heading > p:not(.eyebrow) { max-width: 760px; margin-inline: auto; font-size: .9rem; }
+  .feature-explore, .feature-forge, .feature-evidence { display: grid; gap: clamp(3rem, 6vw, 5rem); margin-top: clamp(4rem, 7vw, 6rem); }
+  .feature-explore { grid-template-columns: 1.6fr 1fr; align-items: center; }
+  .feature-forge { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .feature-evidence { gap: clamp(5rem, 10vw, 9rem); }
+  .feature-side, .feature-example, .feature-evidence-copy { min-width: 0; }
+  .scryr-story .feature-chapter h3 { font-size: 1.15rem; line-height: 1.5; }
+  .scryr-story .feature-side > p, .scryr-story .feature-evidence-copy > p { color: #c4b6d2; font-size: .9rem; line-height: 1.9; margin-top: 1rem; }
+  .scryr-story .feature-chapter .terminal-spell { position: relative; min-width: 0; margin-top: 2rem; }
+  .scryr-story .feature-chapter pre { font-size: .78rem; line-height: 1.9; padding: 1.25rem; }
+  .scryr-story .feature-evidence article { display: grid; grid-template-columns: .85fr 1.15fr; align-items: center; gap: clamp(3rem, 6vw, 5rem); }
+  .scryr-story .feature-evidence article + article { padding-top: clamp(5rem, 10vw, 9rem); }
+  .scryr-story .feature-example .terminal-spell { margin-top: 0; }
+  .scryr-story .feature-evidence .feature-note { margin-top: 1.25rem; font-size: .72rem; color: var(--muted); }
+  .scryr-story .feature-forge .terminal-spell { margin-top: 0; }
+  .feature-outputs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3rem; margin-top: 3rem; }
+  .scryr-story .feature-outputs p { font-size: .78rem; color: var(--muted); line-height: 1.8; }
+  .feature-outputs strong { display: block; margin-bottom: .3rem; color: var(--gold); font-weight: 500; }
+  @media (prefers-reduced-motion: no-preference) {
+    .scryr-story.is-ready[data-motion='on'] .feature-chapter .chapter-heading.is-visible::after { animation: feature-rule-arrive 1.3s ease both; }
+    .scryr-story.is-ready[data-motion='on'] .feature-chapter [data-reveal].is-visible .terminal-spell pre,
+    .scryr-story.is-ready[data-motion='on'] .feature-chapter .terminal-spell.is-visible pre { animation: feature-terminal-arrive 1.2s .2s cubic-bezier(.2,.7,.2,1) both; }
+    .scryr-story.is-ready[data-motion='on'] .feature-chapter [data-reveal].is-visible .terminal-spell::after,
+    .scryr-story.is-ready[data-motion='on'] .feature-chapter .terminal-spell.is-visible::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(110deg, transparent 35%, #e7c77c0d 50%, transparent 65%); animation: feature-terminal-sheen 1.8s .25s ease-out both; }
+    .scryr-story.is-ready[data-motion='on'] .feature-outputs p.is-visible { animation: feature-output-arrive .8s var(--stagger, 0ms) ease-out both; }
+    @media (min-width: 901px) {
+      .scryr-story.is-ready[data-motion='on'] .feature-explore .product-vision { transform: perspective(1400px) rotateY(calc((.5 - var(--progress, .5)) * -9deg)) translateY(calc((.5 - var(--progress, .5)) * -35px)); }
+      .scryr-story.is-ready[data-motion='on'] .feature-forge .grimoire { transform: perspective(1400px) rotateY(calc((.5 - var(--progress, .5)) * 8deg)); }
+    }
+  }
+  @keyframes feature-rule-arrive { from { transform: scaleX(0); opacity: 0; } to { transform: scaleX(1); opacity: 1; } }
+  @keyframes feature-terminal-arrive { from { clip-path: inset(0 0 100% 0); opacity: .3; } to { clip-path: inset(0); opacity: 1; } }
+  @keyframes feature-terminal-sheen { from { transform: translateX(-100%); opacity: 0; } 30% { opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+  @keyframes feature-output-arrive { from { transform: translateY(15px); } to { transform: translateY(0); } }
+  @media (max-width: 1000px) {
+    .feature-explore { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 720px) {
+    .scryr-story .feature-chapter { padding-block: 5rem; }
+    .feature-explore, .feature-forge, .feature-evidence { margin-top: 3rem; }
+    .feature-forge, .feature-outputs, .scryr-story .feature-evidence article { grid-template-columns: 1fr; gap: 2.5rem; }
+    .scryr-story .feature-chapter pre { font-size: .72rem; }
+  }
+</style>
