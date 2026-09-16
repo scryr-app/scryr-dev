@@ -20,6 +20,7 @@ export default defineConfig({
       sidebar: [
         { label: 'Start Here', items: [
           { label: 'Overview', slug: 'index' },
+          { label: 'The Method', slug: 'why' },
           { label: 'Getting started', slug: 'getting-started' },
           { label: 'Generate with an LLM', slug: 'llm-prompt' },
         ] },

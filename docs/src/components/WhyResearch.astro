@@ -1,0 +1,136 @@
+---
+import '../styles/why.css';
+const findings = [
+  {
+    id: 'verification',
+    implication: 'Review has to be grounded in evidence, especially when generated code looks convincing. Put the source, test results, and dependency reports within reach of the person deciding whether a change is ready.', nav: 'Review & confidence', title: 'Confidence in generated code can exceed its security.',
+    method: 'User study · CCS 2023',
+    finding: 'Perry and colleagues found that participants using an AI coding assistant produced less secure code on security-related tasks, while being more likely to believe their code was secure.',
+    sources: [{ title: 'Do Users Write More Insecure Code with AI Assistants?', author: 'Perry, Srivastava, Kumar & Boneh', url: 'https://arxiv.org/abs/2211.03622' }],
+    responseTitle: 'Make review evidence easier to reach.',
+    response: 'Scryr connects components to source repositories, documentation, and test, coverage, and dependency reports. A reviewer can move from a component to the evidence behind it.',
+    docs: [{ label: 'Source and documentation links', url: '/integrations/#github-and-source-links' }, { label: 'Tests and CI reports', url: '/integrations/#github-actions-and-test-reports' }],
+  },
+  {
+    id: 'understanding',
+    implication: 'Measure the whole engineering task: generating a change, understanding it, checking it, and integrating it. The opportunity is to support the work that remains after code has been written.', nav: 'Productivity & context', title: 'Perceived speed and measured productivity can diverge.',
+    method: 'Randomized controlled trial · METR, 2025',
+    finding: 'Sixteen experienced open-source developers completed 246 tasks in mature repositories. They estimated AI had made them 20% faster after the study; measured completion time was 19% longer with the early-2025 tools.',
+    sources: [{ title: 'Measuring the Impact of Early-2025 AI on Experienced Open-Source Developer Productivity', author: 'Becker, Rush, Barnes & Rein', url: 'https://arxiv.org/abs/2507.09089' }, { title: 'Follow-up: changing the experiment design', author: 'METR · February 2026', url: 'https://metr.org/blog/2026-02-24-uplift-update/' }],
+    responseTitle: 'Preserve context alongside the code.',
+    response: 'Scryr manifests record responsibilities, connections, ownership, and source links in a reusable model. Engineers can inspect that context when investigating agent-produced changes.',
+    docs: [{ label: 'Model a component', url: '/manifests/#manifest-one-component' }, { label: 'Generate with an LLM', url: '/llm-prompt/' }],
+  },
+  {
+    id: 'investigation',
+    implication: 'Every investigation needs a connected account of the system. Keeping relationships and source references together gives the next engineer a starting point instead of another trail to reconstruct.', nav: 'Connecting evidence', title: 'System questions span more than one tool result.',
+    method: 'Two qualitative studies · FSE 2006',
+    finding: 'Sillito and colleagues catalogued 44 types of questions programmers asked during software evolution tasks. Developers pieced together isolated tool results to answer broader questions, while tools often failed to preserve the higher-level context of the investigation.',
+    sources: [{ title: 'Questions Programmers Ask During Software Evolution Tasks', author: 'Sillito, Murphy & De Volder', url: 'https://www.cs.ubc.ca/~murphy/papers/other/asking-answering-fse06.pdf' }],
+    responseTitle: 'Connect components to the evidence about them.',
+    response: 'A Scryr component can carry repository links, ownership, documentation, and operational reports. These links provide a path from the shared system model to the tools and records needed to investigate a question.',
+    docs: [{ label: 'Attach source and runbook links', url: '/integrations/#github-and-source-links' }, { label: 'Explore component metadata', url: '/manifests/#manifest-one-component' }],
+  },
+  {
+    id: 'mental-model',
+    implication: 'Understanding is an engineering asset. When the model stays only in one person’s head, the team cannot easily review it, reuse it, or carry it into the next investigation.', nav: 'Mental models', title: 'Understanding software means constructing a mental model.',
+    method: 'Systematic literature review · 187 articles',
+    finding: 'Heinonen and colleagues synthesized research on programmers’ mental models of programs, tasks, and concepts. These models guide how programmers work and influence task performance. The review also identifies inconsistent terminology and gaps around modern tools.',
+    sources: [{ title: 'Synthesizing Research on Programmers’ Mental Models of Programs, Tasks and Concepts', author: 'Heinonen, Lehtelä, Hellas & Fagerholm · 2022', url: 'https://arxiv.org/abs/2212.07763' }],
+    responseTitle: 'Give the team a model it can inspect and revise.',
+    response: 'Typed Python manifests describe components and relationships. Named diagrams select useful views of that model; imports and functions let teams reuse declarations as the system grows.',
+    docs: [{ label: 'Typed Python manifests', url: '/manifests/' }, { label: 'Select a useful view', url: '/manifests/#diagram-one-useful-point-of-view' }],
+  },
+  {
+    id: 'diagrams',
+    implication: 'A useful view should answer a concrete question: what depends on this service, who owns it, or what evidence explains its behavior? That purpose should determine what the diagram contains.', nav: 'What diagrams help with', title: 'Drawings support discussion. Visual layout alone is not enough.',
+    method: 'Developer field research · CHI 2007 / experiment · ICSE 2023',
+    finding: 'Cherubini and colleagues observed developers using drawings to understand, design, and communicate software. A later experiment by Bouraffa and colleagues, involving 20 developers, found no significant overall comprehension improvement from its spatial code canvas.',
+    sources: [{ title: 'Let’s Go to the Whiteboard: How and Why Software Developers Use Drawings', author: 'Cherubini, Venolia, DeLine & Ko', url: 'https://www.microsoft.com/en-us/research/uploads/prod/2007/05/p557-cherubini.pdf' }, { title: 'Developers’ Visuo-spatial Mental Model and Program Comprehension', author: 'Bouraffa, Fuhrmann & Maalej', url: 'https://arxiv.org/abs/2304.09301' }],
+    responseTitle: 'Make each view answer an engineering question.',
+    response: 'Scryr lets teams choose the components in a diagram, or select them through typed queries. Component details attach ownership, documentation, and operational evidence to the architecture.',
+    docs: [{ label: 'Query-selected diagrams', url: '/manifests/#query-selected-diagrams' }, { label: 'Attach supporting context', url: '/integrations/#github-and-source-links' }],
+  },
+  {
+    id: 'tooling',
+    implication: 'Invest in the workflow that receives AI-generated code. Shared, reviewable declarations make architecture and developer tooling something the team can maintain together.', nav: 'Engineering workflows', title: 'AI outcomes depend on the engineering system around the tool.',
+    method: 'Industry research report · DORA 2025',
+    finding: 'DORA describes AI as amplifying an organization’s existing strengths and weaknesses. Its conclusion puts attention on the underlying organizational system, rather than treating AI adoption alone as a path to better delivery.',
+    sources: [{ title: 'State of AI-assisted Software Development 2025', author: 'DORA · Google Cloud', url: 'https://dora.dev/research/2025/dora-report/' }],
+    responseTitle: 'Turn shared declarations into working tools.',
+    response: 'Scryr’s Forge declares tools, environment variables, and tasks in Python, then exports mise, Docker Compose, and devcontainer configuration. Teams can review and reuse that declaration alongside their architecture.',
+    docs: [{ label: 'Declare a Forge', url: '/manifests/#forge-generate-project-tooling' }, { label: 'Export developer environments', url: '/integrations/#mise-docker-compose-and-devcontainers' }],
+  },
+  {
+    id: 'evidence',
+    implication: 'An architecture description becomes more useful during an incident when it connects directly to observations. Engineers need a path from the affected service to measurements, reports, and runbooks.', nav: 'Production investigation', title: 'An incident investigation needs symptoms and system evidence.',
+    method: 'Engineering practice · Google SRE',
+    finding: 'Google’s monitoring guidance distinguishes symptoms from causes and emphasizes latency, traffic, errors, and saturation. It also describes using internal measurements to investigate why a system is behaving poorly.',
+    sources: [{ title: 'Monitoring Distributed Systems', author: 'Rob Ewaschuk · Site Reliability Engineering', url: 'https://sre.google/sre-book/monitoring-distributed-systems/' }],
+    responseTitle: 'Put observations beside the component they describe.',
+    response: 'Scryr supports Prometheus-compatible metric queries, component metric snapshots, and operational reports. Source and runbook links help an investigator move from architecture to the underlying evidence.',
+    docs: [{ label: 'Prometheus-compatible metrics', url: '/integrations/#prometheus-compatible-metrics' }, { label: 'Operational integrations', url: '/integrations/' }],
+  },
+];
+---
+<article class="why-research">
+  <header class="research-intro">
+    <h1>The Method</h1>
+    <p class="research-deck">Turn code into shared understanding.</p>
+    <p>Generating a change is only part of delivering software. Engineers still need to understand its place in the system, verify its behavior, and investigate it when something goes wrong. Research across AI-assisted programming, software comprehension, and operations makes the case for investing in that work. Scryr turns shared understanding into a coded model connected to engineering evidence.</p>
+  </header>
+  <div class="research-layout">
+    <nav class="research-nav" aria-label="On this page">{findings.map(finding => <a href={`#${finding.id}`}>{finding.nav}</a>)}<a href="#engineering-foundations">Engineering Foundations</a></nav>
+    <div class="research-main">
+      {findings.map(finding => <section class="research-finding" id={finding.id} aria-labelledby={`heading-${finding.id}`}>
+        <h2 id={`heading-${finding.id}`}>{finding.title}</h2>
+        <div class="finding-layout">
+          <div class="finding-evidence"><p class="evidence-method">{finding.method}</p><p>{finding.finding}</p>
+            <div class="paper-links">{finding.sources.map(source => <a href={source.url}><span>{source.author}</span><strong>{source.title} <span aria-hidden="true">↗</span></strong></a>)}</div>
+            <aside class="evidence-implication" aria-labelledby={`matters-${finding.id}`}><h3 id={`matters-${finding.id}`}>Why this matters</h3><p>{finding.implication}</p></aside>
+          </div>
+          <aside class="scryr-response" aria-label={`Improve with Scryr: ${finding.responseTitle}`}><span class="response-label">Improve with Scryr</span><h3>{finding.responseTitle}</h3><p>{finding.response}</p><div class="research-docs">{finding.docs.map(doc => <a href={doc.url}>{doc.label} <span aria-hidden="true">↗</span></a>)}</div></aside>
+        </div>
+      </section>)}
+      <section class="research-foundations" id="engineering-foundations" aria-labelledby="foundations-title">
+        <h2 id="foundations-title">Engineering Foundations</h2>
+        <p>A shared model is more useful when it fits into the way you already build software. Scryr makes the model executable, portable, and reusable beyond a single view.</p>
+        <div class="foundation-item">
+          <h3>Typed Python. Separate dependencies.</h3>
+          <p>Describe your system in <code>index.scry</code> using typed Python, imports, and functions. Scryr’s CLI manages its own runtime and dependencies, leaving your application’s virtual environment unchanged.</p>
+          <p>Project mode uses your declared, locked dependencies in Scryr’s managed environment.</p>
+          <div class="research-docs"><a href="/manifests/">Explore the typed SDK ↗</a><a href="/manifests/#python-project-mode">Configure project dependencies ↗</a></div>
+        </div>
+        <div class="foundation-item">
+          <h3>Integrate through JSON Schema</h3>
+          <p>Use JSON model data in your own catalogs, checks, and status tools. Scryr exposes JSON Schema for <code>Manifest</code>, <code>Forge</code>, and <code>Diagram</code> so consumers can validate their structure.</p>
+          <pre><code>scryr inspect schema --path index.scry</code></pre>
+          <p>The command returns individual schemas under <code>models</code>. Select the matching schema for your data; your integration supplies the behavior.</p>
+          <p>Generate types for your application from JSON Schema with these code generators:</p>
+          <ul class="schema-generators">
+            <li><strong>TypeScript</strong><a href="https://github.com/bcherny/json-schema-to-typescript">json-schema-to-typescript ↗</a></li>
+            <li><strong>Go</strong><a href="https://github.com/glideapps/quicktype">quicktype ↗</a></li>
+            <li><strong>Java</strong><a href="https://github.com/glideapps/quicktype">quicktype ↗</a></li>
+            <li><strong>Rust</strong><a href="https://github.com/oxidecomputer/typify">typify ↗</a></li>
+            <li><strong>Swift</strong><a href="https://github.com/glideapps/quicktype">quicktype ↗</a></li>
+            <li><strong>Python</strong><a href="https://github.com/datamodel-code-generator/datamodel-code-generator">datamodel-code-generator ↗</a></li>
+            <li><strong>C++</strong><a href="https://github.com/glideapps/quicktype">quicktype ↗</a></li>
+          </ul>
+          <div class="research-docs"><a href="/cli/#inspect">Inspect Scryr’s model schemas ↗</a><a href="https://json-schema.org/overview/what-is-jsonschema">How JSON Schema supports interoperability ↗</a></div>
+        </div>
+        <div class="foundation-item">
+          <h3>Build views around your questions</h3>
+          <p>Focus a diagram on a request path, a team’s services, or an incident. Typed queries select components; metrics and reports provide service-status evidence.</p>
+          <p>For custom investigations, use the structured model in your own visualization or reporting code. Scryr’s built-in diagrams and metric snapshots are available today.</p>
+          <div class="research-docs"><a href="/manifests/#query-selected-diagrams">Build focused diagrams ↗</a><a href="/integrations/#prometheus-compatible-metrics">Connect service metrics ↗</a><a href="/integrations/#graphql-api">Access the model through GraphQL ↗</a></div>
+        </div>
+        <div class="foundation-item">
+          <h3>Generate the developer environment</h3>
+          <p>Declare tools, environment variables, and tasks in a Forge. Export to mise, Docker Compose, or a devcontainer to turn the model into a working environment.</p>
+          <div class="research-docs"><a href="/integrations/#mise-docker-compose-and-devcontainers">Generate developer environments ↗</a></div>
+        </div>
+      </section>
+      <footer class="research-footer"><h2>Try the approach on a system you know.</h2><p>Build a model, check it against the code, and attach the evidence your team uses to make decisions.</p><a href="/getting-started/">Get started with Scryr <span aria-hidden="true">↗</span></a><p class="research-position">The findings above motivate Scryr’s design. The connections to product features are our interpretation; these sources do not evaluate Scryr itself.</p></footer>
+    </div>
+  </div>
+</article>

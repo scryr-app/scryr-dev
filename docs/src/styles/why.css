@@ -1,0 +1,67 @@
+body:has(.why-research) .content-panel:first-child { display: none; }
+body:has(.why-research) .content-panel { padding: 0; border: 0; }
+body:has(.why-research) .sl-container { max-width: none; }
+.why-research { --research-muted: #bdb0cc; --research-border: #b992de30; color: #eee6f6; background: #0b0812; }
+.why-research *, .why-research *::before, .why-research *::after { box-sizing: border-box; }
+.why-research :is(h1,h2,h3,p,dl,dt,dd) { margin: 0; }
+.why-research p, .why-research dd { font-size: 1rem; line-height: 1.8; }
+.why-research a { text-underline-offset: .25em; }
+.why-research a:focus-visible { outline: 2px solid #77e1ef; outline-offset: 5px; }
+.research-intro { max-width: 100rem; margin: auto; padding: clamp(3rem,6vw,6rem) 6vw 3rem; border-bottom: 1px solid var(--research-border); }
+.why-research h1 { font-size: clamp(2.8rem,5vw,5rem); line-height: 1.1; letter-spacing: -.04em; }
+.research-intro .research-deck { margin-top: 1.3rem; font-size: clamp(1.25rem,2vw,1.7rem); line-height: 1.5; color: #e5d6f1; max-width: 48rem; }
+.research-intro>p { margin-top: 1.2rem; max-width: 58rem; color: var(--research-muted); }
+.research-footer .research-position { text-align: left; margin-top: 2rem; font-size: .875rem; max-width: 58rem; padding-left: 1rem; border-left: 2px solid #a584c8; }
+.research-layout { max-width: 100rem; margin: auto; display: grid; grid-template-columns: 13rem minmax(0,1fr); gap: 3rem; padding: 0 6vw; }
+.research-nav { align-self: start; position: sticky; top: calc(var(--sl-nav-height) + 2rem); display: grid; gap: .4rem; padding-block: 3rem; }
+.why-research .research-nav>a { font-size: .875rem; line-height: 1.5; color: #c7b6d7; text-decoration: none; padding-block: .5rem; }
+.why-research .research-nav>a:hover { color: #fff; text-decoration: underline; }
+.research-main { min-width: 0; }
+.research-finding, .research-foundations { padding: 3rem 0; border-bottom: 1px solid var(--research-border); scroll-margin-top: calc(var(--sl-nav-height) + 2rem); }
+.why-research h2 { font-family: 'Source Code Pro',monospace; font-weight: 500; font-size: clamp(1.4rem,2.1vw,2rem); line-height: 1.4; letter-spacing: -.035em; text-wrap: balance; max-width: 48rem; margin: 0; }
+.why-research h2::after { display: none; }
+.finding-layout { display: grid; grid-template-columns: 1.25fr 1fr; gap: 2rem; margin-top: 1.5rem; align-items: start; }
+.finding-evidence>p { color: #d3c6de; }
+.finding-evidence .evidence-method { font-size: .875rem; color: #a99ab9; margin-bottom: 1rem; }
+.paper-links { display: grid; gap: .9rem; margin-top: 1.25rem; }
+.why-research .paper-links>a { display: grid; gap: .4rem; padding-left: 1rem; border-left: 2px solid #ad86d1; text-decoration: none; }
+.paper-links>a>span { color: #a99ab9; font-size: .8rem; line-height: 1.6; }
+.paper-links strong { color: #d5b5f0; font-size: .95rem; font-weight: 500; line-height: 1.65; }
+.paper-links a:hover strong { color: #fff; text-decoration: underline; }
+.scryr-response { background: #191121; border: 1px solid var(--research-border); border-radius: 6px; padding: 1.3rem; }
+.response-label { display: block; font-size: .8rem; color: #b9a7cb; margin-bottom: .75rem; }
+.why-research h3 { font-family: 'Source Code Pro',monospace; font-size: 1.1rem; font-weight: 500; line-height: 1.55; color: #eee2f8; }
+.scryr-response>p { font-size: .95rem; margin-top: .8rem; color: #c8b9d7; }
+.research-docs { display: grid; gap: .7rem; margin-top: 1.25rem; }
+.why-research .research-docs>a, .why-research .research-footer>a { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 44px; padding: .7rem .85rem; background: #e7c77c0d; border: 1px solid #e7c77c50; border-radius: 4px; color: #ecd397; font-size: .875rem; line-height: 1.5; text-decoration: none; }
+.why-research .research-docs>a:hover, .why-research .research-footer>a:hover { border-color: #e7c77c; background: #e7c77c18; }
+.research-foundations>p { color: var(--research-muted); margin-top: 1rem; }
+.research-foundations dl { margin-top: 1.5rem; display: grid; gap: 1.5rem; }
+.research-foundations dt { color: #dcc9ed; font-size: 1rem; margin-bottom: .4rem; }
+.research-foundations dd { color: var(--research-muted); font-size: .95rem; }
+.research-footer { padding: 3rem 0 5rem; text-align: center; }
+.research-footer>p { margin-top: 1rem; color: var(--research-muted); }
+.why-research .research-footer>a { display: inline-flex; margin-top: 1.5rem; }
+@media(max-width:1200px) { .research-layout { grid-template-columns: 11rem minmax(0,1fr); gap: 2rem; padding-inline: 4vw; }.research-intro { padding-inline: 4vw; }.finding-layout { grid-template-columns: 1fr; }.scryr-response { margin-top: .25rem; } }
+@media(max-width:760px) { .research-layout { display: block; padding-inline: 6vw; }.research-intro { padding-inline: 6vw; }.research-nav { position: static; grid-template-columns: 1fr 1fr; gap: .2rem 1rem; padding: 1.5rem 0; border-bottom: 1px solid var(--research-border); }.research-finding { padding-block: 2.5rem; } }
+@media(max-width:380px) { .research-nav { grid-template-columns: 1fr; } }
+@media print { .research-nav { display: none; }.research-layout { display: block; }.finding-layout { display: block; }.scryr-response { margin-top: 1rem; }.research-finding { break-inside: avoid; }.why-research a { text-decoration: underline; } }
+
+.foundation-item { margin-top:2rem;padding-top:2rem; }
+.foundation-item>p { margin-top:1rem;color:var(--research-muted); }
+.foundation-item .research-docs { display:flex;flex-wrap:wrap; }
+.foundation-item pre { margin-top:1rem;padding:1rem;background:#191121;border:1px solid var(--research-border);border-radius:4px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:.875rem; }
+.foundation-item pre code { background:transparent;padding:0; }
+
+.finding-evidence .evidence-implication { margin-top:1.75rem; }
+.why-research .evidence-implication h3 { color:#eee2f8;font-size:1.15rem;font-weight:600;line-height:1.4; }
+.evidence-implication>p { margin-top:.75rem;color:#e3dceb;font-size:1rem;line-height:1.8; }
+
+.why-research .research-foundations>h2 { font-family:'Cinzel Decorative',Georgia,serif;font-size:clamp(2rem,3.3vw,3.3rem);font-weight:400;line-height:1.2;letter-spacing:-.04em;color:#e4c9fa; }
+.why-research .research-footer>h2 { font-family:'Cinzel Decorative',Georgia,serif;font-size:clamp(2rem,3.3vw,3.3rem);font-weight:400;line-height:1.2;letter-spacing:-.04em;text-align:center;margin-inline:auto; }
+
+.why-research .schema-generators { list-style:none;padding:0;margin:1.25rem 0;display:grid;gap:.75rem; }
+.schema-generators>li { display:grid;grid-template-columns:7rem minmax(0,1fr);gap:1rem;margin:0;font-size:.95rem;line-height:1.6; }
+.schema-generators strong { font-weight:500;color:#e2d3ee; }
+.schema-generators a { overflow-wrap:anywhere; }
+@media(max-width:540px) { .schema-generators>li { grid-template-columns:5.5rem minmax(0,1fr);gap:.5rem;font-size:.875rem; } }
