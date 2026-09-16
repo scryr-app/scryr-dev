@@ -138,6 +138,7 @@ export function PyodideConsole({
 		<section
 			ref={panelRef}
 			aria-label="Manifest source editor"
+			data-camera-occluder
 			style={{
 				left: position.x,
 				top: position.y,

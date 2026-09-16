@@ -111,6 +111,7 @@ export function MapDiagram() {
 				<MovingThemeLight />
 				<MapDisplay />
 				<OrbitControls
+					makeDefault
 					ref={handleControlsMount}
 					target={[0, 0, 0]}
 					maxPolarAngle={Math.PI / 2 - Math.PI / 18}
