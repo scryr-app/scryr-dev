@@ -13,7 +13,7 @@ pub(crate) use generate::{GenerateCommonArgs, resolve_generate_request};
 pub(crate) use workflow::*;
 
 pub(crate) use auth::{AuthArgs, AuthCommand, LoginArgs};
-pub(crate) use generate::{GenerateArgs, GenerateOutput, GenerateRequest};
+pub(crate) use generate::{GenerateOutput, GenerateRequest};
 pub(crate) use serve::ServerArgs;
 
 use clap::{Parser, Subcommand};
@@ -26,7 +26,7 @@ use clap::{Parser, Subcommand};
     version,
     about,
     long_about = None,
-    after_help = "Examples:\n  scryr check\n  scryr format\n  scryr lint --fix\n  scryr push\n  scryr serve\n  scryr report tests\n  scryr query --list\nLegacy commands:\n  scryr generate upload --path index.scry\n  scryr generate types --path index.scry\n  scryr generate mise --path index.scry --forge \"MERN Forge\"\n  scryr generate compose --path index.scry --forge \"MERN Forge\"\n  scryr generate devcontainer --path index.scry --forge \"MERN Forge\""
+    after_help = "Examples:\n  scryr check\n  scryr format\n  scryr lint --fix\n  scryr push\n  scryr serve\n  scryr report tests\n  scryr query --list\n  scryr export mise --forge \"MERN Forge\"\n  scryr inspect schema"
 )]
 pub(crate) struct Args {
     #[command(subcommand)]
@@ -56,10 +56,6 @@ pub(crate) enum Command {
     Inspect(InspectArgs),
     /// Apply database schema migrations without starting the HTTP server.
     Migrate,
-    /// Report a GitHub workflow run to Crystal.
-    ReportActionStatus(ReportArgs),
-    /// Generate manifest artifacts and persist them through GraphQL.
-    Generate(Box<GenerateArgs>),
     /// Interactive Clerk authentication helpers.
     Auth(AuthArgs),
 }
@@ -85,12 +81,8 @@ pub(crate) enum ResolvedCommand {
     Query(QueryArgs),
     /// Apply database schema migrations without starting the HTTP server.
     Migrate,
-    /// Report a GitHub workflow run to Crystal.
-    ReportActionStatus(ReportArgs),
     /// Report operational results.
     Report(Box<ReportsArgs>),
-    /// Generate manifest artifacts or render one generated artifact.
-    Generate(GenerateRequest),
     /// Interactive Clerk authentication helpers.
     Auth(AuthArgs),
 }
@@ -108,10 +100,8 @@ impl Args {
                 Command::Inspect(args) => ResolvedCommand::Inspect(args),
                 Command::Query(args) => ResolvedCommand::Query(args),
                 Command::Report(args) => ResolvedCommand::Report(args),
-                Command::ReportActionStatus(args) => ResolvedCommand::ReportActionStatus(args),
                 Command::Migrate => ResolvedCommand::Migrate,
                 Command::Serve(args) => ResolvedCommand::Serve(args),
-                Command::Generate(args) => ResolvedCommand::Generate((*args).into_request()),
                 Command::Auth(args) => ResolvedCommand::Auth(args),
             });
         }
@@ -125,64 +115,58 @@ impl Args {
 
 #[cfg(test)]
 mod tests {
-    use super::{Args, GenerateOutput, ResolvedCommand};
+    use super::{Args, ResolvedCommand};
     use clap::Parser;
     use crystal_server::state::AuthMode;
     use std::path::PathBuf;
 
     #[test]
-    fn generate_command_accepts_command_local_scryr_dir() -> Result<(), String> {
+    fn push_command_accepts_command_local_scryr_dir() -> Result<(), String> {
         let args = Args::parse_from([
             "scryr",
-            "generate",
-            "upload",
+            "push",
             "--path",
             "sample.py",
             "--scryr-dir",
             "/tmp/scryr-state",
         ]);
 
-        let ResolvedCommand::Generate(generate_args) = args.resolved_command()? else {
-            return Err("expected generate command".to_string());
+        let ResolvedCommand::Push(push_args) = args.resolved_command()? else {
+            return Err("expected push command".to_string());
         };
 
-        assert_eq!(
-            generate_args.scryr_dir,
-            Some(PathBuf::from("/tmp/scryr-state"))
-        );
+        assert_eq!(push_args.scryr_dir, Some(PathBuf::from("/tmp/scryr-state")));
         Ok(())
     }
 
     #[test]
-    fn generate_command_accepts_command_local_manifest_dir() -> Result<(), String> {
+    fn push_command_accepts_command_local_manifest_dir() -> Result<(), String> {
         let args = Args::parse_from([
             "scryr",
-            "generate",
-            "upload",
+            "push",
             "--path",
             "sample.py",
             "--manifest-dir",
             "/tmp/manifest",
         ]);
 
-        let ResolvedCommand::Generate(generate_args) = args.resolved_command()? else {
-            return Err("expected generate command".to_string());
+        let ResolvedCommand::Push(push_args) = args.resolved_command()? else {
+            return Err("expected push command".to_string());
         };
 
-        assert_eq!(generate_args.manifest_dir, PathBuf::from("/tmp/manifest"));
+        assert_eq!(push_args.manifest_dir, PathBuf::from("/tmp/manifest"));
         Ok(())
     }
 
     #[test]
-    fn generate_command_defaults_to_index_scry() -> Result<(), String> {
-        let args = Args::parse_from(["scryr", "generate", "upload"]);
+    fn push_command_defaults_to_index_scry() -> Result<(), String> {
+        let args = Args::parse_from(["scryr", "push"]);
 
-        let ResolvedCommand::Generate(generate_args) = args.resolved_command()? else {
-            return Err("expected generate command".to_string());
+        let ResolvedCommand::Push(push_args) = args.resolved_command()? else {
+            return Err("expected push command".to_string());
         };
 
-        assert_eq!(generate_args.manifest_file, PathBuf::from("index.scry"));
-        assert_eq!(generate_args.output, GenerateOutput::Upload);
+        assert_eq!(push_args.manifest_file, PathBuf::from("index.scry"));
         Ok(())
     }
 
