@@ -166,6 +166,7 @@ body:has(.scryr-story) { overflow-x: clip; }
 .scryr-story .conjure-arrow span { position: absolute; font-size: 1.8rem; text-shadow: 0 0 20px #d3b477; animation: sigil-float 3s ease-in-out infinite; }
 .scryr-story .conjure-arrow i { height: 1px; width: 100%; background: #b989ef66; }
 .scryr-story .product-vision { min-width: 0; border: 1px solid #b087d65c; border-radius: 5px; overflow: hidden; box-shadow: 0 0 60px #9a61d51c; }
+.scryr-story .product-vision > a { display: block; }
 .scryr-story .product-vision img { display: block; width: 100%; height: auto; }
 .scryr-story .product-vision figcaption { display: grid; gap: .35rem; padding: .9rem; font-size: .6rem; color: #cab4de; background: #140c20; }
 .scryr-story .product-vision figcaption span { color: #94809e; font-size: .52rem; }
@@ -302,6 +303,16 @@ body:has(.scryr-story) { overflow-x: clip; }
   .scryr-story .map-world { zoom: var(--map-fit, .3); }
   .scryr-story .portal-discovery { display: none; }
   .scryr-story .portal-caption { bottom: 1.5rem; justify-content: center; text-align: center; }
+}
+@media (max-width: 900px) and (prefers-reduced-motion: no-preference) {
+  .scryr-story.is-ready[data-motion='on'] .map-world {
+    will-change: transform;
+    animation: mobile-map-perspective 9s ease-in-out infinite alternate;
+  }
+}
+@keyframes mobile-map-perspective {
+  from { transform: translateY(10px) rotateX(18deg) rotateZ(8deg) scale(.9); }
+  to { transform: translateY(-8px) rotateX(48deg) rotateZ(22deg) scale(.96); }
 }
 
 .scryr-story .architecture-statement { font-family: 'Source Code Pro', monospace; max-width: 700px; margin: 5rem auto 0; text-align: center; font-size: 2.25rem; line-height: 1.9; letter-spacing: normal; }
