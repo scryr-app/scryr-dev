@@ -1,6 +1,7 @@
 import { RoundedBox } from "@react-three/drei/core/RoundedBox";
 import { useState } from "react";
 import { cameraStore } from "@/camera";
+import { currentTheme } from "@/theme/theme";
 
 interface ZoomButtonProps {
 	blockId?: string;
@@ -11,6 +12,8 @@ interface ZoomButtonProps {
 	blockWidth: number;
 	blockHeight: number;
 	blockDepth: number;
+	cardWidth: number;
+	cardHeight: number;
 	onSelectBlock: () => void;
 	isVisible: boolean;
 	onHoverChange: (isHovered: boolean) => void;
@@ -25,13 +28,20 @@ export function ZoomButton({
 	blockWidth,
 	blockHeight,
 	blockDepth,
+	cardWidth,
+	cardHeight,
 	onSelectBlock,
 	isVisible,
 	onHoverChange,
 }: ZoomButtonProps) {
 	const [isHovered, setIsHovered] = useState(false);
-	const opacity = isVisible ? 0.2 : 0;
-	const bubbleOpacity = isVisible ? (isHovered ? 0.3 : 0.2) : 0;
+	const color = currentTheme.isDarkDiagram ? "#ffffff" : "#0f172a";
+	const opacity = isVisible ? (isHovered ? 0.14 : 0.1) : 0;
+	const bubbleOpacity = isVisible ? (isHovered ? 0.035 : 0.02) : 0;
+	const overlayWidth = cardWidth * 0.94;
+	const overlayHeight = cardHeight * 0.94;
+	// Keep the magnifier circular while filling most of the card's height.
+	const glyphScale = (Math.min(cardWidth, cardHeight) * 0.88) / 0.123;
 
 	const focusBlock = () => {
 		onSelectBlock();
@@ -67,62 +77,77 @@ export function ZoomButton({
 					}
 				}}
 			>
-				<boxGeometry args={[0.2, 0.2, 0.008]} />
+				<boxGeometry args={[overlayWidth, overlayHeight, 0.008]} />
 				<meshBasicMaterial transparent opacity={0} depthWrite={false} />
 			</mesh>
-			<ZoomTooltipBubble opacity={bubbleOpacity} />
-			<ZoomGlyph opacity={opacity} />
+			<ZoomOverlay
+				opacity={bubbleOpacity}
+				color={color}
+				width={overlayWidth}
+				height={overlayHeight}
+			/>
+			<group scale={[glyphScale, glyphScale, 1]}>
+				<ZoomGlyph opacity={opacity} color={color} />
+			</group>
 		</group>
 	);
 }
 
-function ZoomTooltipBubble({ opacity }: { opacity: number }) {
+function ZoomOverlay({
+	opacity,
+	color,
+	width,
+	height,
+}: {
+	opacity: number;
+	color: string;
+	width: number;
+	height: number;
+}) {
 	return (
 		<group position={[0, 0, 0.011]} renderOrder={999}>
-			<RoundedBox args={[0.17, 0.17, 0.012]} radius={0.04} smoothness={10}>
-				<meshBasicMaterial
-					color="#0f172a"
-					transparent
-					opacity={opacity}
-					depthTest={false}
-					depthWrite={false}
-					toneMapped={false}
-				/>
+			<RoundedBox args={[width, height, 0.012]} radius={0.06} smoothness={10}>
+				<ZoomGlyphMaterial opacity={opacity} color={color} />
 			</RoundedBox>
 		</group>
 	);
 }
 
-function ZoomGlyph({ opacity }: { opacity: number }) {
+function ZoomGlyph({ opacity, color }: { opacity: number; color: string }) {
 	return (
 		<group position={[0, 0, 0.014]} renderOrder={1000}>
 			<mesh position={[-0.018, 0.018, 0]}>
 				<torusGeometry args={[0.043, 0.004, 8, 48]} />
-				<ZoomGlyphMaterial opacity={opacity} />
+				<ZoomGlyphMaterial opacity={opacity} color={color} />
 			</mesh>
 			<mesh position={[0.03, -0.03, 0]} rotation={[0, 0, -Math.PI / 4]}>
 				<boxGeometry args={[0.07, 0.009, 0.006]} />
-				<ZoomGlyphMaterial opacity={opacity} />
+				<ZoomGlyphMaterial opacity={opacity} color={color} />
 			</mesh>
 			<mesh position={[-0.018, 0.018, 0.002]}>
 				<boxGeometry args={[0.042, 0.006, 0.006]} />
-				<ZoomGlyphMaterial opacity={opacity} />
+				<ZoomGlyphMaterial opacity={opacity} color={color} />
 			</mesh>
 			<mesh position={[-0.018, 0.018, 0.004]}>
 				<boxGeometry args={[0.006, 0.042, 0.006]} />
-				<ZoomGlyphMaterial opacity={opacity} />
+				<ZoomGlyphMaterial opacity={opacity} color={color} />
 			</mesh>
 		</group>
 	);
 }
 
-function ZoomGlyphMaterial({ opacity }: { opacity: number }) {
+function ZoomGlyphMaterial({
+	opacity,
+	color,
+}: {
+	opacity: number;
+	color: string;
+}) {
 	return (
 		<meshBasicMaterial
-			color="#ffffff"
+			color={color}
 			transparent
 			opacity={opacity}
-			depthTest={false}
 			depthWrite={false}
 			toneMapped={false}
 		/>

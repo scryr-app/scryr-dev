@@ -1,44 +1,66 @@
-import { useEffect, useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 import type { Block } from "@/graphql/generated";
-import { type LayoutResult, layoutBlocks } from "./layout";
+import type { LayoutBlock, LayoutResult } from "./layout";
+import { type LayoutView, layoutBlocksForView } from "./layoutOverview";
 
 export interface MapLayoutState {
 	layout: LayoutResult | null;
+	layoutView: LayoutView | null;
 	layoutError: Error | null;
 }
 
-export function useMapLayout(blocks: Block[]): MapLayoutState {
-	const [layout, setLayout] = useState<LayoutResult | null>(null);
-	const [layoutError, setLayoutError] = useState<Error | null>(null);
+export function useMapLayout(
+	blocks: Block[],
+	view: LayoutView,
+): MapLayoutState {
+	const [state, setState] = useState<MapLayoutState>({
+		layout: null,
+		layoutView: null,
+		layoutError: null,
+	});
+	// Runtime metrics/card metadata refresh independently of the graph. They
+	// must not rerun ELK or reset a camera the user has already positioned.
+	const topology = JSON.stringify(
+		blocks.map(({ name, connections, tags }) => ({ name, connections, tags })),
+	);
+	const {
+		fov,
+		position: [x, y, z],
+	} = view;
+	const getAspect = useEffectEvent(() => view.aspect);
 
 	useEffect(() => {
 		let isCurrent = true;
-		setLayout(null);
-		setLayoutError(null);
-
-		if (blocks.length === 0) {
-			return () => {
-				isCurrent = false;
-			};
+		const requestBlocks: LayoutBlock[] = JSON.parse(topology);
+		// Capture the latest viewport when the graph/theme changes; resizing
+		// alone does not rearrange blocks or reset navigation.
+		const requestView: LayoutView = {
+			position: [x, y, z],
+			fov,
+			aspect: getAspect(),
+		};
+		setState({ layout: null, layoutView: null, layoutError: null });
+		if (requestBlocks.length > 0) {
+			layoutBlocksForView(requestBlocks, requestView, () => isCurrent)
+				.then((layout) => {
+					if (isCurrent)
+						setState({ layout, layoutView: requestView, layoutError: null });
+				})
+				.catch((err) => {
+					if (isCurrent) {
+						console.error("Error during layout:", err);
+						setState({
+							layout: null,
+							layoutView: null,
+							layoutError: err instanceof Error ? err : new Error(String(err)),
+						});
+					}
+				});
 		}
-
-		layoutBlocks(blocks)
-			.then((nextLayout) => {
-				if (isCurrent) {
-					setLayout(nextLayout);
-				}
-			})
-			.catch((err) => {
-				console.error("Error during layout:", err);
-				if (isCurrent) {
-					setLayoutError(err instanceof Error ? err : new Error(String(err)));
-				}
-			});
-
 		return () => {
 			isCurrent = false;
 		};
-	}, [blocks]);
+	}, [topology, fov, x, y, z]);
 
-	return { layout, layoutError };
+	return state;
 }

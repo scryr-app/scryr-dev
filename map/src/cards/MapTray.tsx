@@ -121,6 +121,7 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 	return (
 		<div
 			ref={menuRef}
+			data-camera-occluder
 			style={{
 				position: "fixed",
 				bottom: "1.5rem",

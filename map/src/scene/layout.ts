@@ -1,7 +1,10 @@
 import * as ELK from "elkjs";
+import { BLOCK_CENTER_HEIGHT, BLOCK_DIMENSIONS } from "@/block/dimensions";
 import type { Block } from "@/graphql/generated.ts";
 
 const elk = new ELK.default();
+
+export const LAYOUT_SCALE = 1 / 50;
 
 interface ElkLayoutNode {
 	id: string;
@@ -76,11 +79,14 @@ export interface LayoutResult {
 	height: number;
 }
 
+export type LayoutBlock = Pick<Block, "name" | "connections" | "tags">;
+
 export interface LayoutOptions {
 	algorithm?: "layered" | "force" | "stress" | "mrtree" | "radial";
 	direction?: "RIGHT" | "LEFT" | "DOWN" | "UP";
 	nodeSpacing?: number;
 	layerSpacing?: number;
+	componentSpacing?: number;
 	nodeWidth?: number;
 	nodeHeight?: number;
 }
@@ -100,7 +106,7 @@ function normalizeGraphId(value: string | null | undefined): string | null {
  * Maintains flat layout with tag information in node metadata
  */
 export async function layoutBlocks(
-	blocks: Block[],
+	blocks: LayoutBlock[],
 	options: LayoutOptions = {},
 ): Promise<LayoutResult> {
 	const {
@@ -108,10 +114,9 @@ export async function layoutBlocks(
 		direction = "DOWN",
 		nodeSpacing = 120,
 		layerSpacing = 150,
-		// Node dimensions match actual BlockOpenRight size (3×1 in world coords)
-		// Scaled by 50 for ELK coordinate system (1/50 scale factor)
-		nodeWidth = 150, // 3 units × 50 = 150
-		nodeHeight = 50, // 1 unit × 50 = 50
+		// ELK works on the ground footprint; visibility also accounts for height.
+		nodeWidth = BLOCK_DIMENSIONS.width / LAYOUT_SCALE,
+		nodeHeight = BLOCK_DIMENSIONS.depth / LAYOUT_SCALE,
 	} = options;
 
 	const layoutBlocks = blocks
@@ -145,6 +150,12 @@ export async function layoutBlocks(
 			"elk.algorithm": algorithm,
 			"elk.direction": direction,
 			"elk.spacing.nodeNode": nodeSpacing.toString(),
+			...(options.componentSpacing === undefined
+				? {}
+				: {
+						"elk.spacing.componentComponent":
+							options.componentSpacing.toString(),
+					}),
 			"elk.layered.spacing.nodeNodeBetweenLayers": layerSpacing.toString(),
 			"elk.edgeRouting": "ORTHOGONAL",
 			"elk.spacing.edgeNode": "50",
@@ -329,7 +340,7 @@ export async function layoutBlocks(
 export function toWorldCoordinates(
 	x: number,
 	y: number,
-	scale = 1 / 50,
+	scale = LAYOUT_SCALE,
 	height: number = 0,
 ): [number, number, number] {
 	return [x * scale, 0 + height, y * scale];
@@ -341,7 +352,7 @@ export function toWorldCoordinates(
 export function getNodeWorldPosition(
 	nodeId: string,
 	layout: LayoutResult,
-	scale = 1 / 50,
+	scale = LAYOUT_SCALE,
 ): [number, number, number] | null {
 	const node = layout.nodes.find((n) => n.id === nodeId);
 	if (!node) return null;
@@ -360,7 +371,7 @@ export function getNodeWorldPosition(
 export function getEdgeWorldPath(
 	edgeId: string,
 	layout: LayoutResult,
-	scale = 1 / 50,
+	scale = LAYOUT_SCALE,
 ): Array<[number, number, number]> | null {
 	const edge = layout.edges.find((e) => e.id === edgeId);
 	if (!edge?.sections || edge.sections.length === 0) return null;
@@ -492,7 +503,7 @@ export function getBlockHeight(
 	layout: LayoutResult,
 ): number {
 	const regionZOffset = calculateBlockZOffset(blockName, layout);
-	return regionZOffset + 1.2; // 1.2 units above the region
+	return regionZOffset + BLOCK_CENTER_HEIGHT; // 1.2 units above the region
 }
 
 /**

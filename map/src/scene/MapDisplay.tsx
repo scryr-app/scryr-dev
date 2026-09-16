@@ -1,4 +1,5 @@
 import { Text } from "@react-three/drei/core/Text";
+import { useThree } from "@react-three/fiber";
 import { useMemo } from "react";
 import { Block } from "@/block";
 import { CameraController } from "@/camera";
@@ -16,6 +17,7 @@ import {
 	toWorldCoordinates,
 } from "./layout";
 import { MapFloor } from "./MapFloor";
+import { MapOverview } from "./MapOverview";
 import { darkenHexColor, getRegionColor } from "./mapColors";
 import { Region, Sign } from "./Region";
 import { useMapLayout } from "./useMapLayout";
@@ -216,7 +218,13 @@ export function MapDisplay() {
 			? { scryIdentifier: selectedMap.id }
 			: { sample: selectedMap.key || undefined },
 	);
-	const { layout, layoutError } = useMapLayout(blocks);
+	const size = useThree((state) => state.size);
+	const aspect = size.width / Math.max(1, size.height);
+	const view = useMemo(
+		() => ({ ...currentTheme.appearance.view, aspect }),
+		[aspect],
+	);
+	const { layout, layoutError, layoutView } = useMapLayout(blocks, view);
 
 	if (error) {
 		console.error("Error fetching blocks:", error);
@@ -233,13 +241,14 @@ export function MapDisplay() {
 		);
 	}
 
-	if (isLoading || !layout) {
+	if (isLoading || !layout || !layoutView) {
 		return <Text>Loading</Text>;
 	}
 
 	return (
 		<>
 			<CameraController />
+			<MapOverview layout={layout} view={layoutView} />
 			<MapFloor />
 			<MapRegions layout={layout} />
 			<MapRegionSigns layout={layout} />

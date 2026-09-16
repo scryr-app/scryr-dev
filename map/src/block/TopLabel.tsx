@@ -1,5 +1,7 @@
 import { Text } from "@react-three/drei/core/Text";
 
+import { BLOCK_LABEL_LIFT } from "./dimensions";
+
 const TOP_LABEL_FONT_SIZE = 0.28;
 const TOP_LABEL_HORIZONTAL_PADDING = 0.2;
 
@@ -26,7 +28,7 @@ export function TopLabel({ icon, name, fontColor, hh, width }: TopLabelProps) {
 
 	return (
 		<Text
-			position={[0, hh + 0.01, 0]}
+			position={[0, hh + BLOCK_LABEL_LIFT, 0]}
 			rotation={[-Math.PI / 2, 0, 0]}
 			fontSize={TOP_LABEL_FONT_SIZE}
 			color={fontColor}

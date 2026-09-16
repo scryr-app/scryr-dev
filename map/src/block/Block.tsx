@@ -7,6 +7,7 @@ import type { Block as GraphqlBlock } from "@/graphql/generated";
 import { currentTheme } from "@/theme/theme";
 import { CardSlots } from "./CardSlots";
 import { type BlockCardGroup, createBlockDataCards } from "./defaultCards";
+import { BLOCK_DIMENSIONS } from "./dimensions";
 import { TopLabel } from "./TopLabel";
 import { Walls } from "./Walls";
 import { ZoomButton } from "./ZoomButton";
@@ -60,9 +61,9 @@ export function Block({
 	name = "",
 	icon = "",
 	fontColor = currentTheme.fontColor,
-	width = 3,
-	height = 2,
-	depth = 1,
+	width = BLOCK_DIMENSIONS.width,
+	height = BLOCK_DIMENSIONS.height,
+	depth = BLOCK_DIMENSIONS.depth,
 	cards,
 	description,
 	classification,
@@ -107,7 +108,6 @@ export function Block({
 	const CARD_MARGIN = 0.1; // world-unit margin around all edges
 	const cardWidth = width - 2 * CARD_MARGIN;
 	const cardHeight = height - 2 * CARD_MARGIN;
-	const zoomButtonY = cardHeight / 2 - 0.13;
 
 	const overviewCard = (
 		<InfoCard
@@ -223,12 +223,14 @@ export function Block({
 			<ZoomButton
 				blockId={blockFocusId}
 				x={0}
-				y={zoomButtonY}
+				y={0}
 				z={hd + 0.13}
 				blockPosition={position}
 				blockWidth={width}
 				blockHeight={height}
 				blockDepth={depth}
+				cardWidth={cardWidth}
+				cardHeight={cardHeight}
 				onSelectBlock={handleBlockSelect}
 				isVisible={isZoomButtonVisible}
 				onHoverChange={(isHovered) => {
