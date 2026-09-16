@@ -1,7 +1,7 @@
 import { useEffect, useEffectEvent, useState } from "react";
 import type { Block } from "@/graphql/generated";
 import type { LayoutBlock, LayoutResult } from "./layout";
-import { layoutBlocksForView, type LayoutView } from "./layoutOverview";
+import { type LayoutView, layoutBlocksForView } from "./layoutOverview";
 
 export interface MapLayoutState {
 	layout: LayoutResult | null;

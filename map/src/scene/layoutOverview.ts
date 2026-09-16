@@ -4,10 +4,10 @@ import {
 	calculateRegionCorners,
 	getBlockHeight,
 	LAYOUT_SCALE,
-	layoutBlocks,
 	type LayoutBlock,
 	type LayoutOptions,
 	type LayoutResult,
+	layoutBlocks,
 } from "./layout";
 
 export interface LayoutView {

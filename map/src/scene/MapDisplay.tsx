@@ -16,8 +16,8 @@ import {
 	type LayoutResult,
 	toWorldCoordinates,
 } from "./layout";
-import { MapOverview } from "./MapOverview";
 import { MapFloor } from "./MapFloor";
+import { MapOverview } from "./MapOverview";
 import { darkenHexColor, getRegionColor } from "./mapColors";
 import { Region, Sign } from "./Region";
 import { useMapLayout } from "./useMapLayout";

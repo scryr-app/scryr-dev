@@ -3,7 +3,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Block } from "@/graphql/generated";
 import type { LayoutResult } from "./layout";
-import { layoutBlocksForView, type LayoutView } from "./layoutOverview";
+import { type LayoutView, layoutBlocksForView } from "./layoutOverview";
 import { useMapLayout } from "./useMapLayout";
 
 vi.mock("./layoutOverview", () => ({ layoutBlocksForView: vi.fn() }));

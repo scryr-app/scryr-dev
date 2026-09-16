@@ -6,13 +6,13 @@ import * as appearances from "@/theme/appearance";
 import {
 	getBlockHeight,
 	LAYOUT_SCALE,
-	layoutBlocks,
 	type LayoutResult,
+	layoutBlocks,
 } from "./layout";
 import {
 	getLayoutOverview,
-	layoutBlocksForView,
 	type LayoutView,
+	layoutBlocksForView,
 	measureLayoutOverlap,
 } from "./layoutOverview";
 
