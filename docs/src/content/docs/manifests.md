@@ -5,11 +5,11 @@ description: Model components, connections, diagrams, and developer environments
 
 A `.scry` file is a Python dialect loaded through Scryr's manifest importer. It can import ordinary Python modules and sibling `.scry` modules, so normal composition and type checking still apply. Humans can review it as code, and AI agents can generate it without learning a proprietary diagram format.
 
-Because the file executes as Python, it is useful beyond drawing the map. Teams can compose reusable declarations, inspect repository or environment data, and model deployment targets such as Kubernetes clusters or Helm releases with normal Python control flow. Keep those scripts deterministic, never put secrets in source, and review agent-generated files before execution.
+Because the file executes as Python, it is useful beyond drawing the diagram. Teams can compose reusable declarations, inspect repository or environment data, and model deployment targets such as Kubernetes clusters or Helm releases with normal Python control flow. Keep those scripts deterministic, never put secrets in source, and review agent-generated files before execution.
 
 ## Manifest: one component
 
-A public `Manifest` variable becomes a block on the map. Its core fields are:
+A public `Manifest` variable becomes a block on the diagram. Its core fields are:
 
 - `manifest_id`: stable organization-scoped identity for operational history.
 - `name`: the display label and connection target.

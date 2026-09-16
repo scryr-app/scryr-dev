@@ -1,11 +1,11 @@
 # Scryr documentation
 
-Scryr is open-source software for investigating the systems humans and AI agents build. Define a codebase in typed Python `.scry` files, explore it in an interactive architecture map, query production metrics in context, and generate artifacts with the Rust `scryr` CLI. Scryr is MIT-licensed and its full local workflow does not require a hosted account.
+Scryr is open-source software for investigating the systems humans and AI agents build. Define a codebase in typed Python `.scry` files, explore it in an interactive architecture diagram, query production metrics in context, and generate artifacts with the Rust `scryr` CLI. Scryr is MIT-licensed and its full local workflow does not require a hosted account.
 
 Canonical links:
 - Documentation: https://scryr.dev/docs/
 - LLM manifest prompt: https://scryr.dev/prompt/
-- Live map: https://scryr.app
+- Live diagram: https://scryr.app
 - Source: https://github.com/scryr-app/scryr-dev
 
 Install:
@@ -36,7 +36,7 @@ CLI commands:
 - `scryr check`: non-writing format, lint, type, execution, serialization, and diagram validation.
 - `scryr format`: format the entrypoint and reachable local imports.
 - `scryr lint --fix`: apply safe lint fixes.
-- `scryr serve --watch`: serve the embedded map and reload valid source changes.
+- `scryr serve --watch`: serve the embedded diagram and reload valid source changes.
 - `scryr push`: validate and upload artifacts.
 - `scryr inspect types`: output declared/runtime field metadata.
 - `scryr inspect schema`: output top-level model JSON schema.
