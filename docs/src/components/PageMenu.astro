@@ -1,0 +1,34 @@
+---
+import SidebarSublist from '@astrojs/starlight/components/SidebarSublist.astro';
+const { sidebar } = Astro.locals.starlightRoute;
+---
+
+<button class="page-menu-toggle" type="button" popovertarget="scryr-page-menu" aria-controls="scryr-page-menu" aria-label="Pages" title="Pages">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+</button>
+<aside id="scryr-page-menu" popover="auto" aria-labelledby="page-menu-title">
+  <div class="page-menu-heading">
+    <h2 id="page-menu-title">Explore Scryr</h2>
+    <button type="button" popovertarget="scryr-page-menu" popovertargetaction="hide" aria-label="Close page menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6" /></svg>
+    </button>
+  </div>
+  <nav class="sidebar-content" aria-label="Site pages"><SidebarSublist sublist={sidebar} /></nav>
+</aside>
+
+<style>
+  button { display: inline-flex; align-items: center; justify-content: center; gap: .45rem; min-height: 2.5rem; padding: .4rem .65rem; border: 1px solid #b58cda40; border-radius: .3rem; background: #ffffff04; color: #eadff5; font: inherit; font-size: .8rem; cursor: pointer; }
+  button:hover { background: #b789e51a; color: white; }
+  .page-menu-toggle { flex: none; width: 2.5rem; padding: .6rem; border: 0; background: transparent; color: var(--sl-color-gray-2); }
+  button:focus-visible { outline: 2px solid #e7c77c; outline-offset: 3px; }
+  svg { width: 1.1rem; height: 1.1rem; flex: none; }
+  #scryr-page-menu { position: fixed; inset: var(--sl-nav-height) auto 0 0; width: min(20rem, 100vw); max-width: 100vw; height: calc(100dvh - var(--sl-nav-height)); max-height: calc(100dvh - var(--sl-nav-height)); margin: 0; padding: 1.5rem; box-sizing: border-box; overflow-y: auto; overscroll-behavior: contain; white-space: normal; color: var(--sl-color-white); background: var(--sl-color-bg-sidebar); border: 0; border-right: 1px solid var(--sl-color-hairline-light); box-shadow: 1rem 1rem 3rem #0006; }
+  #scryr-page-menu::backdrop { background: #03010855; }
+  .page-menu-heading { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-bottom: 1.5rem; }
+  .page-menu-heading h2 { margin: 0; font: 600 1rem/1.5 var(--sl-font); letter-spacing: normal; }
+  .page-menu-heading button { flex: none; padding: .4rem; width: 2.5rem; }
+  @media (prefers-reduced-motion: no-preference) {
+    #scryr-page-menu:popover-open { animation: page-menu-enter .2s ease-out; }
+    @keyframes page-menu-enter { from { opacity: 0; transform: translateX(-1rem); } to { opacity: 1; transform: translateX(0); } }
+  }
+</style>

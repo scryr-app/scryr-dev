@@ -1,8 +1,8 @@
 ---
+import FeatureChapters from './FeatureChapters.astro';
 import MapPortal from './MapPortal.astro';
 import '../styles/story.css';
 const particles = Array.from({ length: 64 }, (_, i) => ({ x: (i * 73 + 11) % 100, y: (i * 47 + 7) % 100, size: i % 5 === 0 ? 3 : 2, delay: -i * 1.3, duration: 9 + (i % 7) * 2 }));
-const chapters = [{id:'old-magic', name:'The old world'}, {id:'the-spell', name:'The spell'}, {id:'the-signal', name:'The signal'}, {id:'the-forge', name:'The forge'}, {id:'the-revelation', name:'The revelation'}];
 const scryCode = `from scryr import Diagram, Info, Manifest
 from scryr.types import ProgrammingLanguage
 
@@ -21,40 +21,38 @@ commerce = Diagram(
     name="Northwind Commerce",
     manifests=[api, cache],
 )`;
-const metricsCode = `metrics=Metrics(
-    provider=PrometheusSource(
-        credentials=CredentialRef(
-            name="production-prometheus"
-        ),
-        environment="production",
-        queries={
-            "requestRate":
-                "sum(rate(http_requests_total[5m]))",
-        },
-        units={"requestRate": "req/s"},
-    ),
-)`;
-const forgeCode = `from scryr import Forge
-
-local = Forge(
-    name="Developer environment",
-    tools={
-        "python": "3.14", "node": "24",
-        "postgres": "17",
-    },
-    tasks={
-        "install": "uv sync && npm install",
-        "dev": "npm run dev",
-        "test": "pytest",
-        "debug": "python -m pdb app.py",
-    },
-)`;
 ---
-<noscript><style>body:has(.scryr-story) header.header { visibility: visible; transform: none; }</style></noscript>
+<noscript><style>body:has(.scryr-story) header.header { opacity: 1; visibility: visible; transform: none; }</style></noscript>
 <div class="scryr-story not-content" data-motion="on" data-toolbar="hidden">
   <div class="enchanted-sky" aria-hidden="true">{particles.map(p => <span style={`--x:${p.x}%;--y:${p.y}%;--size:${p.size}px;--delay:${p.delay}s;--duration:${p.duration}s`}></span>)}</div>
   <MapPortal />
-  <nav class="chapter-nav" aria-label="The Scryr story">{chapters.map((chapter, i) => <a href={`#${chapter.id}`} aria-label={`${i + 1}. ${chapter.name}`}><span>0{i + 1}</span><i>{chapter.name}</i></a>)}</nav>
+
+  <section class="quick-start" id="get-started" aria-labelledby="quick-start-title">
+    <div class="quick-start-heading">
+      <h2 id="quick-start-title">Try it Out</h2>
+    </div>
+    <div class="quick-start-options">
+      <article class="quick-start-card" aria-labelledby="local-start-title">
+        <h3 id="local-start-title">Start with your repository.</h3>
+        <ul>
+          <li>Install with Homebrew:<code class="setup-command">brew install scryr-app/tap/scryr</code></li>
+          <li><a href="/llm-prompt/">Copy the prompt</a> into your coding agent to create an <code>index.scry</code> file.</li>
+          <li>Review the file, then run <code>scryr serve</code> from your repository.</li>
+        </ul>
+        <a class="spell-button" href="/getting-started/">Install locally <span aria-hidden="true">↗</span></a>
+      </article>
+      <article class="quick-start-card" aria-labelledby="cloud-start-title">
+        <h3 id="cloud-start-title">Go straight to the map.</h3>
+        <ul>
+          <li>Log in to Scryr with your GitHub account.</li>
+          <li>Open a sample architecture in the cloud.</li>
+          <li>Modify the sample to make it your own.</li>
+        </ul>
+        <a class="spell-button" href="https://scryr.app">Log in to Scryr <span aria-hidden="true">↗</span></a>
+      </article>
+    </div>
+  </section>
+  <div class="section-separator" aria-hidden="true"><span>✦</span></div>
 
   <section class="story-chapter old-world" id="old-magic" aria-labelledby="old-title">
     <div class="chapter-sticky">
@@ -93,46 +91,31 @@ local = Forge(
     </div>
   </section>
 
+  <div class="chapter-divider" aria-hidden="true"></div>
+
   <section class="story-chapter spell-chapter" id="the-spell" aria-labelledby="spell-title">
     <div class="chapter-sticky">
-      <div class="chapter-heading" data-reveal><p class="eyebrow">II · Write the spell</p><h2 id="spell-title">Your LLM already<br />speaks <em>Python.</em></h2><p>Give it a repository. Ask for <code>index.scry</code>.<br />Turn its understanding into something you can examine.</p></div>
+      <div class="chapter-heading" data-reveal><h2 id="spell-title">Generate Diagrams from<br /><em>Typed Python Code.</em></h2><p>Give it a repository. Ask for <code>index.scry</code>.<br />Turn its understanding into something you can examine.</p></div>
       <div class="spell-workbench">
         <div class="grimoire" data-reveal><div class="panel-label"><span>✧ index.scry</span><span>Typed Python</span></div><pre><code>{scryCode}</code></pre><div class="spell-checks"><span>Imports</span><span>Types</span><span>Connections</span><span>Ownership</span></div></div>
         <div class="conjure-arrow" aria-hidden="true"><span>✧</span><i></i></div>
-        <figure class="product-vision" data-reveal><img src="/assets/scryr-product-editor.png" alt="Actual Scryr product with index.scry open beside the Northwind Commerce architecture map" width="1440" height="900" loading="lazy" /><figcaption>The source and its world, side by side. <span>Actual Scryr product</span></figcaption></figure>
+        <figure class="product-vision" data-reveal><a href="https://scryr.app" aria-label="Open Scryr"><img src="/assets/scryr-product-editor.png" alt="Actual Scryr product with index.scry open beside the Northwind Commerce architecture map" width="1440" height="900" loading="lazy" /></a><figcaption>The source and its world, side by side. <span>Actual Scryr product</span></figcaption></figure>
       </div>
-      <div class="spell-reasons"><article data-reveal><span>01</span><h3>Familiar to the agent.</h3><p>Normal Python imports and composition. Typed declarations an LLM can generate from repository evidence.</p></article><article data-reveal><span>02</span><h3>Reviewable by you.</h3><p>Diff the file. Check the types. Inspect the connections, ownership, source links, and runtime boundaries.</p></article><article data-reveal><span>03</span><h3>Checked before the map.</h3><p><code>scryr check</code> checks formatting, lint, types, execution, and diagram rules. Review generated Python before running it.</p></article></div>
-      <a class="chapter-link" href="/llm-prompt/">Give your agent the spell <span aria-hidden="true">↗</span></a>
     </div>
   </section>
 
-  <section class="story-chapter signal-chapter" id="the-signal" aria-labelledby="signal-title">
-    <div class="chapter-sticky split-stage">
-      <div class="chapter-heading" data-reveal><p class="eyebrow">III · Listen beyond the map</p><h2 id="signal-title">The system<br />has a <em>pulse.</em></h2><p>The model tells you what should be connected. Production tells you what is happening.</p><p>Declare a Prometheus-compatible query beside its component. Pull performance evidence through Scryr’s server, with credentials kept on the server.</p><a class="chapter-link" href="/integrations/#prometheus-compatible-metrics">Connect your source of truth <span aria-hidden="true">↗</span></a></div>
-      <div class="signal-visual" data-reveal><div class="scrying-orb" aria-hidden="true"><div class="orb-ring"></div><svg viewBox="0 0 500 220" fill="none"><path class="pulse-line" d="M0 115 H75 L95 100 L115 130 L145 112 H195 L215 45 L240 180 L265 90 L290 115 H345 L365 95 L390 126 L410 115 H500" /></svg><span>Production → Scryr → Your map</span></div><div class="grimoire metrics-code"><div class="panel-label"><span>✧ Attach to a Manifest</span><span>PrometheusSource</span></div><pre><code>{metricsCode}</code></pre></div><p class="visual-note">Named queries. Bounded windows. Provider-backed snapshots.</p></div>
+  <FeatureChapters />
+
+  <section class="story-ending" aria-labelledby="ending-title">
+    <div class="ending-rings" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div data-reveal>
+      <img src="/favicon.svg" alt="" width="80" height="80" loading="lazy" />
+      <h2 id="ending-title">Make Your Diagram<br /><em>Do More.</em></h2>
+      <div class="story-actions"><a class="spell-button" href="/getting-started/">Install locally <span aria-hidden="true">↗</span></a><a class="spell-button" href="https://scryr.app">Log in to Scryr <span aria-hidden="true">↗</span></a></div>
+      <p class="ending-license">Open source · MIT licensed · Local-first</p>
+      <a class="chapter-link" href="https://github.com/scryr-app/scryr-dev">Explore the source ↗</a>
     </div>
   </section>
-
-  <section class="story-chapter forge-chapter" id="the-forge" aria-labelledby="forge-title">
-    <div class="chapter-sticky">
-      <div class="chapter-heading" data-reveal><p class="eyebrow">IV · Enter the forge</p><h2 id="forge-title">Don’t stop at<br />summoning a <em>map.</em></h2><p>Describe the tools that bring the system to life.<br />One Python declaration. A developer environment you can export.</p></div>
-      <div class="forge-workbench"><div class="grimoire" data-reveal><div class="panel-label"><span>⚒ Developer environment</span><span>Forge</span></div><pre><code>{forgeCode}</code></pre></div><div class="forge-outputs"><article data-reveal><span>01 / TOOLCHAIN</span><h3>mise.toml</h3><p>Language versions, environment, and tasks. Declare dependency installation and debugger commands alongside your tools.</p><code>scryr export mise</code></article><article data-reveal><span>02 / WORKSPACE</span><h3>devcontainer.json</h3><p>Generate a container workspace with tool-aware editor extensions and environment setup.</p><code>scryr export devcontainer</code></article><article data-reveal><span>03 / SERVICES</span><h3>compose.yaml</h3><p>Bring supported databases and caches into your development environment from the same Forge.</p><code>scryr export compose</code></article></div></div>
-      <div class="terminal-spell" data-reveal><div class="panel-label"><span>✧ Your terminal is a wand.</span><span>scryr cli</span></div><pre><code><span>$</span> scryr check
-<span>$</span> scryr export devcontainer --forge "Developer environment"
-<span>$</span> scryr serve --watch</code></pre><p>Check the spell. Export your environment. Watch the map change with your source.</p></div>
-      <a class="chapter-link" href="/cli/">Learn the commands <span aria-hidden="true">↗</span></a>
-    </div>
-  </section>
-
-  <section class="story-chapter revelation-chapter" id="the-revelation" aria-labelledby="revelation-title">
-    <div class="chapter-sticky">
-      <div class="chapter-heading" data-reveal><p class="eyebrow">V · See what the system reveals</p><h2 id="revelation-title">A map you can read.<br />Evidence you can <em>follow.</em></h2><p>Open a component’s metrics and performance cards.<br />Put latency, traffic, errors, and resource usage back in context.</p></div>
-      <div class="revelation-map" data-reveal><figure><img src="/assets/scryr-product-map.png" alt="Actual Northwind Commerce map in Scryr, with connected API, cache, web and Stripe blocks" width="1440" height="900" loading="lazy" /><figcaption>Northwind Commerce · Actual Scryr product</figcaption></figure><div class="metric-readings" aria-label="Illustrative metric values"><article><span>Request rate</span><strong>248 <small>req/s</small></strong><svg viewBox="0 0 240 48" aria-hidden="true"><path d="M0 37 L20 31 L40 35 L60 20 L80 25 L100 17 L120 23 L140 11 L160 18 L180 8 L200 13 L220 6 L240 11"/></svg></article><article><span>P95 response time</span><strong>124 <small>ms</small></strong><svg viewBox="0 0 240 48" aria-hidden="true"><path d="M0 11 L20 13 L40 8 L60 19 L80 15 L100 22 L120 19 L140 28 L160 22 L180 31 L200 27 L220 34 L240 30"/></svg></article><article><span>Error rate</span><strong>0.2 <small>%</small></strong><svg viewBox="0 0 240 48" aria-hidden="true"><path d="M0 35 H25 L35 28 L45 35 H80 L90 32 L100 35 H140 L150 20 L160 35 H190 L200 32 L210 35 H240"/></svg></article><p>Illustrative readings · Scryr loads provider snapshots when you open a diagram.</p></div></div>
-      <div class="revelation-copy"><p data-reveal>Your AI can propose the architecture.<br />Your tools can supply the evidence.<br /><strong>You get to see how it all connects.</strong></p><div data-reveal><code>scryr query requestRate --manifest api</code><p>Take the same named query back to your terminal.</p><a class="chapter-link" href="/integrations/">Explore the integrations <span aria-hidden="true">↗</span></a></div></div>
-    </div>
-  </section>
-
-  <section class="story-ending" aria-labelledby="ending-title"><div class="ending-rings" aria-hidden="true"><i></i><i></i><i></i></div><div data-reveal><p class="eyebrow">The next chapter is yours</p><img src="/favicon.svg" alt="" width="80" height="80" loading="lazy"/><h2 id="ending-title">Build with AI.<br /><em>See with Scryr.</em></h2><p>One repository. One <code>index.scry</code>.<br />A whole world worth understanding.</p><div class="story-actions"><a class="spell-button" href="/getting-started/">Begin your journey <span aria-hidden="true">↗</span></a><a class="quiet-link" href="https://scryr.app">Open Scryr <span aria-hidden="true">↗</span></a></div><p class="ending-install"><code>brew install scryr-app/tap/scryr</code></p><p class="ending-license">Open source · MIT licensed · Local-first</p><a class="chapter-link" href="https://github.com/scryr-app/scryr-dev">Explore the source ↗</a></div></section>
 </div>
 
 <script>
