@@ -1,9 +1,9 @@
 ---
 title: Getting started
-description: Install Scryr and turn your first index.scry into an interactive architecture map.
+description: Install Scryr and turn your first index.scry into an interactive architecture diagram.
 ---
 
-Scryr combines a typed Python manifest SDK, a Rust CLI and GraphQL server, and a React/Three.js map. The standalone CLI embeds the map and SDK, so one install is enough for the normal local workflow.
+Scryr combines a typed Python manifest SDK, a Rust CLI and GraphQL server, and a React/Three.js diagram. The standalone CLI embeds the diagram and SDK, so one install is enough for the normal local workflow.
 
 ## Install
 
@@ -73,7 +73,7 @@ architecture = Diagram(name="System architecture", manifests=[web, api, database
 
 Connection targets are resolved by manifest name. The reference in `Manifest(name="Public API")` must match the real component name exactly.
 
-## Check and open the map
+## Check and open the diagram
 
 ```sh
 scryr check
@@ -84,7 +84,7 @@ By default, `serve` starts the embedded UI and GraphQL server at `127.0.0.1:8000
 
 On first execution, Scryr provisions its own pinned `uv`, managed Python runtime, and per-project environment. It does not change your system Python.
 
-:::tip[Try the hosted map]
+:::tip[Try the hosted diagram]
 Open [scryr.app](https://scryr.app) to explore the cloud experience. Cloud editing stores source snapshots; local `scryr serve` can save the registered entrypoint back to disk.
 :::
 
@@ -97,7 +97,7 @@ scryr check --path architecture/platform.scry --manifest-dir .
 scryr serve --path services/catalog/index.scry --manifest-dir .
 ```
 
-Nested entrypoints are grouped by their parent folder in the map selector.
+Nested entrypoints are grouped by their parent folder in the diagram selector.
 
 ## Next steps
 

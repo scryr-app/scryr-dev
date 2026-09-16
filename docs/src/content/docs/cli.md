@@ -44,7 +44,7 @@ scryr serve --no-format --no-open
 scryr serve --server-only --sample mern
 ```
 
-`serve` starts the embedded map and GraphQL server, waits for readiness, formats and checks the source, uploads the artifact, and opens the browser.
+`serve` starts the embedded diagram and GraphQL server, waits for readiness, formats and checks the source, uploads the artifact, and opens the browser.
 
 - `--watch`: repeat after source changes.
 - `--server-only`: do not read, format, execute, or upload a local manifest.

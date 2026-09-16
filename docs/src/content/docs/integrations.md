@@ -52,7 +52,7 @@ scryr report actions --manifest api --event-file workflow-run.json
 
 ## Prometheus-compatible metrics
 
-`PrometheusSource` declares bounded queries against a Prometheus-compatible backend. Grafana installations work when they expose a compatible data source/API. This lets an investigation move directly from a component on the map to the production signals that explain its behavior, without treating a dashboard and an architecture diagram as separate worlds.
+`PrometheusSource` declares bounded queries against a Prometheus-compatible backend. Grafana installations work when they expose a compatible data source/API. This lets an investigation move directly from a component on the diagram to the production signals that explain its behavior, without treating a dashboard and an architecture diagram as separate worlds.
 
 ```python title="index.scry"
 from scryr import CredentialRef, Manifest, Metrics, PrometheusSource
@@ -92,7 +92,7 @@ scryr query page_views --provider posthog --json
 
 ## GraphQL API
 
-The map reads canonical blocks, diagrams, source documents, reports, and observations through Scryr's GraphQL API. Local defaults are:
+The diagram reads canonical blocks, nested diagrams, source documents, reports, and observations through Scryr's GraphQL API. Local defaults are:
 
 - UI: `http://127.0.0.1:8000/`
 - GraphQL and WebSocket: `http://127.0.0.1:8000/graphql`
@@ -110,4 +110,4 @@ scryr export compose --forge "Developer environment" > compose.yaml
 scryr export devcontainer --forge "Developer environment" > devcontainer.json
 ```
 
-The outputs are generated from the same typed declaration that components reference on the map.
+The outputs are generated from the same typed declaration that components reference on the diagram.

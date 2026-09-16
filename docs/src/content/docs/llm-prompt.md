@@ -1,6 +1,6 @@
 ---
 title: Generate index.scry with an LLM
-description: Give humans a reviewable map of agent-written software with a repository-grounded Scryr manifest.
+description: Give humans a reviewable diagram of agent-written software with a repository-grounded Scryr manifest.
 ---
 
 AI agents can create software faster than a reviewer can reconstruct its runtime shape from a diff. A generated `index.scry` gives that reviewer a typed, explorable account of the system: its components, connections, owners, deployment targets, source links, and operational evidence.
