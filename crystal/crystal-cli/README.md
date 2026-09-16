@@ -22,7 +22,7 @@ Run these commands from your own repository. The default entrypoint is `index.sc
 Use `--path` for a different file and `--manifest-dir` for a different project root.
 Paths passed to `--path` are relative to `--manifest-dir` (or absolute).
 
-When uploading with `scryr push`, `scryr generate upload`, or `scryr serve`,
+When uploading with `scryr push` or `scryr serve`,
 the diagram group is its parent folder relative to `--manifest-dir`. For example,
 `--path services/catalog/index.scry` assigns the group `services/catalog`.
 An entrypoint directly in the project root has no group; these diagrams appear
@@ -402,7 +402,7 @@ HogQL aggregates. Credentials remain in server connections, outside artifacts.
 
 ## Migration
 
-| Deprecated command | Canonical command |
+| Removed command | Canonical command |
 | --- | --- |
 | `generate upload` | `push` |
 | `generate types` | `inspect types` |
@@ -412,9 +412,8 @@ HogQL aggregates. Credentials remain in server connections, outside artifacts.
 | `generate devcontainer` | `export devcontainer` |
 | `report-action-status` | `report actions` |
 
-Compatibility commands emit a deprecation warning on stderr. The hidden
-`generate artifact-json` release interface retains its existing output behavior;
-new users should use `export json`. Legacy uploads now undergo full validation,
-including the required Diagram rule. Existing persisted artifacts remain readable.
+These legacy commands have been removed. The hidden `generate artifact-json`
+command has also been removed; use `export json` for checked diagram JSON.
+Existing persisted artifacts remain readable.
 Deployments that previously used `serve` must add `--server-only` to retain
 server-only behavior. Docker and repository server scripts have been updated.

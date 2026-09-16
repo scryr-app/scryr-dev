@@ -14,7 +14,7 @@ Bring Scryr’s architecture model into the language your tools already use. Gen
 With the [Scryr CLI installed](/getting-started/), run this from your manifest project:
 
 ```sh
-scryr generate schema --path index.scry > scryr-schema.json
+scryr inspect schema --path index.scry > scryr-schema.json
 ```
 
 The output contains three model schemas: `Manifest`, `Forge`, and `Diagram`. Select the one your tool needs with [jq](https://jqlang.org/). These examples use `Manifest`, keeping its nested definitions together:

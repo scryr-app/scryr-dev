@@ -1,38 +1,7 @@
 //! Generate command argument parsing and request resolution.
 
-use clap::{Args as ClapArgs, Subcommand};
+use clap::Args as ClapArgs;
 use std::path::PathBuf;
-
-/// Arguments for manifest generation.
-#[derive(ClapArgs, Debug, Clone)]
-#[command(
-    after_help = "Examples:\n  scryr generate upload --path index.scry\n  scryr generate types --path index.scry\n  scryr generate schema --path index.scry\n  scryr generate mise --path index.scry --forge \"MERN Forge\"\n  scryr generate compose --path index.scry --forge \"MERN Forge\"\n  scryr generate devcontainer --path index.scry --forge \"MERN Forge\""
-)]
-pub(crate) struct GenerateArgs {
-    /// Output target to generate.
-    #[command(subcommand)]
-    pub(crate) target: GenerateTarget,
-}
-
-/// Generate subcommands.
-#[derive(Subcommand, Debug, Clone)]
-pub(crate) enum GenerateTarget {
-    /// Persist generated map artifacts through GraphQL.
-    Upload(GenerateCommonArgs),
-    /// Print manifest field type metadata as JSON.
-    Types(GenerateCommonArgs),
-    /// Print the manifest model JSON schema.
-    Schema(GenerateCommonArgs),
-    /// Print generated artifact JSON for release embedding.
-    #[command(name = "artifact-json", hide = true)]
-    ArtifactJson(GenerateCommonArgs),
-    /// Print the selected Forge as mise.toml.
-    Mise(GenerateForgeArgs),
-    /// Print Docker Compose YAML for service tools in the selected Forge.
-    Compose(GenerateForgeArgs),
-    /// Print a devcontainer.json for the selected Forge.
-    Devcontainer(GenerateForgeArgs),
-}
 
 /// Shared arguments for generate subcommands.
 #[derive(ClapArgs, Debug, Clone)]
@@ -46,7 +15,7 @@ pub(crate) struct GenerateCommonArgs {
     /// Directory for Scryr-managed local state, including the uv Python environment.
     #[arg(long)]
     pub(crate) scryr_dir: Option<PathBuf>,
-    /// GraphQL endpoint used by `generate upload`.
+    /// GraphQL endpoint used by `push`.
     #[arg(long = "endpoint", alias = "graphql-url", env = "SCRYR_ENDPOINT")]
     pub(crate) graphql_url: Option<String>,
     /// Clerk organization id to use for generated manifest uploads.
@@ -105,35 +74,6 @@ pub(crate) struct GenerateRequest {
     pub(crate) clerk_org_id: Option<String>,
     /// Git commit SHA to associate with generated manifest uploads.
     pub(crate) git_commit_sha: Option<String>,
-}
-
-impl GenerateArgs {
-    /// Resolve raw generate CLI args into the command execution request.
-    pub(crate) fn into_request(self) -> GenerateRequest {
-        match self.target {
-            GenerateTarget::Upload(common) => {
-                resolve_generate_request(GenerateOutput::Upload, common, None)
-            }
-            GenerateTarget::Types(common) => {
-                resolve_generate_request(GenerateOutput::Types, common, None)
-            }
-            GenerateTarget::Schema(common) => {
-                resolve_generate_request(GenerateOutput::Schema, common, None)
-            }
-            GenerateTarget::ArtifactJson(common) => {
-                resolve_generate_request(GenerateOutput::ArtifactJson, common, None)
-            }
-            GenerateTarget::Mise(args) => {
-                resolve_generate_request(GenerateOutput::Mise, args.common, args.forge)
-            }
-            GenerateTarget::Compose(args) => {
-                resolve_generate_request(GenerateOutput::Compose, args.common, args.forge)
-            }
-            GenerateTarget::Devcontainer(args) => {
-                resolve_generate_request(GenerateOutput::Devcontainer, args.common, args.forge)
-            }
-        }
-    }
 }
 
 /// Convert command-specific options into a concrete request.
