@@ -35,6 +35,31 @@ body:has(.scryr-story) { overflow-x: clip; }
 .scryr-story .chapter-nav a:hover i, .scryr-story .chapter-nav a:focus-visible i { opacity: 1; }
 .scryr-story .chapter-nav [aria-current='step'] { color: var(--gold); }
 .scryr-story .chapter-nav [aria-current='step']::before { background: var(--gold); box-shadow: 0 0 12px #e7c77c; }
+/* Quick setup stays in the normal flow between the hero and the story. */
+.scryr-story .quick-start { position: relative; max-width: 1160px; margin: 0 auto; padding: clamp(4rem, 8vw, 7rem) clamp(1.25rem, 5vw, 4rem); }
+.scryr-story .quick-start::before { content: ''; position: absolute; inset: 12% 18%; z-index: -1; background: radial-gradient(circle, #7d45a71f, transparent 68%); filter: blur(24px); }
+.scryr-story .quick-start-heading { text-align: center; margin-bottom: 2.5rem; }
+.scryr-story .quick-start-heading h2 { font-size: clamp(2.2rem, 4vw, 3.5rem); line-height: 1.2; }
+.scryr-story .quick-start-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.scryr-story .quick-start-card { position: relative; display: flex; flex-direction: column; align-items: flex-start; padding: clamp(1.5rem, 4vw, 3rem); }
+.scryr-story .quick-start-card + .quick-start-card { border-left: 1px solid #d8bdff30; }
+.scryr-story .quick-start-card .eyebrow { margin-bottom: .8rem; }
+.scryr-story .quick-start-card h3 { font-size: 1.25rem; line-height: 1.45; }
+.scryr-story .quick-start-card ul { flex: 1; margin: 1.5rem 0 2.25rem; padding: 0; color: #d2c7dd; font-size: .9rem; line-height: 1.7; list-style: none; counter-reset: setup-step; }
+.scryr-story .quick-start-card li { position: relative; min-height: 1.75rem; padding-left: 2.5rem; counter-increment: setup-step; }
+.scryr-story .quick-start-card li::before { content: counter(setup-step); position: absolute; left: 0; top: .05rem; display: grid; place-items: center; width: 1.65rem; height: 1.65rem; border: 1px solid #e7c77c7a; border-radius: 50%; color: var(--gold); font-size: .66rem; line-height: 1; }
+.scryr-story .quick-start-card li + li { margin-top: 1rem; }
+.scryr-story .quick-start-card li a { color: #d9b9fc; text-decoration: underline; text-underline-offset: .2em; }
+.scryr-story .quick-start-card code { color: #ddbbff; overflow-wrap: anywhere; }
+.scryr-story .setup-command { display: block; margin-top: .4rem; }
+.scryr-story .section-separator { display: flex; align-items: center; gap: 1.25rem; width: min(760px, calc(100% - 3rem)); margin: 0 auto clamp(2rem, 5vw, 4rem); color: var(--gold); }
+.scryr-story .section-separator::before, .scryr-story .section-separator::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, #bb8bf166); }
+.scryr-story .section-separator::after { background: linear-gradient(90deg, #bb8bf166, transparent); }
+.scryr-story .section-separator span { display: grid; place-items: center; width: 3rem; height: 3rem; border: 1px solid #e7c77c80; border-radius: 4px; background: #100b19; box-shadow: 0 0 24px #b36cf22b, inset 0 0 16px #e7c77c0d; font-size: .8rem; }
+@media (max-width: 700px) {
+  .scryr-story .quick-start-options { grid-template-columns: 1fr; }
+  .scryr-story .quick-start-card + .quick-start-card { border-left: 0; border-top: 1px solid #d8bdff30; }
+}
 /* A real 3D transform: roofs, card faces and sides share a ground plane. */
 .scryr-story .map-portal { position: relative; height: max(800px, 100svh); }
 .scryr-story.is-ready[data-motion='on'] .map-portal { height: 235svh; }

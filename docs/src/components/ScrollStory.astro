@@ -54,6 +54,35 @@ local = Forge(
 <div class="scryr-story not-content" data-motion="on" data-toolbar="hidden">
   <div class="enchanted-sky" aria-hidden="true">{particles.map(p => <span style={`--x:${p.x}%;--y:${p.y}%;--size:${p.size}px;--delay:${p.delay}s;--duration:${p.duration}s`}></span>)}</div>
   <MapPortal />
+
+  <section class="quick-start" id="get-started" aria-labelledby="quick-start-title">
+    <div class="quick-start-heading">
+      <h2 id="quick-start-title">Try it Out</h2>
+    </div>
+    <div class="quick-start-options">
+      <article class="quick-start-card" aria-labelledby="local-start-title">
+        <p class="eyebrow">Open source</p>
+        <h3 id="local-start-title">Start with your repository.</h3>
+        <ul>
+          <li>Install with Homebrew:<code class="setup-command">brew install scryr-app/tap/scryr</code></li>
+          <li><a href="/llm-prompt/">Copy the prompt</a> into your coding agent to create an <code>index.scry</code> file.</li>
+          <li>Review the file, then run <code>scryr serve</code> from your repository.</li>
+        </ul>
+        <a class="spell-button" href="/getting-started/">Install locally <span aria-hidden="true">↗</span></a>
+      </article>
+      <article class="quick-start-card" aria-labelledby="cloud-start-title">
+        <p class="eyebrow">Scryr Cloud</p>
+        <h3 id="cloud-start-title">Go straight to the map.</h3>
+        <ul>
+          <li>Log in to Scryr with your GitHub account.</li>
+          <li>Open a sample architecture in the cloud.</li>
+          <li>Modify the sample to make it your own.</li>
+        </ul>
+        <a class="spell-button" href="https://scryr.app">Log in to Scryr <span aria-hidden="true">↗</span></a>
+      </article>
+    </div>
+  </section>
+  <div class="section-separator" aria-hidden="true"><span>✦</span></div>
   <nav class="chapter-nav" aria-label="The Scryr story">{chapters.map((chapter, i) => <a href={`#${chapter.id}`} aria-label={`${i + 1}. ${chapter.name}`}><span>0{i + 1}</span><i>{chapter.name}</i></a>)}</nav>
 
   <section class="story-chapter old-world" id="old-magic" aria-labelledby="old-title">
