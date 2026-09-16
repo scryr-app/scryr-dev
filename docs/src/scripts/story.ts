@@ -5,6 +5,7 @@ export function initStory() {
   const portal = story.querySelector<HTMLElement>('.map-portal');
   const copy = story.querySelector<HTMLElement>('.portal-copy');
   const mapCamera = story.querySelector<HTMLElement>('.map-camera');
+  const toolbar = document.querySelector<HTMLElement>('header.header');
   if (!portal || !copy) return;
 
   const skipLink = document.querySelector<HTMLAnchorElement>('a[href="#_top"]');
@@ -16,7 +17,6 @@ export function initStory() {
   const annotationStage = story.querySelector<HTMLElement>('.retro-desktop');
   const annotationTargets = [...story.querySelectorAll<SVGRectElement>('[data-rectangle-target]')];
   const annotationArrows = [...story.querySelectorAll<SVGPathElement>('.annotation-arrow')];
-  const chapterLinks = [...story.querySelectorAll<HTMLAnchorElement>('.chapter-nav a')];
   const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
   const events = new AbortController();
   let frame = 0;
@@ -31,8 +31,14 @@ export function initStory() {
     const rect = portal.getBoundingClientRect();
     const cinematic = height > 740 && window.innerWidth > 900;
     const camera = clamp(-rect.top / Math.max(1, rect.height - height));
-    story.dataset.toolbar = rect.top < -80 ? 'visible' : 'hidden';
-    story.dataset.chapters = rect.bottom < height * .6 ? 'visible' : 'hidden';
+    // Reveal the toolbar gradually as the hero leaves the viewport.
+    const toolbarProgress = clamp((height * .9 - rect.bottom) / (height * .6));
+    const toolbarReveal = toolbar?.querySelector(':popover-open') ? 1 : motion ? toolbarProgress : Number(toolbarProgress > 0);
+    story.dataset.toolbar = toolbarReveal > 0 ? 'visible' : 'hidden';
+    if (toolbar) {
+      setProgress(toolbar, '--toolbar-reveal', toolbarReveal);
+      toolbar.inert = toolbarReveal < .05;
+    }
     if (motion) {
       setProgress(story, '--camera', camera);
       setProgress(story, '--intro', cinematic ? clamp(camera / .36) : 0);
@@ -40,10 +46,8 @@ export function initStory() {
     }
     // Faded-out actions should never receive invisible keyboard focus.
     copy.inert = motion && cinematic && camera >= .36;
-    let current = '';
     for (const chapter of chapters) {
       const box = chapter.getBoundingClientRect();
-      if (box.top < height * .55) current = chapter.id;
       if (motion && box.bottom > 0 && box.top < height) {
         setProgress(chapter, '--progress', clamp((height - box.top) / (height + box.height)));
         setProgress(chapter, '--chart', clamp((height - box.top - box.height * .28) / (height * .55)));
@@ -77,10 +81,6 @@ export function initStory() {
         arrow.style.setProperty('--arrow-progress', draw.toFixed(4));
         arrow.style.setProperty('--arrow-visible', draw > 0 ? '1' : '0');
       });
-    }
-    for (const link of chapterLinks) {
-      if (link.hash === `#${current}`) link.setAttribute('aria-current', 'step');
-      else link.removeAttribute('aria-current');
     }
   }
   function fitMap() {

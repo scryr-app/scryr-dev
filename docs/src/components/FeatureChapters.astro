@@ -10,7 +10,6 @@ local = Forge(
 
 <section class="story-chapter feature-chapter" id="the-signal" aria-labelledby="signal-title">
   <div class="chapter-heading" data-reveal>
-    <p class="eyebrow">III · Explore the system</p>
     <h2 id="signal-title">Find the service.<br /><em>Follow the context.</em></h2>
     <p>Trace connections. Open a component’s Info card for its stack, owner, docs, and source.<br />Keep the architecture beside you while you change the code.</p>
   </div>
@@ -34,14 +33,12 @@ local = Forge(
 
 <section class="story-chapter feature-chapter" id="the-revelation" aria-labelledby="revelation-title">
   <div class="chapter-heading" data-reveal>
-    <p class="eyebrow">IV · Check the evidence</p>
     <h2 id="revelation-title">A service is more<br />than <em>its name.</em></h2>
-    <p>Put test results, CI status, and runtime snapshots on the component they belong to.</p>
+    <p>Connect test results and runtime evidence to each service.<br />Reuse the same architecture model in your own tools.</p>
   </div>
   <div class="feature-evidence">
     <article>
       <div class="feature-evidence-copy" data-reveal>
-      <p class="feature-card-label">Tests + CI/CD cards</p>
       <h3>Did this service pass?</h3>
       <p>Publish JUnit results and completed GitHub Actions runs. See pass/fail counts and workflow status in the diagram.</p>
       <a class="chapter-link" href="/integrations/#github-actions-and-test-reports">Connect CI evidence <span aria-hidden="true">↗</span></a>
@@ -55,12 +52,10 @@ local = Forge(
 <span>$</span> scryr report actions --manifest api \
     --event-file workflow-run.json --branch main</code></pre>
       </div>
-      <p class="feature-note">Publish <code>api</code> with a stable <code>manifest_id</code> and report sources first. Use its JUnit file, run ID, RFC3339 completion time, and GitHub <code>workflow_run</code> payload.</p>
       </div>
     </article>
     <article>
       <div class="feature-evidence-copy" data-reveal>
-      <p class="feature-card-label">Metrics + Performance cards</p>
       <h3>What’s happening at runtime?</h3>
       <p>Open a component’s provider-backed snapshot. Run its named query from the CLI and export JSON for a script or investigation.</p>
       <a class="chapter-link" href="/integrations/#prometheus-compatible-metrics">Connect runtime metrics <span aria-hidden="true">↗</span></a>
@@ -73,7 +68,20 @@ local = Forge(
 <span>$</span> scryr query requestRate --manifest api \
     --json &gt; request-rate.json</code></pre>
       </div>
-      <p class="feature-note">Declare <code>requestRate</code> on <code>api</code> and configure its Prometheus connection on the Scryr server. Credentials stay server-side.</p>
+      </div>
+    </article>
+    <article>
+      <div class="feature-evidence-copy" data-reveal>
+        <h3>What can your tools build from it?</h3>
+        <p>Export Scryr’s JSON Schema to power code generation, editor tooling, validation, and CI checks from the same typed model as your map.</p>
+        <a class="chapter-link" href="/cli/#inspect">Inspect the model <span aria-hidden="true">↗</span></a>
+      </div>
+      <div class="feature-example" data-reveal>
+        <div class="terminal-spell">
+          <div class="panel-label"><span>Inputs for your own tooling</span><span>terminal</span></div>
+          <pre><code><span>$</span> scryr export json &gt; architecture.json
+<span>$</span> scryr inspect schema &gt; scryr-schema.json</code></pre>
+        </div>
       </div>
     </article>
   </div>
@@ -81,7 +89,6 @@ local = Forge(
 
 <section class="story-chapter feature-chapter" id="the-forge" aria-labelledby="forge-title">
   <div class="chapter-heading" data-reveal>
-    <p class="eyebrow">V · Set up the workspace</p>
     <h2 id="forge-title">Declare the tools.<br /><em>Export the setup.</em></h2>
     <p>A Forge keeps tool versions and tasks in your architecture manifest.<br />Generate the files a developer needs to work on the system.</p>
   </div>
@@ -108,9 +115,12 @@ local = Forge(
   <a class="chapter-link" href="/integrations/#mise-docker-compose-and-devcontainers">Build your development environment <span aria-hidden="true">↗</span></a>
 </section>
 
+<div class="chapter-divider" aria-hidden="true"></div>
+
 <style is:global>
   .scryr-story .feature-chapter { padding-block: clamp(7rem, 14vw, 12rem); border-top: 1px solid #b889d922; background: radial-gradient(ellipse at 65% 45%, #66438518, transparent 70%); }
   .scryr-story .feature-chapter .chapter-heading::after { content: ''; display: block; width: 7rem; height: 1px; margin: 2.5rem auto 0; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+  .scryr-story #the-signal .chapter-heading::after { content: none; }
   .scryr-story .feature-chapter h2 { font-size: clamp(2.4rem, 4.5vw, 4.2rem); }
   .scryr-story .feature-chapter .chapter-heading > p:not(.eyebrow) { max-width: 760px; margin-inline: auto; font-size: .9rem; }
   .feature-explore, .feature-forge, .feature-evidence { display: grid; gap: clamp(3rem, 6vw, 5rem); margin-top: clamp(4rem, 7vw, 6rem); }
@@ -122,9 +132,8 @@ local = Forge(
   .scryr-story .feature-side > p, .scryr-story .feature-evidence-copy > p { color: #c4b6d2; font-size: .9rem; line-height: 1.9; margin-top: 1rem; }
   .scryr-story .feature-chapter .terminal-spell { position: relative; min-width: 0; margin-top: 2rem; }
   .scryr-story .feature-chapter pre { font-size: .78rem; line-height: 1.9; padding: 1.25rem; }
-  .scryr-story .feature-chapter .feature-card-label { color: var(--gold); font-size: .68rem; text-transform: uppercase; letter-spacing: .12em; margin: 0 0 .8rem; }
   .scryr-story .feature-evidence article { display: grid; grid-template-columns: .85fr 1.15fr; align-items: center; gap: clamp(3rem, 6vw, 5rem); }
-  .scryr-story .feature-evidence article + article { border-top: 1px solid #b889d92e; padding-top: clamp(5rem, 10vw, 9rem); }
+  .scryr-story .feature-evidence article + article { padding-top: clamp(5rem, 10vw, 9rem); }
   .scryr-story .feature-example .terminal-spell { margin-top: 0; }
   .scryr-story .feature-evidence .feature-note { margin-top: 1.25rem; font-size: .72rem; color: var(--muted); }
   .scryr-story .feature-forge .terminal-spell { margin-top: 0; }

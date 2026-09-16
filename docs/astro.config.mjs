@@ -11,6 +11,7 @@ export default defineConfig({
       logo: { src: './public/favicon.svg', alt: 'Scryr' },
       components: {
         Header: './src/components/Header.astro',
+        PageFrame: './src/components/PageFrame.astro',
         ThemeProvider: './src/components/DarkTheme.astro',
         ThemeSelect: './src/components/NoThemeSelect.astro',
       },

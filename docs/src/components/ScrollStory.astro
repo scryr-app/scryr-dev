@@ -3,7 +3,6 @@ import FeatureChapters from './FeatureChapters.astro';
 import MapPortal from './MapPortal.astro';
 import '../styles/story.css';
 const particles = Array.from({ length: 64 }, (_, i) => ({ x: (i * 73 + 11) % 100, y: (i * 47 + 7) % 100, size: i % 5 === 0 ? 3 : 2, delay: -i * 1.3, duration: 9 + (i % 7) * 2 }));
-const chapters = [{id:'old-magic', name:'The old world'}, {id:'the-spell', name:'The spell'}, {id:'the-signal', name:'Explore the system'}, {id:'the-revelation', name:'Check the evidence'}, {id:'the-forge', name:'Set up the workspace'}];
 const scryCode = `from scryr import Diagram, Info, Manifest
 from scryr.types import ProgrammingLanguage
 
@@ -23,7 +22,7 @@ commerce = Diagram(
     manifests=[api, cache],
 )`;
 ---
-<noscript><style>body:has(.scryr-story) header.header { visibility: visible; transform: none; }</style></noscript>
+<noscript><style>body:has(.scryr-story) header.header { opacity: 1; visibility: visible; transform: none; }</style></noscript>
 <div class="scryr-story not-content" data-motion="on" data-toolbar="hidden">
   <div class="enchanted-sky" aria-hidden="true">{particles.map(p => <span style={`--x:${p.x}%;--y:${p.y}%;--size:${p.size}px;--delay:${p.delay}s;--duration:${p.duration}s`}></span>)}</div>
   <MapPortal />
@@ -34,7 +33,6 @@ commerce = Diagram(
     </div>
     <div class="quick-start-options">
       <article class="quick-start-card" aria-labelledby="local-start-title">
-        <p class="eyebrow">Open source</p>
         <h3 id="local-start-title">Start with your repository.</h3>
         <ul>
           <li>Install with Homebrew:<code class="setup-command">brew install scryr-app/tap/scryr</code></li>
@@ -44,7 +42,6 @@ commerce = Diagram(
         <a class="spell-button" href="/getting-started/">Install locally <span aria-hidden="true">↗</span></a>
       </article>
       <article class="quick-start-card" aria-labelledby="cloud-start-title">
-        <p class="eyebrow">Scryr Cloud</p>
         <h3 id="cloud-start-title">Go straight to the map.</h3>
         <ul>
           <li>Log in to Scryr with your GitHub account.</li>
@@ -56,7 +53,6 @@ commerce = Diagram(
     </div>
   </section>
   <div class="section-separator" aria-hidden="true"><span>✦</span></div>
-  <nav class="chapter-nav" aria-label="The Scryr story">{chapters.map((chapter, i) => <a href={`#${chapter.id}`} aria-label={`${i + 1}. ${chapter.name}`}><span>0{i + 1}</span><i>{chapter.name}</i></a>)}</nav>
 
   <section class="story-chapter old-world" id="old-magic" aria-labelledby="old-title">
     <div class="chapter-sticky">
@@ -95,16 +91,16 @@ commerce = Diagram(
     </div>
   </section>
 
+  <div class="chapter-divider" aria-hidden="true"></div>
+
   <section class="story-chapter spell-chapter" id="the-spell" aria-labelledby="spell-title">
     <div class="chapter-sticky">
-      <div class="chapter-heading" data-reveal><p class="eyebrow">II · Write the spell</p><h2 id="spell-title">Generate Diagrams from<br /><em>Typed Python Code.</em></h2><p>Give it a repository. Ask for <code>index.scry</code>.<br />Turn its understanding into something you can examine.</p></div>
+      <div class="chapter-heading" data-reveal><h2 id="spell-title">Generate Diagrams from<br /><em>Typed Python Code.</em></h2><p>Give it a repository. Ask for <code>index.scry</code>.<br />Turn its understanding into something you can examine.</p></div>
       <div class="spell-workbench">
         <div class="grimoire" data-reveal><div class="panel-label"><span>✧ index.scry</span><span>Typed Python</span></div><pre><code>{scryCode}</code></pre><div class="spell-checks"><span>Imports</span><span>Types</span><span>Connections</span><span>Ownership</span></div></div>
         <div class="conjure-arrow" aria-hidden="true"><span>✧</span><i></i></div>
         <figure class="product-vision" data-reveal><img src="/assets/scryr-product-editor.png" alt="Actual Scryr product with index.scry open beside the Northwind Commerce architecture map" width="1440" height="900" loading="lazy" /><figcaption>The source and its world, side by side. <span>Actual Scryr product</span></figcaption></figure>
       </div>
-      <div class="spell-reasons"><article data-reveal><span>01</span><h3>Familiar to the agent.</h3><p>Normal Python imports and composition. Typed declarations an LLM can generate from repository evidence.</p></article><article data-reveal><span>02</span><h3>Reviewable by you.</h3><p>Diff the file. Check the types. Inspect the connections, ownership, source links, and runtime boundaries.</p></article><article data-reveal><span>03</span><h3>Checked before the map.</h3><p><code>scryr check</code> checks formatting, lint, types, execution, and diagram rules. Review generated Python before running it.</p></article></div>
-      <a class="chapter-link" href="/llm-prompt/">Give your agent the spell <span aria-hidden="true">↗</span></a>
     </div>
   </section>
 
@@ -114,10 +110,8 @@ commerce = Diagram(
     <div class="ending-rings" aria-hidden="true"><i></i><i></i><i></i></div>
     <div data-reveal>
       <img src="/favicon.svg" alt="" width="80" height="80" loading="lazy" />
-      <h2 id="ending-title">Your repository.<br /><em>Your working map.</em></h2>
-      <p>Create an <code>index.scry</code>. Check it. Open it.<br />Start with one service and the things it connects to.</p>
-      <div class="story-actions"><a class="spell-button" href="/getting-started/">Install Scryr <span aria-hidden="true">↗</span></a><a class="quiet-link" href="https://scryr.app">Try a cloud sample <span aria-hidden="true">↗</span></a></div>
-      <p class="ending-install"><code>brew install scryr-app/tap/scryr</code></p>
+      <h2 id="ending-title">Make Your Diagram<br /><em>Do More.</em></h2>
+      <div class="story-actions"><a class="spell-button" href="/getting-started/">Install locally <span aria-hidden="true">↗</span></a><a class="spell-button" href="https://scryr.app">Log in to Scryr <span aria-hidden="true">↗</span></a></div>
       <p class="ending-license">Open source · MIT licensed · Local-first</p>
       <a class="chapter-link" href="https://github.com/scryr-app/scryr-dev">Explore the source ↗</a>
     </div>
