@@ -3,7 +3,6 @@ import starlight from '@astrojs/starlight';
 
 export default defineConfig({
   site: 'https://scryr.dev',
-  redirects: { '/why': '/case-for-scryr/' },
   integrations: [
     starlight({
       title: 'Scryr',
