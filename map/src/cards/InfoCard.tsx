@@ -1,6 +1,6 @@
 import { Container, Svg, Text } from "@react-three/uikit";
 import { Activity, Code, Info, Users } from "@react-three/uikit-lucide";
-import { type ReactNode, useState } from "react";
+import type { ReactNode } from "react";
 import type { BlockLink } from "@/block/Block";
 import { currentTheme } from "@/theme/theme";
 import { type LogoMetadata, LogosDictionary } from "./LogosDictionary";
@@ -10,8 +10,6 @@ const CARD_SIZE_X = 2.8;
 const CARD_SIZE_Y = 1.8;
 // 1 pixel = 0.01 world units -> 240x160 virtual pixel space
 const PIXEL_SIZE = 0.01;
-const TOOLTIP_BG = "rgba(13,17,23,0.5)";
-const TOOLTIP_BORDER = "rgba(255,255,255,0.22)";
 const LINK_CHIP_BG = "rgba(147,197,253,0.16)";
 const LINK_CHIP_BORDER = "rgba(147,197,253,0.34)";
 const META_CHIP_BG = "rgba(255,255,255,0.10)";
@@ -37,16 +35,9 @@ const META_PILL_HEIGHT = 20;
 const TYPE_PILL_WIDTH = 76;
 const AUTH_PILL_WIDTH = 66;
 const OWNER_CHIP_WIDTH = 86;
-const ENUM_TOOLTIP_WIDTH = 116;
-const DESCRIPTION_TOOLTIP_WIDTH = 216;
-const DESCRIPTION_TOOLTIP_LEFT =
-	(DESCRIPTION_TEXT_WIDTH - DESCRIPTION_TOOLTIP_WIDTH) / 2;
 const DESCRIPTION_LINE_LENGTH = 56;
 const DESCRIPTION_LINE_HEIGHT = 12;
 const DESCRIPTION_MAX_LINES = 3;
-const TOOLTIP_RADIUS = 10;
-const TOOLTIP_Z_OFFSET = 1000;
-const TOOLTIP_Z_TRANSLATE = 64;
 const ENUM_ICON_OPACITY = 0.62;
 const MUTED_ENUM_ICON_OPACITY = 0.5;
 
@@ -173,95 +164,6 @@ function getMetaLabel(value: string): string {
 	return compactLabels[normalized] ?? getEnumLabel(value);
 }
 
-function EnumTooltip({
-	label,
-	docUrl,
-	anchorWidth = ENUM_CHIP_SIZE,
-}: {
-	label: string;
-	docUrl: string | null;
-	anchorWidth?: number;
-}) {
-	return (
-		<Container
-			positionType="absolute"
-			positionTop={-40}
-			positionLeft={-(ENUM_TOOLTIP_WIDTH - anchorWidth) / 2}
-			width={ENUM_TOOLTIP_WIDTH}
-			flexDirection="column"
-			alignItems="center"
-			justifyContent="center"
-			backgroundColor={TOOLTIP_BG}
-			borderColor={TOOLTIP_BORDER}
-			borderWidth={1}
-			borderRadius={TOOLTIP_RADIUS}
-			padding={6}
-			gap={2}
-			transformTranslateZ={TOOLTIP_Z_TRANSLATE}
-			zIndexOffset={TOOLTIP_Z_OFFSET}
-			depthWrite={false}
-			pointerEvents="listener"
-		>
-			<Text
-				fontSize={9}
-				color={
-					currentTheme.appearance.content
-						? "#f3e8cf"
-						: currentTheme.cardTextColor
-				}
-			>
-				{label}
-			</Text>
-			{docUrl && (
-				<Text
-					fontSize={8}
-					color={
-						currentTheme.appearance.content
-							? "#c9b6ed"
-							: currentTheme.cardLinkColor
-					}
-					cursor="pointer"
-					onClick={() => window.open(docUrl, "_blank")}
-				>
-					docs
-				</Text>
-			)}
-		</Container>
-	);
-}
-
-function DescriptionTooltip({ description }: { description: string }) {
-	return (
-		<Container
-			positionType="absolute"
-			positionTop={-50}
-			positionLeft={DESCRIPTION_TOOLTIP_LEFT}
-			width={DESCRIPTION_TOOLTIP_WIDTH}
-			backgroundColor={TOOLTIP_BG}
-			borderColor={TOOLTIP_BORDER}
-			borderWidth={1}
-			borderRadius={TOOLTIP_RADIUS}
-			padding={7}
-			transformTranslateZ={TOOLTIP_Z_TRANSLATE}
-			zIndexOffset={TOOLTIP_Z_OFFSET}
-			depthWrite={false}
-			pointerEvents="none"
-		>
-			<Text
-				fontSize={8.5}
-				lineHeight={10.5}
-				color={
-					currentTheme.appearance.content
-						? "#f3e8cf"
-						: currentTheme.cardTextColor
-				}
-			>
-				{description}
-			</Text>
-		</Container>
-	);
-}
-
 function getDescriptionPreview(description: string): {
 	lines: { id: string; text: string }[];
 	isTruncated: boolean;
@@ -336,8 +238,7 @@ function getDescriptionPreviewHeight(lineCount: number): number {
 }
 
 function DescriptionPreview({ description }: { description: string }) {
-	const [isHovered, setIsHovered] = useState(false);
-	const { lines, isTruncated } = getDescriptionPreview(description);
+	const { lines } = getDescriptionPreview(description);
 	const previewHeight = getDescriptionPreviewHeight(lines.length);
 
 	return (
@@ -349,7 +250,6 @@ function DescriptionPreview({ description }: { description: string }) {
 			alignItems="stretch"
 			justifyContent="flex-start"
 			overflow="visible"
-			onHoverChange={setIsHovered}
 			pointerEvents="listener"
 		>
 			<Container
@@ -378,9 +278,6 @@ function DescriptionPreview({ description }: { description: string }) {
 					</Container>
 				))}
 			</Container>
-			{isHovered && isTruncated && (
-				<DescriptionTooltip description={description} />
-			)}
 		</Container>
 	);
 }
@@ -392,9 +289,7 @@ function EnumChip({
 	value: string;
 	muted?: boolean;
 }) {
-	const [isHovered, setIsHovered] = useState(false);
 	const iconContent = getEnumIconContent(value);
-	const label = getEnumLabel(value);
 	const docUrl = getEnumDocUrl(value);
 
 	return (
@@ -407,7 +302,6 @@ function EnumChip({
 			backgroundColor="rgba(255,255,255,0.08)"
 			borderRadius={4}
 			cursor={docUrl ? "pointer" : undefined}
-			onHoverChange={setIsHovered}
 			onClick={docUrl ? () => window.open(docUrl, "_blank") : undefined}
 		>
 			{iconContent ? (
@@ -431,7 +325,6 @@ function EnumChip({
 					{getShortEnumLabel(value)}
 				</Text>
 			)}
-			{isHovered && <EnumTooltip label={label} docUrl={docUrl} />}
 		</Container>
 	);
 }
@@ -447,10 +340,8 @@ function EnumMetaPill({
 	muted?: boolean;
 	width: number;
 }) {
-	const [isHovered, setIsHovered] = useState(false);
 	const iconContent = getEnumIconContent(value);
 	const label = getMetaLabel(value);
-	const tooltipLabel = getEnumLabel(value);
 	const docUrl = getEnumDocUrl(value);
 
 	return (
@@ -467,7 +358,6 @@ function EnumMetaPill({
 			paddingX={4}
 			gap={3}
 			cursor={docUrl ? "pointer" : undefined}
-			onHoverChange={setIsHovered}
 			onClick={docUrl ? () => window.open(docUrl, "_blank") : undefined}
 		>
 			<Text fontSize={6.5} color={currentTheme.cardMutedTextColor}>
@@ -497,9 +387,6 @@ function EnumMetaPill({
 			>
 				{label}
 			</Text>
-			{isHovered && (
-				<EnumTooltip label={tooltipLabel} docUrl={docUrl} anchorWidth={width} />
-			)}
 		</Container>
 	);
 }

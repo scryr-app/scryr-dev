@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { isLocalAuthMode } from "@/auth/env";
 import {
 	celestialAppearance,
 	grimoireAppearance,
@@ -487,36 +488,39 @@ export const ThemePresets = {
 		...originalPalette,
 		id: "VelvetOracle",
 		name: "Velvet Oracle",
-		description: "Layered velvet cards and embossed gold symbols",
+		description: "Champagne velvet, ethereal gold, and Greek sanctuary tones",
 		mode: "light",
 		appearance: velvetAppearance,
 		console: velvetConsole,
-		backgroundColor: "#f4e7df",
-		surfaceColor: "#fbf0e3",
-		fontColor: "#3d1737",
-		dawn: "#722946",
-		dusk: "#8b3c51",
-		tide: "#b38547",
-		grove: "#6f5063",
-		pulse: "#61203f",
-		flare: "#7c1f38",
-		ember: "#a34c60",
-		mist: "#8a6077",
-		drift: "#625276",
-		slate: "#70555f",
-		regionAlpha: "#d6a8b5",
-		regionBeta: "#d9b0b3",
-		regionGamma: "#e3c49e",
-		regionDelta: "#c8b2bd",
-		regionEpsilon: "#e0bdad",
-		regionZeta: "#d7b4a7",
-		regionEta: "#d9a5b4",
-		regionTheta: "#c9adca",
-		regionIota: "#bcaebe",
-		regionKappa: "#dfc8b1",
+		backgroundColor: "#f2f0e6",
+		surfaceColor: "#faf8ef",
+		fontColor: "#353b34",
+		dawn: "#c2a568",
+		dusk: "#8e845c",
+		tide: "#658b99",
+		grove: "#7e8b68",
+		pulse: "#b69a58",
+		flare: "#d0bc86",
+		ember: "#a68e62",
+		mist: "#a7b6ac",
+		drift: "#7b91a0",
+		slate: "#858c80",
+		regionAlpha: "#e1d5b4",
+		regionBeta: "#d5cfb6",
+		regionGamma: "#c4d6d9",
+		regionDelta: "#cfd6bd",
+		regionEpsilon: "#e8ddbc",
+		regionZeta: "#ded1ad",
+		regionEta: "#d5cbb4",
+		regionTheta: "#d3dfd5",
+		regionIota: "#cbd6df",
+		regionKappa: "#d6d9ce",
 	},
 } satisfies Record<string, ThemeAttributes>;
 export type ThemeId = keyof typeof ThemePresets;
+const defaultThemeId: ThemeId = isLocalAuthMode
+	? "IndustrialForest"
+	: "LightningNeon";
 
 /** Old palettes and brightness settings migrate into one complete theme. */
 export function resolveThemeId(
@@ -530,7 +534,7 @@ export function resolveThemeId(
 	return selected &&
 		["SteelBlue", "IndustryOcean", "VibrantRainbow"].includes(selected)
 		? "LightningNeon"
-		: "IndustrialForest";
+		: defaultThemeId;
 }
 function readInitialTheme(): ThemeId {
 	try {
@@ -542,7 +546,7 @@ function readInitialTheme(): ThemeId {
 	} catch {
 		/* Storage may be disabled; the default still renders. */
 	}
-	return "IndustrialForest";
+	return defaultThemeId;
 }
 export let currentTheme = new Theme(ThemePresets[readInitialTheme()]);
 const listeners = new Set<() => void>();

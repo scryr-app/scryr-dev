@@ -19,14 +19,10 @@ export interface CardSlotProps {
 	blockHalfDepth: number;
 	/** Whether this card is the currently active (docked) card — controlled by Block */
 	isActive: boolean;
-	/** Whether the cursor is over this card's open side slot on the block */
+	/** Whether the pointer is over the slot or its exposed card. */
 	isSlotHovered: boolean;
 	/** Called when this card should also select its parent block. */
 	onSelect?: () => void;
-	/** Called when the active card's front surface is hovered. */
-	onFrontHoverStart?: () => void;
-	/** Called when the pointer leaves the active card's front surface. */
-	onFrontHoverEnd?: () => void;
 }
 
 export function CardSlot({
@@ -39,8 +35,6 @@ export function CardSlot({
 	isActive,
 	isSlotHovered,
 	onSelect,
-	onFrontHoverStart,
-	onFrontHoverEnd,
 }: CardSlotProps) {
 	const { cardRef, initialPosition } = useCardSlideAnimation({
 		blockHalfWidth,
@@ -64,27 +58,6 @@ export function CardSlot({
 		<group
 			ref={cardRef}
 			position={initialPosition}
-			onPointerEnter={(e) => {
-				if (!isActive) {
-					return;
-				}
-				e.stopPropagation();
-				onFrontHoverStart?.();
-			}}
-			onPointerMove={(e) => {
-				if (!isActive) {
-					return;
-				}
-				e.stopPropagation();
-				onFrontHoverStart?.();
-			}}
-			onPointerLeave={(e) => {
-				if (!isActive) {
-					return;
-				}
-				e.stopPropagation();
-				onFrontHoverEnd?.();
-			}}
 			onClick={(e) => {
 				e.stopPropagation();
 				onSelect?.();

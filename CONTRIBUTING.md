@@ -84,14 +84,14 @@ configuration in ignored `mise.local.toml`; copy
 
 ### Development modes
 
-| Command | Behavior | Prerequisites |
-| --- | --- | --- |
-| `contribute:oss` | Rust reload and Vite HMR with SQLite and local auth | Contributor setup |
-| `contribute:cloud` | Rust reload and Vite HMR locally with remote Turso and Clerk | Development cloud credentials |
-| `contribute:cloud:remote-map` | Local Vite HMR against the deployed Fly API | Cloud credentials and `CLOUD_GRAPHQL_URL` |
-| `contribute:oss:server` / `contribute:cloud:server` | Watch and restart only the server | Corresponding mode's setup |
-| `contribute:oss:map` / `contribute:cloud:map` | Run only Vite HMR | Corresponding mode's setup |
-| `contribute:docs` | Run the Astro documentation development server | Contributor setup |
+| Command                                             | Behavior                                                     | Prerequisites                             |
+| --------------------------------------------------- | ------------------------------------------------------------ | ----------------------------------------- |
+| `contribute:oss`                                    | Rust reload and Vite HMR with SQLite and local auth          | Contributor setup                         |
+| `contribute:cloud`                                  | Rust reload and Vite HMR locally with remote Turso and Clerk | Development cloud credentials             |
+| `contribute:cloud:remote-map`                       | Local Vite HMR against the deployed Fly API                  | Cloud credentials and `CLOUD_GRAPHQL_URL` |
+| `contribute:oss:server` / `contribute:cloud:server` | Watch and restart only the server                            | Corresponding mode's setup                |
+| `contribute:oss:map` / `contribute:cloud:map`       | Run only Vite HMR                                            | Corresponding mode's setup                |
+| `contribute:docs`                                   | Run the Astro documentation development server               | Contributor setup                         |
 
 OSS mode removes cloud database/auth variables and selects local auth even when
 `mise.local.toml` contains cloud configuration. SQLite and runtime state live in
@@ -166,18 +166,18 @@ regressions, validates workflow syntax, and scans Git history for secrets.
 
 For faster feedback after `contribute:setup`:
 
-| Command | Scope |
-| --- | --- |
-| `verify:static` | Formatting checks, lint, and types across components |
-| `verify:test` | Unit tests, then integration tests |
-| `verify:manifest` / `verify:crystal` / `verify:map` | One component's complete CI suite |
-| `verify:lint:crystal` | Rust Clippy |
-| `verify:format:manifest` | Python formatting checks |
-| `verify:types:map` | TypeScript type checks |
-| `verify:test:unit:crystal` | Rust unit tests |
-| `verify:test:integration:manifest` | Python sample integration tests |
-| `verify:workflows` | Mise-only workflow and local composite-action policy |
-| `verify:release` | Build and smoke-test the standalone CLI |
+| Command                                             | Scope                                                |
+| --------------------------------------------------- | ---------------------------------------------------- |
+| `verify:static`                                     | Formatting checks, lint, and types across components |
+| `verify:test`                                       | Unit tests, then integration tests                   |
+| `verify:manifest` / `verify:crystal` / `verify:map` | One component's complete CI suite                    |
+| `verify:lint:crystal`                               | Rust Clippy                                          |
+| `verify:format:manifest`                            | Python formatting checks                             |
+| `verify:types:map`                                  | TypeScript type checks                               |
+| `verify:test:unit:crystal`                          | Rust unit tests                                      |
+| `verify:test:integration:manifest`                  | Python sample integration tests                      |
+| `verify:workflows`                                  | Mise-only workflow and local composite-action policy |
+| `verify:release`                                    | Build and smoke-test the standalone CLI              |
 
 Use `contribute:fix` to apply formatting and lint fixes without verification.
 CLI tests need network access when provisioning managed Python for the first time.
