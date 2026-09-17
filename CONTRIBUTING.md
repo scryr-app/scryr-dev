@@ -117,8 +117,9 @@ mise run contribute:generate:samples        # Refresh bundled cloud starter diag
 mise run contribute:build                   # Build all development artifacts
 ```
 
-GraphQL generation and sample upload reuse the local server or start one
-temporarily. `contribute:build:manifest`, `contribute:build:crystal`, and
+GraphQL generation exports the Rust schema and generates frontend contracts
+from that local snapshot; it does not require a running server. Sample upload
+reuses the local server or starts one temporarily. `contribute:build:manifest`, `contribute:build:crystal`, and
 `contribute:build:map` build individual components after contributor setup.
 Development builds do not prepare the standalone CLI's embedded UI; use
 `release:build` for that.

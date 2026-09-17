@@ -38,7 +38,7 @@ class ActionStatusEvent:
 class GithubActionRun:
     def __init__(self, **values):
         defaults = dict(host="github.com", run_attempt=1, head_branch=None, conclusion=None,
-                        run_started_at=None, logs_url=None, events=[])
+                        run_started_at=None, logs_url=None, workflow_path=None, jobs=None, events=[])
         self.__dict__.update({**defaults, **values})
         for name in ("created_at", "updated_at", "run_started_at"):
             value = getattr(self, name)
@@ -64,6 +64,7 @@ class GithubActionRun:
             host=urlsplit(run["html_url"]).netloc.lower(), repository_id=repo["id"],
             repository=repo["full_name"], workflow_id=run["workflow_id"],
             workflow_name=run.get("name") or "", run_id=run["id"],
+            workflow_path=run.get("path") or (payload.get("workflow") or {}).get("path"),
             run_attempt=run.get("run_attempt", 1), head_branch=run.get("head_branch"),
             head_sha=run["head_sha"], html_url=run["html_url"], status=run["status"],
             conclusion=run.get("conclusion"), created_at=run["created_at"],
@@ -81,7 +82,9 @@ class GithubActionRun:
         )
 
     def to_dict(self):
-        return {_camel(key): _wire(value) for key, value in self.__dict__.items()}
+        return {_camel(key): _wire(value) for key, value in self.__dict__.items()
+                if key not in {"workflow_path", "jobs"} or value is not None}
+
 
 
 class GithubActionsLog:
@@ -98,21 +101,34 @@ class GithubActionsLog:
         else:
             if not current.events:
                 current.events = [current.observation(source="manual")]
+            enriched = False
+            if (run.updated_at >= current.updated_at and run.jobs is not None
+                    and run.jobs != current.jobs):
+                current.jobs = copy.deepcopy(run.jobs)
+                current.updated_at = run.updated_at
+                enriched = True
+            if run.workflow_path is not None and run.workflow_path != current.workflow_path:
+                current.workflow_path = run.workflow_path
+                enriched = True
             if any(item.event_id == event.event_id or (
                 item.status, item.conclusion, item.source_updated_at
             ) == (event.status, event.conclusion, event.source_updated_at) for item in current.events):
-                return False
+                return enriched
             latest = max(current.events, key=lambda item: item.order_key, default=None)
             if source == "api" and latest is not None and (
                 event.source_updated_at >= latest.source_updated_at
                 and (latest.status, latest.conclusion) == (event.status, event.conclusion)
             ):
-                return False
+                return enriched
             current.events.append(event)
             current.events.sort(key=lambda item: item.order_key)
             if max(current.events, key=lambda item: item.order_key) == event:
                 replacement = copy.deepcopy(run)
                 replacement.events = current.events
+                if replacement.jobs is None:
+                    replacement.jobs = current.jobs
+                if replacement.workflow_path is None:
+                    replacement.workflow_path = current.workflow_path
                 self.runs[self.runs.index(current)] = replacement
         self.runs.sort(key=lambda run: (run.created_at, run.run_id, run.run_attempt), reverse=True)
         return True
@@ -121,16 +137,22 @@ class GithubActionsLog:
         runs = [run for run in self.runs if run.host.lower() == host.lower()
                 and run.repository == repository and (workflow_id is None or run.workflow_id == workflow_id)
                 and (branch is None or run.head_branch == branch)]
-        if not runs:
-            return None
-        latest = max(runs, key=lambda run: (run.created_at, run.run_id, run.run_attempt))
-        if latest.status != "completed":
-            return "pending"
-        if latest.conclusion == "success":
-            return "passing"
-        if latest.conclusion in {"failure", "timed_out", "action_required", "startup_failure"}:
+        latest = {}
+        for run in runs:
+            key = (run.host.lower(), run.repository_id, run.workflow_id, run.head_branch)
+            current = latest.get(key)
+            if current is None or (run.created_at, run.run_id, run.run_attempt) > (
+                current.created_at, current.run_id, current.run_attempt
+            ):
+                latest[key] = run
+        if any(run.conclusion in {"failure", "timed_out", "action_required", "startup_failure"}
+               for run in latest.values()):
             return "failing"
-        return None
+        if any(run.status != "completed" for run in latest.values()):
+            return "pending"
+        if not latest or any(run.conclusion != "success" for run in latest.values()):
+            return None
+        return "passing"
 
     def to_dict(self):
         return {"runs": [run.to_dict() for run in self.runs]}

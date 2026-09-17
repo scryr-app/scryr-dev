@@ -208,3 +208,56 @@ async fn operational_report_graphql_contract() -> Result<(), Box<dyn std::error:
     );
     Ok(())
 }
+
+/// Collection writes use the active organization and require its write role.
+#[tokio::test]
+async fn provider_sync_graphql_contract() -> Result<(), Box<dyn std::error::Error>> {
+    let sqlite = sqlx::sqlite::SqlitePoolOptions::new()
+        .max_connections(1)
+        .connect("sqlite::memory:")
+        .await?;
+    let pool = DatabasePool::Sqlite(sqlite.clone());
+    let schema = Schema::build(QueryRoot, GeneratedManifestMutationRoot, EmptySubscription)
+        .data(pool.clone())
+        .finish();
+    let request = || {
+        Request::new("mutation { recordProviderSync(manifestId: \"api\", provider: \"github\") }")
+    };
+    let missing = schema.execute(request()).await;
+    assert_eq!(
+        missing.errors[0].message,
+        "request is missing active organization"
+    );
+    let mut context = ManifestRequestContext {
+        clerk_user_id: "user".into(),
+        clerk_org_id: "org".into(),
+        clerk_org_slug: None,
+        clerk_org_role: None,
+        clerk_org_permissions: vec![],
+    };
+    let denied = schema.execute(request().data(context.clone())).await;
+    assert_eq!(
+        denied.errors[0].message,
+        "active organization role cannot record provider sync"
+    );
+    context.clerk_org_role = Some("org:admin".into());
+    let response = schema.execute(request().data(context.clone())).await;
+    assert!(response.errors.is_empty(), "{:?}", response.errors);
+    assert_eq!(response.data.into_json()?["recordProviderSync"], true);
+    let before = crystal_core::persistence::read_provider_sync(&pool, "org", "api").await?;
+    let response = schema.execute(Request::new("mutation { recordProviderSync(manifestId: \"api\", provider: \"github\", error: \"offline\") }").data(context)).await;
+    assert!(response.errors.is_empty(), "{:?}", response.errors);
+    let after = crystal_core::persistence::read_provider_sync(&pool, "org", "api").await?;
+    assert_eq!(after["github"].error.as_deref(), Some("offline"));
+    assert_eq!(
+        after["github"].last_success_at,
+        before["github"].last_success_at
+    );
+    assert!(
+        crystal_core::persistence::read_provider_sync(&pool, "other", "api")
+            .await?
+            .is_empty()
+    );
+    sqlite.close().await;
+    Ok(())
+}

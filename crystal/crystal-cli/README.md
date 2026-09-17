@@ -34,6 +34,7 @@ scryr format
 scryr lint --fix
 scryr push
 scryr serve --watch
+scryr sync github
 scryr report tests --run-id "$GITHUB_RUN_ID" --observed-at "$RESULTS_COMPLETED_AT"
 scryr report actions
 scryr query --list
@@ -66,6 +67,7 @@ lockfile. Tool provisioning can download dependencies on first use.
 ```bash
 scryr serve
 scryr serve --watch --port 9000
+scryr serve --poll 60
 scryr serve --no-format --no-open
 scryr serve --server-only --sample mern
 ```
@@ -104,15 +106,23 @@ restart `scryr serve` to regenerate artifacts from the authoritative disk source
 - `--no-open`: do not launch a browser.
 - `--host`: bind interface (default `127.0.0.1`).
 - `--port`: TCP port (default `8000`).
+- `--poll [seconds]`: background provider interval, from 15 to 3600 seconds (default `300`; bare `--poll` also uses `300`).
+- `--no-poll`: disable background provider collection.
 - `--sample`: persisted artifact selection; no default sample.
 - `--auth-mode`: `local` (default) or `clerk`.
 
 `DATABASE_URL`, `SCRYR_SQLITE_PATH`, `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`,
 `CLERK_SECRET_KEY`, and `CORS_ALLOWED_ORIGINS` remain server environment settings.
 
+After a valid local diagram loads, configured providers sync immediately and then
+every five minutes. Polling is independent of `--watch` and stops when the server
+exits. `--watch` updates source selections after successful manifest reloads.
+`--server-only` and Clerk-authenticated serving do not use local GitHub credentials. Projects without explicit
+provider selections do not invoke `gh`.
+
 ## Shared manifest options
 
-These options are accepted by check, format, lint, push, serve, export, inspect, and query:
+These options are accepted by check, format, lint, push, serve, sync, export, inspect, and query:
 
 ```bash
 --path <file>          Manifest file to execute. Defaults to index.scry.
@@ -187,7 +197,59 @@ GraphQL endpoints use tokenless local auth; all other endpoints require `SCRYR_T
 
 Endpoint precedence is `--endpoint` (alias `--graphql-url`), `SCRYR_ENDPOINT`,
 legacy `SCRYR_GRAPHQL_URL`, then loopback using `PORT` or port 8000. This applies
-to push, report, and query.
+to push, sync, report, and query.
+
+## `sync github`
+
+Collect GitHub Actions workflow and job history with your existing GitHub CLI login:
+
+```python
+from scryr import CICD, ActionsReportSource, Diagram, Github, Manifest
+
+api = Manifest(
+    manifest_id="services/api",
+    name="API",
+    github=Github(repo_url="https://github.com/acme/api"),
+    cicd=CICD(
+        platform="github_actions",
+        source=ActionsReportSource(workflows=["ci.yml", "integration.yml"], branch="main"),
+    ),
+)
+diagram = Diagram(name="System", manifests=[api])
+```
+
+Install `gh` and run `gh auth login` first. Use filenames from `.github/workflows`
+without directory prefixes, or the existing numeric `workflow_id` selector;
+the two selectors are mutually exclusive. Omit `branch` to use the repository's
+default branch. Polling requires an explicit workflow selection, stable
+`manifest_id`, and `github.repo_url` on each selected block.
+
+```bash
+# Load the diagram and continuously refresh its configured providers.
+scryr serve --poll 300
+
+# Collect once into an already running server.
+scryr sync github --endpoint http://127.0.0.1:8000/graphql
+scryr sync github --manifest api --path index.scry
+```
+
+`--manifest` accepts a public variable, name, or stable ID. Without it, sync collects
+all configured GitHub blocks. Shared repository/workflow selections are fetched
+once per cycle and attached to each matching block. One-shot sync resolves the local
+declarations and records history; it does not upload diagrams.
+
+Initial collection imports ten runs per selected workflow on the selected branch.
+Later cycles catch up across up to 100 recent runs and refresh previously observed
+active attempts. Complete job snapshots are paginated up to 2,000 jobs per attempt.
+Failed cycles back off up to one hour, resetting after successful collection. Durable history deduplicates repeated
+observations and keeps rerun attempts separate. States missed between polls are
+not synthesized. Existing `report actions --event-file` reporting continues to work.
+
+Scryr calls `gh api` without copying credentials into its configuration, manifests,
+or diagram data. A repository URL alone does not trigger collection. Missing `gh`,
+authentication failures, or provider errors surface while the last valid diagram
+and collected history remain available. GitHub repository statistics such as stars
+and pull-request counts are not automatically refreshed.
 
 ## `inspect types`
 
@@ -339,7 +401,7 @@ cargo run -p crystal-cli -- push --path ../manifest/tests/samples/mern/index.scr
 Declare a stable `manifest_id` and optional typed input settings:
 
 ```python
-from scryr import ActionsReportSource, CICD, Diagram, Manifest, TestReportSource, Tests
+from scryr import CICD, ActionsReportSource, Diagram, Manifest, TestReportSource, Tests
 
 api = Manifest(
     manifest_id="services/api",
@@ -417,3 +479,23 @@ command has also been removed; use `export json` for checked diagram JSON.
 Existing persisted artifacts remain readable.
 Deployments that previously used `serve` must add `--server-only` to retain
 server-only behavior. Docker and repository server scripts have been updated.
+
+### GitHub dependency inventory and security
+
+Use `Dependencies(source=GithubDependencySource())` on a block with a stable
+`manifest_id` and `github.repo_url` (or `repo_url`). Import both classes from
+`scryr`. `scryr serve --poll 300` and `scryr sync github` then collect GitHub's
+repository-wide dependency inventory and open Dependabot alerts through your
+existing `gh` login. Both components default to enabled; set `inventory=False`
+or `security=False` to collect only one. The selected repository's default
+branch is used, independently of any Actions branch selection.
+
+Inventory and security have independent polling/retry and freshness states.
+Unavailable or incomplete results never become zero vulnerabilities. Last
+successful snapshots remain available, clearly marked as last known after a
+failure; stale observations are labeled after two hours. The diagram shows
+package counts, versions and licenses where provided, security severity,
+affected packages, and remediation links/patched versions. Counts apply to the
+whole repository, including when several blocks subscribe to it. Outdated
+versions and license compliance are not inferred. GitHub feature availability
+and repository contents/Dependabot-alert read permissions still apply.
