@@ -26,7 +26,7 @@ export default defineConfig({
           { label: 'Getting started', slug: 'getting-started' },
           { label: 'Generate with an LLM', slug: 'llm-prompt' },
         ] },
-        { label: 'Use Scryr', items: [
+        { label: 'Developer Docs', items: [
           { label: 'Manifest language', slug: 'manifests' },
           { label: 'CLI reference', slug: 'cli' },
           { label: 'Generate code from JSON Schema', slug: 'code-generation' },
