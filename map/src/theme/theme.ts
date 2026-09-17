@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { isLocalAuthMode } from "@/auth/env";
 import {
 	celestialAppearance,
 	grimoireAppearance,
@@ -517,6 +518,9 @@ export const ThemePresets = {
 	},
 } satisfies Record<string, ThemeAttributes>;
 export type ThemeId = keyof typeof ThemePresets;
+const defaultThemeId: ThemeId = isLocalAuthMode
+	? "IndustrialForest"
+	: "LightningNeon";
 
 /** Old palettes and brightness settings migrate into one complete theme. */
 export function resolveThemeId(
@@ -530,7 +534,7 @@ export function resolveThemeId(
 	return selected &&
 		["SteelBlue", "IndustryOcean", "VibrantRainbow"].includes(selected)
 		? "LightningNeon"
-		: "IndustrialForest";
+		: defaultThemeId;
 }
 function readInitialTheme(): ThemeId {
 	try {
@@ -542,7 +546,7 @@ function readInitialTheme(): ThemeId {
 	} catch {
 		/* Storage may be disabled; the default still renders. */
 	}
-	return "IndustrialForest";
+	return defaultThemeId;
 }
 export let currentTheme = new Theme(ThemePresets[readInitialTheme()]);
 const listeners = new Set<() => void>();

@@ -1,5 +1,5 @@
 import { UserAvatar, useClerk } from "@clerk/react";
-import { CreditCard, KeyRound, Shield, UserCog } from "lucide-react";
+import { CreditCard, KeyRound, LogOut, Shield, UserCog } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 
 type UserProfilePath = "/account" | "/security" | "/billing" | "/api-keys";
@@ -20,8 +20,10 @@ interface AccountButtonProps {
 }
 
 export function AccountButton({ variant = "standalone" }: AccountButtonProps) {
-	const { openUserProfile } = useClerk();
+	const { openUserProfile, signOut } = useClerk();
 	const [isOpen, setIsOpen] = useState(false);
+	const [isSigningOut, setIsSigningOut] = useState(false);
+	const [signOutError, setSignOutError] = useState(false);
 	const menuId = useId();
 	const containerRef = useRef<HTMLDivElement>(null);
 	const buttonClassName =
@@ -64,10 +66,23 @@ export function AccountButton({ variant = "standalone" }: AccountButtonProps) {
 		openUserProfile({ __experimental_startPath: startPath });
 	};
 
+	const logout = async () => {
+		setIsSigningOut(true);
+		setSignOutError(false);
+		try {
+			await signOut({ redirectUrl: "/" });
+		} catch {
+			setSignOutError(true);
+		} finally {
+			setIsSigningOut(false);
+		}
+	};
+
 	return (
 		<div ref={containerRef} className="relative">
 			<button
 				type="button"
+				aria-label="Account menu"
 				aria-expanded={isOpen}
 				aria-haspopup="menu"
 				aria-controls={menuId}
@@ -104,6 +119,22 @@ export function AccountButton({ variant = "standalone" }: AccountButtonProps) {
 							{label}
 						</button>
 					))}
+					<div className="my-1 border-t border-white/10" />
+					<button
+						type="button"
+						role="menuitem"
+						disabled={isSigningOut}
+						onClick={() => void logout()}
+						className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm text-slate-200 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
+					>
+						<LogOut size={16} className="text-slate-400" />
+						{isSigningOut ? "Logging out…" : "Log out"}
+					</button>
+					{signOutError && (
+						<p role="alert" className="px-3 py-2 text-sm text-red-300">
+							Unable to log out. Please try again.
+						</p>
+					)}
 				</div>
 			) : null}
 		</div>
