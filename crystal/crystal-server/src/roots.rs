@@ -61,6 +61,9 @@ impl QueryRoot {
     > {
         let context = ctx.data::<crystal_core::manifest::ManifestRequestContext>()?;
         let state = ctx.data::<AppState>()?;
+        crate::samples::ensure_samples(state, context)
+            .await
+            .map_err(async_graphql::Error::new)?;
         if state.auth_mode == crate::state::AuthMode::Local
             && !ctx
                 .data_opt::<crate::editor::EditorRequestAllowed>()
@@ -105,6 +108,7 @@ impl QueryRoot {
         let auth = require_authenticated_request(ctx).map_err(|error| error.message)?;
         let context = auth.manifest_request_context()?;
         let state = ctx.data::<AppState>().map_err(|e| e.message)?;
+        crate::samples::ensure_samples(state, &context).await?;
         let manifests = if let Some(id) = scry_identifier.as_deref().filter(|s| !s.is_empty()) {
             persistence::read_generated_manifest_json_by_scry_identifier(
                 &state.db_pool,
@@ -186,6 +190,8 @@ impl QueryRoot {
         let state = ctx.data::<AppState>().map_err(|e| e.message)?;
         let pool = &state.db_pool;
 
+        crate::samples::ensure_samples(state, &request_context).await?;
+
         persistence::list_generated_manifest_maps(pool, &request_context.clerk_org_id)
             .await
             .map_err(String::from)
@@ -203,6 +209,7 @@ impl QueryRoot {
         let request_context = auth.manifest_request_context()?;
         let state = ctx.data::<AppState>().map_err(|e| e.message)?;
         let pool = &state.db_pool;
+        crate::samples::ensure_samples(state, &request_context).await?;
         let raw_json = if let Some(scry_identifier) = scry_identifier
             .as_deref()
             .filter(|identifier| !identifier.trim().is_empty())

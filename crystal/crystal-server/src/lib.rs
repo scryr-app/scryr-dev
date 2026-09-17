@@ -10,6 +10,7 @@ mod health;
 mod http_handlers;
 mod roots;
 mod runtime_metrics;
+mod samples;
 /// GraphQL HTTP server bootstrap.
 pub mod server;
 /// Shared server state and configuration.

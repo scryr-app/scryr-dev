@@ -263,6 +263,43 @@ for sample in manifest/tests/samples/*/index.scry; do
 done
 '''
 
+[tasks."contribute:generate:samples"]
+description = "Generate the server's bundled editable organization samples"
+dir = "{{config_root}}"
+usage = 'flag "--check" help="Check that the committed sample catalog is current"'
+run = '''
+python - <<'PYTHON'
+import json
+import os
+from pathlib import Path
+import subprocess
+
+root = Path.cwd()
+subprocess.run(["mise", "run", "internal:embed:manifest"], check=True)
+subprocess.run([
+    "cargo", "build", "--locked", "--manifest-path", "crystal/Cargo.toml",
+    "-p", "crystal-cli",
+], check=True)
+catalog = {}
+for source in sorted((root / "manifest/tests/samples").glob("*/index.scry")):
+    result = subprocess.run([
+        str(root / "crystal/target/debug/scryr"), "export", "json",
+        "--manifest-dir", str(root / "manifest"),
+        "--path", str(source), "--scryr-dir", str(root / ".cache/sample-generator"),
+    ], check=True, text=True, stdout=subprocess.PIPE)
+    catalog[source.parent.name] = json.loads(result.stdout)
+content = json.dumps(catalog, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+target = root / "crystal/crystal-server/src/samples.generated.json"
+if os.environ.get("usage_check") == "true":
+    if not target.is_file() or target.read_text() != content:
+        raise SystemExit("Sample catalog is stale; run mise run contribute:generate:samples")
+else:
+    target.write_text(content)
+print(f"Verified {len(catalog)} bundled sample sources" if os.environ.get("usage_check") == "true"
+      else f"Generated {len(catalog)} bundled sample sources")
+PYTHON
+'''
+
 [tasks."contribute:generate:graphql"]
 description = "Generate frontend GraphQL types from the local server"
 dir = "{{config_root}}"
@@ -401,12 +438,13 @@ dir = "{{config_root}}"
 [tasks."verify:crystal"]
 description = "Install dependencies, embed manifest, and verify crystal: Rust formatting, lint, types, and tests"
 run = [
-    "mise run internal:dependencies:crystal",
-    "mise run internal:embed:manifest",
-    "mise run verify:format:crystal",
-    "mise run verify:lint:crystal",
-    "mise run verify:types:crystal",
-    "mise run verify:test:crystal",
+  "mise run internal:dependencies:crystal",
+  "mise run internal:embed:manifest",
+  "mise run verify:format:crystal",
+  "mise run verify:lint:crystal",
+  "mise run verify:types:crystal",
+  "mise run verify:test:crystal",
+  "mise run contribute:generate:samples --check",
 ]
 dir = "{{config_root}}"
 
