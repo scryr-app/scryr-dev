@@ -9,11 +9,11 @@ Architecture reference: https://dokku.com/docs/development/architecture/
 Source: https://github.com/dokku/dokku
 """
 
-from scryr import CICD, Diagram, Github, Info, Link, Manifest
+from scryr import Diagram, Info, Link, Manifest
+from scryr.collectors import GitHubActionsCollector, GitHubPullRequestCollector, Schedule
 from scryr.saas import Classification
 from scryr.types import (
     AuthType,
-    CICDToolType,
     DeploymentTarget,
     IaCToolType,
     LogAggregationType,
@@ -28,12 +28,12 @@ from scryr.types import (
 _SOURCE = Url("https://github.com/dokku/dokku")
 _DOCS = Url("https://dokku.com/docs/")
 _DEPLOYMENT = DeploymentTarget.bare_metal
-_CICD = CICDToolType.github_actions
 _IAC = IaCToolType.none
 _MONITOR = MonitoringType.none
 _LOGS = LogAggregationType.none
 _TRACING = TracingType.none
 dokku_core_block = Manifest(
+    manifest_id="dokku/dokku_core_block",
     name="Dokku Core",
     icon="🚀",
     classification=Classification.cli,
@@ -63,14 +63,13 @@ dokku_core_block = Manifest(
             Link(site_name="Source", http_url=_SOURCE),
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="dokku/dokku", schedule=Schedule(manual=True)),
+        GitHubActionsCollector(repository="dokku/dokku", schedule=Schedule(manual=True)),
+    ],
 )
 ssh_gateway_block = Manifest(
+    manifest_id="dokku/ssh_gateway_block",
     name="SSH Gateway",
     icon="🔑",
     classification=Classification.network_gateway,
@@ -96,14 +95,13 @@ ssh_gateway_block = Manifest(
             )
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="dokku/dokku", schedule=Schedule(manual=True)),
+        GitHubActionsCollector(repository="dokku/dokku", schedule=Schedule(manual=True)),
+    ],
 )
 git_server_block = Manifest(
+    manifest_id="dokku/git_server_block",
     name="Git Server",
     icon="📦",
     classification=Classification.internal_api,
@@ -129,14 +127,13 @@ git_server_block = Manifest(
             )
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="dokku/dokku", schedule=Schedule(manual=True)),
+        GitHubActionsCollector(repository="dokku/dokku", schedule=Schedule(manual=True)),
+    ],
 )
 app_builder_block = Manifest(
+    manifest_id="dokku/app_builder_block",
     name="App Builder",
     icon="🔨",
     classification=Classification.job_processor,
@@ -163,14 +160,13 @@ app_builder_block = Manifest(
             Link(site_name="Herokuish", http_url=Url("https://github.com/gliderlabs/herokuish")),
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="dokku/dokku", schedule=Schedule(manual=True)),
+        GitHubActionsCollector(repository="dokku/dokku", schedule=Schedule(manual=True)),
+    ],
 )
 docker_scheduler_block = Manifest(
+    manifest_id="dokku/docker_scheduler_block",
     name="Docker Scheduler",
     icon="🐳",
     classification=Classification.scheduler,
@@ -196,14 +192,13 @@ docker_scheduler_block = Manifest(
             )
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="dokku/dokku", schedule=Schedule(manual=True)),
+        GitHubActionsCollector(repository="dokku/dokku", schedule=Schedule(manual=True)),
+    ],
 )
 cron_scheduler_block = Manifest(
+    manifest_id="dokku/cron_scheduler_block",
     name="Cron Scheduler",
     icon="⏰",
     classification=Classification.scheduler,
@@ -229,14 +224,13 @@ cron_scheduler_block = Manifest(
             )
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="dokku/dokku", schedule=Schedule(manual=True)),
+        GitHubActionsCollector(repository="dokku/dokku", schedule=Schedule(manual=True)),
+    ],
 )
 nginx_proxy_block = Manifest(
+    manifest_id="dokku/nginx_proxy_block",
     name="Nginx Proxy",
     icon="⚙️",
     classification=Classification.network_gateway,
@@ -262,14 +256,13 @@ nginx_proxy_block = Manifest(
             )
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="dokku/dokku", schedule=Schedule(manual=True)),
+        GitHubActionsCollector(repository="dokku/dokku", schedule=Schedule(manual=True)),
+    ],
 )
 certs_plugin_block = Manifest(
+    manifest_id="dokku/certs_plugin_block",
     name="Certs Plugin",
     icon="🔒",
     classification=Classification.worker,
@@ -292,14 +285,13 @@ certs_plugin_block = Manifest(
             Link(site_name="SSL Docs", http_url=Url("https://dokku.com/docs/configuration/ssl/"))
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="dokku/dokku", schedule=Schedule(manual=True)),
+        GitHubActionsCollector(repository="dokku/dokku", schedule=Schedule(manual=True)),
+    ],
 )
 plugin_system_block = Manifest(
+    manifest_id="dokku/plugin_system_block",
     name="Plugin System",
     icon="🧩",
     classification=Classification.sdk,
@@ -329,12 +321,10 @@ plugin_system_block = Manifest(
             ),
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="dokku/dokku", schedule=Schedule(manual=True)),
+        GitHubActionsCollector(repository="dokku/dokku", schedule=Schedule(manual=True)),
+    ],
 )
 
 dokku_diagram = Diagram(

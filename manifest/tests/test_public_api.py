@@ -34,18 +34,10 @@ def test_top_level_package_exports_core_manifest_api() -> None:
     assert scryr.Diagram.Query is scryr.ManifestQuery
     assert manifest.to_dict()["forges"] == ["Package Forge"]
     assert scryr.Info is scryr.Manifest.Info
-    assert scryr.Github is scryr.Manifest.Github
-    assert scryr.CICD is scryr.Manifest.CICD
     assert scryr.parse_version("1.2.3") == scryr.SemVer("1.2.3")
     assert callable(scryr.run_manifest_file)
     for name in (
         "Info",
-        "Github",
-        "CICD",
-        "Metrics",
-        "Tests",
-        "Dependencies",
-        "Performance",
         "OtherDiagram",
     ):
         model = getattr(scryr, name)
@@ -72,3 +64,13 @@ def test_run_manifest_file_is_public_library_entrypoint() -> None:
 
     assert isinstance(payload, list)
     assert json.loads(json.dumps(payload)) == payload
+
+
+def test_top_level_exports_inert_collector_constructors() -> None:
+    """Browser autocomplete and root imports expose concrete integration classes."""
+    from scryr.collectors import GitStatusCollector, OpenMetricsCollector, Schedule
+
+    assert scryr.GitStatusCollector is GitStatusCollector
+    assert scryr.OpenMetricsCollector is OpenMetricsCollector
+    assert scryr.Schedule is Schedule
+    assert "GitStatusCollector" in scryr.__all__

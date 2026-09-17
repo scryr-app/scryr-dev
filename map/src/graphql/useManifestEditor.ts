@@ -160,7 +160,7 @@ export function useManifestEditor(isOpen: boolean) {
 			});
 			const variables = { scryIdentifier: saved.identifier };
 			await client.fetchQuery<GetBlocksQuery>({
-				queryKey: useGetBlocksQuery.getKey(variables),
+				queryKey: [...useGetBlocksQuery.getKey(variables), scope],
 				queryFn: graphqlFetcher<GetBlocksQuery, GetBlocksQueryVariables>(
 					GetBlocksDocument,
 					variables,

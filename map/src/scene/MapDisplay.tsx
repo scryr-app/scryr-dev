@@ -3,7 +3,7 @@ import { useThree } from "@react-three/fiber";
 import { useMemo } from "react";
 import { Block } from "@/block";
 import { CameraController } from "@/camera";
-import type { Block as GraphqlBlock } from "@/graphql/generated";
+import type { GetBlocksQuery } from "@/graphql/generated";
 import { useSelectedMap } from "@/graphql/sampleStore";
 import { useBlocksData } from "@/graphql/useBlocksData";
 import { currentTheme } from "@/theme/theme";
@@ -138,7 +138,7 @@ function MapEdges({ layout }: { layout: LayoutResult }) {
 }
 
 interface MapBlocksProps {
-	blocks: GraphqlBlock[];
+	blocks: GetBlocksQuery["blocks"];
 	layout: LayoutResult;
 }
 
@@ -196,7 +196,6 @@ function MapBlocks({ blocks, layout }: MapBlocksProps) {
 						monitoring={block.monitoring || undefined}
 						tracing={block.tracing || undefined}
 						logAggregation={block.logAggregation || undefined}
-						cicdTool={block.cicdTool || undefined}
 						docs={block.docs}
 						links={block.links}
 						diagrams={blockDiagrams}

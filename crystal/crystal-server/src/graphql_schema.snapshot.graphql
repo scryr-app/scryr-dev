@@ -12,15 +12,26 @@ enum ArtifactKind {
 	schema
 }
 
+type BenchmarkResult {
+	name: String!
+	meanSeconds: Float!
+	stddevSeconds: Float!
+	medianSeconds: Float!
+	runs: Int!
+	command: String!
+	baselineMeanSeconds: Float
+	machine: String!
+}
+
 type Block {
 	"""
 	Stable Manifest identity used to attach operational history.
 	"""
 	manifestId: String
 	"""
-	Recent GitHub workflow runs and their observed status history.
+	Declared collectors and their current evidence, including waiting placeholders.
 	"""
-	githubActions: JSON
+	evidence: [CollectorEvidence!]!
 	"""
 	Display name for the component (used as the block label).
 	"""
@@ -30,7 +41,7 @@ type Block {
 	"""
 	icon: String
 	"""
-	Repository or source URL (also used by `GithubCard`).
+	Explicit source URL from the component information section.
 	"""
 	sourceCodeUrl: String
 	"""
@@ -102,10 +113,6 @@ type Block {
 	"""
 	rawJsonString: String!
 	"""
-	CI/CD pipeline platform (`github_actions`, `jenkins`, `circleci`, etc.).
-	"""
-	cicdTool: String
-	"""
 	Named connections to other components in the graph.
 	"""
 	connections: [String!]!
@@ -123,23 +130,134 @@ type Block {
 	minReplicas: Int
 }
 
+type CheckResult {
+	name: String!
+	passed: Boolean!
+	diagnostics: [Diagnostic!]!
+	durationSeconds: Float!
+}
+
+type CollectorEvidence {
+	manifestId: String!
+	section: EvidenceSection!
+	collectorId: String!
+	integration: String!
+	workspaceId: String!
+	state: CollectorState!
+	message: String
+	updatedAt: DateTime
+	freshnessSeconds: Int!
+	stale: Boolean!
+	outdated: Boolean!
+	latest: EvidenceObservation
+}
+
+enum CollectorState {
+	WAITING
+	RUNNING
+	READY
+	MISSING_TOOL
+	INCOMPATIBLE_TOOL
+	NEEDS_LOGIN
+	ERROR
+	CANCELLED
+	DISABLED
+}
+
+type CoverageResult {
+	suite: String!
+	covered: Int!
+	total: Int!
+}
+
+"""
+Implement the DateTime<Utc> scalar
+
+The input/output is a string in RFC3339 format.
+"""
+scalar DateTime
+
+type DependencyEdge {
+	from: String!
+	to: String!
+}
+
+type Diagnostic {
+	message: String!
+	path: String
+	line: Int
+	severity: String!
+}
+
+type EvidenceObservation {
+	schemaVersion: Int!
+	observationId: String!
+	manifestId: String!
+	section: EvidenceSection!
+	collectorId: String!
+	integration: String!
+	workspaceId: String!
+	environment: String!
+	scope: String!
+	planRevision: String!
+	collectorRevision: String!
+	runId: String!
+	attempt: Int!
+	observedAt: DateTime!
+	"""
+	Original source artifact modification time, when importing existing evidence.
+	"""
+	sourceUpdatedAt: DateTime
+	startedAt: DateTime!
+	recordedAt: DateTime
+	inputFingerprint: String!
+	commitSha: String
+	branch: String
+	dirty: Boolean
+	toolVersion: String
+	upstreamFingerprint: String
+	policyRevision: String
+	result: EvidenceResult!
+}
+
+union EvidenceResult = GitResult | PullRequestsResult | WorkflowsResult | CheckResult | TestResult | CoverageResult | InventoryResult | LicenseResult | VulnerabilityResult | MetricsResult | BenchmarkResult
+
+enum EvidenceSection {
+	REPOSITORY
+	CHECKS
+	METRICS
+	TESTS
+	DEPENDENCIES
+	PERFORMANCE
+}
+
 type GeneratedManifestMutationRoot {
 	"""
 	Save source and all its diagram artifacts with optimistic concurrency.
 	"""
 	saveManifestDocument(identifier: String!, revision: String!, envelope: JSON!): JSON!
 	"""
-	Append a typed operational observation for the active organization.
+	Persist normalized evidence without starting any collector or executing code.
 	"""
-	recordReport(manifestId: String!, report: JSON!): Boolean!
+	recordEvidence(observation: JSON!): Boolean!
 	"""
-	Record one GitHub Actions observation without rewriting a generated Manifest.
+	Persist collector lifecycle status; collection remains owned by the local CLI.
 	"""
-	recordActionRun(manifestId: String!, run: JSON!, eventId: String, source: String! = "api"): Boolean!
+	recordCollectorStatus(status: JSON!): Boolean!
 	"""
 	Upsert a generated manifest artifact into storage.
 	"""
 	upsertGeneratedManifest(input: UpsertGeneratedManifestInput!): UpsertGeneratedManifestPayload!
+}
+
+type GitResult {
+	branch: String
+	commit: String
+	dirty: Boolean!
+	changedFiles: Int!
+	ahead: Int!
+	behind: Int!
+	remoteUrl: String
 }
 
 """
@@ -160,10 +278,44 @@ type HealthStatus {
 	databaseMessage: String!
 }
 
+type InventoryResult {
+	complete: Boolean!
+	artifactHash: String!
+	"""
+	Bounded inventory page, filtered over the full immutable snapshot before pagination.
+	"""
+	packages(limit: Int! = 25, offset: Int! = 0, search: String, filter: String, ids: [String!]): [Package!]!
+	matchingPackages(search: String, filter: String, ids: [String!]): Int!
+	relationships(limit: Int! = 25, offset: Int! = 0): [DependencyEdge!]!
+	totalPackages: Int!
+	totalRelationships: Int!
+	licensedPackages: Int!
+	unknownLicensePackages: Int!
+}
+
 """
 A scalar that can represent any JSON value.
 """
 scalar JSON
+
+type LicenseFinding {
+	packageId: String!
+	expression: String
+	decision: String!
+	reason: String!
+}
+
+type LicenseResult {
+	policyRevision: String!
+	inventoryHash: String!
+	complete: Boolean!
+	items(limit: Int! = 25, offset: Int! = 0, search: String, filter: String): [LicenseFinding!]!
+	matchingItems(search: String, filter: String): Int!
+	totalItems: Int!
+	allowedCount: Int!
+	deniedCount: Int!
+	reviewCount: Int!
+}
 
 """
 External reference associated with a block (e.g., repo, docs, dashboard).
@@ -179,27 +331,65 @@ type Link {
 	httpUrl: String
 }
 
+type MetricLabel {
+	name: String!
+	value: String!
+}
+
+type MetricSample {
+	name: String!
+	title: String
+	labels: [MetricLabel!]!
+	value: Float!
+	unit: String
+	metricType: String!
+}
+
+type MetricsResult {
+	samples: [MetricSample!]!
+	scrapedAt: DateTime!
+	complete: Boolean!
+}
+
+type Package {
+	id: String!
+	name: String!
+	version: String!
+	ecosystem: String!
+	purl: String
+	paths: [String!]!
+	licenses: [String!]!
+}
+
+type PullRequest {
+	number: Int!
+	title: String!
+	url: String!
+	state: String!
+	reviewDecision: String
+	headRefName: String
+	headRefOid: String
+}
+
+type PullRequestsResult {
+	repository: String!
+	items: [PullRequest!]!
+	complete: Boolean!
+}
+
 type QueryRoot {
 	"""
 	Read the selected diagram's complete source document.
 	"""
 	manifestDocument(identifier: String!): JSON!
 	"""
-	Execute a named local declaration without persisting a diagram.
+	Read passive, immutable collector history scoped to the active organization.
 	"""
-	manifestQuery(source: JSON!, name: String!): JSON!
+	evidenceHistory(manifestId: String!, section: EvidenceSection!, collectorId: String!, workspaceId: String!, limit: Int! = 50, offset: Int! = 0): [EvidenceObservation!]!
 	"""
-	Fetch configured runtime metrics once when opening a diagram. Block polling never calls this.
+	Immutable, organization-scoped observation used for on-demand detail pagination.
 	"""
-	diagramMetrics(scryIdentifier: String, sample: String): JSON!
-	"""
-	Read operational observations for the active organization.
-	"""
-	reportHistory(manifestId: String!, limit: Int! = 100, offset: Int! = 0): JSON!
-	"""
-	Read complete workflow attempts, newest first, scoped to the active organization.
-	"""
-	actionHistory(manifestId: String!, limit: Int! = 100, offset: Int! = 0): JSON!
+	evidenceObservation(observationId: String!, workspaceId: String): EvidenceObservation
 	health: HealthStatus!
 	"""
 	Lists persisted Scryr maps available in the configured database.
@@ -209,7 +399,7 @@ type QueryRoot {
 	Loads and returns blocks from generated manifest artifacts in the configured database.
 	Pass `scry_identifier` to load an exact Scryr map, or `sample` for legacy lookup.
 	"""
-	blocks(scryIdentifier: String, sample: String): [Block!]!
+	blocks(scryIdentifier: String, sample: String, workspaceId: String): [Block!]!
 }
 
 """
@@ -256,6 +446,24 @@ type ScryrMap {
 	Last update timestamp rendered by the database.
 	"""
 	updatedAt: String!
+}
+
+type TestCase {
+	name: String!
+	suite: String!
+	status: String!
+	message: String
+	durationSeconds: Float!
+}
+
+type TestResult {
+	suite: String!
+	passing: Int!
+	failing: Int!
+	errors: Int!
+	skipped: Int!
+	durationSeconds: Float!
+	cases: [TestCase!]!
 }
 
 """
@@ -316,6 +524,49 @@ type UpsertGeneratedManifestPayload {
 	Persisted row identifier.
 	"""
 	id: UUID!
+}
+
+type VulnerabilityFinding {
+	packageId: String!
+	advisoryId: String!
+	aliases: [String!]!
+	severity: String!
+	fixVersions: [String!]!
+	url: String
+}
+
+type VulnerabilityResult {
+	inventoryHash: String!
+	databaseAgeSeconds: Int
+	databaseVersion: String
+	complete: Boolean!
+	items(limit: Int! = 25, offset: Int! = 0, search: String, filter: String): [VulnerabilityFinding!]!
+	matchingFindings(search: String, filter: String): Int!
+	totalFindings: Int!
+	affectedPackages: Int!
+	criticalCount: Int!
+	highCount: Int!
+	mediumCount: Int!
+	lowCount: Int!
+	unknownSeverityCount: Int!
+}
+
+type WorkflowRun {
+	runId: String!
+	attempt: Int!
+	name: String!
+	status: String!
+	conclusion: String
+	branch: String!
+	commit: String!
+	url: String!
+	updatedAt: DateTime!
+}
+
+type WorkflowsResult {
+	repository: String!
+	items: [WorkflowRun!]!
+	complete: Boolean!
 }
 
 """

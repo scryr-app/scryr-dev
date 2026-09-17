@@ -8,11 +8,11 @@ Architecture reference: https://docs.opensaas.sh/start/guided-tour/
 Source: https://github.com/wasp-lang/open-saas
 """
 
-from scryr import CICD, Diagram, Github, Info, Link, Manifest, ManifestQuery
+from scryr import Diagram, Info, Link, Manifest, ManifestQuery
+from scryr.collectors import GitHubActionsCollector, GitHubPullRequestCollector, Schedule
 from scryr.saas import Classification
 from scryr.types import (
     AuthType,
-    CICDToolType,
     DeploymentTarget,
     IaCToolType,
     IncrementalVersion,
@@ -27,13 +27,13 @@ from scryr.types import (
 
 _SOURCE = Url("https://github.com/wasp-lang/open-saas")
 _DOCS = Url("https://docs.opensaas.sh/")
-_CICD = CICDToolType.github_actions
 _IAC = IaCToolType.none
 _MONITOR = MonitoringType.none
 _LOGS = LogAggregationType.none
 _TRACING = TracingType.none
 _DEPLOYMENT = DeploymentTarget.railway
 postgres_block = Manifest(
+    manifest_id="open_saas/postgres_block",
     name="PostgreSQL",
     icon="🐘",
     classification=Classification.database,
@@ -54,14 +54,15 @@ postgres_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Open SaaS Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="wasp-lang/open-saas", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(repository="wasp-lang/open-saas", schedule=Schedule(manual=True)),
+    ],
 )
 server_block = Manifest(
+    manifest_id="open_saas/server_block",
     name="Wasp Server",
     icon="⚙️",
     classification=Classification.internal_api,
@@ -91,14 +92,15 @@ server_block = Manifest(
             Link(site_name="Open SaaS Docs", http_url=_DOCS),
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="wasp-lang/open-saas", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(repository="wasp-lang/open-saas", schedule=Schedule(manual=True)),
+    ],
 )
 client_block = Manifest(
+    manifest_id="open_saas/client_block",
     name="Wasp Client",
     icon="🖥️",
     classification=Classification.public_ui,
@@ -119,14 +121,15 @@ client_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Open SaaS Live Demo", http_url=Url("https://opensaas.sh"))],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="wasp-lang/open-saas", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(repository="wasp-lang/open-saas", schedule=Schedule(manual=True)),
+    ],
 )
 blog_block = Manifest(
+    manifest_id="open_saas/blog_block",
     name="Blog & Docs",
     icon="📚",
     classification=Classification.public_ui,
@@ -148,14 +151,15 @@ blog_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Open SaaS Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="wasp-lang/open-saas", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(repository="wasp-lang/open-saas", schedule=Schedule(manual=True)),
+    ],
 )
 stripe_block = Manifest(
+    manifest_id="open_saas/stripe_block",
     name="Stripe",
     icon="💳",
     classification=Classification.public_api,
@@ -182,14 +186,12 @@ stripe_block = Manifest(
             ),
         ],
     ),
-    github=Github(
-        repo_url=Url("https://github.com/stripe/stripe-node"),
-    ),
-    cicd=CICD(
-        platform=CICDToolType.none,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="stripe/stripe-node", schedule=Schedule(manual=True))
+    ],
 )
 email_block = Manifest(
+    manifest_id="open_saas/email_block",
     name="Email",
     icon="✉️",
     classification=Classification.public_api,
@@ -215,14 +217,12 @@ email_block = Manifest(
             )
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=CICDToolType.none,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="wasp-lang/open-saas", schedule=Schedule(manual=True))
+    ],
 )
 s3_block = Manifest(
+    manifest_id="open_saas/s3_block",
     name="AWS S3",
     icon="🗄️",
     classification=Classification.object_storage,
@@ -248,14 +248,12 @@ s3_block = Manifest(
             )
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=CICDToolType.none,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="wasp-lang/open-saas", schedule=Schedule(manual=True))
+    ],
 )
 analytics_block = Manifest(
+    manifest_id="open_saas/analytics_block",
     name="Analytics",
     icon="📈",
     classification=Classification.public_api,
@@ -281,12 +279,9 @@ analytics_block = Manifest(
             )
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=CICDToolType.none,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="wasp-lang/open-saas", schedule=Schedule(manual=True))
+    ],
 )
 
 open_saas_diagram = Diagram(

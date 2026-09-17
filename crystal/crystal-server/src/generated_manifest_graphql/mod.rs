@@ -32,6 +32,15 @@ impl GeneratedManifestMutationRoot {
                 "Local editor requests require the server's own origin",
             ));
         }
+        if state.local_capability.is_some()
+            && !ctx
+                .data_opt::<crate::editor::LocalCapabilityAllowed>()
+                .is_some_and(|value| value.0)
+        {
+            return Err(async_graphql::Error::new(
+                "Local source saves require this process's UI capability and same-origin loopback request. Open the embedded Scryr UI.",
+            ));
+        }
         let editor = ctx.data::<crate::editor::EditorService>()?;
         editor
             .save(&state.db_pool, context, &identifier, &revision, envelope.0)
@@ -39,43 +48,29 @@ impl GeneratedManifestMutationRoot {
             .map(async_graphql::Json)
             .map_err(async_graphql::Error::new)
     }
-    /// Append a typed operational observation for the active organization.
-    async fn record_report(
+    /// Persist normalized evidence without starting any collector or executing code.
+    async fn record_evidence(
         &self,
         ctx: &Context<'_>,
-        manifest_id: String,
-        report: async_graphql::Json<crystal_core::reports::Report>,
+        observation: async_graphql::Json<crystal_core::evidence::EvidenceObservation>,
     ) -> async_graphql::Result<bool> {
         let pool = ctx.data::<DatabasePool>()?;
         let context = ctx.data::<ManifestRequestContext>()?;
-        crystal_core::persistence::record_report(pool, context, &manifest_id, report.0)
+        crystal_core::persistence::record_evidence(pool, context, observation.0)
             .await
             .map_err(async_graphql::Error::new)
     }
-
-    /// Record one GitHub Actions observation without rewriting a generated Manifest.
-    async fn record_action_run(
+    /// Persist collector lifecycle status; collection remains owned by the local CLI.
+    async fn record_collector_status(
         &self,
         ctx: &Context<'_>,
-        manifest_id: String,
-        run: async_graphql::Json<crystal_core::action_history::GithubActionRun>,
-        event_id: Option<String>,
-        #[graphql(default = "api")] source: String,
+        status: async_graphql::Json<crystal_core::evidence::CollectorStatus>,
     ) -> async_graphql::Result<bool> {
         let pool = ctx.data::<DatabasePool>()?;
-        let context = ctx
-            .data::<ManifestRequestContext>()
-            .map_err(|_| async_graphql::Error::new("request is missing active organization"))?;
-        crystal_core::persistence::record_action_run(
-            pool,
-            context,
-            &manifest_id,
-            run.0,
-            event_id,
-            &source,
-        )
-        .await
-        .map_err(async_graphql::Error::new)
+        let context = ctx.data::<ManifestRequestContext>()?;
+        crystal_core::persistence::record_collector_status(pool, context, status.0)
+            .await
+            .map_err(async_graphql::Error::new)
     }
 
     /// Upsert a generated manifest artifact into storage.

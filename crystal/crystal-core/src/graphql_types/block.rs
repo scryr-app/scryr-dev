@@ -11,6 +11,8 @@ use serde_json::Value;
 pub struct Block {
     /// The raw JSON representation of the component.
     pub raw_json: Value,
+    /// Typed results projected separately from declaration data.
+    pub collector_evidence: Vec<crate::evidence::CollectorEvidence>,
 }
 
 /// External reference associated with a block (e.g., repo, docs, dashboard).
@@ -32,14 +34,9 @@ impl Block {
             .map(str::to_owned)
     }
 
-    /// Recent GitHub workflow runs and their observed status history.
-    pub async fn github_actions(&self) -> Option<async_graphql::Json<Value>> {
-        self.raw_json
-            .get("cicd")?
-            .get("githubActions")
-            .filter(|value| !value.is_null())
-            .cloned()
-            .map(async_graphql::Json)
+    /// Declared collectors and their current evidence, including waiting placeholders.
+    pub async fn evidence(&self) -> &[crate::evidence::CollectorEvidence] {
+        &self.collector_evidence
     }
 
     /// Display name for the component (used as the block label).
@@ -55,14 +52,9 @@ impl Block {
         block_icon(&self.raw_json)
     }
 
-    /// Repository or source URL (also used by `GithubCard`).
+    /// Explicit source URL from the component information section.
     pub async fn source_code_url(&self) -> Option<String> {
-        section_string_or_top(
-            &self.raw_json,
-            "github",
-            "repoUrl",
-            &["source_code_url", "sourceCodeUrl"],
-        )
+        section_string_or_top(&self.raw_json, "info", "sourceCodeUrl", &["sourceCodeUrl"])
     }
 
     /// Short description of the component.
@@ -251,16 +243,6 @@ impl Block {
     /// Returns the raw JSON as a string for debugging.
     pub async fn raw_json_string(&self) -> String {
         self.raw_json.to_string()
-    }
-
-    /// CI/CD pipeline platform (`github_actions`, `jenkins`, `circleci`, etc.).
-    pub async fn cicd_tool(&self) -> Option<String> {
-        section_string_or_top(
-            &self.raw_json,
-            "cicd",
-            "platform",
-            &["cicd_tool", "cicdTool"],
-        )
     }
 
     /// Named connections to other components in the graph.

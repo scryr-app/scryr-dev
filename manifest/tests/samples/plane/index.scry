@@ -7,11 +7,11 @@ Architecture reference: https://github.com/makeplane/plane/blob/preview/docker-c
 Source: https://github.com/makeplane/plane
 """
 
-from scryr import CICD, Diagram, Github, Info, Link, Manifest
+from scryr import Diagram, Info, Link, Manifest
+from scryr.collectors import GitHubActionsCollector, GitHubPullRequestCollector, Schedule
 from scryr.saas import Classification
 from scryr.types import (
     AuthType,
-    CICDToolType,
     DeploymentTarget,
     IaCToolType,
     IncrementalVersion,
@@ -27,12 +27,12 @@ from scryr.types import (
 _SOURCE = Url("https://github.com/makeplane/plane")
 _DOCS = Url("https://developers.plane.so/")
 _DEPLOYMENT = DeploymentTarget.docker_swarm
-_CICD = CICDToolType.github_actions
 _IAC = IaCToolType.none
 _MONITOR = MonitoringType.none
 _LOGS = LogAggregationType.none
 _TRACING = TracingType.none
 postgres_block = Manifest(
+    manifest_id="plane/postgres_block",
     name="PostgreSQL",
     icon="🐘",
     classification=Classification.database,
@@ -53,14 +53,13 @@ postgres_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="makeplane/plane", schedule=Schedule(manual=True)),
+        GitHubActionsCollector(repository="makeplane/plane", schedule=Schedule(manual=True)),
+    ],
 )
 valkey_block = Manifest(
+    manifest_id="plane/valkey_block",
     name="Valkey",
     icon="🔴",
     classification=Classification.cache_store,
@@ -81,14 +80,13 @@ valkey_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="makeplane/plane", schedule=Schedule(manual=True)),
+        GitHubActionsCollector(repository="makeplane/plane", schedule=Schedule(manual=True)),
+    ],
 )
 rabbitmq_block = Manifest(
+    manifest_id="plane/rabbitmq_block",
     name="RabbitMQ",
     icon="🐰",
     classification=Classification.queue,
@@ -109,14 +107,13 @@ rabbitmq_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="makeplane/plane", schedule=Schedule(manual=True)),
+        GitHubActionsCollector(repository="makeplane/plane", schedule=Schedule(manual=True)),
+    ],
 )
 minio_block = Manifest(
+    manifest_id="plane/minio_block",
     name="MinIO",
     icon="🗄️",
     classification=Classification.object_storage,
@@ -137,14 +134,13 @@ minio_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="MinIO Docs", http_url=Url("https://min.io/docs/"))],
     ),
-    github=Github(
-        repo_url=Url("https://github.com/minio/minio"),
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="minio/minio", schedule=Schedule(manual=True)),
+        GitHubActionsCollector(repository="minio/minio", schedule=Schedule(manual=True)),
+    ],
 )
 api_block = Manifest(
+    manifest_id="plane/api_block",
     name="API Server",
     icon="⚙️",
     classification=Classification.internal_api,
@@ -176,14 +172,13 @@ api_block = Manifest(
             )
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="makeplane/plane", schedule=Schedule(manual=True)),
+        GitHubActionsCollector(repository="makeplane/plane", schedule=Schedule(manual=True)),
+    ],
 )
 worker_block = Manifest(
+    manifest_id="plane/worker_block",
     name="Background Worker",
     icon="⚡",
     classification=Classification.worker,
@@ -210,14 +205,13 @@ worker_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="makeplane/plane", schedule=Schedule(manual=True)),
+        GitHubActionsCollector(repository="makeplane/plane", schedule=Schedule(manual=True)),
+    ],
 )
 beat_worker_block = Manifest(
+    manifest_id="plane/beat_worker_block",
     name="Beat Worker",
     icon="🕐",
     classification=Classification.scheduler,
@@ -239,14 +233,13 @@ beat_worker_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="makeplane/plane", schedule=Schedule(manual=True)),
+        GitHubActionsCollector(repository="makeplane/plane", schedule=Schedule(manual=True)),
+    ],
 )
 live_block = Manifest(
+    manifest_id="plane/live_block",
     name="Live Server",
     icon="✍️",
     classification=Classification.internal_api,
@@ -267,14 +260,13 @@ live_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="makeplane/plane", schedule=Schedule(manual=True)),
+        GitHubActionsCollector(repository="makeplane/plane", schedule=Schedule(manual=True)),
+    ],
 )
 web_block = Manifest(
+    manifest_id="plane/web_block",
     name="Web App",
     icon="🗂️",
     classification=Classification.public_ui,
@@ -299,14 +291,13 @@ web_block = Manifest(
             Link(site_name="Source", http_url=_SOURCE),
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="makeplane/plane", schedule=Schedule(manual=True)),
+        GitHubActionsCollector(repository="makeplane/plane", schedule=Schedule(manual=True)),
+    ],
 )
 admin_block = Manifest(
+    manifest_id="plane/admin_block",
     name="Admin Panel",
     icon="🛡️",
     classification=Classification.admin_ui,
@@ -333,14 +324,13 @@ admin_block = Manifest(
             )
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="makeplane/plane", schedule=Schedule(manual=True)),
+        GitHubActionsCollector(repository="makeplane/plane", schedule=Schedule(manual=True)),
+    ],
 )
 space_block = Manifest(
+    manifest_id="plane/space_block",
     name="Spaces",
     icon="🌐",
     classification=Classification.public_ui,
@@ -362,14 +352,13 @@ space_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="makeplane/plane", schedule=Schedule(manual=True)),
+        GitHubActionsCollector(repository="makeplane/plane", schedule=Schedule(manual=True)),
+    ],
 )
 proxy_block = Manifest(
+    manifest_id="plane/proxy_block",
     name="Proxy",
     icon="🔀",
     classification=Classification.network_gateway,
@@ -396,12 +385,10 @@ proxy_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="makeplane/plane", schedule=Schedule(manual=True)),
+        GitHubActionsCollector(repository="makeplane/plane", schedule=Schedule(manual=True)),
+    ],
 )
 
 plane_diagram = Diagram(

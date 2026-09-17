@@ -1,7 +1,7 @@
 # 🔮 Scryr
 
-Actionable architecture. Define architecture in Python `.scry` manifests, explore
-it in a React/Three.js map, and generate artifacts with the Rust `scryr` CLI.
+Define architecture and local development evidence in a typed Python `index.scry`,
+explore it in a React/Three.js map, and run collection with the Rust `scryr` CLI.
 
 [![CI](https://github.com/scryr-app/scryr-dev/actions/workflows/ci.yml/badge.svg)](https://github.com/scryr-app/scryr-dev/actions/workflows/ci.yml)
 
@@ -22,13 +22,66 @@ mise run release:build
 
 Open `http://127.0.0.1:8000`. The binary embeds the map UI and Python SDK.
 Use `scryr serve` from a repository containing `index.scry` to format, check, and load
-its diagrams automatically. `--server-only` serves existing uploaded maps without
-reading or modifying local manifests. Add `--watch` to reload after source edits.
+its diagrams automatically. It also schedules the collectors declared in that
+file. Add `--watch` to reload after source edits, or `--no-collect` to start with
+collection paused. `--server-only` serves existing uploaded maps without
+reading local manifests or running collectors.
 This workflow needs no Clerk, Turso, Fly, or other cloud account. The build and first manifest
 execution need internet access to download dependencies and managed Python.
 
 Local mode grants requests a shared writable identity. Keep it bound to loopback.
 Only run trusted `.scry` files: manifests execute Python code.
+
+## Local development cards
+
+Put concrete SDK collectors directly in the sections of each `Manifest`:
+
+```python
+from scryr import (
+    Diagram, GitStatusCollector, Manifest, PytestCollector, RuffCheckCollector,
+)
+
+api = Manifest(
+    manifest_id="api",
+    name="API",
+    repository=[GitStatusCollector()],
+    checks=[RuffCheckCollector(paths=["src"])],
+    tests=[PytestCollector(paths=["tests"])],
+)
+system = Diagram(name="Local development", manifests=[api])
+```
+
+The six sections are `repository`, `checks`, `metrics`, `tests`, `dependencies`,
+and `performance`. GitHub pull requests and remote Actions runs belong in
+`repository`; local lint/build tasks belong in `checks`. OpenMetrics endpoints
+and Docker provide laptop metrics. Pytest, Vitest, Nextest, and existing JUnit or
+coverage files provide test evidence. Dependencies combines Syft inventory,
+Grant-backed license policy, and Grype vulnerabilities. Hyperfine supplies
+explicitly requested benchmarks.
+
+```bash
+scryr collect list
+scryr collect doctor
+scryr serve --watch
+# In another terminal in the same project:
+scryr collect run --manifest api --section tests
+scryr collect status
+scryr collect pause
+scryr collect resume
+```
+
+Install the collector tools you choose in your project environment or `PATH`;
+Scryr does not install them automatically. Constructors only describe settings.
+Git and lightweight metrics can poll; tests, checks, and benchmarks default to
+manual runs. Schedules, tool requirements, environment references, and dependency
+policy are all declared in `index.scry`.
+
+Observations are stored in local SQLite (`.scryr/scryr.db` by default) and exposed
+through the local GraphQL API. Collector state and temporary artifacts live under
+`.scryr/collection`. Cards show collection time, source age, and stale or missing
+evidence; importing an old report does not make its results current. See the
+[CLI guide](crystal/crystal-cli/README.md) and
+[typed integration examples](docs/src/content/docs/integrations.md).
 
 To generate an artifact from a bundled sample:
 

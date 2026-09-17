@@ -1,6 +1,6 @@
 # Scryr documentation
 
-Scryr is open-source software for investigating the systems humans and AI agents build. Define a codebase in typed Python `.scry` files, explore it in an interactive architecture diagram, query production metrics in context, and generate artifacts with the Rust `scryr` CLI. Scryr is MIT-licensed and its full local workflow does not require a hosted account.
+Scryr is open-source software for investigating the systems humans and AI agents build. Define a codebase in typed Python `.scry` files, explore it in an interactive architecture diagram, collect local evidence in context, and generate artifacts with the Rust `scryr` CLI. Scryr is MIT-licensed and its full local workflow does not require a hosted account.
 
 Canonical links:
 - Documentation: https://scryr.dev/docs/
@@ -41,8 +41,13 @@ CLI commands:
 - `scryr inspect types`: output declared/runtime field metadata.
 - `scryr inspect schema`: output top-level model JSON schema.
 - `scryr export mise|compose|devcontainer`: generate developer-environment artifacts from a `Forge`.
-- `scryr report tests|actions`: attach durable JUnit or GitHub Actions observations.
-- `scryr query`: run declared Prometheus-compatible or PostHog queries through the server.
+- `scryr collect doctor|list|status`: inspect declared tools, schedules, and evidence status.
+- `scryr collect run --manifest services/api --section tests --collector unit`: run a selected declared integration.
+- Evidence sections are typed lists: repository, checks, metrics, tests, dependencies, performance.
+- Import concrete classes from scryr.collectors. No generic provider wrappers or static summaries.
+- Remote CI belongs to Repository; Checks contains local verification.
+- OpenMetricsCollector scrapes an application/exporter endpoint directly; no metrics server account is needed.
+- Dependencies gives inventory, license evidence/policy decisions, and vulnerabilities equal visibility.
 
 Editor support:
 Associate `*.scry` with Python. In VS Code use `"files.associations": { "*.scry": "python" }`.

@@ -1,0 +1,54 @@
+"""All six laptop evidence cards, with tool execution declared but never run on import."""
+
+from datetime import timedelta
+
+from scryr import Diagram, Manifest
+from scryr.collectors import (
+    Command,
+    CounterRate,
+    GaugeSeries,
+    GitStatusCollector,
+    GrantLicenseCollector,
+    GrypeScanCollector,
+    HistogramPercentile,
+    HyperfineBenchmarkCollector,
+    LicensePolicy,
+    OpenMetricsCollector,
+    PytestCollector,
+    RuffCheckCollector,
+    SbomRef,
+    Schedule,
+    SyftInventoryCollector,
+)
+
+api = Manifest(
+    manifest_id="local/api",
+    name="Local API",
+    description="Collect evidence from this checkout; choose the project tools before running.",
+    repository=[GitStatusCollector()],
+    checks=[RuffCheckCollector()],
+    metrics=[
+        OpenMetricsCollector(
+            endpoint="http://127.0.0.1:8080/metrics",
+            series=[
+                CounterRate(metric="http_requests_total", title="Requests"),
+                HistogramPercentile(metric="http_request_duration_seconds", percentile=95),
+                GaugeSeries(metric="process_resident_memory_bytes", title="Memory"),
+            ],
+        ),
+    ],
+    tests=[PytestCollector(paths=["tests"], timeout=timedelta(minutes=5))],
+    dependencies=[
+        SyftInventoryCollector(
+            id="packages", schedule=Schedule(startup=True, watch=["uv.lock", "pyproject.toml"])
+        ),
+        GrantLicenseCollector(
+            sbom=SbomRef(collector_id="packages"), policy=LicensePolicy(allow=["MIT", "Apache-2.0"])
+        ),
+        GrypeScanCollector(sbom=SbomRef(collector_id="packages")),
+    ],
+    performance=[
+        HyperfineBenchmarkCollector(command=Command(executable="python", args=["--version"]))
+    ],
+)
+local_diagram = Diagram(name="Local development", manifests=[api])

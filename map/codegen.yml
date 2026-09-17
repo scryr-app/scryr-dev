@@ -6,10 +6,11 @@ generates:
     plugins:
       - add:
           content: "import { graphqlFetcher } from './client';"
-      - "typescript"
       - "typescript-operations"
       - "typescript-react-query"
     config:
+      scalars:
+        DateTime: string
       fetcher:
         func: graphqlFetcher
         isReactHook: false

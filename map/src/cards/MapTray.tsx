@@ -13,13 +13,13 @@ import {
 	GitFork,
 	Info,
 	Layers,
+	ListChecks,
 	Map as MapIcon,
 	Minus,
 	Package,
 	Palette,
 	PencilLine,
 	Plus,
-	Rocket,
 	TestTube,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -31,9 +31,9 @@ import { useMapTray } from "./MapTrayContext";
 
 const CARD_TYPES = [
 	{ index: 0, icon: Info, label: "Info" },
-	{ index: 1, icon: GitFork, label: "GitHub" },
-	{ index: 2, icon: Activity, label: "Metrics" },
-	{ index: 3, icon: Rocket, label: "CI/CD" },
+	{ index: 1, icon: GitFork, label: "Repository" },
+	{ index: 2, icon: ListChecks, label: "Checks" },
+	{ index: 3, icon: Activity, label: "Metrics" },
 	{ index: 4, icon: TestTube, label: "Tests" },
 	{ index: 5, icon: Package, label: "Dependencies" },
 	{ index: 6, icon: Gauge, label: "Performance" },

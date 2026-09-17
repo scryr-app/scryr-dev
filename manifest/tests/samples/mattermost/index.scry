@@ -9,12 +9,12 @@ Architecture reference: https://github.com/mattermost/mattermost/blob/master/ser
 Source: https://github.com/mattermost/mattermost
 """
 
-from scryr import CICD, Diagram, Github, Info, Link, Manifest
+from scryr import Diagram, Info, Link, Manifest
+from scryr.collectors import GitHubActionsCollector, GitHubPullRequestCollector, Schedule
 from scryr.saas import Classification
 from scryr.types import (
     AuthType,
     CalendarVersion,
-    CICDToolType,
     DeploymentTarget,
     IaCToolType,
     IncrementalVersion,
@@ -30,12 +30,12 @@ from scryr.types import (
 _SOURCE = Url("https://github.com/mattermost/mattermost")
 _DOCS = Url("https://docs.mattermost.com/")
 _DEPLOYMENT = DeploymentTarget.docker_swarm
-_CICD = CICDToolType.github_actions
 _IAC = IaCToolType.none
 _MONITOR = MonitoringType.prometheus
 _LOGS = LogAggregationType.loki
 _TRACING = TracingType.none
 postgres_block = Manifest(
+    manifest_id="mattermost/postgres_block",
     name="PostgreSQL",
     icon="🐘",
     classification=Classification.database,
@@ -56,14 +56,15 @@ postgres_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="mattermost/mattermost", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(repository="mattermost/mattermost", schedule=Schedule(manual=True)),
+    ],
 )
 redis_block = Manifest(
+    manifest_id="mattermost/redis_block",
     name="Redis",
     icon="🔴",
     classification=Classification.cache_store,
@@ -84,14 +85,15 @@ redis_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="mattermost/mattermost", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(repository="mattermost/mattermost", schedule=Schedule(manual=True)),
+    ],
 )
 minio_block = Manifest(
+    manifest_id="mattermost/minio_block",
     name="MinIO",
     icon="🗄️",
     classification=Classification.object_storage,
@@ -112,14 +114,15 @@ minio_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="mattermost/mattermost", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(repository="mattermost/mattermost", schedule=Schedule(manual=True)),
+    ],
 )
 elasticsearch_block = Manifest(
+    manifest_id="mattermost/elasticsearch_block",
     name="Elasticsearch",
     icon="🔍",
     classification=Classification.search_store,
@@ -140,14 +143,15 @@ elasticsearch_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="mattermost/mattermost", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(repository="mattermost/mattermost", schedule=Schedule(manual=True)),
+    ],
 )
 openldap_block = Manifest(
+    manifest_id="mattermost/openldap_block",
     name="OpenLDAP",
     icon="📂",
     classification=Classification.internal_api,
@@ -168,14 +172,15 @@ openldap_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="mattermost/mattermost", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(repository="mattermost/mattermost", schedule=Schedule(manual=True)),
+    ],
 )
 keycloak_block = Manifest(
+    manifest_id="mattermost/keycloak_block",
     name="Keycloak",
     icon="🔐",
     classification=Classification.public_api,
@@ -197,14 +202,15 @@ keycloak_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="mattermost/mattermost", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(repository="mattermost/mattermost", schedule=Schedule(manual=True)),
+    ],
 )
 server_block = Manifest(
+    manifest_id="mattermost/server_block",
     name="Mattermost Server",
     icon="💬",
     classification=Classification.internal_api,
@@ -236,14 +242,15 @@ server_block = Manifest(
             Link(site_name="API Reference", http_url=Url("https://api.mattermost.com/")),
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="mattermost/mattermost", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(repository="mattermost/mattermost", schedule=Schedule(manual=True)),
+    ],
 )
 webapp_block = Manifest(
+    manifest_id="mattermost/webapp_block",
     name="Mattermost Webapp",
     icon="🌐",
     classification=Classification.public_ui,
@@ -270,14 +277,15 @@ webapp_block = Manifest(
             ),
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="mattermost/mattermost", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(repository="mattermost/mattermost", schedule=Schedule(manual=True)),
+    ],
 )
 nginx_block = Manifest(
+    manifest_id="mattermost/nginx_block",
     name="Nginx",
     icon="⚙️",
     classification=Classification.network_gateway,
@@ -298,14 +306,15 @@ nginx_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="mattermost/mattermost", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(repository="mattermost/mattermost", schedule=Schedule(manual=True)),
+    ],
 )
 prometheus_block = Manifest(
+    manifest_id="mattermost/prometheus_block",
     name="Prometheus",
     icon="📈",
     classification=Classification.internal_api,
@@ -326,14 +335,15 @@ prometheus_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="mattermost/mattermost", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(repository="mattermost/mattermost", schedule=Schedule(manual=True)),
+    ],
 )
 grafana_block = Manifest(
+    manifest_id="mattermost/grafana_block",
     name="Grafana",
     icon="📊",
     classification=Classification.admin_ui,
@@ -354,14 +364,15 @@ grafana_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="mattermost/mattermost", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(repository="mattermost/mattermost", schedule=Schedule(manual=True)),
+    ],
 )
 loki_block = Manifest(
+    manifest_id="mattermost/loki_block",
     name="Loki",
     icon="📝",
     classification=Classification.datastore,
@@ -382,14 +393,15 @@ loki_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="mattermost/mattermost", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(repository="mattermost/mattermost", schedule=Schedule(manual=True)),
+    ],
 )
 otel_collector_block = Manifest(
+    manifest_id="mattermost/otel_collector_block",
     name="OTel Collector",
     icon="🔭",
     classification=Classification.worker,
@@ -410,12 +422,12 @@ otel_collector_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="mattermost/mattermost", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(repository="mattermost/mattermost", schedule=Schedule(manual=True)),
+    ],
 )
 
 mattermost_diagram = Diagram(

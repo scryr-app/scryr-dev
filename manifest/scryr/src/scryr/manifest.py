@@ -16,12 +16,18 @@ from pydantic import (
     model_validator,
 )
 
-from .github import GithubActionsLog  # noqa: TC001 - Pydantic resolves this at runtime.
-from .metrics_source import PostHogSource, PrometheusSource  # noqa: TC001
+from .collectors import (  # noqa: TC001 - Pydantic resolves model annotations.
+    CheckCollector,
+    DependencyCollector,
+    MetricCollector,
+    PerformanceCollector,
+    RepositoryCollector,
+    TestCollector,
+)
+from .collectors.validation import validate_manifest_collectors
 from .types import (
     AuthType,
     CalendarVersion,
-    CICDToolType,
     Classification,
     DeploymentTarget,
     IaCToolType,
@@ -52,12 +58,6 @@ type ForgeTaskRun = str | Sequence[ForgeTaskRunStep]
 type ForgeTaskDependency = str | ForgeTaskCommand
 type ForgeTaskDependencyList = ForgeTaskDependency | Sequence[ForgeTaskDependency]
 type ForgeTaskSpec = str | Sequence[ForgeTaskRunStep] | ForgeTask
-
-type BuildStatus = Literal["passing", "failing", "pending"]
-type DeployStatus = Literal["deployed", "deploying", "failed"]
-type CoverageTrend = Literal["up", "down", "stable"]
-type DependencySeverity = Literal["critical", "high", "medium", "low", "none"]
-type LicenseCompliance = Literal["compliant", "warning", "violation"]
 
 _QUERY_MISSING = object()
 
@@ -223,420 +223,6 @@ class Info(_Section):
             msg = "min_replicas must be less than or equal to max_replicas"
             raise ValueError(msg)
         return self
-
-
-class Github(_Section):
-    """Manifest section for Github data."""
-
-    enabled: bool | None = Field(default=None, description="Whether Github data is enabled")
-    repo_url: Url | str | None = Field(
-        default=None,
-        serialization_alias="repoUrl",
-        validation_alias=AliasChoices("repo_url", "repoUrl"),
-        description="Repository URL",
-    )
-    stars: int | None = Field(default=None, ge=0, description="Number of stars")
-    forks: int | None = Field(default=None, ge=0, description="Number of forks")
-    open_issues: int | None = Field(
-        default=None,
-        ge=0,
-        serialization_alias="openIssues",
-        validation_alias=AliasChoices("open_issues", "openIssues"),
-        description="Number of open issues",
-    )
-    open_prs: int | None = Field(
-        default=None,
-        ge=0,
-        serialization_alias="openPRs",
-        validation_alias=AliasChoices("open_prs", "openPRs"),
-        description="Number of open PRs",
-    )
-    last_commit: str | None = Field(
-        default=None,
-        serialization_alias="lastCommit",
-        validation_alias=AliasChoices("last_commit", "lastCommit"),
-        description="Last commit date",
-    )
-    primary_language: ProgrammingLanguage | str | None = Field(
-        default=None,
-        serialization_alias="primaryLanguage",
-        validation_alias=AliasChoices("primary_language", "primaryLanguage"),
-        description="Primary language",
-    )
-    lines_of_code: int | None = Field(
-        default=None,
-        ge=0,
-        serialization_alias="linesOfCode",
-        validation_alias=AliasChoices("lines_of_code", "linesOfCode"),
-        description="Lines of code",
-    )
-    coverage: float | None = Field(default=None, ge=0, le=100, description="Test coverage")
-    vulnerabilities: int | None = Field(
-        default=None,
-        ge=0,
-        description="Security vulnerabilities count",
-    )
-    outdated_deps: int | None = Field(
-        default=None,
-        ge=0,
-        serialization_alias="outdatedDeps",
-        validation_alias=AliasChoices("outdated_deps", "outdatedDeps"),
-        description="Outdated dependencies count",
-    )
-    active_contributors: int | None = Field(
-        default=None,
-        ge=0,
-        serialization_alias="activeContributors",
-        validation_alias=AliasChoices("active_contributors", "activeContributors"),
-        description="Active contributors",
-    )
-    latest_release: Version | str | None = Field(
-        default=None,
-        serialization_alias="latestRelease",
-        validation_alias=AliasChoices("latest_release", "latestRelease"),
-        description="Latest release version",
-    )
-    license: str | None = Field(default=None, description="License type")
-    build_status: BuildStatus | None = Field(
-        default=None,
-        serialization_alias="buildStatus",
-        validation_alias=AliasChoices("build_status", "buildStatus"),
-        description="Build status",
-    )
-
-    @field_serializer("primary_language")
-    def _serialize_primary_language(self, value: ProgrammingLanguage | str | None) -> str | None:
-        if value is None:
-            return None
-        return value.value if isinstance(value, ProgrammingLanguage) else str(value)
-
-    @field_serializer("latest_release")
-    def _serialize_latest_release(self, value: Version | str | None) -> str | None:
-        return None if value is None else str(value)
-
-
-class Metrics(_Section):
-    """Manifest section for Metrics data."""
-
-    provider: PrometheusSource | None = None
-
-    enabled: bool | None = Field(default=None, description="Whether Metrics data is enabled")
-    response_time_p50: float | None = Field(
-        default=None,
-        ge=0,
-        serialization_alias="responseTimeP50",
-        validation_alias=AliasChoices("response_time_p50", "responseTimeP50", "p50"),
-        description="Response time p50 in ms",
-    )
-    response_time_p95: float | None = Field(
-        default=None,
-        ge=0,
-        serialization_alias="responseTimeP95",
-        validation_alias=AliasChoices("response_time_p95", "responseTimeP95", "p95"),
-        description="Response time p95 in ms",
-    )
-    response_time_p99: float | None = Field(
-        default=None,
-        ge=0,
-        serialization_alias="responseTimeP99",
-        validation_alias=AliasChoices("response_time_p99", "responseTimeP99", "p99"),
-        description="Response time p99 in ms",
-    )
-    request_rate: float | None = Field(
-        default=None,
-        ge=0,
-        serialization_alias="requestRate",
-        validation_alias=AliasChoices("request_rate", "requestRate"),
-        description="Request rate",
-    )
-    error_rate: float | None = Field(
-        default=None,
-        ge=0,
-        serialization_alias="errorRate",
-        validation_alias=AliasChoices("error_rate", "errorRate"),
-        description="Error rate percentage",
-    )
-    success_rate: float | None = Field(
-        default=None,
-        ge=0,
-        le=100,
-        serialization_alias="successRate",
-        validation_alias=AliasChoices("success_rate", "successRate"),
-        description="Success rate percentage",
-    )
-    uptime: float | None = Field(default=None, ge=0, le=100, description="Uptime percentage")
-    active_connections: int | None = Field(
-        default=None,
-        ge=0,
-        serialization_alias="activeConnections",
-        validation_alias=AliasChoices("active_connections", "activeConnections"),
-        description="Active connections count",
-    )
-    cpu_usage: float | None = Field(
-        default=None,
-        ge=0,
-        le=100,
-        serialization_alias="cpuUsage",
-        validation_alias=AliasChoices("cpu_usage", "cpuUsage"),
-        description="CPU usage percentage",
-    )
-    memory_usage: float | None = Field(
-        default=None,
-        ge=0,
-        le=100,
-        serialization_alias="memoryUsage",
-        validation_alias=AliasChoices("memory_usage", "memoryUsage"),
-        description="Memory usage percentage",
-    )
-
-
-class TestReportSource(BaseModel):
-    """Input artifacts for scryr report tests; paths are relative to index.scry."""
-
-    model_config = ConfigDict(extra="forbid")
-    files: list[str] = Field(default_factory=list)
-    format: Literal["junit"] = "junit"
-    suite: str = Field(default="default", min_length=1)
-
-
-class ActionsReportSource(BaseModel):
-    """Workflow selection for scryr report actions."""
-
-    model_config = ConfigDict(extra="forbid")
-    workflow_id: int | None = Field(default=None, gt=0)
-    jobs_file: str | None = None
-    branch: str | None = None
-
-
-class CICD(_Section):
-    """Manifest section for CICD data."""
-
-    source: ActionsReportSource | None = None
-
-    reports: dict[str, Any] | None = Field(
-        default=None, description="Current durable reports by kind and scope"
-    )
-
-    github_actions: GithubActionsLog | None = Field(
-        default=None,
-        serialization_alias="githubActions",
-        validation_alias=AliasChoices("github_actions", "githubActions"),
-        description="Workflow runs and their observed status history",
-    )
-
-    platform: CICDToolType | str | None = Field(default=None, description="CI/CD platform name")
-    build_status: BuildStatus | None = Field(
-        default=None,
-        serialization_alias="buildStatus",
-        validation_alias=AliasChoices("build_status", "buildStatus"),
-        description="Build status",
-    )
-    last_build: str | None = Field(
-        default=None,
-        serialization_alias="lastBuild",
-        validation_alias=AliasChoices("last_build", "lastBuild"),
-        description="Last build timestamp",
-    )
-    deploy_status_prod: DeployStatus | None = Field(
-        default=None,
-        serialization_alias="deployStatusProd",
-        validation_alias=AliasChoices("deploy_status_prod", "deployStatusProd"),
-        description="Production deployment status",
-    )
-    deploy_status_staging: DeployStatus | None = Field(
-        default=None,
-        serialization_alias="deployStatusStaging",
-        validation_alias=AliasChoices("deploy_status_staging", "deployStatusStaging"),
-        description="Staging deployment status",
-    )
-    deploy_frequency: float | None = Field(
-        default=None,
-        ge=0,
-        serialization_alias="deployFrequency",
-        validation_alias=AliasChoices("deploy_frequency", "deployFrequency"),
-        description="Deployments per week",
-    )
-    pipeline_duration: float | None = Field(
-        default=None,
-        ge=0,
-        serialization_alias="pipelineDuration",
-        validation_alias=AliasChoices("pipeline_duration", "pipelineDuration"),
-        description="Pipeline duration in minutes",
-    )
-    failed_builds: int | None = Field(
-        default=None,
-        ge=0,
-        serialization_alias="failedBuilds",
-        validation_alias=AliasChoices("failed_builds", "failedBuilds"),
-        description="Failed builds count",
-    )
-
-    @field_serializer("platform")
-    def _serialize_platform(self, value: CICDToolType | str | None) -> str | None:
-        if value is None:
-            return None
-        return value.value if isinstance(value, CICDToolType) else str(value)
-
-
-class Tests(_Section):
-    """Manifest section for Tests data."""
-
-    source: TestReportSource | None = None
-
-    reports: dict[str, Any] | None = Field(
-        default=None, description="Current durable reports by kind and scope"
-    )
-
-    errors: int | None = Field(default=None, ge=0, description="Errored tests")
-    skipped: int | None = Field(default=None, ge=0, description="Skipped tests")
-    total: int | None = Field(default=None, ge=0, description="Total number of tests")
-    passing: int | None = Field(default=None, ge=0, description="Number of passing tests")
-    failing: int | None = Field(default=None, ge=0, description="Number of failing tests")
-    coverage: float | None = Field(default=None, ge=0, le=100, description="Test coverage")
-    coverage_trend: CoverageTrend | None = Field(
-        default=None,
-        serialization_alias="coverageTrend",
-        validation_alias=AliasChoices("coverage_trend", "coverageTrend"),
-        description="Coverage trend indicator",
-    )
-    flaky_tests: int | None = Field(
-        default=None,
-        ge=0,
-        serialization_alias="flakyTests",
-        validation_alias=AliasChoices("flaky_tests", "flakyTests"),
-        description="Number of flaky tests",
-    )
-    execution_time: float | None = Field(
-        default=None,
-        ge=0,
-        serialization_alias="executionTime",
-        validation_alias=AliasChoices("execution_time", "executionTime"),
-        description="Test execution time in seconds",
-    )
-    last_run: str | None = Field(
-        default=None,
-        serialization_alias="lastRun",
-        validation_alias=AliasChoices("last_run", "lastRun"),
-        description="Last test run time",
-    )
-
-
-class Dependencies(_Section):
-    """Manifest section for Dependencies data."""
-
-    reports: dict[str, Any] | None = Field(
-        default=None, description="Current durable reports by kind and scope"
-    )
-
-    open_alerts: int | None = Field(
-        default=None,
-        ge=0,
-        serialization_alias="openAlerts",
-        validation_alias=AliasChoices("open_alerts", "openAlerts"),
-    )
-    total_deps: int | None = Field(
-        default=None,
-        ge=0,
-        serialization_alias="totalDeps",
-        validation_alias=AliasChoices("total_deps", "totalDeps"),
-        description="Total number of dependencies",
-    )
-    outdated_deps: int | None = Field(
-        default=None,
-        ge=0,
-        serialization_alias="outdatedDeps",
-        validation_alias=AliasChoices("outdated_deps", "outdatedDeps"),
-        description="Number of outdated dependencies",
-    )
-    vulnerable_deps: int | None = Field(
-        default=None,
-        ge=0,
-        serialization_alias="vulnerableDeps",
-        validation_alias=AliasChoices("vulnerable_deps", "vulnerableDeps"),
-        description="Number of dependencies with vulnerabilities",
-    )
-    max_severity: DependencySeverity | None = Field(
-        default=None,
-        serialization_alias="maxSeverity",
-        validation_alias=AliasChoices("max_severity", "maxSeverity"),
-        description="Highest severity vulnerability level",
-    )
-    direct_deps: int | None = Field(
-        default=None,
-        ge=0,
-        serialization_alias="directDeps",
-        validation_alias=AliasChoices("direct_deps", "directDeps"),
-        description="Number of direct dependencies",
-    )
-    transitive_deps: int | None = Field(
-        default=None,
-        ge=0,
-        serialization_alias="transitiveDeps",
-        validation_alias=AliasChoices("transitive_deps", "transitiveDeps"),
-        description="Number of transitive dependencies",
-    )
-    update_lag: int | None = Field(
-        default=None,
-        ge=0,
-        serialization_alias="updateLag",
-        validation_alias=AliasChoices("update_lag", "updateLag"),
-        description="Dependency update lag in days",
-    )
-    license_compliance: LicenseCompliance | None = Field(
-        default=None,
-        serialization_alias="licenseCompliance",
-        validation_alias=AliasChoices("license_compliance", "licenseCompliance"),
-        description="License compliance status",
-    )
-
-
-class Performance(_Section):
-    """Manifest section for Performance data."""
-
-    cpu_history: list[float] | None = Field(
-        default=None,
-        serialization_alias="cpuHistory",
-        validation_alias=AliasChoices("cpu_history", "cpuHistory"),
-        description="CPU usage history",
-    )
-    cpu_current: float | None = Field(
-        default=None,
-        ge=0,
-        le=100,
-        serialization_alias="cpuCurrent",
-        validation_alias=AliasChoices("cpu_current", "cpuCurrent"),
-        description="Current CPU usage percentage",
-    )
-    cpu_avg: float | None = Field(
-        default=None,
-        ge=0,
-        le=100,
-        serialization_alias="cpuAvg",
-        validation_alias=AliasChoices("cpu_avg", "cpuAvg"),
-        description="Average CPU usage percentage",
-    )
-    cpu_peak: float | None = Field(
-        default=None,
-        ge=0,
-        le=100,
-        serialization_alias="cpuPeak",
-        validation_alias=AliasChoices("cpu_peak", "cpuPeak"),
-        description="Peak CPU usage percentage",
-    )
-    memory_usage: float | None = Field(
-        default=None,
-        ge=0,
-        le=100,
-        serialization_alias="memoryUsage",
-        validation_alias=AliasChoices("memory_usage", "memoryUsage"),
-        description="Current memory usage percentage",
-    )
-    time_window: str | None = Field(
-        default=None,
-        serialization_alias="timeWindow",
-        validation_alias=AliasChoices("time_window", "timeWindow"),
-        description="Time window label",
-    )
 
 
 class OtherDiagram(_Section):
@@ -838,12 +424,6 @@ class Manifest(BaseModel):
     """A data model representing a single Scryr block."""
 
     Info: ClassVar[type[Info]] = Info
-    Github: ClassVar[type[Github]] = Github
-    Metrics: ClassVar[type[Metrics]] = Metrics
-    CICD: ClassVar[type[CICD]] = CICD
-    Tests: ClassVar[type[Tests]] = Tests
-    Dependencies: ClassVar[type[Dependencies]] = Dependencies
-    Performance: ClassVar[type[Performance]] = Performance
     OtherDiagram: ClassVar[type[OtherDiagram]] = OtherDiagram
 
     model_config = ConfigDict(
@@ -882,16 +462,14 @@ class Manifest(BaseModel):
         description="Named forge configurations this component uses",
     )
 
-    # Manifest sections. Names intentionally match the map surface, but remain
-    # domain-level Manifest section models rather than UI component references.
+    # Architecture metadata and typed, integration-specific evidence declarations.
     info: Info = Field(default_factory=Info)
-    github: Github | None = Field(default=None)
-    analytics: PostHogSource | None = Field(default=None)
-    metrics: Metrics | None = Field(default=None)
-    cicd: CICD | None = Field(default=None)
-    tests: Tests | None = Field(default=None)
-    dependencies: Dependencies | None = Field(default=None)
-    performance: Performance | None = Field(default=None)
+    repository: list[RepositoryCollector] = Field(default_factory=list)
+    checks: list[CheckCollector] = Field(default_factory=list)
+    metrics: list[MetricCollector] = Field(default_factory=list)
+    tests: list[TestCollector] = Field(default_factory=list)
+    dependencies: list[DependencyCollector] = Field(default_factory=list)
+    performance: list[PerformanceCollector] = Field(default_factory=list)
     other_diagram: OtherDiagram | None = Field(
         default=None,
         serialization_alias="otherDiagram",
@@ -909,13 +487,12 @@ class Manifest(BaseModel):
         connections: list[Manifest] | None = None,
         forges: list[Label | str] | None = None,
         info: Info | None = None,
-        github: Github | None = None,
-        analytics: PostHogSource | None = None,
-        metrics: Metrics | None = None,
-        cicd: CICD | None = None,
-        tests: Tests | None = None,
-        dependencies: Dependencies | None = None,
-        performance: Performance | None = None,
+        repository: list[RepositoryCollector] | None = None,
+        checks: list[CheckCollector] | None = None,
+        metrics: list[MetricCollector] | None = None,
+        tests: list[TestCollector] | None = None,
+        dependencies: list[DependencyCollector] | None = None,
+        performance: list[PerformanceCollector] | None = None,
         other_diagram: OtherDiagram | None = None,
         description: Markdown | str | None = None,
         version: Version | str | None = None,
@@ -932,8 +509,6 @@ class Manifest(BaseModel):
         min_replicas: int | None = None,
         docs: list[Url | str] | None = None,
         links: list[Link] | None = None,
-        repo_url: Url | str | None = None,
-        cicd_tool: CICDToolType | str | None = None,
         **extra: Never,
     ) -> None:
         """Create a manifest, accepting common section fields as init-only sugar."""
@@ -948,7 +523,8 @@ class Manifest(BaseModel):
             "tags": tags,
             "connections": connections,
             "forges": forges,
-            "analytics": analytics,
+            "repository": repository,
+            "checks": checks,
             "metrics": metrics,
             "tests": tests,
             "dependencies": dependencies,
@@ -989,19 +565,12 @@ class Manifest(BaseModel):
         elif info is not None:
             data["info"] = info
 
-        if repo_url is not None:
-            base_github = github.model_dump(mode="python", by_alias=False) if github else {}
-            data["github"] = {**base_github, "repo_url": repo_url}
-        elif github is not None:
-            data["github"] = github
-
-        if cicd_tool is not None:
-            base_cicd = cicd.model_dump(mode="python", by_alias=False) if cicd else {}
-            data["cicd"] = {**base_cicd, "platform": cicd_tool}
-        elif cicd is not None:
-            data["cicd"] = cicd
-
         super().__init__(**data)
+
+    @model_validator(mode="after")
+    def _validate_evidence(self) -> Manifest:
+        validate_manifest_collectors(self)
+        return self
 
     @field_serializer("classification")
     def _serialize_classification(self, value: Classification) -> str:
@@ -1061,12 +630,6 @@ class Manifest(BaseModel):
 
 _MANIFEST_QUERY_SECTION_MODELS: dict[str, type[BaseModel]] = {
     "info": Info,
-    "github": Github,
-    "metrics": Metrics,
-    "cicd": CICD,
-    "tests": Tests,
-    "dependencies": Dependencies,
-    "performance": Performance,
     "other_diagram": OtherDiagram,
 }
 
@@ -1092,10 +655,6 @@ _MANIFEST_QUERY_FIELD_ALIASES: dict[str, str] = {
     "minReplicas": "info.min_replicas",
     "docs": "info.docs",
     "links": "info.links",
-    "repo_url": "github.repo_url",
-    "repoUrl": "github.repo_url",
-    "cicd_tool": "cicd.platform",
-    "cicdTool": "cicd.platform",
     "otherDiagram": "other_diagram",
 }
 
@@ -1244,7 +803,7 @@ class ManifestQuery(BaseModel):
         description=(
             "Manifest field filters. Keys may be dot paths such as `info.language`, "
             "Python-safe paths such as `info__language`, or common field shorthands "
-            "such as `language` and `repo_url`."
+            "such as `language` and `owner_team`."
         ),
     )
 

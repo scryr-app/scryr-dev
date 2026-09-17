@@ -9,7 +9,7 @@ const findings = [
     sources: [{ title: 'Do Users Write More Insecure Code with AI Assistants?', author: 'Perry, Srivastava, Kumar & Boneh', url: 'https://arxiv.org/abs/2211.03622' }],
     responseTitle: 'Make review evidence easier to reach.',
     response: 'Scryr connects components to source repositories, documentation, and test, coverage, and dependency reports. A reviewer can move from a component to the evidence behind it.',
-    docs: [{ label: 'Source and documentation links', url: '/integrations/#github-and-source-links' }, { label: 'Tests and CI reports', url: '/integrations/#github-actions-and-test-reports' }],
+    docs: [{ label: 'Source and documentation links', url: '/integrations/#repository-and-source-links' }, { label: 'Tests and CI reports', url: '/integrations/#local-checks-and-test-reports' }],
   },
   {
     id: 'understanding',
@@ -29,7 +29,7 @@ const findings = [
     sources: [{ title: 'Questions Programmers Ask During Software Evolution Tasks', author: 'Sillito, Murphy & De Volder', url: 'https://www.cs.ubc.ca/~murphy/papers/other/asking-answering-fse06.pdf' }],
     responseTitle: 'Connect components to the evidence about them.',
     response: 'A Scryr component can carry repository links, ownership, documentation, and operational reports. These links provide a path from the shared system model to the tools and records needed to investigate a question.',
-    docs: [{ label: 'Attach source and runbook links', url: '/integrations/#github-and-source-links' }, { label: 'Explore component metadata', url: '/manifests/#manifest-one-component' }],
+    docs: [{ label: 'Attach source and runbook links', url: '/integrations/#repository-and-source-links' }, { label: 'Explore component metadata', url: '/manifests/#manifest-one-component' }],
   },
   {
     id: 'mental-model',
@@ -49,7 +49,7 @@ const findings = [
     sources: [{ title: 'Let’s Go to the Whiteboard: How and Why Software Developers Use Drawings', author: 'Cherubini, Venolia, DeLine & Ko', url: 'https://www.microsoft.com/en-us/research/uploads/prod/2007/05/p557-cherubini.pdf' }, { title: 'Developers’ Visuo-spatial Mental Model and Program Comprehension', author: 'Bouraffa, Fuhrmann & Maalej', url: 'https://arxiv.org/abs/2304.09301' }],
     responseTitle: 'Make each view answer an engineering question.',
     response: 'Scryr lets teams choose the components in a diagram, or select them through typed queries. Component details attach ownership, documentation, and operational evidence to the architecture.',
-    docs: [{ label: 'Query-selected diagrams', url: '/manifests/#query-selected-diagrams' }, { label: 'Attach supporting context', url: '/integrations/#github-and-source-links' }],
+    docs: [{ label: 'Query-selected diagrams', url: '/manifests/#query-selected-diagrams' }, { label: 'Attach supporting context', url: '/integrations/#repository-and-source-links' }],
   },
   {
     id: 'tooling',
@@ -68,8 +68,8 @@ const findings = [
     finding: 'Google’s monitoring guidance distinguishes symptoms from causes and emphasizes latency, traffic, errors, and saturation. It also describes using internal measurements to investigate why a system is behaving poorly.',
     sources: [{ title: 'Monitoring Distributed Systems', author: 'Rob Ewaschuk · Site Reliability Engineering', url: 'https://sre.google/sre-book/monitoring-distributed-systems/' }],
     responseTitle: 'Put observations beside the component they describe.',
-    response: 'Scryr supports Prometheus-compatible metric queries, component metric snapshots, and operational reports. Source and runbook links help an investigator move from architecture to the underlying evidence.',
-    docs: [{ label: 'Prometheus-compatible metrics', url: '/integrations/#prometheus-compatible-metrics' }, { label: 'Operational integrations', url: '/integrations/' }],
+    response: 'Scryr collects direct OpenMetrics samples, local test outcomes, package licenses, and vulnerability observations. Source and runbook links help an investigator move from architecture to the underlying evidence.',
+    docs: [{ label: 'OpenMetrics evidence', url: '/integrations/#openmetrics-from-one-endpoint' }, { label: 'Operational integrations', url: '/integrations/' }],
   },
 ];
 ---
