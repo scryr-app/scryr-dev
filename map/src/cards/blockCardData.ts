@@ -2,11 +2,15 @@ import type { Block } from "@/graphql/generated";
 import type { RuntimeMetricSnapshot } from "../graphql/useDiagramMetrics";
 import type { CICDCardProps } from "./CICDCard";
 import type { DependenciesCardProps } from "./DependenciesCard";
-import {
-	githubActionsData,
-	type GithubActionsCardData,
-} from "./githubActionsData";
 import type { GithubCardProps } from "./GithubCard";
+import {
+	type GithubActionsCardData,
+	githubActionsData,
+} from "./githubActionsData";
+import {
+	type GithubDependenciesCardData,
+	githubDependenciesData,
+} from "./githubDependenciesData";
 import type { MetricsCardProps } from "./MetricsCard";
 import type { PerformanceCardProps } from "./PerformanceCard";
 import { isOperationalReport, type OperationalReport } from "./ReportCard";
@@ -126,6 +130,7 @@ function inferBuildStatus(
 
 export interface BlockCardData {
 	githubActions?: GithubActionsCardData;
+	githubDependencies?: GithubDependenciesCardData;
 	runtimeAnalytics?: RuntimeMetricSnapshot;
 	runtimeMetrics?: RuntimeMetricSnapshot;
 	reports: OperationalReport[];
@@ -160,6 +165,7 @@ export function getBlockCardData(block: Block): BlockCardData {
 
 	return {
 		githubActions: githubActionsData(raw),
+		githubDependencies: githubDependenciesData(raw),
 		runtimeAnalytics: raw?.runtimeAnalytics as
 			| RuntimeMetricSnapshot
 			| undefined,

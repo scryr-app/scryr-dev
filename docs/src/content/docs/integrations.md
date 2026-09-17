@@ -67,6 +67,45 @@ scryr sync github --manifest api --endpoint http://127.0.0.1:8000/graphql
 
 Collection requires an explicit source selection, stable `manifest_id`, and `github.repo_url`. A repository URL alone does not enable polling, and projects without configured sources make no `gh` calls. Scryr invokes `gh api`; authentication stays with `gh`, and tokens are not copied into manifests or diagram data. Missing `gh`, authentication failures, and provider errors are reported while the last valid diagram and collected history remain available. Repository statistics such as stars and pull-request counts are not automatically collected.
 
+## Poll dependency inventory and security alerts
+
+Opt in on blocks with a stable `manifest_id` and a GitHub repository URL:
+
+```python
+from scryr import Dependencies, GithubDependencySource
+
+# Add this section to the block's Manifest(...):
+dependencies = Dependencies(source=GithubDependencySource())
+```
+
+`GithubDependencySource` enables repository-wide inventory and security collection.
+Use `inventory=False` or `security=False` to disable one; at least one must remain enabled.
+This data describes the repository's default branch, not packages owned exclusively by an
+individual diagram block. Blocks referencing the same repository share each collection.
+`scryr serve --poll 300` and `scryr sync github` collect it alongside configured workflows.
+Each background provider has its own retry schedule, so an unavailable inventory does not
+slow workflow or security updates.
+
+The Dependencies card shows known package counts, open security alerts, unique vulnerable
+packages, highest severity, and alert links with available patched versions. Package details
+include versions and declared licenses when present. Direct and transitive counts appear only
+when the dependency graph provides complete relationships. Inventory is not an audit of
+outdated versions or license compliance, and no such values are inferred.
+
+Scryr uses GitHub's asynchronous SBOM export when available, with a legacy export fallback
+for deployments that do not expose the newer route. Inventory exports need repository contents
+read access. Dependabot alerts require the feature to be available and the current `gh` login
+to have access to security alerts (fine-grained tokens need **Dependabot alerts: read**).
+See [GitHub's SBOM API](https://docs.github.com/en/rest/dependency-graph/sboms) and
+[Dependabot API](https://docs.github.com/en/rest/dependabot/alerts).
+
+Missing permissions, unavailable features, malformed responses, and incomplete pagination
+produce an **unavailable/unknown** state, never a zero-vulnerability result. Inventory and
+security succeed or fail independently. Last successful snapshots persist across restarts and
+remain explicitly labeled as last known when collection fails. Only a complete successful
+empty alert response establishes zero open alerts; observations older than two hours are
+shown as stale. Collection does not enable GitHub security features or expand token permissions.
+
 ## GitHub Actions and test reports
 
 Declare where CI and JUnit evidence lives:

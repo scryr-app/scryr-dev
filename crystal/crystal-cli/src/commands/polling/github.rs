@@ -93,7 +93,7 @@ fn valid_workflow(value: &str) -> bool {
 }
 
 /// Reject URLs that could turn gh into a request to an unintended endpoint.
-fn repository(value: &str) -> Result<String, String> {
+pub(super) fn repository(value: &str) -> Result<String, String> {
     let url = url::Url::parse(value).map_err(|_| "Invalid GitHub repository URL")?;
     let path = url.path().trim_end_matches('/').trim_end_matches(".git");
     let parts: Vec<_> = path.trim_start_matches('/').split('/').collect();

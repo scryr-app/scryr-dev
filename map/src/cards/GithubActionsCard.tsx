@@ -1,6 +1,6 @@
 import { Container, Text } from "@react-three/uikit";
-import type { CICDCardProps } from "./CICDCard";
 import { currentTheme } from "@/theme/theme";
+import type { CICDCardProps } from "./CICDCard";
 import type {
 	GithubActionsCardData,
 	WorkflowStatus,

@@ -479,3 +479,23 @@ command has also been removed; use `export json` for checked diagram JSON.
 Existing persisted artifacts remain readable.
 Deployments that previously used `serve` must add `--server-only` to retain
 server-only behavior. Docker and repository server scripts have been updated.
+
+### GitHub dependency inventory and security
+
+Use `Dependencies(source=GithubDependencySource())` on a block with a stable
+`manifest_id` and `github.repo_url` (or `repo_url`). Import both classes from
+`scryr`. `scryr serve --poll 300` and `scryr sync github` then collect GitHub's
+repository-wide dependency inventory and open Dependabot alerts through your
+existing `gh` login. Both components default to enabled; set `inventory=False`
+or `security=False` to collect only one. The selected repository's default
+branch is used, independently of any Actions branch selection.
+
+Inventory and security have independent polling/retry and freshness states.
+Unavailable or incomplete results never become zero vulnerabilities. Last
+successful snapshots remain available, clearly marked as last known after a
+failure; stale observations are labeled after two hours. The diagram shows
+package counts, versions and licenses where provided, security severity,
+affected packages, and remediation links/patched versions. Counts apply to the
+whole repository, including when several blocks subscribe to it. Outdated
+versions and license compliance are not inferred. GitHub feature availability
+and repository contents/Dependabot-alert read permissions still apply.

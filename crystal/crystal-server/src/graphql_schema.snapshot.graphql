@@ -125,6 +125,10 @@ type Block {
 
 type GeneratedManifestMutationRoot {
 	"""
+	Record complete successful dependency components without rewriting the diagram.
+	"""
+	recordGithubDependencies(manifestId: String!, snapshot: JSON!): Boolean!
+	"""
 	Record collection health independently of the provider's workflow outcomes.
 	"""
 	recordProviderSync(manifestId: String!, provider: String!, error: String, context: JSON): Boolean!

@@ -72,6 +72,15 @@ if test -f "$TEST_FIXTURE/fail"; then
   exit 1
 fi
 case "$6" in
+ repos/example/api/dependency-graph/sbom/generate-report) printf 'gh: Not Found (HTTP 404)\n' >&2; exit 1;;
+ repos/example/api/dependency-graph/sbom)
+   if test -f "$TEST_FIXTURE/inventory-fail"; then printf 'HTTP 404 unavailable (HTTP 404)\n' >&2; exit 1; fi
+   /bin/cat "$TEST_FIXTURE/sbom.json";;
+ repos/example/api/dependabot/alerts\?*)
+   test "$7" = --paginate
+   test "$8" = --slurp
+   if test -f "$TEST_FIXTURE/security-fail"; then printf 'HTTP 403 denied\n' >&2; exit 1; fi
+   /bin/cat "$TEST_FIXTURE/alerts.json";;
  repos/example/api) /bin/cat "$TEST_FIXTURE/repository.json";;
  repos/example/api/actions/workflows/ci.yml) /bin/cat "$TEST_FIXTURE/workflow.json";;
  repos/example/api/actions/workflows/ci.yml/runs\?*) /bin/cat "$TEST_FIXTURE/runs.json";;
@@ -106,6 +115,22 @@ esac
         };
         fixture.observation(false)?;
         Ok(fixture)
+    }
+
+    fn enable_dependencies(&self) -> TestResult {
+        let root = self.directory.path();
+        let mut values: Value = serde_json::from_slice(&fs::read(root.join("manifest.json"))?)?;
+        let section = json!({"source":{"provider":"github","inventory":true,"security":true}});
+        values[0]["manifest"]["dependencies"] = section.clone();
+        values[1]["diagram"]["manifests"][0]["dependencies"] = section;
+        write_json(root, "manifest.json", &values)?;
+        write_json(
+            root,
+            "sbom.json",
+            &json!({"sbom":{"spdxVersion":"SPDX-2.3","packages":[{"SPDXID":"A","name":"requests","versionInfo":"2.0"}]}}),
+        )?;
+        write_json(root, "alerts.json", &json!([[]]))?;
+        Ok(())
     }
 
     fn command(&self) -> Command {
@@ -305,6 +330,8 @@ fn write_json(root: &Path, name: &str, value: &Value) -> TestResult {
 #[test]
 fn serve_polls_immediately_and_refreshes_without_watch() -> TestResult {
     let fixture = Fixture::new()?;
+    fixture.enable_dependencies()?;
+    fs::write(fixture.directory.path().join("inventory-fail"), "")?;
     let mut server = fixture.serve(&["--poll", "15"])?;
     fixture.wait_for(Duration::from_secs(10), || {
         fixture
@@ -326,7 +353,14 @@ fn serve_polls_immediately_and_refreshes_without_watch() -> TestResult {
     );
     assert_eq!(history["runs"][0]["jobs"][0]["conclusion"], "success");
     assert!(fixture.calls() > initial);
-    assert_eq!(fixture.block()?["cicd"]["buildStatus"], "passing");
+    let block = fixture.block()?;
+    assert_eq!(block["cicd"]["buildStatus"], "passing");
+    assert!(block["providerSync"]["github_dependencies_inventory"]["error"].is_string());
+    assert!(block["dependencies"]["github"]["inventory"].is_null());
+    assert_eq!(
+        block["dependencies"]["github"]["security"]["alerts"],
+        json!([])
+    );
     server.stop()?;
     assert!(
         fixture
@@ -531,5 +565,41 @@ fn watched_source_changes_refresh_subscriptions_without_waiting_for_the_interval
         })
     })?;
     assert_eq!(fixture.history()?["runs"].as_array().map(Vec::len), Some(2));
+    Ok(())
+}
+
+#[test]
+fn dependency_snapshots_preserve_partial_success_and_recover_after_restart() -> TestResult {
+    let fixture = Fixture::new()?;
+    fixture.enable_dependencies()?;
+    let root = fixture.directory.path();
+    let mut server = fixture.serve(&["--no-poll"])?;
+    fixture.wait_for(Duration::from_secs(10), || fixture.block().is_ok())?;
+    assert!(fixture.sync()?.status.success());
+    let initial = fixture.block()?["dependencies"]["github"].clone();
+    assert_eq!(
+        initial["inventory"]["packages"].as_array().map(Vec::len),
+        Some(1)
+    );
+    assert_eq!(initial["security"]["alerts"], json!([]));
+    fs::write(root.join("security-fail"), "")?;
+    assert!(!fixture.sync()?.status.success());
+    let failed = fixture.block()?;
+    assert_eq!(
+        failed["dependencies"]["github"]["security"],
+        initial["security"]
+    );
+    assert!(failed["providerSync"]["github_dependencies_security"]["error"].is_string());
+    assert!(failed["providerSync"]["github_dependencies_inventory"]["error"].is_null());
+    server.stop()?;
+    let _restarted = fixture.serve(&["--no-poll"])?;
+    fixture.wait_for(Duration::from_secs(10), || fixture.block().is_ok())?;
+    assert_eq!(
+        fixture.block()?["dependencies"]["github"]["security"],
+        initial["security"]
+    );
+    fs::remove_file(root.join("security-fail"))?;
+    assert!(fixture.sync()?.status.success());
+    assert!(fixture.block()?["providerSync"]["github_dependencies_security"]["error"].is_null());
     Ok(())
 }

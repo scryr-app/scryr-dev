@@ -9,6 +9,7 @@ import {
 } from "@/cards";
 import type { BlockCardData } from "@/cards/blockCardData";
 import { GithubActionsCard } from "../cards/GithubActionsCard";
+import { GithubDependenciesCard } from "../cards/GithubDependenciesCard";
 import { ReportCard } from "../cards/ReportCard";
 import { RuntimeMetricsCard } from "../cards/RuntimeMetricsCard";
 
@@ -101,15 +102,22 @@ export function createBlockDataCards(cardData: BlockCardData): BlockCardGroup {
 					: [],
 		},
 		{
-			components: cardData.reports.some((r) => r.data.kind === "dependencies")
-				? cardData.reports
-						.filter((r) => r.data.kind === "dependencies")
-						.map((r, index) => (
-							<ReportCard key={reportKey(r, index)} report={r} />
-						))
-				: hasData(cardData.dependencies)
-					? [<DependenciesCard key="deps-card" {...cardData.dependencies} />]
-					: [],
+			components: cardData.githubDependencies
+				? [
+						<GithubDependenciesCard
+							key="github-dependencies-card"
+							{...cardData.githubDependencies}
+						/>,
+					]
+				: cardData.reports.some((r) => r.data.kind === "dependencies")
+					? cardData.reports
+							.filter((r) => r.data.kind === "dependencies")
+							.map((r, index) => (
+								<ReportCard key={reportKey(r, index)} report={r} />
+							))
+					: hasData(cardData.dependencies)
+						? [<DependenciesCard key="deps-card" {...cardData.dependencies} />]
+						: [],
 		},
 		{
 			components:

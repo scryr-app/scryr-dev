@@ -3,6 +3,8 @@
 
 /// GitHub Actions run and status history models.
 pub mod action_history;
+/// Complete GitHub dependency inventory and security snapshots.
+pub mod github_dependencies;
 /// Typed operational report observations.
 pub mod reports;
 

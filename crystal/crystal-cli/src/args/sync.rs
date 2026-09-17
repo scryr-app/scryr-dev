@@ -13,7 +13,7 @@ pub(crate) struct SyncArgs {
 /// Supported background providers.
 #[derive(Subcommand, Debug, Clone)]
 pub(crate) enum SyncCommand {
-    /// Collect declared GitHub Actions workflows using your existing gh login.
+    /// Collect declared GitHub workflows, dependencies, and security alerts using gh.
     Github(GithubSyncArgs),
 }
 

@@ -156,6 +156,69 @@ fn matches_action_source(
     true
 }
 
+/// Overlay successful dependency components only for the current declared repository.
+async fn attach_github_dependencies(
+    pool: &persistence::DatabasePool,
+    clerk_org_id: &str,
+    block: &mut serde_json::Value,
+) -> Result<(), String> {
+    // Runtime snapshots never survive a disabled or changed declaration.
+    if let Some(dependencies) = block
+        .get_mut("dependencies")
+        .and_then(serde_json::Value::as_object_mut)
+    {
+        dependencies.remove("github");
+    }
+    let source = &block["dependencies"]["source"];
+    if source["provider"].as_str() != Some("github") {
+        return Ok(());
+    }
+    let Some(manifest_id) = block["manifestId"].as_str() else {
+        return Ok(());
+    };
+    let Some(repository_url) = block["github"]["repoUrl"].as_str() else {
+        return Ok(());
+    };
+    let Ok(repository_url) = url::Url::parse(repository_url) else {
+        return Ok(());
+    };
+    if repository_url.scheme() != "https"
+        || repository_url.host_str() != Some("github.com")
+        || !repository_url.username().is_empty()
+        || repository_url.password().is_some()
+        || repository_url.port().is_some()
+        || repository_url.query().is_some()
+        || repository_url.fragment().is_some()
+    {
+        return Ok(());
+    }
+    let Some(mut snapshot) =
+        persistence::read_github_dependencies(pool, clerk_org_id, manifest_id).await?
+    else {
+        return Ok(());
+    };
+    if !repository_url
+        .path()
+        .trim_matches('/')
+        .trim_end_matches(".git")
+        .eq_ignore_ascii_case(&snapshot.repository)
+    {
+        return Ok(());
+    }
+    if source["inventory"].as_bool() == Some(false) {
+        snapshot.inventory = None;
+    }
+    if source["security"].as_bool() == Some(false) {
+        snapshot.security = None;
+    }
+    if snapshot.inventory.is_none() && snapshot.security.is_none() {
+        return Ok(());
+    }
+    block["dependencies"]["github"] =
+        serde_json::to_value(snapshot).map_err(|error| error.to_string())?;
+    Ok(())
+}
+
 /// Root query type for GraphQL schema.
 pub(crate) struct QueryRoot;
 
@@ -345,6 +408,7 @@ impl QueryRoot {
                 let mut item = item.clone();
                 attach_provider_sync(pool, &request_context.clerk_org_id, &mut item).await?;
                 attach_action_history(pool, &request_context.clerk_org_id, &mut item).await?;
+                attach_github_dependencies(pool, &request_context.clerk_org_id, &mut item).await?;
                 blocks.push(Block { raw_json: item });
             }
         }
@@ -361,7 +425,7 @@ pub(crate) type SubscriptionRoot = async_graphql::EmptySubscription;
 
 #[cfg(test)]
 mod tests {
-    use super::{attach_action_history, attach_provider_sync};
+    use super::{attach_action_history, attach_github_dependencies, attach_provider_sync};
     use crystal_core::{
         action_history::GithubActionRun,
         manifest::ManifestRequestContext,
@@ -596,6 +660,151 @@ mod tests {
             .ok_or("block object")?
             .remove("github");
         assert!(super::matches_action_source(&block, &run));
+        Ok(())
+    }
+
+    fn dependency_snapshot() -> serde_json::Value {
+        serde_json::json!({"repository":"example/api",
+            "inventory":{"observedAt":"2026-09-08T10:00:00Z", "packages":[{"id":"react18","name":"react","version":"18","license":"MIT","purl":"pkg:npm/react@18"}]},
+            "security":{"observedAt":"2026-09-08T10:00:00Z", "alerts":[]}})
+    }
+
+    #[tokio::test]
+    async fn dependencies_overlay_requires_current_opt_in_repository_and_component()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let sqlite = sqlx::sqlite::SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await?;
+        let pool = DatabasePool::Sqlite(sqlite);
+        let context = ManifestRequestContext {
+            clerk_user_id: "user".into(),
+            clerk_org_id: "org".into(),
+            clerk_org_slug: None,
+            clerk_org_role: Some("org:admin".into()),
+            clerk_org_permissions: vec![],
+        };
+        persistence::record_github_dependencies(
+            &pool,
+            &context,
+            "api",
+            serde_json::from_value(dependency_snapshot())?,
+        )
+        .await?;
+        let original = serde_json::json!({"manifestId":"api", "github":{"repoUrl":"https://github.com/Example/API.git/"},
+            "dependencies":{"source":{"provider":"github"}, "totalDeps":123, "vulnerableDeps":2}});
+        let mut block = original.clone();
+        attach_github_dependencies(&pool, "org", &mut block).await?;
+        assert_eq!(block["dependencies"]["github"], dependency_snapshot());
+        assert_eq!(block["dependencies"]["totalDeps"], 123);
+        assert_eq!(block["dependencies"]["vulnerableDeps"], 2);
+        for (inventory, security) in [(false, true), (true, false), (false, false)] {
+            let mut disabled = block.clone();
+            disabled["dependencies"]["source"]["inventory"] = serde_json::json!(inventory);
+            disabled["dependencies"]["source"]["security"] = serde_json::json!(security);
+            attach_github_dependencies(&pool, "org", &mut disabled).await?;
+            assert_eq!(
+                disabled["dependencies"]["github"]
+                    .get("inventory")
+                    .is_some(),
+                inventory
+            );
+            assert_eq!(
+                disabled["dependencies"]["github"].get("security").is_some(),
+                security
+            );
+        }
+        for repository in [
+            "https://github.com/other/api",
+            "https://github.enterprise/example/api",
+            "https://evil.example/example/api",
+            "https://github.com/example/api?token=x",
+        ] {
+            let mut moved = block.clone();
+            moved["github"]["repoUrl"] = serde_json::json!(repository);
+            attach_github_dependencies(&pool, "org", &mut moved).await?;
+            assert!(moved["dependencies"].get("github").is_none());
+        }
+        let mut disabled = block.clone();
+        disabled["dependencies"]["source"] = serde_json::Value::Null;
+        attach_github_dependencies(&pool, "org", &mut disabled).await?;
+        assert!(disabled["dependencies"].get("github").is_none());
+        let mut other_tenant = block.clone();
+        attach_github_dependencies(&pool, "other", &mut other_tenant).await?;
+        assert!(other_tenant["dependencies"].get("github").is_none());
+        // Collection failures update provider health only; a successful prior snapshot remains visible.
+        persistence::record_provider_sync(
+            &pool,
+            &context,
+            "api",
+            "github_dependencies_security",
+            Some("offline".into()),
+        )
+        .await?;
+        attach_provider_sync(&pool, "org", &mut block).await?;
+        attach_github_dependencies(&pool, "org", &mut block).await?;
+        assert_eq!(block["dependencies"]["github"], dependency_snapshot());
+        assert_eq!(
+            block["providerSync"]["github_dependencies_security"]["error"],
+            "offline"
+        );
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn dependency_mutation_validates_permissions_and_snapshot_wire_shape()
+    -> Result<(), Box<dyn std::error::Error>> {
+        use async_graphql::{EmptySubscription, Request, Schema, Variables};
+        let sqlite = sqlx::sqlite::SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await?;
+        let pool = DatabasePool::Sqlite(sqlite);
+        let schema = Schema::build(
+            super::QueryRoot,
+            super::MutationRoot::default(),
+            EmptySubscription,
+        )
+        .data(pool.clone())
+        .finish();
+        let request = || {
+            Request::new("mutation($snapshot:JSON!){recordGithubDependencies(manifestId:\"api\",snapshot:$snapshot)}")
+            .variables(Variables::from_json(serde_json::json!({"snapshot":dependency_snapshot()})))
+        };
+        assert!(!schema.execute(request()).await.errors.is_empty());
+        let mut principal = ManifestRequestContext {
+            clerk_user_id: "user".into(),
+            clerk_org_id: "org".into(),
+            clerk_org_slug: None,
+            clerk_org_role: None,
+            clerk_org_permissions: vec![],
+        };
+        assert!(
+            !schema
+                .execute(request().data(principal.clone()))
+                .await
+                .errors
+                .is_empty()
+        );
+        principal.clerk_org_role = Some("org:admin".into());
+        let response = schema.execute(request().data(principal.clone())).await;
+        assert!(response.errors.is_empty(), "{:?}", response.errors);
+        assert_eq!(response.data.into_json()?["recordGithubDependencies"], true);
+        assert_eq!(
+            schema
+                .execute(request().data(principal.clone()))
+                .await
+                .data
+                .into_json()?["recordGithubDependencies"],
+            false
+        );
+        let bad = Request::new("mutation{recordGithubDependencies(manifestId:\"api\",snapshot:{repository:\"example/api\"})}").data(principal);
+        assert!(!schema.execute(bad).await.errors.is_empty());
+        assert!(
+            persistence::read_github_dependencies(&pool, "other", "api")
+                .await?
+                .is_none()
+        );
         Ok(())
     }
 }

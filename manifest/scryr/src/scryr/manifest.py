@@ -556,8 +556,30 @@ class Tests(_Section):
     )
 
 
+class GithubDependencySource(BaseModel):
+    """Collect repository-wide SBOM and Dependabot data on GitHub's default branch."""
+
+    model_config = ConfigDict(extra="forbid")
+    provider: Literal["github"] = "github"
+    inventory: bool = True
+    security: bool = True
+
+    @model_validator(mode="after")
+    def validate_sections(self) -> GithubDependencySource:
+        """An explicit source must enable at least one dependency evidence section."""
+        if not self.inventory and not self.security:
+            msg = "GitHub dependency collection requires inventory or security"
+            raise ValueError(msg)
+        return self
+
+
 class Dependencies(_Section):
     """Manifest section for Dependencies data."""
+
+    source: GithubDependencySource | None = Field(
+        default=None,
+        description="Opt-in repository-wide GitHub collection, not per-component package ownership",
+    )
 
     reports: dict[str, Any] | None = Field(
         default=None, description="Current durable reports by kind and scope"
