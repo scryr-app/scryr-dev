@@ -7,6 +7,9 @@ export interface SurfaceStyle {
 	transmission: number;
 	envMapIntensity: number;
 	emissiveIntensity: number;
+	sheen?: number;
+	sheenColor?: string;
+	sheenRoughness?: number;
 }
 export interface SceneLight {
 	position: [number, number, number];
@@ -558,21 +561,21 @@ export const sunkenAppearance: ThemeAppearance = {
 	view: { fov: 36, position: [11, 10, 16] },
 };
 
-/** Plush layered divination cards with embossed champagne-gold symbols. */
+/** Champagne velvet and ivory cards in the soft gold light of a Greek sanctuary. */
 export const velvetAppearance: ThemeAppearance = {
 	textures: {
 		wall: "velvet",
-		wallBrightness: 0.72,
+		wallBrightness: 0.9,
 		card: "oracle",
-		paperColor: "#f8ead9",
+		paperColor: "#faf7e9",
 		glowCore: 0,
 		glowRim: 0,
 	},
 	content: {
-		text: "#3d1737",
-		muted: "#77586f",
-		link: "#7d294f",
-		inset: "rgba(91,28,64,0.08)",
+		text: "#353b34",
+		muted: "#68705f",
+		link: "#356578",
+		inset: "rgba(126,111,62,0.08)",
 	},
 	shapes: {
 		flatFaces: false,
@@ -583,12 +586,22 @@ export const velvetAppearance: ThemeAppearance = {
 	},
 	walls: {
 		...matte,
-		metalness: 0.03,
-		roughness: 0.96,
+		metalness: 0,
+		roughness: 0.94,
 		clearcoat: 0,
 		envMapIntensity: 0.12,
+		sheen: 0.75,
+		sheenColor: "#f5e6bc",
+		sheenRoughness: 0.86,
 	},
-	innerWalls: { ...matte, metalness: 0.08, roughness: 0.82 },
+	innerWalls: {
+		...matte,
+		metalness: 0,
+		roughness: 0.9,
+		sheen: 0.5,
+		sheenColor: "#f5e6bc",
+		sheenRoughness: 0.9,
+	},
 	cards: {
 		...matte,
 		metalness: 0.08,
@@ -603,35 +616,35 @@ export const velvetAppearance: ThemeAppearance = {
 	},
 	lighting: {
 		ambient: 0.62,
-		hemisphere: { sky: "#fff2de", ground: "#6f304e", intensity: 0.68 },
-		key: { position: [-7, 15, 10], color: "#ffe4b8", intensity: 1.35 },
-		fill: [{ position: [10, 7, -8], color: "#b66a83", intensity: 0.38 }],
+		hemisphere: { sky: "#fff8e3", ground: "#7a8064", intensity: 0.68 },
+		key: { position: [-7, 15, 10], color: "#fff0cc", intensity: 1.35 },
+		fill: [{ position: [10, 7, -8], color: "#d4e6ee", intensity: 0.38 }],
 		reflections: [
 			{
 				position: [2, 8, 4],
 				scale: [5, 6, 1],
-				color: "#f5d49a",
+				color: "#f5e3ac",
 				intensity: 0.8,
 			},
 		],
 	},
 	floor: {
 		pattern: "velvet",
-		tiles: ["#55203f", "#632544"],
+		tiles: ["#bbb08b", "#beb48f"],
 		opacity: 0.98,
 		roughness: 0.95,
 		metalness: 0,
-		gridMajor: "#d7b06d",
-		gridMinor: "#8d536e",
+		gridMajor: "#eee2b6",
+		gridMinor: "#8c916f",
 		gridOpacity: 0.075,
 	},
 	regions: {
-		tint: "#7d3a57",
-		signColor: "#6d243f",
-		labelColor: "#ffe6b7",
+		tint: "#c5cbb4",
+		signColor: "#696b4f",
+		labelColor: "#fff6d9",
 		roughness: 0.86,
 		frame: 0,
 	},
-	connections: { color: "#c9a060", luminous: false, haloOpacity: 0 },
+	connections: { color: "#a58a48", luminous: false, haloOpacity: 0 },
 	view: { fov: 37, position: [10, 9, 15] },
 };

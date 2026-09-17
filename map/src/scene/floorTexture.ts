@@ -105,8 +105,8 @@ export function createFloorTexture(
 			const x = (i * 73.17) % TEXTURE_SIZE;
 			const y = (i * 41.39) % TEXTURE_SIZE;
 			context.fillStyle =
-				i % 3 ? "rgba(255,219,228,0.025)" : "rgba(25,2,15,0.035)";
-			context.fillRect(x, y, 1, 1);
+				i % 3 ? "rgba(255,248,218,0.04)" : "rgba(38,43,28,0.035)";
+			context.fillRect(x, y, 0.7, 2);
 		}
 	}
 

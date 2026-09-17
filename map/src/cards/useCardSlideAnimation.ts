@@ -41,7 +41,7 @@ interface UseCardSlideAnimationProps {
 	animationSpeed?: number;
 	/** Whether this card should be docked to the front face (controlled by Block) */
 	isActive: boolean;
-	/** Whether the cursor is over this card's open side slot on the block */
+	/** Whether the pointer is over the slot or its exposed card. */
 	isSlotHovered: boolean;
 }
 
@@ -55,7 +55,7 @@ interface UseCardSlideAnimationReturn {
 }
 
 /**
- * Animates a card through side-slot hover and toolbar-controlled docking.
+ * Animates slot hover previews and docking selected by card clicks or the toolbar.
  *
  * Dock   : slide out right → move forward → slide back to front face centre
  * Undock : slide right → move back → slide into slot
