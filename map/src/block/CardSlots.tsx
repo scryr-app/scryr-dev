@@ -18,11 +18,7 @@ export interface CardSlotsProps {
 	/** Index of the currently active (front-face) card, or null for none */
 	activeCardIndex: number | null;
 	/** Called when any card in the block is clicked. */
-	onBlockSelect?: () => void;
-	/** Called when the active front-face card is hovered. */
-	onFrontFaceHoverStart?: () => void;
-	/** Called when the pointer leaves the active front-face card. */
-	onFrontFaceHoverEnd?: () => void;
+	onCardSelect: (index: number) => void;
 }
 
 /**
@@ -38,9 +34,7 @@ export function CardSlots({
 	blockHalfWidth,
 	blockHalfDepth,
 	activeCardIndex,
-	onBlockSelect,
-	onFrontFaceHoverStart,
-	onFrontFaceHoverEnd,
+	onCardSelect,
 }: CardSlotsProps) {
 	const cardLayout = getCardLayout(cards);
 	const [hoveredSlotIndex, setHoveredSlotIndex] = useState<number | null>(null);
@@ -91,14 +85,21 @@ export function CardSlots({
 				const slotKey = getCardSlotKey(cardConfig);
 
 				return (
-					<group key={slotKey}>
+					<group
+						key={slotKey}
+						onPointerOver={() => setHoveredSlotIndex(index)}
+						onPointerOut={() => {
+							setHoveredSlotIndex((current) =>
+								current === index ? null : current,
+							);
+						}}
+					>
+						{/* biome-ignore lint/a11y/noStaticElementInteractions: THREE.Mesh uses R3F pointer events. */}
 						<mesh
 							position={[blockHalfWidth + 0.035, 0, cardConfig.zOffset]}
-							onPointerEnter={() => setHoveredSlotIndex(index)}
-							onPointerLeave={() => {
-								setHoveredSlotIndex((current) =>
-									current === index ? null : current,
-								);
+							onClick={(event) => {
+								event.stopPropagation();
+								onCardSelect(index);
 							}}
 						>
 							<boxGeometry args={[0.07, cardHeight, 0.075]} />
@@ -113,9 +114,7 @@ export function CardSlots({
 							blockHalfDepth={blockHalfDepth}
 							isActive={activeCardIndex === index}
 							isSlotHovered={hoveredSlotIndex === index}
-							onSelect={onBlockSelect}
-							onFrontHoverStart={onFrontFaceHoverStart}
-							onFrontHoverEnd={onFrontFaceHoverEnd}
+							onSelect={() => onCardSelect(index)}
 						/>
 					</group>
 				);

@@ -5,43 +5,30 @@ import { currentTheme } from "@/theme/theme";
 
 interface ZoomButtonProps {
 	blockId?: string;
-	x: number;
-	y: number;
-	z: number;
+	isVisible: boolean;
 	blockPosition: [number, number, number];
 	blockWidth: number;
 	blockHeight: number;
 	blockDepth: number;
-	cardWidth: number;
-	cardHeight: number;
 	onSelectBlock: () => void;
-	isVisible: boolean;
-	onHoverChange: (isHovered: boolean) => void;
 }
 
 export function ZoomButton({
 	blockId,
-	x,
-	y,
-	z,
+	isVisible,
 	blockPosition,
 	blockWidth,
 	blockHeight,
 	blockDepth,
-	cardWidth,
-	cardHeight,
 	onSelectBlock,
-	isVisible,
-	onHoverChange,
 }: ZoomButtonProps) {
 	const [isHovered, setIsHovered] = useState(false);
 	const color = currentTheme.isDarkDiagram ? "#ffffff" : "#0f172a";
-	const opacity = isVisible ? (isHovered ? 0.14 : 0.1) : 0;
-	const bubbleOpacity = isVisible ? (isHovered ? 0.035 : 0.02) : 0;
-	const overlayWidth = cardWidth * 0.94;
-	const overlayHeight = cardHeight * 0.94;
-	// Keep the magnifier circular while filling most of the card's height.
-	const glyphScale = (Math.min(cardWidth, cardHeight) * 0.88) / 0.123;
+	const opacity = isVisible ? (isHovered ? 0.85 : 0.5) : 0;
+	const overlayWidth = blockWidth * 0.96;
+	const overlayHeight = blockDepth * 0.96;
+	// Leave the centered block label clear, with a compact glyph toward the front.
+	const glyphScale = (Math.min(blockWidth, blockDepth) * 0.26) / 0.123;
 
 	const focusBlock = () => {
 		onSelectBlock();
@@ -55,38 +42,33 @@ export function ZoomButton({
 	};
 
 	return (
-		<group position={[x, y, z]}>
-			{/* biome-ignore lint/a11y/noStaticElementInteractions: THREE.Mesh is not an HTML element; pointer handlers are R3F events. */}
-			<mesh
-				position={[0, 0, 0.004]}
-				onPointerEnter={(event) => {
-					event.stopPropagation();
-					setIsHovered(true);
-					onHoverChange(true);
-				}}
-				onPointerLeave={(event) => {
-					event.stopPropagation();
-					setIsHovered(false);
-					onHoverChange(false);
-				}}
-				onPointerDown={(event) => event.stopPropagation()}
-				onClick={(event) => {
-					event.stopPropagation();
-					if (isVisible) {
-						focusBlock();
-					}
-				}}
-			>
-				<boxGeometry args={[overlayWidth, overlayHeight, 0.008]} />
+		// biome-ignore lint/a11y/noStaticElementInteractions: THREE.Group uses R3F pointer events.
+		<group
+			position={[0, blockHeight / 2 + 0.015, 0]}
+			rotation={[-Math.PI / 2, 0, 0]}
+			onPointerEnter={() => setIsHovered(true)}
+			onPointerLeave={() => setIsHovered(false)}
+			onPointerDown={(event) => event.stopPropagation()}
+			onClick={(event) => {
+				event.stopPropagation();
+				focusBlock();
+			}}
+		>
+			{/* A single top-facing hit plane leaves the card faces unobstructed. */}
+			<mesh>
+				<planeGeometry args={[overlayWidth, overlayHeight]} />
 				<meshBasicMaterial transparent opacity={0} depthWrite={false} />
 			</mesh>
 			<ZoomOverlay
-				opacity={bubbleOpacity}
+				opacity={isVisible && isHovered ? 0.06 : 0}
 				color={color}
 				width={overlayWidth}
 				height={overlayHeight}
 			/>
-			<group scale={[glyphScale, glyphScale, 1]}>
+			<group
+				position={[0, -blockDepth * 0.3, 0]}
+				scale={[glyphScale, glyphScale, 1]}
+			>
 				<ZoomGlyph opacity={opacity} color={color} />
 			</group>
 		</group>

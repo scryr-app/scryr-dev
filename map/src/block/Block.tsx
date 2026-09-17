@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { cameraStore } from "@/camera";
 import { InfoCard, OtherDiagramCard } from "@/cards";
 import { getBlockCardData } from "@/cards/blockCardData";
@@ -85,9 +85,8 @@ export function Block({
 	const hw = width / 2;
 	const hh = height / 2;
 	const hd = depth / 2;
+	const [isHovered, setIsHovered] = useState(false);
 	const blockFocusId = blockData?.name ?? name;
-	const [isZoomButtonVisible, setIsZoomButtonVisible] = useState(false);
-	const zoomHideTimer = useRef<number | null>(null);
 	const fallbackCards =
 		cards ?? Array.from({ length: 6 }, () => ({ components: [] }));
 	const cardData = blockData ? getBlockCardData(blockData) : null;
@@ -95,8 +94,9 @@ export function Block({
 		? createBlockDataCards(cardData)
 		: fallbackCards;
 
-	/** Global card selection from the bottom MapTray */
-	const { activeCardIndex, selectBlock } = useMapTray();
+	/** Individual card choices override the shared toolbar selection. */
+	const { getActiveCardIndex, selectCardForBlock, selectBlock } = useMapTray();
+	const activeCardIndex = getActiveCardIndex(blockFocusId);
 	const handleBlockSelect = () => {
 		if (!blockData?.name) {
 			return;
@@ -139,34 +139,6 @@ export function Block({
 		{ components: diagrams.length > 0 ? [otherDiagramCard] : [] },
 	];
 
-	const showZoomButton = () => {
-		if (zoomHideTimer.current !== null) {
-			window.clearTimeout(zoomHideTimer.current);
-			zoomHideTimer.current = null;
-		}
-		if (!isZoomButtonVisible) {
-			setIsZoomButtonVisible(true);
-		}
-	};
-
-	const scheduleZoomButtonHide = () => {
-		if (zoomHideTimer.current !== null) {
-			window.clearTimeout(zoomHideTimer.current);
-		}
-		zoomHideTimer.current = window.setTimeout(() => {
-			setIsZoomButtonVisible(false);
-			zoomHideTimer.current = null;
-		}, 180);
-	};
-
-	useEffect(() => {
-		return () => {
-			if (zoomHideTimer.current !== null) {
-				window.clearTimeout(zoomHideTimer.current);
-			}
-		};
-	}, []);
-
 	useEffect(() => {
 		if (!blockFocusId) {
 			return;
@@ -185,6 +157,11 @@ export function Block({
 		// biome-ignore lint/a11y/noStaticElementInteractions: THREE.Group is not an HTML element; onClick is a valid R3F pointer event
 		<group
 			position={position as [number, number, number]}
+			onPointerOver={(event) => {
+				event.stopPropagation();
+				setIsHovered(true);
+			}}
+			onPointerOut={() => setIsHovered(false)}
 			onClick={() => {
 				handleBlockSelect();
 			}}
@@ -201,45 +178,14 @@ export function Block({
 			{/* Outer and inner walls */}
 			<Walls color={color} hw={hw} hh={hh} hd={hd} />
 
-			<mesh
-				position={[0, 0, hd + 0.018]}
-				onPointerEnter={(event) => {
-					event.stopPropagation();
-					showZoomButton();
-				}}
-				onPointerMove={(event) => {
-					event.stopPropagation();
-					showZoomButton();
-				}}
-				onPointerLeave={(event) => {
-					event.stopPropagation();
-					scheduleZoomButtonHide();
-				}}
-			>
-				<planeGeometry args={[width, height]} />
-				<meshBasicMaterial transparent opacity={0} depthWrite={false} />
-			</mesh>
-
 			<ZoomButton
 				blockId={blockFocusId}
-				x={0}
-				y={0}
-				z={hd + 0.13}
+				isVisible={isHovered}
 				blockPosition={position}
 				blockWidth={width}
 				blockHeight={height}
 				blockDepth={depth}
-				cardWidth={cardWidth}
-				cardHeight={cardHeight}
 				onSelectBlock={handleBlockSelect}
-				isVisible={isZoomButtonVisible}
-				onHoverChange={(isHovered) => {
-					if (isHovered) {
-						showZoomButton();
-					} else {
-						scheduleZoomButtonHide();
-					}
-				}}
 			/>
 
 			{/* Card slots — OverviewCard is always first */}
@@ -251,9 +197,10 @@ export function Block({
 				blockHalfWidth={hw}
 				blockHalfDepth={hd}
 				activeCardIndex={activeCardIndex}
-				onBlockSelect={handleBlockSelect}
-				onFrontFaceHoverStart={showZoomButton}
-				onFrontFaceHoverEnd={scheduleZoomButtonHide}
+				onCardSelect={(index) => {
+					selectCardForBlock(blockFocusId, index);
+					handleBlockSelect();
+				}}
 			/>
 		</group>
 	);
