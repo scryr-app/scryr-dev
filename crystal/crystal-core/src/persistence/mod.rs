@@ -24,7 +24,9 @@ mod manifest_envelope;
 mod models;
 mod read;
 mod read_store;
+mod samples;
 mod schema;
+pub use samples::seed_organization_samples;
 mod write;
 
 pub use connection::sqlite_path_from_env;

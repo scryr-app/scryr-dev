@@ -63,6 +63,10 @@ const CREATE_UPLOAD_LEDGER_INDEX_SQL: &str = r"
 ";
 
 const SCHEMA_STATEMENTS: &[(&str, &str)] = &[
+    (
+        "create organization sample seed markers",
+        "CREATE TABLE IF NOT EXISTS organization_sample_seeds (clerk_org_id TEXT PRIMARY KEY, seeded_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)",
+    ),
     ("create report history", super::reports::CREATE_TABLE),
     (
         "create manifest action history",

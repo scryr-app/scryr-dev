@@ -113,6 +113,7 @@ This mode does not start a local Rust server.
 mise run contribute:generate:graphql        # Generate frontend GraphQL types
 mise run contribute:generate:manifest-types # Generate manifest field metadata
 mise run contribute:seed:samples            # Upload sample manifests locally
+mise run contribute:generate:samples        # Refresh bundled cloud starter diagrams
 mise run contribute:build                   # Build all development artifacts
 ```
 
@@ -121,6 +122,11 @@ temporarily. `contribute:build:manifest`, `contribute:build:crystal`, and
 `contribute:build:map` build individual components after contributor setup.
 Development builds do not prepare the standalone CLI's embedded UI; use
 `release:build` for that.
+
+Cloud servers bundle generated sample diagrams and their editable source snapshots
+in `crystal/crystal-server/src/samples.generated.json`. After changing the sample
+sources or their SDK output, run `contribute:generate:samples` and include the
+generated catalog in the change. `verify:crystal` checks that it is current.
 
 ### VS Code debugging
 
@@ -320,3 +326,12 @@ allow targeted maintenance. Run `deploy:build` before standalone `deploy:fly`.
 Migration reuses the server's schema upgrade logic; it does not create databases
 or seed sample data. Failure stops subsequent steps. Provider deployments are
 sequential, not atomic.
+
+With Clerk authentication, an organization's first diagram read installs its own
+editable starter diagrams in the `samples` folder. This also covers existing
+organizations on their next visit. A durable marker and all inserts commit in one
+transaction, so retries do not duplicate samples or overwrite edits. Deleted
+samples stay deleted, and later releases do not refresh an already seeded
+organization. Existing identifier or source-location collisions preserve that
+organization's source and skip the conflicting sample source. Local-auth workspaces
+continue to use explicit uploads through `contribute:seed:samples`.

@@ -55,6 +55,19 @@ TURSO_DATABASE_URL=libsql://your-database.turso.io
 TURSO_AUTH_TOKEN=...
 ```
 
+Clerk organizations receive their own editable sample copies on their first
+diagram read. New and existing organizations are initialized in the same way;
+the copies use `folder_path = 'samples'` and distinct source filenames such as
+`mern.scry`. Normal organization write permissions apply to editing them.
+
+`organization_sample_seeds` records completion atomically with the diagrams and
+upload ledger. Repeated requests, restarts and new deployments preserve edits
+and deletions. Existing sources with matching diagram identifiers or sample file
+locations are retained, and the conflicting sample source is skipped. Samples are
+bundled at build time, so initializing an organization does not run Python or
+require a repository checkout on the server. Refresh the committed bundle with
+`mise run contribute:generate:samples` after changing sample sources or SDK output.
+
 ## Authentication
 
 Scryr uses zero-config local auth by default. It injects a synthetic local
