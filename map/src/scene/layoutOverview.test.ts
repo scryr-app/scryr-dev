@@ -1,8 +1,8 @@
 import { PerspectiveCamera, Vector3 } from "three";
 import { describe, expect, it } from "vitest";
 import { BLOCK_DIMENSIONS } from "@/block/dimensions";
-import type { Block } from "@/graphql/generated";
 import * as appearances from "@/theme/appearance";
+import type { LayoutBlock } from "./layout";
 import {
 	calculateRegionCorners,
 	getBlockHeight,
@@ -21,15 +21,11 @@ function block(
 	name: string,
 	connections: string[] = [],
 	tags: string[] = [],
-): Block {
+): LayoutBlock {
 	return {
 		name,
 		connections,
 		tags,
-		docs: [],
-		frameworks: [],
-		links: [],
-		rawJsonString: "{}",
 	};
 }
 

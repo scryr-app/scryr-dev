@@ -50,6 +50,9 @@ pub async fn start_with_workspace(
         .await
         .map_err(std::io::Error::other)?;
 
+    persistence::ensure_table(&db_pool)
+        .await
+        .map_err(std::io::Error::other)?;
     let host = args.host;
     let port = args.port;
     let auth_mode = AuthMode::resolve(args.auth_mode, &host);
@@ -68,13 +71,14 @@ pub async fn start_with_workspace(
         clerk_authorizer,
         clerk_client,
         db_pool,
+        local_capability: workspace.as_ref().map(|w| w.capability().to_owned()),
+        local_port: workspace.as_ref().map(|_| port),
     };
 
     let schema = Schema::build(QueryRoot, MutationRoot::default(), EmptySubscription)
         .data(crate::editor::EditorService { local: workspace })
         .data(app_state.clone())
         .data(app_state.db_pool.clone())
-        .data(crate::runtime_metrics::RuntimeMetrics::from_env()?)
         .finish();
 
     let schema_data = web::Data::new(schema);
@@ -201,6 +205,8 @@ mod tests {
             clerk_authorizer: None,
             clerk_client: None,
             db_pool: DatabasePool::Sqlite(pool.clone()),
+            local_capability: None,
+            local_port: None,
         };
         let schema = Schema::build(QueryRoot, MutationRoot::default(), EmptySubscription)
             .data(state.clone())

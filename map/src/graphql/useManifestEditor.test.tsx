@@ -67,7 +67,7 @@ afterEach(() => {
 
 it("loads source, saves it, and refetches blocks even when their cache is fresh", async () => {
 	const hook = setup();
-	hook.client.setQueryData(["GetBlocks", { scryIdentifier: "main" }], {
+	hook.client.setQueryData(["GetBlocks", { scryIdentifier: "main" }, "local"], {
 		blocks: [{ name: "old" }],
 	});
 	await waitFor(() => expect(hook.result.current.code).toBe("original"));

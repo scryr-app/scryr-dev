@@ -34,10 +34,10 @@ scryr format
 scryr lint --fix
 scryr push
 scryr serve --watch
-scryr report tests --run-id "$GITHUB_RUN_ID" --observed-at "$RESULTS_COMPLETED_AT"
-scryr report actions
-scryr query --list
-scryr query request_latency --json
+scryr collect list
+scryr collect doctor
+scryr collect run --manifest api --section tests
+scryr collect status
 ```
 
 ## Check, format, and lint
@@ -67,12 +67,15 @@ lockfile. Tool provisioning can download dependencies on first use.
 scryr serve
 scryr serve --watch --port 9000
 scryr serve --no-format --no-open
+scryr serve --no-collect
 scryr serve --server-only --sample mern
 ```
 
 By default, `serve` starts the embedded UI and GraphQL server, waits for readiness,
 formats sources, runs all checks, uploads the validated artifact to that server,
-and opens the UI. `--watch` repeats on source changes. Local loading always uses
+and opens the UI. It starts the local collector owner for the typed declarations
+in the validated manifest. Collector intervals and file watches run independently
+of `--watch`, which reloads the manifest after source changes. Local loading always uses
 the server's actual host and port, even when a cloud endpoint is configured.
 Validation failures are printed in the terminal; the server stays available and
 the previous valid diagram remains loaded. Without `--watch`, initial loading runs once.
@@ -99,7 +102,8 @@ first execution. A cancelled or timed-out Python run is not saved. Once saving
 starts, wait for its result. If the local process is interrupted while committing,
 restart `scryr serve` to regenerate artifacts from the authoritative disk source.
 
-- `--server-only`: do not read, format, execute, or upload a local manifest. Use in deployments.
+- `--server-only`: serve stored data without loading a local manifest or starting a collector owner.
+- `--no-collect`: start the local UI and manifest loader with collection paused; use `scryr collect resume` to enable it.
 - `--no-format`: verify formatting without changing source files.
 - `--no-open`: do not launch a browser.
 - `--host`: bind interface (default `127.0.0.1`).
@@ -112,7 +116,8 @@ restart `scryr serve` to regenerate artifacts from the authoritative disk source
 
 ## Shared manifest options
 
-These options are accepted by check, format, lint, push, serve, export, inspect, and query:
+These options are accepted by check, format, lint, push, serve, export, inspect,
+and collect subcommands:
 
 ```bash
 --path <file>          Manifest file to execute. Defaults to index.scry.
@@ -182,12 +187,13 @@ SCRYR_GIT_COMMIT_SHA
 
 `push` validates before uploading and reuses the generated JSON without executing
 the manifest again. It prints the deployment UI URL. Export and inspect commands
-print artifacts to stdout; progress and deprecation messages go to stderr. Localhost, `127.0.0.1`, and `[::1]`
+print artifacts to stdout; progress messages go to stderr. Localhost, `127.0.0.1`, and `[::1]`
 GraphQL endpoints use tokenless local auth; all other endpoints require `SCRYR_TOKEN` or a cached Clerk OAuth token.
 
-Endpoint precedence is `--endpoint` (alias `--graphql-url`), `SCRYR_ENDPOINT`,
-legacy `SCRYR_GRAPHQL_URL`, then loopback using `PORT` or port 8000. This applies
-to push, report, and query.
+Configure the upload endpoint with `--endpoint` or `SCRYR_ENDPOINT`; otherwise
+`push` uses loopback and `PORT` or port 8000. Local collection writes to the
+local SQLite database used by `serve`; an upload endpoint does not authorize
+remote command execution.
 
 ## `inspect types`
 
@@ -334,64 +340,163 @@ Upload a sample to a local GraphQL server:
 cargo run -p crystal-cli -- push --path ../manifest/tests/samples/mern/index.scry --manifest-dir ../manifest
 ```
 
-## Report existing results
+## Declare laptop evidence in `index.scry`
 
-Declare a stable `manifest_id` and optional typed input settings:
+Use concrete SDK collectors directly in each section. There is no separate
+collector config file or global collector registry:
 
 ```python
-from scryr import ActionsReportSource, CICD, Diagram, Manifest, TestReportSource, Tests
+from datetime import timedelta
+from scryr import (
+    Diagram, GitHubActionsCollector, GitStatusCollector, GrantLicenseCollector,
+    GrypeScanCollector, JUnitReportCollector, LicensePolicy, Manifest,
+    OpenMetricsCollector, PytestCollector, RuffCheckCollector, SbomRef,
+    Schedule, SyftInventoryCollector,
+)
 
 api = Manifest(
-    manifest_id="services/api",
+    manifest_id="api",
     name="API",
-    tests=Tests(source=TestReportSource(files=["results/junit.xml"], suite="unit")),
-    cicd=CICD(source=ActionsReportSource(workflow_id=42, branch="main", jobs_file="results/jobs.json")),
+    repository=[
+        GitStatusCollector(),
+        GitHubActionsCollector(repository="your-org/your-repo"),
+    ],
+    checks=[RuffCheckCollector(paths=["src"])],
+    tests=[
+        PytestCollector(id="unit", paths=["tests"]),
+        JUnitReportCollector(id="integration", files=["results/integration.xml"]),
+    ],
+    metrics=[OpenMetricsCollector(
+        endpoint="http://127.0.0.1:8080/metrics",
+        schedule=Schedule(startup=True, every=timedelta(seconds=30)),
+    )],
+    dependencies=[
+        SyftInventoryCollector(id="packages"),
+        GrantLicenseCollector(
+            sbom=SbomRef(collector_id="packages"),
+            policy=LicensePolicy(allow=["MIT", "Apache-2.0"]),
+        ),
+        GrypeScanCollector(sbom=SbomRef(collector_id="packages")),
+    ],
 )
-diagram = Diagram(name="System", manifests=[api])
+system = Diagram(name="Local development", manifests=[api])
 ```
+
+Constructing these objects only validates and serializes settings. `manifest_id`
+and collector `id` identify the source across runs; set different IDs for multiple
+instances of the same integration. Relative collector paths are contained within
+`--manifest-dir`. `SbomRef` binds both license and vulnerability evidence to the
+exact Syft inventory; use its optional `manifest_id` for another declared manifest.
+
+| Section / card | Concrete integrations | Installed tools |
+| --- | --- | --- |
+| `repository` / Repository | `GitStatusCollector`, `GitHubPullRequestsCollector`, `GitHubActionsCollector` | `git`, `gh` |
+| `checks` / Checks | `RuffCheckCollector`, `BiomeCheckCollector`, `CargoClippyCollector`, `MiseTaskCollector` | `ruff`, `biome`, `cargo`, `mise` |
+| `metrics` / Metrics | `OpenMetricsCollector`, `DockerStatsCollector` | HTTP endpoint, `docker` |
+| `tests` / Tests | `PytestCollector`, `VitestCollector`, `NextestCollector`, `JUnitReportCollector`, `LcovCoverageCollector`, `CoberturaCoverageCollector` | `pytest`, `vitest`, `cargo-nextest`, or existing files |
+| `dependencies` / Dependencies | `SyftInventoryCollector`, `GrantLicenseCollector`, `GrypeScanCollector` | `syft`, `grant`, `grype` |
+| `performance` / Performance | `HyperfineBenchmarkCollector` | `hyperfine` and the declared executable |
+
+Repository includes remote CI workflow runs. Checks records local commands.
+Metrics scrapes the endpoint directly; `CounterRate`, `GaugeSeries`, and
+`HistogramPercentile` provide typed selections without a provider service or
+query language. Dependencies presents inventory, licenses, and vulnerabilities
+with equal prominence. Grant enumerates the shared inventory; Scryr applies the
+typed policy to the original SPDX `AND`, `OR`, and `WITH` expressions. Unknown
+license evidence requires review unless the explicit policy denies it.
+
+A benchmark is an explicit argv declaration, for example:
+
+```python
+from scryr import Command, HyperfineBenchmarkCollector
+
+benchmark = HyperfineBenchmarkCollector(
+    command=Command(executable="./target/release/api", args=["--self-test"]),
+    warmup=2,
+    runs=10,
+)
+# Put benchmark in a Manifest's performance=[benchmark] list.
+```
+
+Install collector tools yourself in the project environment or `PATH`.
+Scryr checks `.venv/bin`, `node_modules/.bin`, and `PATH` and reports missing or
+incompatible tools. It does not auto-install collector CLIs or log into GitHub.
+Run `gh auth login` yourself when using GitHub collectors. `ToolRequirement`
+constrains the integration's version. `EnvRef` supplies explicitly named machine
+environment variables without putting secret values in serialized declarations.
+The managed Python runtime described above remains part of manifest execution.
+
+## Control local collection
 
 ```bash
-scryr report tests --manifest api --run-id "$GITHUB_RUN_ID" --observed-at "$RESULTS_COMPLETED_AT"
-scryr report actions --manifest api --event-file workflow-run.json
+scryr collect list
+scryr collect doctor
+scryr collect run --manifest api --section tests --collector unit
+scryr collect status
+scryr collect pause
+scryr collect resume
 ```
 
-Artifact paths in declarations are relative to the entrypoint. Explicit flags
-such as `--file`, `--format`, `--suite`, `--workflow-id`, `--branch`, and `--jobs-file`
-override declared defaults. Multiple manifests require `--manifest` (public variable,
-name, or stable ID). Reporting executes the manifest to resolve its declarations;
-it does not run tests, regenerate diagrams, or automatically push diagrams.
+- `list` validates the manifest and prints declared collectors and settings.
+- `doctor` checks executable availability, optional version requirements, and
+  applicable authentication. It does not execute tests, scans, or benchmarks.
+- `run` requests a manual run from the active `serve` owner. Without an active
+  owner, it validates the manifest and performs a one-shot collection locally.
+  The selected schedules must enable `manual`.
+- `status` shows current collector lifecycle and freshness settings, or the last
+  saved status when the owner is stopped.
+- `pause` cancels active child processes and pauses collection for the workspace.
+- `resume` re-enables the active owner's declared schedules.
 
-Explicit `--manifest-id` without `--path` or `--manifest` retains the existing
-Python-free reporting mode. Test reporting still requires a run ID and a stable
-source completion time (`--observed-at`); `GITHUB_RUN_ID` supplies the former in CI.
+Use `--manifest` with a stable `manifest_id`, `--section` with one of the six
+section names, and `--collector` with a collector ID to narrow `list`, `doctor`,
+and `run`. Pause and resume require an active owner and apply to the whole
+workspace. Use the same project root and database configuration as `serve`.
 
-Actions reporting reads `workflow_run` events from `GITHUB_EVENT_PATH` or
-`--event-file`. Automatic branch selection uses `GITHUB_TOKEN` to check main,
-master, then the repository default; `--branch` or the declaration avoids that lookup.
-The optional jobs file is a complete GitHub jobs API response with `total_count`
-and `jobs`; combine all pages first. Every job must belong to the exact workflow
-run and attempt. Jobs enrich existing run history, and identical retries are idempotent.
+Git and lightweight metrics poll by default. GitHub collectors use slower
+intervals. Syft observes startup and lockfile changes; Grant and Grype follow the
+shared inventory, with periodic Grype rescanning. Tests, checks, and benchmarks
+default to manual execution. Existing JUnit/LCOV/Cobertura collectors read and
+watch files without running their producers. Override these behaviors using a
+typed `Schedule` in `index.scry`.
 
-The existing `report coverage`, `report dependencies`, and `report deployment`
-commands remain supported. All reporters support `--dry-run` and `--json`.
+Starting `scryr serve --no-collect` pauses this execution owner until an explicit
+`collect resume`. Browser previews, manifest uploads, and ordinary GraphQL
+writes cannot register or run laptop commands. `serve --server-only` does not
+start a collection owner.
 
-## Query declared providers
+## Local storage, provenance, and freshness
 
-```bash
-scryr query --list
-scryr query request_latency --manifest api
-scryr query page_views --json --endpoint https://your-scryr.example/graphql
-```
+Collection requires a local file-backed SQLite database. Its default path is
+`.scryr/scryr.db`; use `SCRYR_SQLITE_PATH` or a SQLite `DATABASE_URL` to select
+another file. Relative database paths resolve from the command's working
+directory. Use an absolute path when running commands from different directories.
+Remote Turso/PostgreSQL and in-memory databases are not collection targets.
 
-Query names come from `metrics.provider.queries` and `analytics.queries` in the
-local manifest. Listing executes the manifest but makes no provider request.
-Duplicate query names require a manifest selector; use `--provider prometheus` or
-`--provider posthog` when both providers on one manifest use the same query name. Queries execute through a
-running Scryr server and its organization-scoped `SCRYR_METRICS_CONNECTIONS_FILE`
-connections; they do not publish the local manifest. Provider failures return a
-nonzero exit status. JSON output includes timestamps, status, values, and units.
-Grafana support uses Prometheus-compatible data sources; PostHog uses declared
-HogQL aggregates. Credentials remain in server connections, outside artifacts.
+The workspace identity combines the canonical project root and database path.
+A local lock and private control socket ensure one execution owner for that
+workspace. Temporary run artifacts, pending observations, and cached status live
+under `<manifest-dir>/.scryr/collection/<workspace>`, or under the corresponding
+`--scryr-dir` location. `--scryr-dir` does not change the database path.
+
+Normalized observations are persisted through the shared core and available to
+the map through GraphQL. They retain collector identity, configuration/input
+revision, applicable Git context, tool version, and collection time. Imported
+JUnit and coverage artifacts retain their source modification time separately;
+for multiple files the oldest source time determines age. A successful import
+of an old file therefore remains old evidence. Scanner results retain inventory
+identity and database provenance; missing or partial scans cannot imply a clean
+Dependencies result.
+
+The UI distinguishes current, stale, outdated, partial, and missing evidence
+from execution states such as running or missing-tool. A failed or cancelled
+attempt leaves the last successful result and its age visible. Editing a
+collector invalidates incompatible observations, and benchmark comparisons
+require a compatible baseline. Repository results, local tests, dependency
+scans, and measurements keep their own source scope.
+
+See [the SDK integration guide](../../docs/src/content/docs/integrations.md)
+for examples of all six cards and their display states.
 
 ## Export and inspect
 
@@ -399,21 +504,3 @@ HogQL aggregates. Credentials remain in server connections, outside artifacts.
 `export devcontainer` operate on Forges and do not require a Diagram.
 `inspect types` prints runtime metadata; use `check` for static type checking.
 `inspect schema` prints the SDK's JSON schema.
-
-## Migration
-
-| Removed command | Canonical command |
-| --- | --- |
-| `generate upload` | `push` |
-| `generate types` | `inspect types` |
-| `generate schema` | `inspect schema` |
-| `generate mise` | `export mise` |
-| `generate compose` | `export compose` |
-| `generate devcontainer` | `export devcontainer` |
-| `report-action-status` | `report actions` |
-
-These legacy commands have been removed. The hidden `generate artifact-json`
-command has also been removed; use `export json` for checked diagram JSON.
-Existing persisted artifacts remain readable.
-Deployments that previously used `serve` must add `--server-only` to retain
-server-only behavior. Docker and repository server scripts have been updated.

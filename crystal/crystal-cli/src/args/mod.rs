@@ -1,11 +1,9 @@
 //! CLI argument parsing.
 #![allow(clippy::missing_docs_in_private_items, clippy::redundant_pub_crate)]
 
-mod observations;
-pub(crate) use observations::{ObservationArgs, ReportCommand, ReportsArgs};
+mod collect;
+pub(crate) use collect::{CollectArgs, CollectCommand};
 mod auth;
-mod report;
-pub(crate) use report::ReportArgs;
 mod generate;
 mod serve;
 mod workflow;
@@ -26,7 +24,7 @@ use clap::{Parser, Subcommand};
     version,
     about,
     long_about = None,
-    after_help = "Examples:\n  scryr check\n  scryr format\n  scryr lint --fix\n  scryr push\n  scryr serve\n  scryr report tests\n  scryr query --list\n  scryr export mise --forge \"MERN Forge\"\n  scryr inspect schema"
+    after_help = "Examples:\n  scryr check\n  scryr format\n  scryr lint --fix\n  scryr push\n  scryr serve\n  scryr collect doctor\n  scryr collect list\n  scryr export mise --forge \"MERN Forge\"\n  scryr inspect schema"
 )]
 pub(crate) struct Args {
     #[command(subcommand)]
@@ -46,10 +44,8 @@ pub(crate) enum Command {
     Push(GenerateCommonArgs),
     /// Start the local UI, format, check, and load index.scry.
     Serve(ServerArgs),
-    /// Report operational results.
-    Report(Box<ReportsArgs>),
-    /// Run a named query declared in index.scry.
-    Query(QueryArgs),
+    /// Run and inspect typed local collectors.
+    Collect(CollectArgs),
     /// Export JSON or Forge configuration.
     Export(ExportArgs),
     /// Inspect model schemas and runtime type metadata.
@@ -77,12 +73,10 @@ pub(crate) enum ResolvedCommand {
     Export(ExportArgs),
     /// Inspect model schemas and runtime type metadata.
     Inspect(InspectArgs),
-    /// Run a named query declared in index.scry.
-    Query(QueryArgs),
     /// Apply database schema migrations without starting the HTTP server.
     Migrate,
-    /// Report operational results.
-    Report(Box<ReportsArgs>),
+    /// Run and inspect typed local collectors.
+    Collect(CollectArgs),
     /// Interactive Clerk authentication helpers.
     Auth(AuthArgs),
 }
@@ -98,8 +92,7 @@ impl Args {
                 Command::Push(args) => ResolvedCommand::Push(args),
                 Command::Export(args) => ResolvedCommand::Export(args),
                 Command::Inspect(args) => ResolvedCommand::Inspect(args),
-                Command::Query(args) => ResolvedCommand::Query(args),
-                Command::Report(args) => ResolvedCommand::Report(args),
+                Command::Collect(args) => ResolvedCommand::Collect(args),
                 Command::Migrate => ResolvedCommand::Migrate,
                 Command::Serve(args) => ResolvedCommand::Serve(args),
                 Command::Auth(args) => ResolvedCommand::Auth(args),
@@ -107,7 +100,7 @@ impl Args {
         }
 
         Err(
-            "missing command: use `check`, `format`, `lint`, `push`, `serve`, `report`, or `query`"
+            "missing command: use `check`, `format`, `lint`, `push`, `serve`, `collect`, or `export`"
                 .to_string(),
         )
     }

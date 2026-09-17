@@ -1,9 +1,36 @@
 """Public Python API for Scryr manifests."""
 
 from . import manifest as _manifest
-from .action_client import GithubActionsClient, ScryrClient
-from .github import ActionStatusEvent, GithubActionJob, GithubActionRun, GithubActionsLog
-from .metrics_source import CredentialRef, PostHogSource, PrometheusSource
+from .collectors import (
+    BiomeCheckCollector,
+    CargoClippyCollector,
+    CoberturaCoverageCollector,
+    Command,
+    CounterRate,
+    DockerStatsCollector,
+    EnvRef,
+    GaugeSeries,
+    GitHubActionsCollector,
+    GitHubPullRequestCollector,
+    GitStatusCollector,
+    GrantLicenseCollector,
+    GrypeScanCollector,
+    HistogramPercentile,
+    HyperfineBenchmarkCollector,
+    JUnitReportCollector,
+    LcovCoverageCollector,
+    LicensePolicy,
+    MiseTaskCollector,
+    NextestCollector,
+    OpenMetricsCollector,
+    PytestCollector,
+    RuffCheckCollector,
+    SbomRef,
+    Schedule,
+    SyftInventoryCollector,
+    ToolRequirement,
+    VitestCollector,
+)
 from .runtime import (
     emit_diagram_values,
     emit_forge_values,
@@ -20,7 +47,6 @@ from .runtime import (
 from .types import (
     AuthType,
     CalendarVersion,
-    CICDToolType,
     Classification,
     DeploymentTarget,
     IaCToolType,
@@ -40,10 +66,6 @@ from .types import (
     parse_version,
 )
 
-ActionsReportSource = _manifest.ActionsReportSource
-TestReportSource = _manifest.TestReportSource
-CICD = _manifest.CICD
-Dependencies = _manifest.Dependencies
 Diagram = _manifest.Diagram
 Forge = _manifest.Forge
 ForgeEnvDirective = _manifest.ForgeEnvDirective
@@ -52,28 +74,25 @@ ForgeTaskBatch = _manifest.ForgeTaskBatch
 ForgeTaskCommand = _manifest.ForgeTaskCommand
 ForgeTaskConfirm = _manifest.ForgeTaskConfirm
 ForgeTool = _manifest.ForgeTool
-Github = _manifest.Github
 Info = _manifest.Info
 Link = _manifest.Link
 Manifest = _manifest.Manifest
 ManifestQuery = _manifest.ManifestQuery
-Metrics = _manifest.Metrics
 OtherDiagram = _manifest.OtherDiagram
-Performance = _manifest.Performance
-Tests = _manifest.Tests
 
 __all__ = [
-    "CICD",
-    "ActionStatusEvent",
-    "ActionsReportSource",
     "AuthType",
-    "CICDToolType",
+    "BiomeCheckCollector",
     "CalendarVersion",
+    "CargoClippyCollector",
     "Classification",
-    "CredentialRef",
-    "Dependencies",
+    "CoberturaCoverageCollector",
+    "Command",
+    "CounterRate",
     "DeploymentTarget",
     "Diagram",
+    "DockerStatsCollector",
+    "EnvRef",
     "Forge",
     "ForgeEnvDirective",
     "ForgeTask",
@@ -81,36 +100,45 @@ __all__ = [
     "ForgeTaskCommand",
     "ForgeTaskConfirm",
     "ForgeTool",
-    "Github",
-    "GithubActionJob",
-    "GithubActionRun",
-    "GithubActionsClient",
-    "GithubActionsLog",
+    "GaugeSeries",
+    "GitHubActionsCollector",
+    "GitHubPullRequestCollector",
+    "GitStatusCollector",
+    "GrantLicenseCollector",
+    "GrypeScanCollector",
+    "HistogramPercentile",
+    "HyperfineBenchmarkCollector",
     "IaCToolType",
     "Incremental",
     "IncrementalVersion",
     "Info",
     "InterfaceType",
+    "JUnitReportCollector",
     "Label",
+    "LcovCoverageCollector",
+    "LicensePolicy",
     "Link",
     "LogAggregationType",
     "Manifest",
     "ManifestQuery",
     "Markdown",
-    "Metrics",
+    "MiseTaskCollector",
     "MonitoringType",
+    "NextestCollector",
+    "OpenMetricsCollector",
     "OtherDiagram",
-    "Performance",
-    "PostHogSource",
     "ProgrammingLanguage",
-    "PrometheusSource",
-    "ScryrClient",
+    "PytestCollector",
+    "RuffCheckCollector",
+    "SbomRef",
+    "Schedule",
     "SemVer",
-    "TestReportSource",
-    "Tests",
+    "SyftInventoryCollector",
+    "ToolRequirement",
     "TracingType",
     "Url",
     "Version",
+    "VitestCollector",
     "WebFramework",
     "emit_diagram_values",
     "emit_forge_values",

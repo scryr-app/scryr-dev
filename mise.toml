@@ -301,37 +301,12 @@ PYTHON
 '''
 
 [tasks."contribute:generate:graphql"]
-description = "Generate frontend GraphQL types from the local server"
+description = "Generate the GraphQL schema and frontend types without starting a server"
 dir = "{{config_root}}"
-run = '''
-#!/usr/bin/env bash
-set -eu
-token="${SCRYR_API_TOKEN:-windrunner}"
-
-if ! curl --silent --show-error --fail \
-  -H "x-scryr-token: ${token}" \
-  -H "content-type: application/json" \
-  --data '{"query":"query { __typename }"}' \
-  http://127.0.0.1:8000/graphql >/dev/null; then
-  (
-    HOST=127.0.0.1 PORT=8000 AUTH_MODE=local mise run internal:contribute:oss:serve
-  ) >/tmp/scryr-codegen-server.log 2>&1 &
-  server_pid=$!
-  trap 'kill "${server_pid}" 2>/dev/null || true' EXIT
-
-  curl --silent --show-error --fail \
-    --retry 40 \
-    --retry-all-errors \
-    --retry-connrefused \
-    --retry-delay 1 \
-    -H "x-scryr-token: ${token}" \
-    -H "content-type: application/json" \
-    --data '{"query":"query { __typename }"}' \
-    http://127.0.0.1:8000/graphql >/dev/null
-fi
-
-mise run internal:generate:map
-'''
+run = [
+    "SCRYR_UPDATE_GRAPHQL_SCHEMA=1 cargo test --locked --manifest-path crystal/Cargo.toml -p crystal-server --lib graphql_schema_matches_snapshot",
+    "mise run internal:generate:map",
+]
 
 [tasks."contribute:generate:manifest-types"]
 description = "Generate manifest field type metadata via the Scryr CLI"
@@ -409,6 +384,7 @@ run = [
     "mise run verify:automation",
     "mise run verify:manifest",
     "mise run verify:crystal",
+    "mise run verify:collectors",
     "mise run verify:map",
     "mise run verify:release",
 ]
@@ -616,6 +592,130 @@ run = [
 description = "Run all frontend tests"
 dir = "{{config_root}}"
 run = "mise run verify:test:unit:map"
+
+[tasks."verify:collectors"]
+description = "Exercise scheduled and manual local collection against an isolated SQLite server"
+dir = "{{config_root}}"
+run = [
+    "mise run internal:embed:manifest",
+    "cargo build --locked --manifest-path crystal/Cargo.toml -p crystal-cli",
+    '''
+python - <<'PYTHON'
+from pathlib import Path
+import json
+import os
+import signal
+import socket
+import subprocess
+import tempfile
+import time
+import urllib.request
+
+binary = Path("crystal/target/debug/scryr").resolve()
+with tempfile.TemporaryDirectory(prefix="scryr-collect-smoke-") as temporary:
+    project = Path(temporary).resolve()
+    state = project / ".scryr"
+    state.mkdir()
+    (project / "index.scry").write_text("""from datetime import timedelta
+
+from scryr import Diagram, JUnitReportCollector, Manifest, PytestCollector, Schedule
+
+api = Manifest(
+    name="Collector smoke",
+    manifest_id="smoke/api",
+    tests=[
+        JUnitReportCollector(
+            id="imported",
+            files=["report.xml"],
+            schedule=Schedule(startup=True, every=timedelta(seconds=1)),
+        ),
+        PytestCollector(id="unit"),
+    ],
+)
+local = Diagram(name="Local", manifests=[api])
+""")
+    report = project / "report.xml"
+    report.write_text('<testsuite><testcase name="initial"/></testsuite>')
+    tool = project / ".venv/bin/pytest"
+    tool.parent.mkdir(parents=True)
+    tool.write_text("""#!/bin/sh
+if [ "$1" = "--version" ]; then echo 'pytest 8.4.0'; exit 0; fi
+printf run >> .scryr/invocations
+while [ "$#" -gt 0 ]; do
+    if [ "$1" = "--junitxml" ]; then shift; printf '<testsuite><testcase name="local"><failure/></testcase></testsuite>' > "$1"; fi
+    shift
+done
+exit 1
+""")
+    tool.chmod(0o700)
+    env = dict(os.environ)
+    for key in ["DATABASE_URL", "TURSO_DATABASE_URL", "TURSO_AUTH_TOKEN", "LIBSQL_AUTH_TOKEN", "SCRYR_TOKEN", "SCRYR_API_TOKEN", "SCRYR_ENDPOINT", "SCRYR_GRAPHQL_URL", "SCRYR_CLERK_ORG_ID", "CLERK_SECRET_KEY", "HOST", "PORT"]:
+        env.pop(key, None)
+    env.update(AUTH_MODE="local", SCRYR_SQLITE_PATH=str(state / "local.db"))
+    with socket.socket() as listener:
+        listener.bind(("127.0.0.1", 0))
+        port = listener.getsockname()[1]
+    base = f"http://127.0.0.1:{port}"
+    log = project / "server.log"
+    def command(*arguments):
+        return subprocess.run([str(binary), "collect", *arguments, "--manifest-dir", str(project), "--scryr-dir", str(state)], cwd=project, env=env, check=True, text=True, capture_output=True, timeout=120)
+    def query():
+        data = json.dumps({"query": '{ blocks(scryIdentifier:"local") { manifestId evidence { collectorId state latest { observationId result { ... on TestResult { passing failing } } } } } }'}).encode()
+        request = urllib.request.Request(base + "/graphql", data=data, headers={"Content-Type":"application/json"})
+        with urllib.request.urlopen(request, timeout=3) as response:
+            result = json.load(response)
+        if result.get("errors"):
+            raise RuntimeError(result["errors"])
+        blocks = result["data"]["blocks"]
+        if not blocks:
+            return {}
+        return {item["collectorId"]:item for item in blocks[0]["evidence"]}
+    def wait_for(predicate, label):
+        deadline = time.monotonic() + 120
+        while time.monotonic() < deadline:
+            try:
+                value = query()
+                if predicate(value):
+                    return value
+            except (OSError, RuntimeError, KeyError, TypeError):
+                pass
+            if server.poll() is not None:
+                raise RuntimeError("server exited:\n" + log.read_text())
+            time.sleep(0.2)
+        raise RuntimeError(label + " timed out:\n" + log.read_text())
+    with log.open("w") as output:
+        server = subprocess.Popen([str(binary), "serve", "--port", str(port), "--no-open", "--manifest-dir", str(project), "--scryr-dir", str(state)], cwd=project, env=env, stdout=output, stderr=subprocess.STDOUT)
+        try:
+            wait_for(lambda rows: rows["imported"]["latest"]["result"]["passing"] == 1, "startup collection without --watch")
+            assert not (state / "invocations").exists(), "manual tests must not run at startup"
+            report.write_text('<testsuite><testcase name="changed"><failure/></testcase></testsuite>')
+            wait_for(lambda rows: rows["imported"]["latest"]["result"]["failing"] == 1, "independent polling")
+            command("run", "--manifest", "smoke/api", "--collector", "unit")
+            wait_for(lambda rows: rows["unit"]["latest"]["result"]["failing"] == 1, "manual owner execution")
+            assert (state / "invocations").read_text() == "run", "only one owner may execute"
+            command("pause")
+            paused = wait_for(lambda rows: all(item["state"] == "DISABLED" for item in rows.values()), "pause")
+            previous = paused["imported"]["latest"]["observationId"]
+            report.write_text('<testsuite><testcase name="resumed"/></testsuite>')
+            time.sleep(2)
+            assert query()["imported"]["latest"]["observationId"] == previous
+            command("resume")
+            wait_for(lambda rows: rows["imported"]["latest"]["result"]["passing"] == 1, "resume")
+        finally:
+            server.send_signal(signal.SIGINT)
+            try:
+                server.wait(timeout=15)
+            except subprocess.TimeoutExpired:
+                server.kill()
+                server.wait()
+            if server.returncode not in (0, -signal.SIGINT):
+                print(log.read_text())
+    command("run", "--manifest", "smoke/api", "--collector", "unit")
+    assert (state / "invocations").read_text() == "runrun", "standalone manual collection must use the same runner"
+    print("Collector smoke passed: startup, polling without --watch, manual owner, pause/resume, and standalone persistence")
+PYTHON
+''',
+]
 
 [tasks."verify:editor"]
 description = "Build and test the standalone source editor in Chrome; requires network"
@@ -877,6 +977,11 @@ dir = "{{config_root}}"
 hide = true
 run = "cargo fetch --locked --manifest-path crystal/Cargo.toml"
 
+[tasks."contribute:resolve:crystal"]
+description = "Resolve changed CLI dependencies while retaining other locked versions"
+dir = "{{config_root}}"
+run = "cargo update --manifest-path crystal/Cargo.toml -p crystal-cli"
+
 [tasks."internal:dependencies:manifest"]
 description = "Install Python workspace dependencies"
 dir = "{{config_root}}"
@@ -905,7 +1010,16 @@ run = "cargo build --manifest-path crystal/Cargo.toml --locked -p crystal-cli --
 description = "Generate TypeScript GraphQL client code"
 dir = "{{config_root}}"
 hide = true
-run = "npm --prefix map run codegen"
+run = [
+    "npm --prefix map run codegen",
+    """python - <<'PYTHON'
+from pathlib import Path
+# Normalize generator-emitted blank-line spaces; generated code is never hand-edited.
+path = Path("map/src/graphql/generated.ts")
+path.write_text("\\n".join(line.rstrip() for line in path.read_text().splitlines()) + "\\n")
+PYTHON
+""",
+]
 
 [tasks."internal:embed:manifest"]
 description = "Refresh the crate-local Python SDK copy embedded in crystal-cli packages"
@@ -2340,6 +2454,7 @@ class WorkflowPolicyTests(unittest.TestCase):
                 "mise run verify:automation",
                 "mise run verify:manifest",
                 "mise run verify:crystal",
+                "mise run verify:collectors",
                 "mise run verify:map",
                 "mise run verify:release",
             ],

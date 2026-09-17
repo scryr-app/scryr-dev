@@ -6,11 +6,6 @@ pub mod collectors;
 /// Typed observations and collector status.
 pub mod evidence;
 
-/// Legacy modules removed with the backend replacement.
-pub mod action_history;
-/// Legacy modules removed with the backend replacement.
-pub mod reports;
-
 mod error;
 pub use error::Error;
 

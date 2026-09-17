@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+	localCapabilityHeaders,
 	resolveGraphqlEndpoint,
 	resolveSameOriginGraphqlEndpoint,
 	shouldRetrySameOriginGraphqlEndpoint,
@@ -51,5 +52,60 @@ describe("GraphQL client endpoint resolution", () => {
 				"http://127.0.0.1:8000",
 			),
 		).toBe(false);
+	});
+});
+
+describe("local collector capability transport", () => {
+	it("sends the capability only to the originating loopback server", () => {
+		expect(
+			localCapabilityHeaders(
+				"/graphql",
+				"opaque-secret",
+				"local",
+				"http://127.0.0.1:8000",
+			),
+		).toEqual({ "X-Scryr-Local-Capability": "opaque-secret" });
+		expect(
+			localCapabilityHeaders(
+				"/graphql",
+				"opaque-secret",
+				"local",
+				"http://[::1]:8000",
+			),
+		).toEqual({ "X-Scryr-Local-Capability": "opaque-secret" });
+	});
+	it("does not expose local capabilities across ports, external hosts, or hosted auth", () => {
+		expect(
+			localCapabilityHeaders(
+				"http://127.0.0.1:8000/graphql",
+				"opaque-secret",
+				"local",
+				"http://127.0.0.1:3000",
+			),
+		).toEqual({});
+		expect(
+			localCapabilityHeaders(
+				"https://example.com/graphql",
+				"opaque-secret",
+				"local",
+				"http://127.0.0.1:8000",
+			),
+		).toEqual({});
+		expect(
+			localCapabilityHeaders(
+				"/graphql",
+				"opaque-secret",
+				"clerk",
+				"http://127.0.0.1:8000",
+			),
+		).toEqual({});
+		expect(
+			localCapabilityHeaders(
+				"/graphql",
+				"opaque-secret",
+				"local",
+				"https://example.com",
+			),
+		).toEqual({});
 	});
 });

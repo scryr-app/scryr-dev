@@ -1,5 +1,4 @@
 import { useEffect, useEffectEvent, useState } from "react";
-import type { Block } from "@/graphql/generated";
 import type { LayoutBlock, LayoutResult } from "./layout";
 import { type LayoutView, layoutBlocksForView } from "./layoutOverview";
 
@@ -10,7 +9,7 @@ export interface MapLayoutState {
 }
 
 export function useMapLayout(
-	blocks: Block[],
+	blocks: LayoutBlock[],
 	view: LayoutView,
 ): MapLayoutState {
 	const [state, setState] = useState<MapLayoutState>({

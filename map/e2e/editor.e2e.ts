@@ -126,6 +126,9 @@ test("stored-source editing through server-only saves all source without touchin
     expect(await readFile(resolve(directory, "index.scry"), "utf8")).toBe(diskBefore);
     await page.reload();
     await expect(page.getByRole("region", { name: "Manifest source editor" })).toBeVisible();
+    await expect(page.locator(".cm-content")).toContainText("from scryr");
+    // The expanded typed-collector imports move this name below CodeMirror's viewport.
+    await page.locator(".cm-content").press("PageDown");
     await expect(page.locator(".cm-content")).toContainText("Stored Web");
     const denied = await request.post(`${base}/graphql`, {
         headers: { origin: "https://untrusted.example" },
@@ -155,6 +158,36 @@ test("nested entrypoint preserves project tooling configuration and only writes 
     const source = await gql(request, '{ manifestDocument(identifier: "mern_diagram") }');
     expect(source.data.manifestDocument.folderPath).toBe("services");
     expect(source.data.manifestDocument.local).toBe(true);
+});
+
+test("local Save and Run replaces collector schedules without watch", async ({ page, request }) => {
+    initial = `from datetime import timedelta
+
+from scryr import Diagram, JUnitReportCollector, Manifest, Schedule
+
+api = Manifest(
+    manifest_id="local/api",
+    name="Local API",
+    tests=[JUnitReportCollector(
+        id="imported",
+        files=["one.xml"],
+        schedule=Schedule(startup=True, every=timedelta(seconds=1)),
+    )],
+)
+local = Diagram(name="Local", manifests=[api])
+`;
+    await writeFile(resolve(directory, "index.scry"), initial);
+    await writeFile(resolve(directory, "one.xml"), '<testsuite><testcase name="passing"/></testsuite>');
+    await writeFile(resolve(directory, "two.xml"), '<testsuite><testcase name="failing"><failure/></testcase></testsuite>');
+    await launch(request);
+    const result = async () => {
+        const response = await gql(request, '{ blocks(scryIdentifier:"local") { evidence { latest { result { ... on TestResult { passing failing } } } } } }');
+        return response.data?.blocks?.[0]?.evidence?.[0]?.latest?.result;
+    };
+    await expect.poll(async () => (await result())?.passing, { timeout: 30_000 }).toBe(1);
+    await openEditor(page);
+    await run(page, initial.replace("one.xml", "two.xml"), "disk");
+    await expect.poll(async () => (await result())?.failing, { timeout: 30_000 }).toBe(1);
 });
 
 test("console controls align and the diagram menu stays above the editor", async ({ page, request }) => {

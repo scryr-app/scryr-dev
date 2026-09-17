@@ -18,6 +18,7 @@ import {
 } from "@codemirror/view";
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import { pythonEnumCompletionSource } from "@/pyodide/pythonEnumCompletions";
+import { pythonSdkCompletionSource } from "@/pyodide/pythonSdkCompletions";
 import type { Theme } from "@/theme/theme";
 import { createThemeExtensions } from "./pythonEditorTheme";
 
@@ -65,7 +66,7 @@ export const PythonCodeEditor = forwardRef<
 				python(),
 				autocompletion({
 					activateOnTyping: true,
-					override: [pythonEnumCompletionSource],
+					override: [pythonSdkCompletionSource, pythonEnumCompletionSource],
 				}),
 				EditorView.updateListener.of((update) => {
 					if (update.docChanged) {

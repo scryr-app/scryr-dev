@@ -443,6 +443,8 @@ impl CollectorConfig {
             _ => ".",
         }
     }
+    /// # Errors
+    /// Returns a serialization error if the configuration cannot be encoded.
     pub fn revision(&self) -> Result<String, String> {
         fingerprint(self)
     }
@@ -454,6 +456,8 @@ impl CollectorConfig {
             _ => None,
         }
     }
+    /// # Errors
+    /// Rejects invalid triggers, paths, identities and integration options.
     pub fn validate(&self) -> Result<(), String> {
         validate_identity(self.id())?;
         let c = self.common();
@@ -461,11 +465,11 @@ impl CollectorConfig {
         if !c.timeout.is_finite()
             || !(0.1..=86400.0).contains(&c.timeout)
             || !c.freshness.is_finite()
-            || !(1.0..=31536000.0).contains(&c.freshness)
+            || !(1.0..=31_536_000.0).contains(&c.freshness)
             || !s.debounce.is_finite()
             || !(0.0..=3600.0).contains(&s.debounce)
             || s.every
-                .is_some_and(|v| !v.is_finite() || !(1.0..=31536000.0).contains(&v))
+                .is_some_and(|v| !v.is_finite() || !(1.0..=31_536_000.0).contains(&v))
             || !(s.startup
                 || s.every.is_some()
                 || !s.watch.is_empty()
@@ -506,7 +510,7 @@ impl CollectorConfig {
                         } => (metric, Some(*percentile)),
                     };
                     if metric.is_empty()
-                        || p.is_some_and(|n| !n.is_finite() || !(0.0..=1.0).contains(&n))
+                        || p.is_some_and(|n| !n.is_finite() || !(0.0..=100.0).contains(&n))
                     {
                         return Err("invalid metric selection".into());
                     }
@@ -598,14 +602,29 @@ pub struct CollectorDeclaration {
     pub revision: String,
 }
 /// Decode and validate only inert declarations; this function never starts a process.
+/// # Errors
+/// Rejects invalid collectors, duplicate identities and missing or ambiguous inventory references.
 pub fn declarations(envelope: &Value) -> Result<Vec<CollectorDeclaration>, String> {
+    parse_declarations(envelope, true)
+}
+/// Decode an already scoped artifact, whose referenced inventory may be outside this diagram.
+/// # Errors
+/// Rejects invalid collectors or duplicate identities in the scoped artifact.
+pub fn declarations_for_projection(envelope: &Value) -> Result<Vec<CollectorDeclaration>, String> {
+    parse_declarations(envelope, false)
+}
+fn parse_declarations(
+    envelope: &Value,
+    validate_references: bool,
+) -> Result<Vec<CollectorDeclaration>, String> {
     let manifests = envelope
         .as_array()
         .or_else(|| envelope.get("manifests").and_then(Value::as_array))
         .ok_or("expected manifests array")?;
     let mut out = Vec::new();
-    let mut keys = BTreeSet::new();
+    let mut keys = std::collections::BTreeMap::new();
     for manifest in manifests {
+        let mut local_keys = BTreeSet::new();
         for removed in ["github", "cicd", "analytics"] {
             if manifest.get(removed).is_some_and(|v| !v.is_null()) {
                 return Err(format!(
@@ -638,38 +657,51 @@ pub fn declarations(envelope: &Value) -> Result<Vec<CollectorDeclaration>, Strin
                         section.as_str()
                     ));
                 }
-                if !keys.insert((id.to_owned(), config.id().to_owned())) {
+                let key = (id.to_owned(), section.as_str(), config.id().to_owned());
+                let revision = config.revision()?;
+                if !local_keys.insert(key.clone()) {
+                    return Err(format!("duplicate collector id {} on {id}", config.id()));
+                }
+                if let Some(previous) = keys.insert(key, revision.clone()) {
+                    // A manifest may appear in several stored diagrams. Passive
+                    // reads share one projection for identical declarations.
+                    if !validate_references && previous == revision {
+                        continue;
+                    }
                     return Err(format!("duplicate collector id {} on {id}", config.id()));
                 }
                 out.push(CollectorDeclaration {
                     manifest_id: id.into(),
                     section,
-                    revision: config.revision()?,
+                    revision,
                     config,
                 });
             }
         }
+    }
+    if !validate_references {
+        return Ok(out);
     }
     for declaration in &out {
         if matches!(
             &declaration.config,
             CollectorConfig::GrypeScan(_) | CollectorConfig::GrantLicense(_)
         ) {
-            let candidates: Vec<_> = out
+            let candidates = out
                 .iter()
                 .filter(|d| {
                     matches!(d.config, CollectorConfig::SyftInventory(_))
-                        && match declaration.config.sbom() {
-                            Some(r) => {
+                        && declaration.config.sbom().map_or_else(
+                            || d.manifest_id == declaration.manifest_id,
+                            |r| {
                                 d.manifest_id
                                     == *r.manifest_id.as_ref().unwrap_or(&declaration.manifest_id)
                                     && d.config.id() == r.collector_id
-                            }
-                            None => d.manifest_id == declaration.manifest_id,
-                        }
+                            },
+                        )
                 })
-                .collect();
-            if candidates.len() != 1 {
+                .count();
+            if candidates != 1 {
                 return Err(format!(
                     "{} requires one unambiguous syft_inventory reference",
                     declaration.config.id()
@@ -680,6 +712,8 @@ pub fn declarations(envelope: &Value) -> Result<Vec<CollectorDeclaration>, Strin
     Ok(out)
 }
 /// Canonical revision of a serializable value, independent of object key order.
+/// # Errors
+/// Returns serialization errors.
 pub fn fingerprint<T: Serialize>(value: &T) -> Result<String, String> {
     use std::fmt::Write as _;
     let value = serde_json::to_value(value).map_err(|e| e.to_string())?;
@@ -724,6 +758,15 @@ mod tests {
     use super::*;
     use serde_json::json;
     #[test]
+    fn shared_diagram_manifests_use_one_passive_projection() -> Result<(), String> {
+        let manifest = json!({"manifestId":"api","repository":[{"kind":"git_status"}]});
+        let diagrams = json!([manifest.clone(), manifest]);
+        assert_eq!(declarations_for_projection(&diagrams)?.len(), 1);
+        assert!(declarations(&diagrams).is_err());
+        assert!(declarations_for_projection(&json!([{"manifestId":"api","repository":[{"kind":"git_status"},{"kind":"git_status"}]}])).is_err());
+        Ok(())
+    }
+    #[test]
     fn configs_are_typed_strict_and_round_trip() -> Result<(), String> {
         let value = json!({"kind":"git_status","id":"git","schedule":{"startup":true,"every":15},"directory":"."});
         let config: CollectorConfig = serde_json::from_value(value).map_err(|e| e.to_string())?;
@@ -753,6 +796,7 @@ mod tests {
             declarations(&json!([{"manifestId":"api","dependencies":[{"kind":"grype_scan"}]}]))
                 .is_err()
         );
+        assert!(declarations(&json!([{"manifestId":"api","checks":[{"kind":"ruff","id":"unit"}],"tests":[{"kind":"pytest","id":"unit"}]}])).is_ok());
         assert!(declarations(&json!([{"manifestId":"api","dependencies":[{"kind":"syft_inventory"},{"kind":"grype_scan"}]}])).is_ok());
         assert!(declarations(&json!([{"manifestId":"api","dependencies":[{"kind":"grype_scan","sbom":{"collector_id":"inventory","manifest_id":"shared"}}]},{"manifestId":"shared","dependencies":[{"kind":"syft_inventory","id":"inventory"}]}])).is_ok());
     }

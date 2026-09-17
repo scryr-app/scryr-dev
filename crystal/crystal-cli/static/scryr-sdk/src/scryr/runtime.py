@@ -16,6 +16,7 @@ from pathlib import Path
 from types import CodeType, UnionType
 from typing import TYPE_CHECKING, Any, Union, cast, get_args, get_origin
 
+from scryr.collectors.validation import validate_collector_references
 from scryr.manifest import Diagram, Forge, Manifest
 
 if TYPE_CHECKING:
@@ -370,8 +371,25 @@ def scryr_variable_name(module: ModuleType, python_variable: str) -> str:
     return python_variable
 
 
+def _validate_module_collectors(module: ModuleType) -> None:
+    pending = [obj for _, obj in iter_manifest_objects(module)]
+    for _, diagram in iter_diagram_objects(module):
+        pending.extend(diagram.manifests)
+    manifests = []
+    seen = set()
+    while pending:
+        manifest = pending.pop()
+        if id(manifest) in seen:
+            continue
+        seen.add(id(manifest))
+        manifests.append(manifest)
+        pending.extend(manifest.connections)
+    validate_collector_references(manifests)
+
+
 def emit_manifest_values(module: ModuleType) -> list[ManifestValueRecord]:
     """Serialize public manifest instances from a loaded module."""
+    _validate_module_collectors(module)
     return [
         {
             "kind": "manifest",
@@ -396,6 +414,7 @@ def emit_forge_values(module: ModuleType) -> list[ForgeValueRecord]:
 
 def emit_diagram_values(module: ModuleType) -> list[DiagramValueRecord]:
     """Serialize public diagram instances from a loaded module."""
+    _validate_module_collectors(module)
     manifest_pool = [obj for _, obj in iter_manifest_objects(module)]
     return [
         {
@@ -414,6 +433,7 @@ def emit_scryr_values(module: ModuleType) -> list[ScryrValueRecord]:
 
 def emit_manifest_types(module: ModuleType) -> list[ManifestTypeRecord]:
     """Describe declared and runtime field types for public top-level constructs."""
+    _validate_module_collectors(module)
     block_types: list[ManifestTypeRecord] = []
     for kind, variable, obj in (
         ("manifest", variable, obj) for variable, obj in iter_manifest_objects(module)

@@ -1,6 +1,6 @@
 import * as ELK from "elkjs";
 import { BLOCK_CENTER_HEIGHT, BLOCK_DIMENSIONS } from "@/block/dimensions";
-import type { Block } from "@/graphql/generated.ts";
+import type { GetBlocksQuery } from "@/graphql/generated";
 
 const elk = new ELK.default();
 
@@ -79,7 +79,10 @@ export interface LayoutResult {
 	height: number;
 }
 
-export type LayoutBlock = Pick<Block, "name" | "connections" | "tags">;
+export type LayoutBlock = Pick<
+	GetBlocksQuery["blocks"][number],
+	"name" | "connections" | "tags"
+>;
 
 export interface LayoutOptions {
 	algorithm?: "layered" | "force" | "stress" | "mrtree" | "radial";

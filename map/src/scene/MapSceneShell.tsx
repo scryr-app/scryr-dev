@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 import { useState } from "react";
+import { EvidenceDetails } from "@/cards/EvidenceDetails";
+import { EvidenceDetailsProvider } from "@/cards/EvidenceDetailsContext";
 import { MapTray } from "@/cards/MapTray";
 import { MapTrayProvider } from "@/cards/MapTrayContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -28,38 +30,41 @@ export function MapSceneShell({ header }: MapSceneShellProps) {
 
 	return (
 		<MapTrayProvider>
-			<div
-				style={{
-					width: "100vw",
-					height: "100vh",
-					background: theme.background,
-				}}
-			>
-				<ErrorBoundary name="PyodideConsole" fallback={null}>
-					<PyodideConsole
-						isOpen={isPyodideOpen}
-						panelWidth={pyodidePanelWidth}
-						onOpenChange={setIsPyodideOpen}
-						onPanelWidthChange={setPyodidePanelWidth}
-					/>
-				</ErrorBoundary>
-				<div className="relative min-w-0 h-full">
-					{header}
-					<MapDiagram key={theme.id} />
-					<ErrorBoundary name="MapTray" fallback={null}>
-						<MapTray
-							isPyodideOpen={isPyodideOpen}
-							onTogglePyodide={togglePyodide}
+			<EvidenceDetailsProvider>
+				<div
+					style={{
+						width: "100vw",
+						height: "100vh",
+						background: theme.background,
+					}}
+				>
+					<ErrorBoundary name="PyodideConsole" fallback={null}>
+						<PyodideConsole
+							isOpen={isPyodideOpen}
+							panelWidth={pyodidePanelWidth}
+							onOpenChange={setIsPyodideOpen}
+							onPanelWidthChange={setPyodidePanelWidth}
 						/>
 					</ErrorBoundary>
-					<ErrorBoundary name="TopCornerButtons" fallback={null}>
-						<TopCornerButtons
-							isPyodideOpen={isPyodideOpen}
-							onTogglePyodide={togglePyodide}
-						/>
-					</ErrorBoundary>
+					<div className="relative min-w-0 h-full">
+						{header}
+						<MapDiagram key={theme.id} />
+						<EvidenceDetails />
+						<ErrorBoundary name="MapTray" fallback={null}>
+							<MapTray
+								isPyodideOpen={isPyodideOpen}
+								onTogglePyodide={togglePyodide}
+							/>
+						</ErrorBoundary>
+						<ErrorBoundary name="TopCornerButtons" fallback={null}>
+							<TopCornerButtons
+								isPyodideOpen={isPyodideOpen}
+								onTogglePyodide={togglePyodide}
+							/>
+						</ErrorBoundary>
+					</div>
 				</div>
-			</div>
+			</EvidenceDetailsProvider>
 		</MapTrayProvider>
 	);
 }

@@ -15,6 +15,15 @@ pub(super) async fn run(args: &ServerArgs) -> Result<(), String> {
             "serve requires a fixed --port; use --server-only for an ephemeral port".into(),
         );
     }
+    if !matches!(
+        args.host.as_str(),
+        "localhost" | "127.0.0.1" | "::1" | "[::1]"
+    ) || args
+        .auth_mode
+        .is_some_and(|m| m != crystal_server::state::AuthMode::Local)
+    {
+        return Err("local manifest serving and collection require loopback/local auth; use --server-only for hosted serving".into());
+    }
     // Bind before starting the loader, so an occupied port cannot receive our upload.
     let root = args
         .common
@@ -71,15 +80,27 @@ pub(super) async fn run(args: &ServerArgs) -> Result<(), String> {
         crystal_server::server::start_with_workspace(args.server.clone(), Some(workspace.clone()))
             .await
             .map_err(|e| e.to_string())?;
+    let (plans, plan_rx) = tokio::sync::watch::channel(None);
+    let collection = super::collect::supervise(
+        root,
+        args.common.scryr_dir.clone(),
+        plan_rx,
+        args.no_collect,
+    );
     tokio::pin!(server);
     tokio::select! {
         result = &mut server => result.map_err(|e| e.to_string()),
-        () = load_loop(args, &workspace) => server.await.map_err(|e| e.to_string()),
+        result = collection => result,
+        () = load_loop(args, &workspace, plans) => server.await.map_err(|e| e.to_string()),
     }
 }
 
 /// Wait for this server, then refresh only when source contents change.
-async fn load_loop(args: &ServerArgs, workspace: &crystal_server::editor::LocalWorkspace) {
+async fn load_loop(
+    args: &ServerArgs,
+    workspace: &crystal_server::editor::LocalWorkspace,
+    plans: tokio::sync::watch::Sender<Option<super::collect::Plan>>,
+) {
     let host = match args.host.as_str() {
         "0.0.0.0" => "127.0.0.1".to_owned(),
         "::" => "[::1]".to_owned(),
@@ -108,10 +129,15 @@ async fn load_loop(args: &ServerArgs, workspace: &crystal_server::editor::LocalW
     common.graphql_url = Some(format!("{base}/graphql"));
     let mut previous = None;
     let mut opened = false;
+    let mut editor_revision = workspace.source_revision();
     loop {
         let guard = workspace.gate.lock().await;
         let fingerprint = fingerprint(&common);
-        if previous.as_ref() != Some(&fingerprint) {
+        let editor_changed = workspace.source_revision() != editor_revision;
+        if previous.is_none()
+            || editor_changed
+            || (args.watch && previous.as_ref() != Some(&fingerprint))
+        {
             let load_common = common.clone();
             let format = !args.no_format;
             let prepared = tokio::task::spawn_blocking(move || {
@@ -121,12 +147,18 @@ async fn load_loop(args: &ServerArgs, workspace: &crystal_server::editor::LocalW
                 }
                 let revision = self::fingerprint(&load_common);
                 let checked = project.check()?;
-                Ok::<_, String>((project, checked, revision))
+                let plan =
+                    super::collect::Plan::parse(&checked.json, &project.root, &project.file)?;
+                Ok::<_, String>((project, checked, revision, plan))
             })
             .await;
             let (result, revision) = match prepared {
-                Ok(Ok((project, checked, revision))) => {
-                    (publish(&project, checked).await, revision)
+                Ok(Ok((project, checked, revision, plan))) => {
+                    let result = publish(&project, checked).await;
+                    if result.is_ok() {
+                        plans.send_replace(Some(plan));
+                    }
+                    (result, revision)
                 }
                 Ok(Err(error)) => (Err(error), fingerprint.clone()),
                 Err(error) => (Err(error.to_string()), fingerprint.clone()),
@@ -148,9 +180,7 @@ async fn load_loop(args: &ServerArgs, workspace: &crystal_server::editor::LocalW
             }
             // Ignore our formatting, but retain edits made while checking or uploading.
             previous = Some(revision);
-        }
-        if !args.watch {
-            return;
+            editor_revision = workspace.source_revision();
         }
         drop(guard);
         tokio::time::sleep(Duration::from_millis(500)).await;

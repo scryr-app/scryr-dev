@@ -268,6 +268,11 @@ export function PyodideConsole({
 							</button>
 						</div>
 					</div>
+					{editor.doc?.local && (
+						<p className="mb-2 opacity-70">
+							Save and Run applies collector schedules on this laptop.
+						</p>
+					)}
 					<div role="status" aria-live="polite">
 						{editor.status}
 					</div>

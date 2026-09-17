@@ -19,7 +19,12 @@ A public `Manifest` variable becomes a block on the diagram. Its core fields are
 - `connections`: named links to other manifests.
 - `forges`: developer-environment configurations used by the component.
 
-Add detail through typed sections: `Info`, `Github`, `Metrics`, `CICD`, `Tests`, `Dependencies`, `Performance`, and `OtherDiagram`.
+Use `Info` and `OtherDiagram` for architectural detail. Evidence uses six typed
+lists: `repository`, `checks`, `metrics`, `tests`, `dependencies`, and
+`performance`. Add concrete classes from `scryr.collectors` directly to these
+lists, such as `repository=[GitStatusCollector()]`. There is no generic collector
+wrapper or static summary data. Remote CI is Repository evidence; Checks is local
+verification. See [collector integrations](/integrations/) for all six cards.
 
 `Info` can describe version, language, frameworks, deployment, owning team, authentication, observability, infrastructure as code, scaling, docs, and external links.
 

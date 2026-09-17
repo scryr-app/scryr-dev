@@ -67,10 +67,27 @@ const SCHEMA_STATEMENTS: &[(&str, &str)] = &[
         "create organization sample seed markers",
         "CREATE TABLE IF NOT EXISTS organization_sample_seeds (clerk_org_id TEXT PRIMARY KEY, seeded_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)",
     ),
-    ("create report history", super::reports::CREATE_TABLE),
     (
-        "create manifest action history",
-        super::action_history::CREATE_TABLE,
+        "create evidence history",
+        super::evidence::CREATE_OBSERVATIONS,
+    ),
+    ("create collector status", super::evidence::CREATE_STATUSES),
+    ("index evidence", super::evidence::CREATE_INDEX),
+    (
+        "index workflow evidence sources",
+        super::evidence::WORKFLOW_SOURCES_INDEX,
+    ),
+    (
+        "create workflow projection",
+        super::evidence::workflows::CREATE,
+    ),
+    (
+        "index workflow projection",
+        super::evidence::workflows::INDEX,
+    ),
+    (
+        "index workflow projection ownership",
+        super::evidence::workflows::OWNERSHIP_INDEX,
     ),
     (
         "create generated_manifests table",
@@ -94,42 +111,118 @@ const SCHEMA_STATEMENTS: &[(&str, &str)] = &[
     ),
 ];
 
-/// Create the local `SQLite` artifact storage tables when they do not already exist.
+/// Breaking storage generation. Existing databases are never upgraded or erased implicitly.
+const SCHEMA_VERSION: &str = "3";
+const TABLES: &str =
+    "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'";
+const VERSION: &str = "SELECT version FROM scryr_schema WHERE singleton=1";
+const CREATE_VERSION: &str = "CREATE TABLE scryr_schema (singleton INTEGER PRIMARY KEY CHECK(singleton=1), version TEXT NOT NULL)";
+const INSERT_VERSION: &str = "INSERT INTO scryr_schema (singleton,version) VALUES (1,'3')";
+fn incompatible() -> String {
+    format!(
+        "Incompatible Scryr database schema; expected {SCHEMA_VERSION}. Keep a backup and configure a fresh empty database with SCRYR_SQLITE_PATH or a new Turso database, then reimport index.scry. Existing data was not changed."
+    )
+}
+fn validate_version(versions: &[String]) -> Result<(), String> {
+    if versions == [SCHEMA_VERSION] {
+        Ok(())
+    } else {
+        Err(incompatible())
+    }
+}
 async fn ensure_sqlite_table(pool: &SqlitePool) -> Result<(), String> {
-    for (description, statement) in SCHEMA_STATEMENTS {
-        sqlx::query(*statement)
-            .execute(pool)
-            .await
-            .map_err(|error| format!("Failed to {description} in local SQLite storage: {error}"))?;
+    let tables: Vec<String> = sqlx::query_scalar(TABLES)
+        .fetch_all(pool)
+        .await
+        .map_err(|e| e.to_string())?;
+    if tables.iter().any(|name| name == "scryr_schema") {
+        return validate_version(
+            &sqlx::query_scalar::<_, String>(VERSION)
+                .fetch_all(pool)
+                .await
+                .map_err(|e| e.to_string())?,
+        );
     }
-
-    Ok(())
+    if !tables.is_empty() {
+        return Err(incompatible());
+    }
+    // Serialize competing fresh initializers and publish the version atomically with all tables.
+    let mut tx = pool
+        .begin_with("BEGIN IMMEDIATE")
+        .await
+        .map_err(|e| e.to_string())?;
+    let tables: Vec<String> = sqlx::query_scalar(TABLES)
+        .fetch_all(&mut *tx)
+        .await
+        .map_err(|e| e.to_string())?;
+    if tables.iter().any(|name| name == "scryr_schema") {
+        let versions = sqlx::query_scalar::<_, String>(VERSION)
+            .fetch_all(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
+        validate_version(&versions)?;
+    } else {
+        if !tables.is_empty() {
+            return Err(incompatible());
+        }
+        for statement in [CREATE_VERSION, INSERT_VERSION]
+            .into_iter()
+            .chain(SCHEMA_STATEMENTS.iter().map(|(_, sql)| *sql))
+        {
+            sqlx::query(statement)
+                .execute(&mut *tx)
+                .await
+                .map_err(|e| e.to_string())?;
+        }
+    }
+    tx.commit().await.map_err(|e| e.to_string())
 }
-
-/// Create the Turso/libSQL artifact storage tables when they do not already exist.
+async fn text_rows(mut rows: libsql::Rows) -> Result<Vec<String>, String> {
+    let mut out = vec![];
+    while let Some(row) = rows.next().await.map_err(|e| e.to_string())? {
+        out.push(row.get(0).map_err(|e| e.to_string())?);
+    }
+    Ok(out)
+}
 async fn ensure_turso_table(database: &libsql::Database) -> Result<(), String> {
-    let connection = database
-        .connect()
-        .map_err(|error| format!("Failed to open Turso schema connection: {error}"))?;
-
-    for (description, statement) in SCHEMA_STATEMENTS {
-        connection
-            .execute(statement, ())
-            .await
-            .map_err(|error| format!("Failed to {description} in Turso storage: {error}"))?;
+    let c = database.connect().map_err(|e| e.to_string())?;
+    let tables = text_rows(c.query(TABLES, ()).await.map_err(|e| e.to_string())?).await?;
+    if tables.iter().any(|name| name == "scryr_schema") {
+        return validate_version(
+            &text_rows(c.query(VERSION, ()).await.map_err(|e| e.to_string())?).await?,
+        );
     }
-
-    Ok(())
+    if !tables.is_empty() {
+        return Err(incompatible());
+    }
+    let tx = c
+        .transaction_with_behavior(libsql::TransactionBehavior::Immediate)
+        .await
+        .map_err(|e| e.to_string())?;
+    let tables = text_rows(tx.query(TABLES, ()).await.map_err(|e| e.to_string())?).await?;
+    if tables.iter().any(|name| name == "scryr_schema") {
+        validate_version(
+            &text_rows(tx.query(VERSION, ()).await.map_err(|e| e.to_string())?).await?,
+        )?;
+    } else {
+        if !tables.is_empty() {
+            return Err(incompatible());
+        }
+        for statement in [CREATE_VERSION, INSERT_VERSION]
+            .into_iter()
+            .chain(SCHEMA_STATEMENTS.iter().map(|(_, sql)| *sql))
+        {
+            tx.execute(statement, ()).await.map_err(|e| e.to_string())?;
+        }
+    }
+    tx.commit().await.map_err(|e| e.to_string())
 }
-
-/// Create the artifact storage table when it does not already exist.
-///
+/// Initialize a fresh database, or reject an incompatible existing schema without changing it.
 /// # Errors
-///
-/// Returns an error if any schema bootstrap or migration step fails.
+/// Returns version mismatch, bootstrap, or connection errors.
 pub(crate) async fn ensure_table(pool: &DatabasePool) -> Result<(), String> {
     match pool {
-        DatabasePool::Turso(database) => ensure_turso_table(database).await,
-        DatabasePool::Sqlite(pool) => ensure_sqlite_table(pool).await,
+        DatabasePool::Sqlite(p) => ensure_sqlite_table(p).await,
+        DatabasePool::Turso(d) => ensure_turso_table(d).await,
     }
 }

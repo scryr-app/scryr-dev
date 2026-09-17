@@ -39,7 +39,8 @@ Scryr is pre-1.0. Keep the CLI and the manifests in a project versioned together
 Save this file at the root of your repository:
 
 ```python title="index.scry"
-from scryr import Diagram, Github, Info, Manifest
+from scryr import Diagram, Info, Manifest
+from scryr.collectors import GitStatusCollector
 from scryr.types import ProgrammingLanguage, WebFramework
 
 web = Manifest(
@@ -64,7 +65,7 @@ api = Manifest(
         frameworks=[WebFramework.fastapi],
         owner_team="Platform",
     ),
-    github=Github(repo_url="https://github.com/acme/api"),
+    repository=[GitStatusCollector()],
 )
 
 database = Manifest(name="Postgres")
@@ -80,7 +81,7 @@ scryr check
 scryr serve --watch
 ```
 
-By default, `serve` starts the embedded UI and GraphQL server at `127.0.0.1:8000`, formats and validates the source, uploads the artifact, and opens the browser. Watch mode keeps the previous valid diagram visible when a later edit fails.
+By default, `serve` starts the embedded UI and GraphQL server at `127.0.0.1:8000`, formats and validates the source, uploads the artifact, and opens the browser. Collector schedules run independently of source watching. Watch mode keeps the previous valid diagram and collector plan when a later edit fails; collection errors remain visible.
 
 On first execution, Scryr provisions its own pinned `uv`, managed Python runtime, and per-project environment. It does not change your system Python.
 

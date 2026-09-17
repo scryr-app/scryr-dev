@@ -41,33 +41,31 @@ local = Forge(
     <article>
       <div class="feature-evidence-copy" data-reveal>
       <h3>Did this service pass?</h3>
-      <p>Publish JUnit results and completed GitHub Actions runs. See pass/fail counts and workflow status in the diagram.</p>
-      <a class="chapter-link" href="/integrations/#github-actions-and-test-reports">Connect CI evidence <span aria-hidden="true">↗</span></a>
+      <p>Run declared local tests and read optional GitHub Actions context. See local outcomes in Tests and remote workflow status in Repository.</p>
+      <a class="chapter-link" href="/integrations/#local-checks-and-test-reports">Connect CI evidence <span aria-hidden="true">↗</span></a>
       </div>
       <div class="feature-example" data-reveal>
       <div class="terminal-spell">
-        <div class="panel-label"><span>Report completed runs</span><span>terminal</span></div>
-        <pre><code><span>$</span> scryr report tests --manifest api \
-    --run-id "$GITHUB_RUN_ID" \
-    --observed-at "$RESULTS_COMPLETED_AT"
-<span>$</span> scryr report actions --manifest api \
-    --event-file workflow-run.json --branch main</code></pre>
+        <div class="panel-label"><span>Run declared local tests</span><span>terminal</span></div>
+        <pre><code><span>$</span> scryr collect doctor
+<span>$</span> scryr collect run --manifest services/api \
+    --section tests --collector unit
+<span>$</span> scryr collect status</code></pre>
       </div>
       </div>
     </article>
     <article>
       <div class="feature-evidence-copy" data-reveal>
       <h3>What’s happening at runtime?</h3>
-      <p>Open a component’s provider-backed snapshot. Run its named query from the CLI and export JSON for a script or investigation.</p>
-      <a class="chapter-link" href="/integrations/#prometheus-compatible-metrics">Connect runtime metrics <span aria-hidden="true">↗</span></a>
+      <p>Declare one application metrics endpoint in index.scry. Scryr collects bounded samples on your laptop and keeps each card’s freshness visible.</p>
+      <a class="chapter-link" href="/integrations/#openmetrics-from-one-endpoint">Connect runtime metrics <span aria-hidden="true">↗</span></a>
       </div>
       <div class="feature-example" data-reveal>
       <div class="terminal-spell">
-        <div class="panel-label"><span>Query the same source</span><span>terminal</span></div>
-        <pre><code><span>$</span> scryr query --list
-<span>$</span> scryr query requestRate --manifest api
-<span>$</span> scryr query requestRate --manifest api \
-    --json &gt; request-rate.json</code></pre>
+        <div class="panel-label"><span>Collect declared evidence</span><span>terminal</span></div>
+        <pre><code><span>$</span> scryr collect list
+<span>$</span> scryr serve --watch
+<span>$</span> scryr collect status</code></pre>
       </div>
       </div>
     </article>

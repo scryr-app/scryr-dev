@@ -1,6 +1,6 @@
 //! Canonical typed local evidence; declarations and observations never execute code.
 #![allow(missing_docs)]
-use async_graphql::{Enum, SimpleObject, Union};
+use async_graphql::{ComplexObject, Enum, SimpleObject, Union};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -69,6 +69,9 @@ pub struct EvidenceObservation {
     pub run_id: String,
     pub attempt: u32,
     pub observed_at: DateTime<Utc>,
+    /// Original source artifact modification time, when importing existing evidence.
+    #[serde(default)]
+    pub source_updated_at: Option<DateTime<Utc>>,
     pub started_at: DateTime<Utc>,
     pub recorded_at: Option<DateTime<Utc>>,
     pub input_fingerprint: String,
@@ -229,6 +232,17 @@ pub struct Package {
     pub paths: Vec<String>,
     pub licenses: Vec<String>,
 }
+impl Package {
+    fn has_license_evidence(&self) -> bool {
+        self.licenses.iter().any(|license| {
+            let normalized = license.trim();
+            !normalized.is_empty()
+                && !["NOASSERTION", "NONE", "UNKNOWN"]
+                    .iter()
+                    .any(|unknown| normalized.eq_ignore_ascii_case(unknown))
+        })
+    }
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize, SimpleObject)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -239,8 +253,11 @@ pub struct DependencyEdge {
 
 #[derive(Clone, Debug, Serialize, Deserialize, SimpleObject)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[graphql(complex)]
 pub struct InventoryResult {
+    #[graphql(skip)]
     pub packages: Vec<Package>,
+    #[graphql(skip)]
     pub relationships: Vec<DependencyEdge>,
     pub complete: bool,
     pub artifact_hash: String,
@@ -257,7 +274,9 @@ pub struct LicenseFinding {
 
 #[derive(Clone, Debug, Serialize, Deserialize, SimpleObject)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[graphql(complex)]
 pub struct LicenseResult {
+    #[graphql(skip)]
     pub items: Vec<LicenseFinding>,
     pub policy_revision: String,
     pub inventory_hash: String,
@@ -277,7 +296,9 @@ pub struct VulnerabilityFinding {
 
 #[derive(Clone, Debug, Serialize, Deserialize, SimpleObject)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[graphql(complex)]
 pub struct VulnerabilityResult {
+    #[graphql(skip)]
     pub items: Vec<VulnerabilityFinding>,
     pub inventory_hash: String,
     pub database_age_seconds: Option<u64>,
@@ -349,6 +370,8 @@ fn local_environment() -> String {
     "local".into()
 }
 /// Bounded, stable identity used for manifests, collectors and workspaces.
+/// # Errors
+/// Rejects empty, oversized or malformed identifiers.
 pub fn validate_identity(value: &str) -> Result<(), String> {
     if value.is_empty()
         || value.len() > 256
@@ -363,6 +386,8 @@ pub fn validate_identity(value: &str) -> Result<(), String> {
 }
 impl EvidenceObservation {
     /// Reject malformed or mismatched evidence before it reaches storage.
+    /// # Errors
+    /// Rejects malformed identities, result values or provenance.
     pub fn validate(&self) -> Result<(), String> {
         for id in [
             &self.observation_id,
@@ -395,6 +420,8 @@ impl EvidenceObservation {
     }
 }
 impl CollectorStatus {
+    /// # Errors
+    /// Rejects malformed identities, result values or provenance.
     pub fn validate(&self) -> Result<(), String> {
         for id in [&self.manifest_id, &self.collector_id, &self.workspace_id] {
             validate_identity(id)?;
@@ -441,6 +468,8 @@ impl EvidenceResult {
             Self::Benchmark(_) => integration == "hyperfine",
         }
     }
+    /// # Errors
+    /// Rejects malformed identities, result values or provenance.
     pub fn validate(&self) -> Result<(), String> {
         let duration = |n: f64| n.is_finite() && n >= 0.0;
         let valid = match self {
@@ -493,7 +522,16 @@ impl EvidenceResult {
                         .iter()
                         .all(|i| !i.package_id.is_empty() && !i.advisory_id.is_empty())
             }
-            Self::Workflows(r) => r.items.iter().all(|i| i.attempt > 0),
+            Self::Workflows(r) => {
+                let ids: std::collections::HashSet<_> =
+                    r.items.iter().map(|i| (&i.run_id, i.attempt)).collect();
+                !r.repository.is_empty()
+                    && r.items.len() <= 1000
+                    && ids.len() == r.items.len()
+                    && r.items
+                        .iter()
+                        .all(|i| i.attempt > 0 && validate_identity(&i.run_id).is_ok())
+            }
             Self::Git(_) | Self::PullRequests(_) => true,
         };
         if valid {
@@ -501,5 +539,286 @@ impl EvidenceResult {
         } else {
             Err("invalid evidence result values".into())
         }
+    }
+}
+
+fn count(value: usize) -> u64 {
+    u64::try_from(value).unwrap_or(u64::MAX)
+}
+fn filter_matches(filter: Option<&str>, value: &str) -> bool {
+    filter.is_none_or(|f| f.trim().is_empty() || f.trim().eq_ignore_ascii_case(value))
+}
+fn search_matches<'a>(search: Option<&str>, values: impl IntoIterator<Item = &'a str>) -> bool {
+    search.is_none_or(|s| {
+        let s = s.trim().to_lowercase();
+        s.is_empty() || values.into_iter().any(|v| v.to_lowercase().contains(&s))
+    })
+}
+fn page<'a, T: Clone + 'a>(
+    values: impl Iterator<Item = &'a T>,
+    limit: u32,
+    offset: u32,
+) -> async_graphql::Result<Vec<T>> {
+    if limit > 100 {
+        return Err(async_graphql::Error::new(
+            "detail page limit must be 0..100",
+        ));
+    }
+    Ok(values
+        .skip(offset as usize)
+        .take(limit as usize)
+        .cloned()
+        .collect())
+}
+impl InventoryResult {
+    fn selected_packages<'a>(
+        &'a self,
+        search: Option<&'a str>,
+        filter: Option<&'a str>,
+        ids: Option<&'a [String]>,
+    ) -> impl Iterator<Item = &'a Package> {
+        self.packages.iter().filter(move |p| {
+            filter_matches(filter, &p.ecosystem)
+                && ids.is_none_or(|ids| ids.iter().any(|id| id == &p.id))
+                && search_matches(
+                    search,
+                    [
+                        p.id.as_str(),
+                        p.name.as_str(),
+                        p.version.as_str(),
+                        p.ecosystem.as_str(),
+                        p.purl.as_deref().unwrap_or(""),
+                    ]
+                    .into_iter()
+                    .chain(p.paths.iter().chain(p.licenses.iter()).map(String::as_str)),
+                )
+        })
+    }
+}
+#[ComplexObject]
+impl InventoryResult {
+    /// Bounded inventory page, filtered over the full immutable snapshot before pagination.
+    async fn packages(
+        &self,
+        #[graphql(default = 25)] limit: u32,
+        #[graphql(default = 0)] offset: u32,
+        search: Option<String>,
+        filter: Option<String>,
+        ids: Option<Vec<String>>,
+    ) -> async_graphql::Result<Vec<Package>> {
+        if ids.as_ref().is_some_and(|v| v.len() > 100) {
+            return Err(async_graphql::Error::new(
+                "package ID lookup supports at most 100 IDs",
+            ));
+        }
+        page(
+            self.selected_packages(search.as_deref(), filter.as_deref(), ids.as_deref()),
+            limit,
+            offset,
+        )
+    }
+    async fn matching_packages(
+        &self,
+        search: Option<String>,
+        filter: Option<String>,
+        ids: Option<Vec<String>>,
+    ) -> async_graphql::Result<u64> {
+        if ids.as_ref().is_some_and(|v| v.len() > 100) {
+            return Err(async_graphql::Error::new(
+                "package ID lookup supports at most 100 IDs",
+            ));
+        }
+        Ok(count(
+            self.selected_packages(search.as_deref(), filter.as_deref(), ids.as_deref())
+                .count(),
+        ))
+    }
+    async fn relationships(
+        &self,
+        #[graphql(default = 25)] limit: u32,
+        #[graphql(default = 0)] offset: u32,
+    ) -> async_graphql::Result<Vec<DependencyEdge>> {
+        page(self.relationships.iter(), limit, offset)
+    }
+    async fn total_packages(&self) -> u64 {
+        count(self.packages.len())
+    }
+    async fn total_relationships(&self) -> u64 {
+        count(self.relationships.len())
+    }
+    async fn licensed_packages(&self) -> u64 {
+        count(
+            self.packages
+                .iter()
+                .filter(|p| p.has_license_evidence())
+                .count(),
+        )
+    }
+    async fn unknown_license_packages(&self) -> u64 {
+        count(
+            self.packages
+                .iter()
+                .filter(|p| !p.has_license_evidence())
+                .count(),
+        )
+    }
+}
+impl LicenseResult {
+    fn selected_items<'a>(
+        &'a self,
+        search: Option<&'a str>,
+        filter: Option<&'a str>,
+    ) -> impl Iterator<Item = &'a LicenseFinding> {
+        self.items.iter().filter(move |i| {
+            filter_matches(filter, &i.decision)
+                && search_matches(
+                    search,
+                    [
+                        i.package_id.as_str(),
+                        i.expression.as_deref().unwrap_or(""),
+                        i.decision.as_str(),
+                        i.reason.as_str(),
+                    ],
+                )
+        })
+    }
+}
+#[ComplexObject]
+impl LicenseResult {
+    async fn items(
+        &self,
+        #[graphql(default = 25)] limit: u32,
+        #[graphql(default = 0)] offset: u32,
+        search: Option<String>,
+        filter: Option<String>,
+    ) -> async_graphql::Result<Vec<LicenseFinding>> {
+        page(
+            self.selected_items(search.as_deref(), filter.as_deref()),
+            limit,
+            offset,
+        )
+    }
+    async fn matching_items(&self, search: Option<String>, filter: Option<String>) -> u64 {
+        count(
+            self.selected_items(search.as_deref(), filter.as_deref())
+                .count(),
+        )
+    }
+    async fn total_items(&self) -> u64 {
+        count(self.items.len())
+    }
+    async fn allowed_count(&self) -> u64 {
+        count(self.items.iter().filter(|i| i.decision == "allow").count())
+    }
+    async fn denied_count(&self) -> u64 {
+        count(self.items.iter().filter(|i| i.decision == "deny").count())
+    }
+    async fn review_count(&self) -> u64 {
+        count(self.items.iter().filter(|i| i.decision == "review").count())
+    }
+}
+impl VulnerabilityResult {
+    fn selected_items<'a>(
+        &'a self,
+        search: Option<&'a str>,
+        filter: Option<&'a str>,
+    ) -> impl Iterator<Item = &'a VulnerabilityFinding> {
+        self.items.iter().filter(move |i| {
+            filter_matches(filter, &i.severity)
+                && search_matches(
+                    search,
+                    [
+                        i.package_id.as_str(),
+                        i.advisory_id.as_str(),
+                        i.severity.as_str(),
+                        i.url.as_deref().unwrap_or(""),
+                    ]
+                    .into_iter()
+                    .chain(
+                        i.aliases
+                            .iter()
+                            .chain(i.fix_versions.iter())
+                            .map(String::as_str),
+                    ),
+                )
+        })
+    }
+}
+#[ComplexObject]
+impl VulnerabilityResult {
+    async fn items(
+        &self,
+        #[graphql(default = 25)] limit: u32,
+        #[graphql(default = 0)] offset: u32,
+        search: Option<String>,
+        filter: Option<String>,
+    ) -> async_graphql::Result<Vec<VulnerabilityFinding>> {
+        page(
+            self.selected_items(search.as_deref(), filter.as_deref()),
+            limit,
+            offset,
+        )
+    }
+    async fn matching_findings(&self, search: Option<String>, filter: Option<String>) -> u64 {
+        count(
+            self.selected_items(search.as_deref(), filter.as_deref())
+                .count(),
+        )
+    }
+    async fn total_findings(&self) -> u64 {
+        count(self.items.len())
+    }
+    async fn affected_packages(&self) -> u64 {
+        count(
+            self.items
+                .iter()
+                .map(|i| &i.package_id)
+                .collect::<std::collections::HashSet<_>>()
+                .len(),
+        )
+    }
+    async fn critical_count(&self) -> u64 {
+        count(
+            self.items
+                .iter()
+                .filter(|i| i.severity.eq_ignore_ascii_case("critical"))
+                .count(),
+        )
+    }
+    async fn high_count(&self) -> u64 {
+        count(
+            self.items
+                .iter()
+                .filter(|i| i.severity.eq_ignore_ascii_case("high"))
+                .count(),
+        )
+    }
+    async fn medium_count(&self) -> u64 {
+        count(
+            self.items
+                .iter()
+                .filter(|i| i.severity.eq_ignore_ascii_case("medium"))
+                .count(),
+        )
+    }
+    async fn low_count(&self) -> u64 {
+        count(
+            self.items
+                .iter()
+                .filter(|i| i.severity.eq_ignore_ascii_case("low"))
+                .count(),
+        )
+    }
+    async fn unknown_severity_count(&self) -> u64 {
+        count(
+            self.items
+                .iter()
+                .filter(|i| {
+                    !["critical", "high", "medium", "low"]
+                        .iter()
+                        .any(|s| i.severity.eq_ignore_ascii_case(s))
+                })
+                .count(),
+        )
     }
 }

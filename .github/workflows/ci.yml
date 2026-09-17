@@ -67,6 +67,7 @@ jobs:
           version: 2026.9.5
           install_args: rust python uv
       - run: mise run verify:crystal
+      - run: mise run verify:collectors
 
   map:
     name: Frontend map
