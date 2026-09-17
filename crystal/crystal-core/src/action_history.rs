@@ -68,6 +68,9 @@ pub struct GithubActionRun {
     pub workflow_id: u64,
     /// Workflow display name.
     pub workflow_name: String,
+    /// Repository-relative workflow file path, when supplied by the provider.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub workflow_path: Option<String>,
     /// Stable workflow run identity.
     pub run_id: u64,
     /// Attempt number, starting at one.
@@ -227,22 +230,45 @@ pub struct GithubActionsLog {
 }
 
 impl GithubActionsLog {
-    /// Summarize the newest reported build across workflows. Reporters select the branch.
+    /// Summarize the latest attempt of every workflow and branch without hiding failures.
     #[must_use]
     pub fn build_status(&self) -> Option<&'static str> {
-        let run = self
-            .runs
-            .iter()
-            .max_by_key(|run| (run.created_at, run.run_id, run.run_attempt))?;
-        if run.status != "completed" {
-            return Some("pending");
-        }
-        match run.conclusion.as_deref() {
-            Some("success") => Some("passing"),
-            Some("failure" | "timed_out" | "action_required" | "startup_failure") => {
-                Some("failing")
+        let mut latest = std::collections::BTreeMap::new();
+        for run in &self.runs {
+            let key = (
+                run.host.to_lowercase(),
+                run.repository_id,
+                run.workflow_id,
+                run.head_branch.as_deref(),
+            );
+            let current = latest.entry(key).or_insert(run);
+            if (run.created_at, run.run_id, run.run_attempt)
+                > (current.created_at, current.run_id, current.run_attempt)
+            {
+                *current = run;
             }
-            _ => None,
+        }
+        let mut pending = false;
+        let mut unknown = latest.is_empty();
+        for run in latest.values() {
+            if run.status == "completed" {
+                match run.conclusion.as_deref() {
+                    Some("failure" | "timed_out" | "action_required" | "startup_failure") => {
+                        return Some("failing");
+                    }
+                    Some("success") => {}
+                    _ => unknown = true,
+                }
+            } else {
+                pending = true;
+            }
+        }
+        if pending {
+            Some("pending")
+        } else if unknown {
+            None
+        } else {
+            Some("passing")
         }
     }
 
@@ -259,6 +285,12 @@ impl GithubActionsLog {
             }
             if run.jobs.is_none() {
                 run.jobs.clone_from(&current.jobs);
+            }
+            if run.workflow_path.is_some() {
+                current.workflow_path.clone_from(&run.workflow_path);
+            }
+            if run.workflow_path.is_none() {
+                run.workflow_path.clone_from(&current.workflow_path);
             }
             let mut events = std::mem::take(&mut current.events);
             for event in &run.events {

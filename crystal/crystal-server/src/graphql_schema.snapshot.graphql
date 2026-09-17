@@ -125,6 +125,10 @@ type Block {
 
 type GeneratedManifestMutationRoot {
 	"""
+	Record collection health independently of the provider's workflow outcomes.
+	"""
+	recordProviderSync(manifestId: String!, provider: String!, error: String, context: JSON): Boolean!
+	"""
 	Save source and all its diagram artifacts with optimistic concurrency.
 	"""
 	saveManifestDocument(identifier: String!, revision: String!, envelope: JSON!): JSON!

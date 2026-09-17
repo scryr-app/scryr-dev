@@ -99,6 +99,8 @@ export type GeneratedManifestMutationRoot = {
   __typename?: 'GeneratedManifestMutationRoot';
   /** Record one GitHub Actions observation without rewriting a generated Manifest. */
   recordActionRun: Scalars['Boolean']['output'];
+  /** Record collection health independently of the provider's workflow outcomes. */
+  recordProviderSync: Scalars['Boolean']['output'];
   /** Append a typed operational observation for the active organization. */
   recordReport: Scalars['Boolean']['output'];
   /** Save source and all its diagram artifacts with optimistic concurrency. */
@@ -113,6 +115,14 @@ export type GeneratedManifestMutationRootRecordActionRunArgs = {
   manifestId: Scalars['String']['input'];
   run: Scalars['JSON']['input'];
   source?: Scalars['String']['input'];
+};
+
+
+export type GeneratedManifestMutationRootRecordProviderSyncArgs = {
+  context?: InputMaybe<Scalars['JSON']['input']>;
+  error?: InputMaybe<Scalars['String']['input']>;
+  manifestId: Scalars['String']['input'];
+  provider: Scalars['String']['input'];
 };
 
 

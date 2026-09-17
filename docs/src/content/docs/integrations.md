@@ -24,12 +24,55 @@ api = Manifest(
 
 These links appear with the block, keeping navigation from architecture to implementation and operations direct.
 
+## Poll GitHub Actions locally
+
+The OSS CLI can collect workflow and job history using your existing GitHub CLI login. Install `gh` and authenticate with `gh auth login`, then select workflows on each block:
+
+```python title="index.scry"
+from scryr import CICD, ActionsReportSource, Diagram, Github, Manifest
+
+api = Manifest(
+    manifest_id="services/api",
+    name="Public API",
+    github=Github(repo_url="https://github.com/acme/api"),
+    cicd=CICD(
+        platform="github_actions",
+        source=ActionsReportSource(
+            workflows=["ci.yml", "integration.yml"],
+            branch="main",
+        ),
+    ),
+)
+diagram = Diagram(name="Commerce", manifests=[api])
+```
+
+Use filenames from `.github/workflows`, without the directory prefix. Existing numeric `workflow_id` selections also work; choose either `workflow_id` or `workflows`. Omit `branch` to follow the repository's default branch.
+
+```sh
+scryr serve
+scryr serve --poll 60
+```
+
+After loading a valid diagram, `serve` syncs immediately and polls configured providers every 300 seconds (five minutes). The general `--poll` option accepts 15–3600 seconds; bare `--poll` also uses 300 seconds. Polling runs independently of `--watch` and stops with the server. `--watch` refreshes declarations after source edits. `--no-poll` disables collection. `--server-only` and Clerk-authenticated serving do not use your local GitHub login.
+
+The initial sync imports ten recent runs per selected workflow, including complete job snapshots. Later polls scan up to 100 recent runs per workflow, including reruns of older completed runs, and refresh previously observed active attempts. Job snapshots are paginated up to 2,000 jobs per attempt. Failed cycles back off up to one hour, then resume the requested interval after recovery. Shared selections are fetched once per cycle and attached to every matching stable `manifest_id`. Repeated observations are deduplicated in Scryr's durable history. Polling records observed states; it cannot recover transitions that happened between polls.
+
+To sync once into a running Scryr server:
+
+```sh
+scryr sync github --manifest api --endpoint http://127.0.0.1:8000/graphql
+```
+
+`--path` and `--manifest-dir` select another manifest project. Without `--manifest`, all configured GitHub blocks are collected. One-shot sync attaches history to stable IDs; use `scryr push` or `scryr serve` to load the diagram itself.
+
+Collection requires an explicit source selection, stable `manifest_id`, and `github.repo_url`. A repository URL alone does not enable polling, and projects without configured sources make no `gh` calls. Scryr invokes `gh api`; authentication stays with `gh`, and tokens are not copied into manifests or diagram data. Missing `gh`, authentication failures, and provider errors are reported while the last valid diagram and collected history remain available. Repository statistics such as stars and pull-request counts are not automatically collected.
+
 ## GitHub Actions and test reports
 
 Declare where CI and JUnit evidence lives:
 
 ```python
-from scryr import ActionsReportSource, CICD, Manifest, TestReportSource, Tests
+from scryr import CICD, ActionsReportSource, Manifest, TestReportSource, Tests
 
 api = Manifest(
     manifest_id="services/api",

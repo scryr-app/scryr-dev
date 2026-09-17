@@ -11,6 +11,10 @@ mod reports;
 pub use reports::{read_reports, record_report};
 mod action_history;
 pub use action_history::{read_action_history, record_action_run};
+mod provider_sync;
+pub use provider_sync::{
+    ProviderSyncStatus, read_provider_sync, record_provider_sync, record_provider_sync_with_context,
+};
 
 mod connection;
 mod metadata;

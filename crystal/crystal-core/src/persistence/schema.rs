@@ -69,6 +69,10 @@ const SCHEMA_STATEMENTS: &[(&str, &str)] = &[
     ),
     ("create report history", super::reports::CREATE_TABLE),
     (
+        "create provider sync status",
+        super::provider_sync::CREATE_TABLE,
+    ),
+    (
         "create manifest action history",
         super::action_history::CREATE_TABLE,
     ),

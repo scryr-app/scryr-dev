@@ -8,6 +8,7 @@ import {
 	TestsCard,
 } from "@/cards";
 import type { BlockCardData } from "@/cards/blockCardData";
+import { GithubActionsCard } from "../cards/GithubActionsCard";
 import { ReportCard } from "../cards/ReportCard";
 import { RuntimeMetricsCard } from "../cards/RuntimeMetricsCard";
 
@@ -66,9 +67,17 @@ export function createBlockDataCards(cardData: BlockCardData): BlockCardGroup {
 		},
 		{
 			components: [
-				...(hasData(cardData.cicd)
-					? [<CICDCard key="cicd-card" {...cardData.cicd} />]
-					: []),
+				...(cardData.githubActions
+					? [
+							<GithubActionsCard
+								key="github-actions-card"
+								{...cardData.githubActions}
+								pipeline={cardData.cicd}
+							/>,
+						]
+					: hasData(cardData.cicd)
+						? [<CICDCard key="cicd-card" {...cardData.cicd} />]
+						: []),
 				...cardData.reports
 					.filter((r) => r.data.kind === "deployment")
 					.map((r, index) => (

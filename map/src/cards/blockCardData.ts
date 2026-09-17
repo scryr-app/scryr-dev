@@ -2,6 +2,10 @@ import type { Block } from "@/graphql/generated";
 import type { RuntimeMetricSnapshot } from "../graphql/useDiagramMetrics";
 import type { CICDCardProps } from "./CICDCard";
 import type { DependenciesCardProps } from "./DependenciesCard";
+import {
+	githubActionsData,
+	type GithubActionsCardData,
+} from "./githubActionsData";
 import type { GithubCardProps } from "./GithubCard";
 import type { MetricsCardProps } from "./MetricsCard";
 import type { PerformanceCardProps } from "./PerformanceCard";
@@ -121,6 +125,7 @@ function inferBuildStatus(
 }
 
 export interface BlockCardData {
+	githubActions?: GithubActionsCardData;
 	runtimeAnalytics?: RuntimeMetricSnapshot;
 	runtimeMetrics?: RuntimeMetricSnapshot;
 	reports: OperationalReport[];
@@ -145,8 +150,16 @@ export function getBlockCardData(block: Block): BlockCardData {
 			: undefined;
 	};
 	const cpuHistory = getValue(raw, ["performance", "cpuHistory"]);
+	const cicdPlatform = block.cicdTool ?? string("cicd", "platform");
+	const cicdBuildStatus = inferBuildStatus(
+		firstString(raw, [
+			["cicd", "buildStatus"],
+			["ci", "buildStatus"],
+		]),
+	);
 
 	return {
+		githubActions: githubActionsData(raw),
 		runtimeAnalytics: raw?.runtimeAnalytics as
 			| RuntimeMetricSnapshot
 			| undefined,
@@ -162,6 +175,11 @@ export function getBlockCardData(block: Block): BlockCardData {
 		}),
 		github: {
 			repoUrl: getRepoUrl(block, raw),
+			buildStatus:
+				cicdPlatform === "github_actions"
+					? (cicdBuildStatus ??
+						inferBuildStatus(string("github", "buildStatus")))
+					: inferBuildStatus(string("github", "buildStatus")),
 			primaryLanguage: block.language ?? undefined,
 			stars: firstNumber(raw, [
 				["github", "stars"],
@@ -213,13 +231,8 @@ export function getBlockCardData(block: Block): BlockCardData {
 			memoryUsage: number("metrics", "memoryUsage"),
 		},
 		cicd: {
-			platform: block.cicdTool ?? string("cicd", "platform"),
-			buildStatus: inferBuildStatus(
-				firstString(raw, [
-					["cicd", "buildStatus"],
-					["ci", "buildStatus"],
-				]),
-			),
+			platform: cicdPlatform,
+			buildStatus: cicdBuildStatus,
 			lastBuild: firstString(raw, [
 				["cicd", "lastBuild"],
 				["ci", "lastBuild"],
