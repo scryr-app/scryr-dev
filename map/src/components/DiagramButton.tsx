@@ -260,7 +260,8 @@ export function DiagramButton({ className = "" }: Props) {
 				type="button"
 				onClick={() => setOpen((v) => !v)}
 				title={currentTitle}
-				className="flex max-w-[min(42rem,calc(100vw-16rem))] items-center gap-2 text-white/60 hover:text-white/90 hover:bg-white/10 transition-colors rounded-full px-3 py-1.5 text-[13px]"
+				aria-expanded={open}
+				className="flex max-w-[min(42rem,calc(100vw-16rem))] items-center gap-4 text-white/60 hover:text-white/90 hover:bg-white/10 transition-colors rounded-full px-5 py-1.5 text-[13px]"
 			>
 				<Layers size={13} strokeWidth={2.2} className="shrink-0" />
 				<span className="flex min-w-0 flex-col text-left leading-snug">
@@ -317,12 +318,15 @@ export function DiagramButton({ className = "" }: Props) {
 											}`}
 										>
 											<div
-												className={`flex min-w-0 items-start gap-2 ${groupName ? "pl-5" : ""}`}
+												className={`flex min-w-0 items-stretch gap-3 ${groupName ? "pl-5" : ""}`}
 											>
-												<FileCode2
-													size={14}
-													className="mt-0.5 shrink-0 text-white/35"
-												/>
+												<span className="flex shrink-0 items-center border-r border-white/15 pr-3">
+													<FileCode2
+														size={16}
+														className="text-white/35"
+														aria-hidden="true"
+													/>
+												</span>
 												<span className="min-w-0">
 													<span className="block whitespace-normal break-words font-medium leading-snug">
 														{labels.primary}

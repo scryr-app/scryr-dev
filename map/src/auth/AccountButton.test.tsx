@@ -8,6 +8,7 @@ import {
 } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { AccountButton } from "./AccountButton";
+
 const signOut = vi.hoisted(() => vi.fn());
 vi.mock("@clerk/react", () => ({
 	UserAvatar: () => <span>Avatar</span>,

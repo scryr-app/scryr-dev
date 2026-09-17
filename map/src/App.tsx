@@ -5,8 +5,8 @@ import {
 	OrganizationAccountControls,
 	SignedOutScreen,
 } from "@/auth";
-import { MapSceneShell } from "@/scene";
 import { OpenSourcePrompt } from "@/components/OpenSourcePrompt";
+import { MapSceneShell } from "@/scene";
 
 function App() {
 	if (isLocalAuthMode) {

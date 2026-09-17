@@ -402,13 +402,9 @@ export function getEdgeWorldPath(
 /**
  * Calculate the area of a group including its margin
  */
-function calculateGroupArea(group: LayoutGroup, marginPercent = 0.05): number {
-	const { minX, maxX, minY, maxY } = group.boundingBox;
-	const width = maxX - minX;
-	const height = maxY - minY;
-	const marginX = width * marginPercent;
-	const marginY = height * marginPercent;
-	return (width + marginX * 2) * (height + marginY * 2);
+function calculateGroupArea(group: LayoutGroup, marginPercent = 0.1): number {
+	const { minX, maxX, minY, maxY } = calculateGroupBounds(group, marginPercent);
+	return (maxX - minX) * (maxY - minY);
 }
 
 /**
@@ -416,13 +412,14 @@ function calculateGroupArea(group: LayoutGroup, marginPercent = 0.05): number {
  */
 function calculateGroupBounds(
 	group: LayoutGroup,
-	marginPercent = 0.05,
+	marginPercent = 0.1,
 ): { minX: number; maxX: number; minY: number; maxY: number } {
 	const { minX, maxX, minY, maxY } = group.boundingBox;
 	const width = maxX - minX;
 	const height = maxY - minY;
-	const marginX = width * marginPercent;
-	const marginY = height * marginPercent;
+	const minimumMargin = 0.4 / LAYOUT_SCALE;
+	const marginX = Math.max(minimumMargin, width * marginPercent);
+	const marginY = Math.max(minimumMargin, height * marginPercent);
 
 	return {
 		minX: minX - marginX,
@@ -548,20 +545,16 @@ export function calculateGroupExpandFactor(
 export function calculateRegionCorners(
 	group: LayoutGroup,
 	allGroups: LayoutGroup[],
-	marginPercent = 0.05,
+	marginPercent = 0.1,
 ): {
 	p1: [number, number, number];
 	p2: [number, number, number];
 	p3: [number, number, number];
 	p4: [number, number, number];
 } {
-	const { minX, maxX, minY, maxY } = group.boundingBox;
+	const { minX, maxX, minY, maxY } = calculateGroupBounds(group, marginPercent);
 	const width = maxX - minX;
 	const height = maxY - minY;
-
-	// Calculate margin (5% of dimensions)
-	const marginX = width * marginPercent;
-	const marginY = height * marginPercent;
 
 	// Lift regions slightly above the floor while preserving overlap layering.
 	const zOffset = calculateGroupZOffset(group, allGroups) + 0.03;
@@ -574,8 +567,8 @@ export function calculateRegionCorners(
 	const centerY = (minY + maxY) / 2;
 
 	// Apply margin and expansion
-	const expandedWidth = (width + marginX * 2) * expandFactor;
-	const expandedHeight = (height + marginY * 2) * expandFactor;
+	const expandedWidth = width * expandFactor;
+	const expandedHeight = height * expandFactor;
 	const expandedMinX = centerX - expandedWidth / 2;
 	const expandedMaxX = centerX + expandedWidth / 2;
 	const expandedMinY = centerY - expandedHeight / 2;
