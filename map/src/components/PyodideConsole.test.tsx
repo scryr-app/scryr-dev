@@ -67,6 +67,9 @@ it("labels the action Save and Run and groups source controls with the bottom st
 	expect(footer).not.toBeNull();
 	if (!footer) throw new Error("Missing bottom toolbar");
 	expect(
+		within(footer).getByRole("button", { name: "Save and Run" }),
+	).toBeDefined();
+	expect(
 		within(footer).getByRole("checkbox", { name: "Follow selected block" }),
 	).toBeDefined();
 	fireEvent.click(

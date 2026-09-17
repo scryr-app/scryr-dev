@@ -419,6 +419,8 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 									activeCardIndex === index &&
 										"bg-white/20 text-white shadow-inner",
 								)}
+								aria-label={label}
+								aria-pressed={activeCardIndex === index}
 								onClick={() => toggleCard(index)}
 								onMouseEnter={() => setHoveredIndex(index)}
 								onMouseLeave={() => setHoveredIndex(null)}
@@ -449,6 +451,8 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 								activeCardIndex === index &&
 									"bg-white/20 text-white shadow-inner",
 							)}
+							aria-label={label}
+							aria-pressed={activeCardIndex === index}
 							onClick={() => toggleCard(index)}
 							onMouseEnter={() => setHoveredIndex(index)}
 							onMouseLeave={() => setHoveredIndex(null)}

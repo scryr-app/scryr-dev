@@ -190,6 +190,7 @@ export function Block({
 
 			{/* Card slots — OverviewCard is always first */}
 			<CardSlots
+				blockId={blockFocusId}
 				cards={allCards}
 				cardWidth={cardWidth}
 				cardHeight={cardHeight}

@@ -17,9 +17,9 @@ export function MapSceneShell({ header }: MapSceneShellProps) {
 	const [isPyodideOpen, setIsPyodideOpen] = useState(true);
 	const [pyodidePanelWidth, setPyodidePanelWidth] = useState(() => {
 		if (typeof window === "undefined") {
-			return 420;
+			return 480;
 		}
-		return Math.round(window.innerWidth * 0.3);
+		return Math.max(480, Math.round(window.innerWidth * 0.3));
 	});
 
 	const togglePyodide = () => {
@@ -53,7 +53,10 @@ export function MapSceneShell({ header }: MapSceneShellProps) {
 						/>
 					</ErrorBoundary>
 					<ErrorBoundary name="TopCornerButtons" fallback={null}>
-						<TopCornerButtons />
+						<TopCornerButtons
+							isPyodideOpen={isPyodideOpen}
+							onTogglePyodide={togglePyodide}
+						/>
 					</ErrorBoundary>
 				</div>
 			</div>
