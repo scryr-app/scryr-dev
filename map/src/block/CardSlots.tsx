@@ -1,8 +1,10 @@
-import { isValidElement, type ReactNode, useState } from "react";
+import { isValidElement, type ReactNode, useEffect, useState } from "react";
+import { useMapTray } from "@/cards/MapTrayContext";
 import type { CardSlotConfig } from "@/cards";
 import { CardSlot, getCardLayout } from "@/cards";
 
 export interface CardSlotsProps {
+	blockId: string;
 	/** Card configuration with components for each card */
 	cards: Array<{ components: ReactNode[] }>;
 	/** Width of individual cards */
@@ -27,6 +29,7 @@ export interface CardSlotsProps {
  * Only one card may be docked to the front face at a time (controlled by Block state).
  */
 export function CardSlots({
+	blockId,
 	cards,
 	cardWidth,
 	cardHeight,
@@ -36,6 +39,7 @@ export function CardSlots({
 	activeCardIndex,
 	onCardSelect,
 }: CardSlotsProps) {
+	const { previewCardForBlock, clearCardPreview } = useMapTray();
 	const cardLayout = getCardLayout(cards);
 	const [hoveredSlotIndex, setHoveredSlotIndex] = useState<number | null>(null);
 
@@ -78,6 +82,13 @@ export function CardSlots({
 		return `card-slot-${componentIds.join("-")}-${cardConfig.zOffset}`;
 	};
 
+	const slotKeys = cardLayout.map(getCardSlotKey).join("|");
+	useEffect(() => {
+		// A refreshed slot layout replaces hover targets without pointer-out events.
+		if (slotKeys) setHoveredSlotIndex(null);
+		return () => clearCardPreview(blockId);
+	}, [blockId, clearCardPreview, slotKeys]);
+
 	return (
 		<>
 			{cardLayout.map((cardConfig, index) => {
@@ -87,8 +98,12 @@ export function CardSlots({
 				return (
 					<group
 						key={slotKey}
-						onPointerOver={() => setHoveredSlotIndex(index)}
+						onPointerOver={() => {
+							setHoveredSlotIndex(index);
+							previewCardForBlock(blockId, index);
+						}}
 						onPointerOut={() => {
+							clearCardPreview(blockId, index);
 							setHoveredSlotIndex((current) =>
 								current === index ? null : current,
 							);

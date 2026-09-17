@@ -4,6 +4,7 @@ import { BLOCK_DIMENSIONS } from "@/block/dimensions";
 import type { Block } from "@/graphql/generated";
 import * as appearances from "@/theme/appearance";
 import {
+	calculateRegionCorners,
 	getBlockHeight,
 	LAYOUT_SCALE,
 	type LayoutResult,
@@ -215,4 +216,27 @@ describe("camera-aware ELK layout", () => {
 			baseline,
 		);
 	});
+});
+
+it("layers regions that overlap only through their floor padding", () => {
+	const groups = [
+		{
+			id: "small",
+			tag: "small",
+			nodeIds: ["a", "b"],
+			boundingBox: { minX: 0, maxX: 150, minY: 0, maxY: 50 },
+			signPosition: { x: 75, y: 50 },
+		},
+		{
+			id: "large",
+			tag: "large",
+			nodeIds: ["c", "d"],
+			boundingBox: { minX: 0, maxX: 300, minY: 80, maxY: 130 },
+			signPosition: { x: 150, y: 130 },
+		},
+	];
+	const small = calculateRegionCorners(groups[0], groups);
+	const large = calculateRegionCorners(groups[1], groups);
+	expect(small.p3[2]).toBeGreaterThan(large.p1[2]);
+	expect(small.p1[1]).toBeGreaterThan(large.p1[1]);
 });

@@ -175,21 +175,6 @@ export function PyodideConsole({
 							: "index.scry"}
 						{editor.dirty ? " *" : ""}
 					</span>
-					<button
-						type="button"
-						onClick={() => void editor.run()}
-						disabled={
-							!editor.doc?.writable || editor.running || editor.conflict
-						}
-						className="inline-flex items-center gap-1 rounded border border-current/20 px-3 py-1 disabled:opacity-40"
-					>
-						{editor.running ? (
-							<LoaderCircle size={14} className="animate-spin" />
-						) : (
-							<Play size={14} />
-						)}{" "}
-						Save and Run
-					</button>
 				</header>
 				{editor.conflict && (
 					<div role="alert" className="bg-amber-500/15 p-3 text-sm">
@@ -261,6 +246,25 @@ export function PyodideConsole({
 							>
 								<RefreshCw size={14} strokeWidth={2} aria-hidden="true" />
 								Reload source
+							</button>
+							<button
+								type="button"
+								onClick={() => void editor.run()}
+								disabled={
+									!editor.doc?.writable || editor.running || editor.conflict
+								}
+								className="inline-flex items-center gap-1.5 rounded-lg border border-current/20 px-2.5 py-1.5 font-semibold shadow-sm transition-all hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+								style={{
+									backgroundColor: palette.accent,
+									color: consoleTextColor(palette.background),
+								}}
+							>
+								{editor.running ? (
+									<LoaderCircle size={14} className="animate-spin" />
+								) : (
+									<Play size={14} />
+								)}{" "}
+								Save and Run
 							</button>
 						</div>
 					</div>

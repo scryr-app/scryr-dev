@@ -67,23 +67,20 @@ function MapRegionSigns({ layout }: { layout: LayoutResult }) {
 			{layout.groups.map((group) => {
 				if (group.nodeIds.length === 1) return null;
 
-				const worldPos = toWorldCoordinates(
-					group.signPosition.x,
-					group.signPosition.y,
-				);
+				const { p3, p4 } = calculateRegionCorners(group, layout.groups);
 				const signColor = getRegionColor(group.tag);
 
 				return (
 					<group
 						key={`sign-${group.id}`}
-						position={[worldPos[0], 0.31, worldPos[2]]}
+						position={[(p3[0] + p4[0]) / 2, p3[1] + 0.42, p3[2]]}
 					>
 						<Sign
 							label={group.tag}
 							color={signColor}
 							labelColor={darkenHexColor(signColor)}
-							fontSize={0.28}
-							margin={0.14}
+							fontSize={0.36}
+							margin={0.2}
 						/>
 					</group>
 				);

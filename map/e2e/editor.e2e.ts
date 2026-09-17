@@ -54,7 +54,7 @@ async function gql(request: APIRequestContext, query: string, variables = {}) {
 }
 async function openEditor(page: Page) {
     await page.goto(base);
-    await page.getByRole("button", { name: "Show editor", exact: true }).click();
+    await expect(page.getByRole("region", { name: "Manifest source editor" })).toBeVisible();
     await expect(page.locator(".cm-content")).toContainText("from scryr");
 }
 async function run(page: Page, code: string, location: "disk" | "cloud") {
@@ -107,6 +107,8 @@ test("standalone serve edits disk, refreshes fresh blocks, survives restart, and
     await launch(request);
     await page.goto(base);
     await openEditor(page);
+    // CodeMirror renders only visible lines; scroll to the manifest name.
+    await page.locator(".cm-content").press("PageDown");
     await expect(page.locator(".cm-content")).toContainText("External Web");
     await expect(page.locator("canvas").first()).toBeVisible();
     await page.screenshot({ path: test.info().outputPath("standalone-editor.png") });
@@ -123,7 +125,7 @@ test("stored-source editing through server-only saves all source without touchin
     await run(page, initial.replaceAll("React it all yo", "Stored Web"), "cloud");
     expect(await readFile(resolve(directory, "index.scry"), "utf8")).toBe(diskBefore);
     await page.reload();
-    await page.getByRole("button", { name: "Show editor", exact: true }).click();
+    await expect(page.getByRole("region", { name: "Manifest source editor" })).toBeVisible();
     await expect(page.locator(".cm-content")).toContainText("Stored Web");
     const denied = await request.post(`${base}/graphql`, {
         headers: { origin: "https://untrusted.example" },
@@ -155,26 +157,38 @@ test("nested entrypoint preserves project tooling configuration and only writes 
     expect(source.data.manifestDocument.local).toBe(true);
 });
 
-test("console follows tray brightness and keeps source controls in the bottom toolbar", async ({ page, request }) => {
+test("console controls align and the diagram menu stays above the editor", async ({ page, request }) => {
     await launch(request);
     await openEditor(page);
     const panel = page.getByRole("region", { name: "Manifest source editor" });
     const footer = panel.locator("footer");
-    await expect(panel.getByRole("button", { name: "Save and Run", exact: true })).toBeVisible();
-    await expect(footer.getByRole("checkbox", { name: "Follow selected block" })).toBeVisible();
-    await expect(footer.getByRole("button", { name: "Reload source" })).toBeVisible();
-    await expect(panel.getByText(/Run saves/)).toHaveCount(0);
-    await expect(page.locator(".cm-editor")).toHaveCSS("color", "rgb(15, 23, 42)");
-    const palette = page.locator("button").filter({ has: page.locator("svg.lucide-palette") });
-    const tray = palette.locator("../..");
-    expect(await panel.evaluate(el => getComputedStyle(el).backgroundColor)).toBe(await tray.evaluate(el => getComputedStyle(el).backgroundColor));
-    await page.screenshot({ path: test.info().outputPath("console-light.png") });
-    await palette.click();
-    await Promise.all([
-        page.waitForEvent("load"),
-        page.getByRole("switch", { name: "Switch to dark mode" }).click(),
-    ]);
-    await page.getByRole("button", { name: "Show editor", exact: true }).click();
-    await expect(page.locator(".cm-editor")).toHaveCSS("color", "rgb(226, 232, 240)");
+    const runButton = footer.getByRole("button", { name: "Save and Run", exact: true });
+    const reload = footer.getByRole("button", { name: "Reload source" });
+    const follow = footer.locator("label").filter({ hasText: "Follow selected block" });
+    await expect(runButton).toBeVisible();
+    for (const control of [reload, follow]) {
+        await expect(control).toBeVisible();
+        expect((await control.boundingBox())?.y).toBe((await runButton.boundingBox())?.y);
+    }
+    const hideEditor = page.getByRole("button", { name: "Hide diagram editor", exact: true });
+    await hideEditor.click();
+    await expect(panel).toBeHidden();
+    await page.getByRole("button", { name: "Show diagram editor", exact: true }).click();
+    await expect(panel).toBeVisible();
+
+    const diagramTrigger = page.locator("button[aria-expanded]").filter({ has: page.locator("svg.lucide-layers") });
+    await diagramTrigger.click();
+    const diagramOption = diagramTrigger.locator("..").getByRole("button").nth(1);
+    await expect(diagramOption).toBeVisible();
+    await diagramOption.click({ trial: true });
+    await page.screenshot({ path: test.info().outputPath("diagram-dropdown.png") });
+    await diagramTrigger.click();
+
+    const lightBackground = await panel.evaluate(el => getComputedStyle(el).backgroundColor);
+    await page.getByRole("button", { name: "Choose diagram theme" }).click();
+    await page.getByRole("button", { name: /Scholarly Grimoire/ }).click();
+    await expect.poll(() => panel.evaluate(el => getComputedStyle(el).backgroundColor)).not.toBe(lightBackground);
+    await expect(page.locator(".cm-content")).toContainText("from scryr");
+    await expect(runButton).toBeVisible();
     await page.screenshot({ path: test.info().outputPath("console-dark.png") });
 });

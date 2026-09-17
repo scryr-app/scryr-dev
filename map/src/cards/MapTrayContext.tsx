@@ -1,4 +1,10 @@
-import { createContext, type ReactNode, useContext, useState } from "react";
+import {
+	createContext,
+	type ReactNode,
+	useCallback,
+	useContext,
+	useState,
+} from "react";
 
 interface SelectedBlockState {
 	name: string;
@@ -11,6 +17,8 @@ interface MapTrayContextValue {
 	toggleCard: (index: number) => void;
 	getActiveCardIndex: (blockId: string) => number | null;
 	selectCardForBlock: (blockId: string, index: number) => void;
+	previewCardForBlock: (blockId: string, index: number) => void;
+	clearCardPreview: (blockId: string, index?: number) => void;
 	selectedBlock: SelectedBlockState | null;
 	selectBlock: (name: string, lineNumber: number | null) => void;
 }
@@ -19,7 +27,7 @@ const MapTrayContext = createContext<MapTrayContextValue | null>(null);
 
 /** Shares toolbar card selection with per-block choices from direct card clicks. */
 export function MapTrayProvider({ children }: { children: ReactNode }) {
-	const [activeCardIndex, setActiveCardIndex] = useState<number | null>(0);
+	const [sharedCardIndex, setSharedCardIndex] = useState<number | null>(0);
 	const [blockCardIndexes, setBlockCardIndexes] = useState(
 		() => new Map<string, number>(),
 	);
@@ -27,19 +35,45 @@ export function MapTrayProvider({ children }: { children: ReactNode }) {
 		null,
 	);
 
+	const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
+	const [hoveredCard, setHoveredCard] = useState<{
+		blockId: string;
+		index: number;
+	} | null>(null);
+	const previewCardForBlock = useCallback((blockId: string, index: number) => {
+		setHoveredCard({ blockId, index });
+	}, []);
+	const clearCardPreview = useCallback((blockId: string, index?: number) => {
+		setHoveredCard((current) =>
+			current?.blockId === blockId &&
+			(index === undefined || current.index === index)
+				? null
+				: current,
+		);
+	}, []);
+	const activeCardIndex =
+		hoveredCard?.index ??
+		(activeBlockId === null
+			? undefined
+			: blockCardIndexes.get(activeBlockId)) ??
+		sharedCardIndex;
+
 	const toggleCard = (index: number) => {
-		setActiveCardIndex((prev) => (prev === index ? 0 : index));
+		setSharedCardIndex(activeCardIndex === index ? 0 : index);
 		setBlockCardIndexes(new Map());
+		setHoveredCard(null);
 	};
 
 	const getActiveCardIndex = (blockId: string) =>
-		blockCardIndexes.get(blockId) ?? activeCardIndex;
+		blockCardIndexes.get(blockId) ?? sharedCardIndex;
 
 	const selectCardForBlock = (blockId: string, index: number) => {
 		setBlockCardIndexes((previous) => new Map(previous).set(blockId, index));
+		setActiveBlockId(blockId);
 	};
 
 	const selectBlock = (name: string, lineNumber: number | null) => {
+		setActiveBlockId(name);
 		setSelectedBlock((prev) => ({
 			name,
 			lineNumber,
@@ -54,6 +88,8 @@ export function MapTrayProvider({ children }: { children: ReactNode }) {
 				toggleCard,
 				getActiveCardIndex,
 				selectCardForBlock,
+				previewCardForBlock,
+				clearCardPreview,
 				selectedBlock,
 				selectBlock,
 			}}
@@ -63,7 +99,7 @@ export function MapTrayProvider({ children }: { children: ReactNode }) {
 	);
 }
 
-/** Returns the global active-card index and toggle function. Must be used inside MapTrayProvider. */
+/** Returns the toolbar selection and per-block card controls. Must be used inside MapTrayProvider. */
 export function useMapTray() {
 	const ctx = useContext(MapTrayContext);
 	if (!ctx) throw new Error("useMapTray must be used within MapTrayProvider");
