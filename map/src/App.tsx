@@ -6,6 +6,7 @@ import {
 	SignedOutScreen,
 } from "@/auth";
 import { MapSceneShell } from "@/scene";
+import { OpenSourcePrompt } from "@/components/OpenSourcePrompt";
 
 function App() {
 	if (isLocalAuthMode) {
@@ -26,6 +27,7 @@ function App() {
 							</div>
 						}
 					/>
+					<OpenSourcePrompt />
 				</AuthenticatedSession>
 			</Show>
 		</>

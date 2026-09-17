@@ -1,5 +1,6 @@
 import { FileCode2, Folder, Layers } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { isLocalAuthMode } from "@/auth/env";
 import {
 	type GetScryrMapsQuery,
 	useGetScryrMapsQuery,
@@ -19,6 +20,17 @@ interface Props {
 type ScryrMapOption = GetScryrMapsQuery["scryrMaps"][number];
 
 const DIAGRAM_SEARCH_PARAM = "diagram";
+
+function diagramGroup(map: ScryrMapOption): string {
+	const folder = map.folderPath
+		.trim()
+		.replaceAll("\\", "/")
+		.replace(/\/+$/, "");
+	return !isLocalAuthMode &&
+		/^(?:manifest\/)?tests\/samples\/[^/]+$/.test(folder)
+		? "Samples"
+		: map.folderPath.trim();
+}
 
 function diagramSourceLabel(map: ScryrMapOption): string {
 	const folderPath = map.folderPath.trim().replace(/\/+$/, "");
@@ -168,7 +180,15 @@ export function DiagramButton({ className = "" }: Props) {
 		}
 
 		const matchingMap =
-			maps.find((map) => map.key === current.key) ?? maps.at(0);
+			maps.find((map) => map.key === current.key) ??
+			(!isLocalAuthMode
+				? maps.find(
+						(map) =>
+							diagramGroup(map) === "Samples" &&
+							map.name === "MERN Customer Path",
+					)
+				: undefined) ??
+			maps.at(0);
 		if (!matchingMap) {
 			return;
 		}
@@ -216,7 +236,7 @@ export function DiagramButton({ className = "" }: Props) {
 
 	const visibleMaps = maps;
 	const mapsByGroup = visibleMaps.reduce((groups, map) => {
-		const groupName = map.folderPath.trim();
+		const groupName = diagramGroup(map);
 		const group = groups.get(groupName) ?? [];
 		group.push(map);
 		groups.set(groupName, group);

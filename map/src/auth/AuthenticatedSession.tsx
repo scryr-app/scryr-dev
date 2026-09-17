@@ -73,6 +73,9 @@ export function AuthenticatedSession({ children }: AuthenticatedSessionProps) {
 				className="grid h-screen w-screen place-items-center px-6 text-slate-100"
 				style={{ background: theme.background }}
 			>
+				<div className="absolute right-4 top-4 z-50">
+					<AccountButton />
+				</div>
 				<div className="w-full max-w-sm rounded-xl border border-white/10 bg-black/50 p-5 shadow-2xl shadow-black/40 backdrop-blur-xl">
 					<div className="mb-4 flex items-center gap-3">
 						<div className="grid h-9 w-9 place-items-center rounded-lg border border-white/10 bg-white/8">
