@@ -67,3 +67,9 @@ After the agent finishes:
 scryr check
 scryr serve --watch
 ```
+
+## Next Steps
+
+You've reached the end of the introductory guides. The pages that follow are **Developer Docs**: technical guides and references for writing manifests, using the CLI, generating code, and connecting Scryr to your development tools.
+
+Start with the [Manifest language](/manifests/), or jump to the [CLI reference](/cli/), [code generation](/code-generation/), [integrations](/integrations/), or [editor highlighting](/editors/).

@@ -64,8 +64,10 @@ header.header {
 
 .sl-markdown-content a:not(.sl-link-button) { color: #d19bff; }
 .sl-markdown-content a:not(.sl-link-button):hover { color: #fff; }
-.sl-markdown-content h2 { margin-top: 3.2rem; }
-.sl-markdown-content h2::after {
+.sl-markdown-content > h2,
+.sl-markdown-content .sl-heading-wrapper.level-h2 { margin-top: 2.5rem; }
+.sl-markdown-content > h2::after,
+.sl-markdown-content .sl-heading-wrapper.level-h2::after {
   content: '';
   display: block;
   width: 4.5rem;
