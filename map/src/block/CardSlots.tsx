@@ -1,7 +1,7 @@
 import { isValidElement, type ReactNode, useEffect, useState } from "react";
-import { useMapTray } from "@/cards/MapTrayContext";
 import type { CardSlotConfig } from "@/cards";
 import { CardSlot, getCardLayout } from "@/cards";
+import { useMapTray } from "@/cards/MapTrayContext";
 
 export interface CardSlotsProps {
 	blockId: string;
