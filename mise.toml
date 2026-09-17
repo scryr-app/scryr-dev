@@ -1,7 +1,10 @@
 # Shared toolchain and task entrypoints for contributors and GitHub Actions.
 # Put cloud credentials in ignored mise.local.toml (see mise.local.toml.example).
 [tools]
-rust = { version = "1.96.0", profile = "minimal", components = ["rustfmt", "clippy"] }
+rust = { version = "1.96.0", profile = "minimal", components = [
+    "rustfmt",
+    "clippy",
+] }
 python = "3.14.6"
 uv = "0.11.12"
 node = "26.1.0"
@@ -44,10 +47,10 @@ GUIDE
 description = "Install locked dependencies for crystal, manifest, map, and docs"
 dir = "{{config_root}}"
 run = [
-  "mise run internal:dependencies:crystal",
-  "mise run internal:dependencies:manifest",
-  "mise run internal:dependencies:map",
-  "mise run internal:dependencies:docs",
+    "mise run internal:dependencies:crystal",
+    "mise run internal:dependencies:manifest",
+    "mise run internal:dependencies:map",
+    "mise run internal:dependencies:docs",
 ]
 
 [tasks."contribute:agent"]
@@ -158,7 +161,10 @@ dir = "{{config_root}}"
 [tasks."contribute:lint-fix"]
 description = "Fix auto-fixable Python and TypeScript lint issues"
 dir = "{{config_root}}"
-run = ["mise run contribute:lint-fix:manifest", "mise run contribute:lint-fix:map"]
+run = [
+    "mise run contribute:lint-fix:manifest",
+    "mise run contribute:lint-fix:map",
+]
 
 [tasks."contribute:lint-fix:manifest"]
 description = "Fix auto-fixable Ruff issues"
@@ -174,9 +180,9 @@ run = "cd map && npm exec biome -- check --write --unsafe ."
 description = "Format Rust, Python, and TypeScript code"
 dir = "{{config_root}}"
 run = [
-  "mise run contribute:format:crystal",
-  "mise run contribute:format:manifest",
-  "mise run contribute:format:map",
+    "mise run contribute:format:crystal",
+    "mise run contribute:format:manifest",
+    "mise run contribute:format:map",
 ]
 
 [tasks."contribute:format:crystal"]
@@ -198,9 +204,9 @@ run = "cd map && npm exec biome -- format --write ."
 description = "Build Rust, Python, and frontend artifacts for local development"
 dir = "{{config_root}}"
 run = [
-  "mise run contribute:build:map",
-  "mise run contribute:build:manifest",
-  "mise run contribute:build:crystal",
+    "mise run contribute:build:map",
+    "mise run contribute:build:manifest",
+    "mise run contribute:build:crystal",
 ]
 
 [tasks."contribute:build:crystal"]
@@ -363,20 +369,20 @@ echo "Restart your shell or run: export PATH=\"$install_dir:\$PATH\""
 description = "Run the full CI checks: automation, manifest, crystal, map, and standalone CLI"
 dir = "{{config_root}}"
 run = [
-  "mise run verify:automation",
-  "mise run verify:manifest",
-  "mise run verify:crystal",
-  "mise run verify:map",
-  "mise run verify:release",
+    "mise run verify:automation",
+    "mise run verify:manifest",
+    "mise run verify:crystal",
+    "mise run verify:map",
+    "mise run verify:release",
 ]
 
 [tasks."verify:automation"]
 description = "Validate workflow structure and scan Git history"
 run = [
-  "mise run verify:workflows",
-  "mise run internal:verify:regressions",
-  "actionlint",
-  "gitleaks git --redact --no-banner --log-opts=--all .",
+    "mise run verify:workflows",
+    "mise run internal:verify:regressions",
+    "actionlint",
+    "gitleaks git --redact --no-banner --log-opts=--all .",
 ]
 tools = { "actionlint" = "1.7.12", "gitleaks" = "8.30.1" }
 dir = "{{config_root}}"
@@ -384,35 +390,35 @@ dir = "{{config_root}}"
 [tasks."verify:manifest"]
 description = "Install dependencies and verify manifest: Python SDK formatting, lint, types, and tests"
 run = [
-  "mise run internal:dependencies:manifest",
-  "mise run verify:format:manifest",
-  "mise run verify:lint:manifest",
-  "mise run verify:types:manifest",
-  "mise run verify:test:manifest",
+    "mise run internal:dependencies:manifest",
+    "mise run verify:format:manifest",
+    "mise run verify:lint:manifest",
+    "mise run verify:types:manifest",
+    "mise run verify:test:manifest",
 ]
 dir = "{{config_root}}"
 
 [tasks."verify:crystal"]
 description = "Install dependencies, embed manifest, and verify crystal: Rust formatting, lint, types, and tests"
 run = [
-  "mise run internal:dependencies:crystal",
-  "mise run internal:embed:manifest",
-  "mise run verify:format:crystal",
-  "mise run verify:lint:crystal",
-  "mise run verify:types:crystal",
-  "mise run verify:test:crystal",
+    "mise run internal:dependencies:crystal",
+    "mise run internal:embed:manifest",
+    "mise run verify:format:crystal",
+    "mise run verify:lint:crystal",
+    "mise run verify:types:crystal",
+    "mise run verify:test:crystal",
 ]
 dir = "{{config_root}}"
 
 [tasks."verify:map"]
 description = "Install dependencies and verify map: Vite UI formatting, lint, types, tests, and build"
 run = [
-  "mise run internal:dependencies:map",
-  "mise run verify:format:map",
-  "mise run verify:lint:map",
-  "mise run verify:types:map",
-  "mise run verify:test:map",
-  "mise run contribute:build:map",
+    "mise run internal:dependencies:map",
+    "mise run verify:format:map",
+    "mise run verify:lint:map",
+    "mise run verify:types:map",
+    "mise run verify:test:map",
+    "mise run contribute:build:map",
 ]
 dir = "{{config_root}}"
 
@@ -425,9 +431,9 @@ dir = "{{config_root}}"
 description = "Run formatting checks, linters, and type checks"
 dir = "{{config_root}}"
 run = [
-  "mise run verify:format",
-  "mise run verify:lint",
-  "mise run verify:types",
+    "mise run verify:format",
+    "mise run verify:lint",
+    "mise run verify:types",
 ]
 
 [tasks."verify:test"]
@@ -439,9 +445,9 @@ run = ["mise run verify:test:unit", "mise run verify:test:integration"]
 description = "Run all linters"
 dir = "{{config_root}}"
 run = [
-  "mise run verify:lint:crystal",
-  "mise run verify:lint:manifest",
-  "mise run verify:lint:map",
+    "mise run verify:lint:crystal",
+    "mise run verify:lint:manifest",
+    "mise run verify:lint:map",
 ]
 
 [tasks."verify:lint:crystal"]
@@ -463,9 +469,9 @@ run = "npm --prefix map run lint"
 description = "Check Rust, Python, and TypeScript formatting"
 dir = "{{config_root}}"
 run = [
-  "mise run verify:format:crystal",
-  "mise run verify:format:manifest",
-  "mise run verify:format:map",
+    "mise run verify:format:crystal",
+    "mise run verify:format:manifest",
+    "mise run verify:format:map",
 ]
 
 [tasks."verify:format:crystal"]
@@ -487,9 +493,9 @@ run = "cd map && npm exec biome -- format ."
 description = "Run Rust, Python, and TypeScript type checks"
 dir = "{{config_root}}"
 run = [
-  "mise run verify:types:crystal",
-  "mise run verify:types:manifest",
-  "mise run verify:types:map",
+    "mise run verify:types:crystal",
+    "mise run verify:types:manifest",
+    "mise run verify:types:map",
 ]
 
 [tasks."verify:types:crystal"]
@@ -511,9 +517,9 @@ run = "cd map && npm exec tsc -- --noEmit"
 description = "Run all unit test suites"
 dir = "{{config_root}}"
 run = [
-  "mise run verify:test:unit:crystal",
-  "mise run verify:test:unit:manifest",
-  "mise run verify:test:unit:map",
+    "mise run verify:test:unit:crystal",
+    "mise run verify:test:unit:manifest",
+    "mise run verify:test:unit:map",
 ]
 
 [tasks."verify:test:unit:crystal"]
@@ -534,14 +540,17 @@ run = "npm --prefix map run test"
 [tasks."verify:test:integration"]
 description = "Run integration test suites"
 dir = "{{config_root}}"
-run = ["mise run verify:test:integration:crystal", "mise run verify:test:integration:manifest"]
+run = [
+    "mise run verify:test:integration:crystal",
+    "mise run verify:test:integration:manifest",
+]
 
 [tasks."verify:test:integration:crystal"]
 description = "Run Rust integration tests"
 dir = "{{config_root}}"
 run = [
-  "cargo test --locked --manifest-path crystal/Cargo.toml -p crystal-core --tests",
-  "cargo test --locked --manifest-path crystal/Cargo.toml -p crystal-cli --test cli",
+    "cargo test --locked --manifest-path crystal/Cargo.toml -p crystal-core --tests",
+    "cargo test --locked --manifest-path crystal/Cargo.toml -p crystal-cli --test cli",
 ]
 
 [tasks."verify:test:integration:manifest"]
@@ -552,12 +561,18 @@ run = "cd manifest && uv run --locked python -m pytest tests/test_sample_mern_in
 [tasks."verify:test:crystal"]
 description = "Run all Rust tests"
 dir = "{{config_root}}"
-run = ["mise run verify:test:unit:crystal", "mise run verify:test:integration:crystal"]
+run = [
+    "mise run verify:test:unit:crystal",
+    "mise run verify:test:integration:crystal",
+]
 
 [tasks."verify:test:manifest"]
 description = "Run all Python tests"
 dir = "{{config_root}}"
-run = ["mise run verify:test:unit:manifest", "mise run verify:test:integration:manifest"]
+run = [
+    "mise run verify:test:unit:manifest",
+    "mise run verify:test:integration:manifest",
+]
 
 [tasks."verify:test:map"]
 description = "Run all frontend tests"
@@ -694,10 +709,10 @@ dir = "{{config_root}}"
 description = "Build the self-contained open-source scryr CLI with embedded SDK and UI"
 dir = "{{config_root}}"
 run = [
-  "mise run internal:dependencies:manifest",
-  "mise run internal:embed:manifest",
-  "mise run internal:embed:map:oss",
-  "mise run internal:release:build:crystal",
+    "mise run internal:dependencies:manifest",
+    "mise run internal:embed:manifest",
+    "mise run internal:embed:map:oss",
+    "mise run internal:release:build:crystal",
 ]
 
 [tasks."release:validate"]
@@ -719,9 +734,9 @@ dir = "{{config_root}}"
 [tasks."release:distribute"]
 description = "Distribute the published standalone release through Homebrew"
 run = [
-  "mise run internal:release:preflight",
-  "mise run release:distribution:prepare",
-  "mise run release:distribute:homebrew",
+    "mise run internal:release:preflight",
+    "mise run release:distribution:prepare",
+    "mise run release:distribute:homebrew",
 ]
 dir = "{{config_root}}"
 
@@ -768,11 +783,11 @@ dir = "{{config_root}}"
 [tasks."deploy:build"]
 description = "Build Clerk-enabled map assets and the crystal CLI for Fly; requires cloud UI configuration"
 run = [
-  "mise run internal:dependencies:manifest",
-  "mise run internal:embed:manifest",
-  "mise run internal:embed:map:cloud",
-  "mise run internal:release:build:crystal",
-  "mise run deploy:build:map",
+    "mise run internal:dependencies:manifest",
+    "mise run internal:embed:manifest",
+    "mise run internal:embed:map:cloud",
+    "mise run internal:release:build:crystal",
+    "mise run deploy:build:map",
 ]
 dir = "{{config_root}}"
 
