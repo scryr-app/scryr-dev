@@ -17,8 +17,8 @@ export function MapFloor() {
 			texture.center.set(0.5, 0.5);
 			texture.rotation = elapsed * 0.0025;
 		} else if (floor.pattern === "seabed") {
-			texture.offset.x = Math.sin(elapsed * 0.16) * 0.012;
-			texture.offset.y = Math.cos(elapsed * 0.12) * 0.01;
+			texture.offset.x = elapsed * 0.008;
+			texture.offset.y = elapsed * 0.014;
 		}
 	});
 	return (
