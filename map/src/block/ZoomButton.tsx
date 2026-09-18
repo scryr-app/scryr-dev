@@ -24,7 +24,7 @@ export function ZoomButton({
 }: ZoomButtonProps) {
 	const [isHovered, setIsHovered] = useState(false);
 	const color = currentTheme.isDarkDiagram ? "#ffffff" : "#0f172a";
-	const opacity = isVisible ? (isHovered ? 0.85 : 0.5) : 0;
+	const opacity = isVisible ? (isHovered ? 1 : 0.8) : 0;
 	const overlayWidth = blockWidth * 0.96;
 	const overlayHeight = blockDepth * 0.96;
 	// Leave the centered block label clear, with a compact glyph toward the front.
@@ -107,11 +107,11 @@ function ZoomGlyph({ opacity, color }: { opacity: number; color: string }) {
 				<ZoomGlyphMaterial opacity={opacity} color={color} />
 			</mesh>
 			<mesh position={[-0.018, 0.018, 0.002]}>
-				<boxGeometry args={[0.042, 0.006, 0.006]} />
+				<boxGeometry args={[0.052, 0.011, 0.006]} />
 				<ZoomGlyphMaterial opacity={opacity} color={color} />
 			</mesh>
 			<mesh position={[-0.018, 0.018, 0.004]}>
-				<boxGeometry args={[0.006, 0.042, 0.006]} />
+				<boxGeometry args={[0.011, 0.052, 0.006]} />
 				<ZoomGlyphMaterial opacity={opacity} color={color} />
 			</mesh>
 		</group>
