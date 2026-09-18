@@ -44,8 +44,11 @@ const { sidebar } = Astro.locals.starlightRoute;
   if (menu && toggle && pin && close) {
     const storageKey = 'scryr-page-menu-pinned';
     const wideScreen = window.matchMedia('(min-width: 64rem)');
-    let preferredPinned = false;
-    try { preferredPinned = localStorage.getItem(storageKey) === 'true'; } catch { /* Pinning also works without storage. */ }
+    const isOverview = Boolean(document.querySelector('.scryr-story'));
+    let preferredPinned = !isOverview;
+    if (isOverview) {
+      try { preferredPinned = localStorage.getItem(storageKey) === 'true'; } catch { /* Pinning also works without storage. */ }
+    }
     function updateExpanded() {
       toggle!.setAttribute('aria-expanded', String(menu!.hasAttribute('data-pinned') || menu!.matches(':popover-open')));
     }
