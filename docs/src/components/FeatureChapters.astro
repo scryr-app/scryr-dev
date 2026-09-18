@@ -1,4 +1,5 @@
 ---
+import { Code } from 'astro:components';
 import SchemaLanguages from './SchemaLanguages.astro';
 const forgeCode = `from scryr import Forge
 
@@ -90,7 +91,7 @@ local = Forge(
   <div class="feature-forge">
     <div class="grimoire" data-reveal>
       <div class="panel-label"><span>Developer environment</span><span>index.scry</span></div>
-      <pre><code>{forgeCode}</code></pre>
+      <Code code={forgeCode} lang="python" theme="github-dark" />
     </div>
     <div class="terminal-spell" data-reveal>
       <div class="panel-label"><span>From the same Forge</span><span>terminal</span></div>
@@ -115,7 +116,8 @@ local = Forge(
 <style is:global>
   .scryr-story .feature-chapter { padding-block: clamp(7rem, 14vw, 12rem); border-top: 1px solid #b889d922; background: radial-gradient(ellipse at 65% 45%, #66438518, transparent 70%); }
   .scryr-story .feature-chapter .chapter-heading::after { content: ''; display: block; width: 7rem; height: 1px; margin: 2.5rem auto 0; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
-  .scryr-story #the-signal .chapter-heading::after { content: none; }
+  .scryr-story #the-signal .chapter-heading::after,
+  .scryr-story #the-forge .chapter-heading::after { content: none; }
   .scryr-story .feature-chapter h2 { font-size: clamp(2.4rem, 4.5vw, 4.2rem); }
   .scryr-story .feature-chapter .chapter-heading > p:not(.eyebrow) { max-width: 760px; margin-inline: auto; font-size: .9rem; }
   .feature-explore, .feature-forge, .feature-evidence { display: grid; gap: clamp(3rem, 6vw, 5rem); margin-top: clamp(4rem, 7vw, 6rem); }
@@ -132,6 +134,10 @@ local = Forge(
   .scryr-story .feature-example .terminal-spell { margin-top: 0; }
   .scryr-story .feature-evidence .feature-note { margin-top: 1.25rem; font-size: .72rem; color: var(--muted); }
   .scryr-story .feature-forge .terminal-spell { margin-top: 0; }
+  .scryr-story .feature-forge :is(.grimoire, .terminal-spell) { border: 1px solid #ba974a44; border-radius: 8px; }
+  .scryr-story .feature-forge .grimoire { border-color: #ba974a44; background: #0c0a12; box-shadow: none; }
+  .scryr-story .feature-forge :is(.grimoire, .terminal-spell)::before { content: ''; position: absolute; top: 0; left: 15%; right: 15%; height: 1px; background: linear-gradient(90deg, transparent, #e7c77c, transparent); box-shadow: 0 0 18px #e7c77c55; }
+  .scryr-story .feature-forge .grimoire .panel-label { border-color: #ba974a33; color: var(--gold); }
   .feature-outputs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3rem; margin-top: 3rem; }
   .scryr-story .feature-outputs p { font-size: .78rem; color: var(--muted); line-height: 1.8; }
   .feature-outputs strong { display: block; margin-bottom: .3rem; color: var(--gold); font-weight: 500; }

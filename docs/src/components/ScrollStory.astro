@@ -1,4 +1,5 @@
 ---
+import { Code } from 'astro:components';
 import FeatureChapters from './FeatureChapters.astro';
 import MapPortal from './MapPortal.astro';
 import '../styles/story.css';
@@ -32,23 +33,25 @@ commerce = Diagram(
       <h2 id="quick-start-title">Try it Out</h2>
     </div>
     <div class="quick-start-options">
-      <article class="quick-start-card" aria-labelledby="local-start-title">
-        <h3 id="local-start-title">Start with your repository.</h3>
-        <ul>
-          <li>Install with Homebrew:<code class="setup-command">brew install scryr-app/tap/scryr</code></li>
-          <li><a href="/llm-prompt/">Copy the prompt</a> into your coding agent to create an <code>index.scry</code> file.</li>
-          <li>Review the file, then run <code>scryr serve</code> from your repository.</li>
-        </ul>
-        <a class="spell-button" href="/getting-started/">Install locally <span aria-hidden="true">↗</span></a>
-      </article>
       <article class="quick-start-card" aria-labelledby="cloud-start-title">
-        <h3 id="cloud-start-title">Go straight to the diagram.</h3>
+        <p class="eyebrow">Cloud</p>
+        <h3 id="cloud-start-title">Log in and start exploring.</h3>
         <ul>
           <li>Log in to Scryr with your GitHub account.</li>
-          <li>Open a sample architecture in the cloud.</li>
-          <li>Modify the sample to make it your own.</li>
+          <li>Open a sample architecture in the hosted app.</li>
+          <li>Edit the sample to make it your own.</li>
         </ul>
         <a class="spell-button" href="https://scryr.app">Log in to Scryr <span aria-hidden="true">↗</span></a>
+      </article>
+      <article class="quick-start-card" aria-labelledby="local-start-title">
+        <p class="eyebrow">Open source (OSS)</p>
+        <h3 id="local-start-title">Try it locally—no repository needed.</h3>
+        <ul>
+          <li>Install Scryr with Homebrew.</li>
+          <li>Copy the small <code>index.scry</code> example into an empty folder.</li>
+          <li>Run <code>scryr serve</code>, then add Scryr to a repository when you are ready.</li>
+        </ul>
+        <a class="spell-button" href="/getting-started/">Start locally <span aria-hidden="true">↗</span></a>
       </article>
     </div>
   </section>
@@ -97,7 +100,7 @@ commerce = Diagram(
     <div class="chapter-sticky">
       <div class="chapter-heading" data-reveal><h2 id="spell-title">Generate Diagrams from<br /><em>Typed Python Code.</em></h2><p>Give it a repository. Ask for <code>index.scry</code>.<br />Turn its understanding into something you can examine.</p></div>
       <div class="spell-workbench">
-        <div class="grimoire" data-reveal><div class="panel-label"><span>✧ index.scry</span><span>Typed Python</span></div><pre><code>{scryCode}</code></pre><div class="spell-checks"><span>Imports</span><span>Types</span><span>Connections</span><span>Ownership</span></div></div>
+        <div class="grimoire" data-reveal><div class="panel-label"><span>✧ index.scry</span><span>Typed Python</span></div><Code code={scryCode} lang="python" theme="github-dark" /><div class="spell-checks"><span>Imports</span><span>Types</span><span>Connections</span><span>Ownership</span></div></div>
         <div class="conjure-arrow" aria-hidden="true"><span>✧</span><i></i></div>
         <figure class="product-vision" data-reveal><a href="https://scryr.app" aria-label="Open Scryr"><img src="/assets/scryr-product-editor.png" alt="Actual Scryr product with index.scry open beside the Northwind Commerce architecture diagram" width="1440" height="900" loading="lazy" /></a><figcaption>The source and its world, side by side. <span>Actual Scryr product</span></figcaption></figure>
       </div>
@@ -111,7 +114,7 @@ commerce = Diagram(
     <div data-reveal>
       <img src="/favicon.svg" alt="" width="80" height="80" loading="lazy" />
       <h2 id="ending-title">Try the approach on<br /><em>a system you know.</em></h2>
-      <div class="story-actions"><a class="spell-button" href="/getting-started/">Install locally <span aria-hidden="true">↗</span></a><a class="spell-button" href="https://scryr.app">Log in to Scryr <span aria-hidden="true">↗</span></a></div>
+      <div class="story-actions"><a class="spell-button" href="/getting-started/">Start locally <span aria-hidden="true">↗</span></a><a class="spell-button" href="https://scryr.app">Log in to Scryr <span aria-hidden="true">↗</span></a></div>
       <p class="ending-license">Open source · MIT licensed · Local-first</p>
       <a class="chapter-link" href="https://github.com/scryr-app/scryr-dev">Explore the source ↗</a>
     </div>

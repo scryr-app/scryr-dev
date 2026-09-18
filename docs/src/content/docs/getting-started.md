@@ -3,91 +3,70 @@ title: Getting started
 description: Install Scryr and turn your first index.scry into an interactive architecture diagram.
 ---
 
-Scryr combines a typed Python manifest SDK, a Rust CLI and GraphQL server, and a React/Three.js diagram. The standalone CLI embeds the diagram and SDK, so one install is enough for the normal local workflow.
+Choose the path that fits what you want to try:
 
-## Install
+- **Cloud:** [Log in to Scryr](https://scryr.app), open a sample architecture, and edit it in the hosted app. There is nothing to install.
+- **Open source (OSS):** Install the standalone CLI, create a small local diagram without a repository, and then bring Scryr into your own codebase.
 
-### Homebrew
+The open-source CLI embeds the Python manifest SDK, GraphQL server, and interactive diagram, so Homebrew is the only installation step.
+
+## Open-source quick start
+
+### 1. Install with Homebrew
 
 ```sh
 brew install scryr-app/tap/scryr
 ```
 
-### npm
+### 2. Create a simple first diagram
+
+Create an empty folder and enter it:
 
 ```sh
-npm install --global @scryr/cli
+mkdir scryr-quick-start
+cd scryr-quick-start
 ```
 
-### Cargo
-
-```sh
-cargo install crystal-cli
-```
-
-Native release archives for macOS and Linux on ARM64 and x86_64 are also available from [GitHub Releases](https://github.com/scryr-app/scryr-dev/releases).
-
-```sh title="Verify the installation"
-scryr --version
-scryr --help
-```
-
-Scryr is pre-1.0. Keep the CLI and the manifests in a project versioned together.
-
-## Create `index.scry`
-
-Save this file at the root of your repository:
+Save this small example as `index.scry`:
 
 ```python title="index.scry"
-from scryr import Diagram, Info, Manifest
-from scryr.collectors import GitStatusCollector
-from scryr.types import ProgrammingLanguage, WebFramework
+from scryr import Diagram, Manifest
 
-web = Manifest(
-    manifest_id="apps/web",
-    name="Web App",
-    connections=[Manifest(name="Public API")],
-    info=Info(
-        description="Customer-facing application",
-        language=ProgrammingLanguage.typescript,
-        frameworks=[WebFramework.react],
-        owner_team="Product",
-    ),
-)
+api = Manifest(name="API", connections=[Manifest(name="Database")])
+database = Manifest(name="Database")
 
-api = Manifest(
-    manifest_id="services/api",
-    name="Public API",
-    connections=[Manifest(name="Postgres")],
-    info=Info(
-        description="Business API",
-        language=ProgrammingLanguage.python,
-        frameworks=[WebFramework.fastapi],
-        owner_team="Platform",
-    ),
-    repository=[GitStatusCollector()],
-)
-
-database = Manifest(name="Postgres")
-architecture = Diagram(name="System architecture", manifests=[web, api, database])
+architecture = Diagram(name="Quick start", manifests=[api, database])
 ```
 
-Connection targets are resolved by manifest name. The reference in `Manifest(name="Public API")` must match the real component name exactly.
+### 3. Check and open the diagram
 
-## Check and open the diagram
+```sh
+scryr serve --watch
+```
+
+By default, `serve` starts the embedded UI and GraphQL server at `127.0.0.1:8000`, formats and validates the source, uploads the artifact, and opens the browser.
+## Use Scryr in your own repository
+
+### 1. Open your repository
+
+```sh
+cd /path/to/your/repository
+```
+
+### 2. Create the repository manifest
+
+Add `index.scry` at the repository root. You can start by copying the small example above, or [give the Scryr prompt to your coding agent](/llm-prompt/) to generate a model of the repository for you.
+
+Review the generated file before running it. A `.scry` file is Python and can execute imported code.
+
+### 3. Check and serve it
 
 ```sh
 scryr check
 scryr serve --watch
 ```
 
-By default, `serve` starts the embedded UI and GraphQL server at `127.0.0.1:8000`, formats and validates the source, uploads the artifact, and opens the browser. Collector schedules run independently of source watching. Watch mode keeps the previous valid diagram and collector plan when a later edit fails; collection errors remain visible.
-
-On first execution, Scryr provisions its own pinned `uv`, managed Python runtime, and per-project environment. It does not change your system Python.
-
-:::tip[Try the hosted diagram]
-Open [scryr.app](https://scryr.app) to explore the cloud experience. Cloud editing stores source snapshots; local `scryr serve` can save the registered entrypoint back to disk.
-:::
+Commit `index.scry` with the code it describes so changes to the architecture stay reviewable.
 
 ## Use another entrypoint
 
