@@ -1,13 +1,9 @@
-import { Crosshair, LoaderCircle, Play, RefreshCw, X } from "lucide-react";
+import { LoaderCircle, Play, RefreshCw, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useMapTray } from "@/cards/MapTrayContext";
 import { useManifestEditor } from "@/graphql/useManifestEditor";
 import { consoleTextColor } from "@/theme/console";
 import { useTheme } from "@/theme/theme";
-import {
-	PythonCodeEditor,
-	type PythonCodeEditorHandle,
-} from "./PythonCodeEditor";
+import { PythonCodeEditor } from "./PythonCodeEditor";
 
 interface PyodideConsoleProps {
 	isOpen: boolean;
@@ -47,11 +43,8 @@ export function PyodideConsole({
 	onPanelWidthChange,
 }: PyodideConsoleProps) {
 	const editor = useManifestEditor(isOpen);
-	const editorRef = useRef<PythonCodeEditorHandle | null>(null);
-	const { selectedBlock } = useMapTray();
 	const theme = useTheme();
 	const palette = theme.console;
-	const [follow, setFollow] = useState(true);
 	const [position, setPosition] = useState<PanelPosition>({ x: 16, y: 72 });
 	const panelRef = useRef<HTMLElement | null>(null);
 	const gesture = useRef<PanelGesture | null>(null);
@@ -76,10 +69,6 @@ export function PyodideConsole({
 		document.body.style.cursor = kind === "drag" ? "grabbing" : "col-resize";
 		document.body.style.userSelect = "none";
 	};
-	useEffect(() => {
-		if (isOpen && follow && selectedBlock?.lineNumber)
-			editorRef.current?.moveToLine(selectedBlock.lineNumber);
-	}, [isOpen, follow, selectedBlock?.lineNumber]);
 	useEffect(() => {
 		if (!isOpen) return;
 		const move = (event: PointerEvent) => {
@@ -192,7 +181,6 @@ export function PyodideConsole({
 					style={{ backgroundColor: palette.background }}
 				>
 					<PythonCodeEditor
-						ref={editorRef}
 						value={editor.code}
 						onChange={editor.setCode}
 						theme={theme}
@@ -210,26 +198,6 @@ export function PyodideConsole({
 							</button>
 						)}
 						<div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-							<label
-								className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-current/20 px-2.5 py-1.5 font-medium shadow-sm transition-colors focus-within:ring-2 focus-within:ring-current"
-								style={{
-									color: consoleTextColor(
-										follow ? palette.accent : palette.text,
-									),
-									backgroundColor: follow
-										? palette.selection
-										: palette.activeLine,
-								}}
-							>
-								<input
-									type="checkbox"
-									checked={follow}
-									onChange={(event) => setFollow(event.target.checked)}
-									className="sr-only"
-								/>
-								<Crosshair size={14} strokeWidth={2} aria-hidden="true" />
-								Follow selected block
-							</label>
 							<button
 								type="button"
 								disabled={editor.running}

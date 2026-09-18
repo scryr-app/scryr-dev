@@ -1,3 +1,5 @@
+import { Html } from "@react-three/drei/web/Html";
+import { Loading } from "@/components/Loading";
 import { Text } from "@react-three/drei/core/Text";
 import { useThree } from "@react-three/fiber";
 import { useMemo } from "react";
@@ -238,7 +240,14 @@ export function MapDisplay() {
 	}
 
 	if (isLoading || !layout || !layoutView) {
-		return <Text>Loading</Text>;
+		return (
+			<Html
+				center
+				style={{ color: currentTheme.fontColor, whiteSpace: "nowrap" }}
+			>
+				<Loading />
+			</Html>
+		);
 	}
 
 	return (

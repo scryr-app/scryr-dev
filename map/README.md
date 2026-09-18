@@ -108,7 +108,7 @@ The palette button selects a complete theme:
 - **Luminous Crystal** includes Dark Mode, dark crystal materials, layered glowing edges, violet connections, a subdued grid, and an elevated camera view.
 - **Celestial Observatory** includes Dark Mode, midnight-blue precision instruments, brushed-brass orbital engravings, starlight, and a slowly moving celestial highlight.
 - **Porcelain Reverie** includes Light Mode, glazed ivory ceramic, cobalt botanical borders, delicate gold details, and kintsugi cracks.
-- **Sunken Sanctuary** includes Dark Mode, carved submerged stone, weathered copper, translucent sea-glass cards, and drifting underwater caustics.
+- **Sunken Sanctuary** includes Dark Mode, ocean-blue wave-carved blocks, translucent sea-glass cards, and a rolling sea-foam wave floor.
 - **Velvet Oracle** includes Light Mode, champagne velvet with a soft fabric sheen, ivory cards, ethereal gold light, and Greek-inspired laurel and Aegean accents.
 
 Each preset in `src/theme/theme.ts` owns its mode and palette. Its typed

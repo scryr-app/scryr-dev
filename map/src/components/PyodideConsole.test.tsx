@@ -70,8 +70,8 @@ it("labels the action Save and Run and groups source controls with the bottom st
 		within(footer).getByRole("button", { name: "Save and Run" }),
 	).toBeDefined();
 	expect(
-		within(footer).getByRole("checkbox", { name: "Follow selected block" }),
-	).toBeDefined();
+		within(footer).queryByRole("checkbox", { name: "Follow selected block" }),
+	).toBeNull();
 	fireEvent.click(
 		within(footer).getByRole("button", { name: "Reload source" }),
 	);

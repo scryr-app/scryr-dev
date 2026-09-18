@@ -232,6 +232,8 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 								() => setHoveredIndex(null),
 							)}
 							onMouseEnter={() => setHoveredIndex("rotate-up")}
+							onMouseLeave={() => setHoveredIndex(null)}
+							aria-label="Rotate Up"
 						>
 							<ChevronUp size={10} />
 						</button>
@@ -244,6 +246,8 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 								() => setHoveredIndex(null),
 							)}
 							onMouseEnter={() => setHoveredIndex("rotate-down")}
+							onMouseLeave={() => setHoveredIndex(null)}
+							aria-label="Rotate Down"
 						>
 							<ChevronDown size={10} />
 						</button>
@@ -256,6 +260,8 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 								() => setHoveredIndex(null),
 							)}
 							onMouseEnter={() => setHoveredIndex("rotate-left")}
+							onMouseLeave={() => setHoveredIndex(null)}
+							aria-label="Rotate Left"
 						>
 							<ChevronLeft size={10} />
 						</button>
@@ -268,6 +274,8 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 								() => setHoveredIndex(null),
 							)}
 							onMouseEnter={() => setHoveredIndex("rotate-right")}
+							onMouseLeave={() => setHoveredIndex(null)}
+							aria-label="Rotate Right"
 						>
 							<ChevronRight size={10} />
 						</button>
@@ -296,6 +304,8 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 								() => setHoveredIndex(null),
 							)}
 							onMouseEnter={() => setHoveredIndex("zoom-in")}
+							onMouseLeave={() => setHoveredIndex(null)}
+							aria-label="Zoom In"
 						>
 							<Plus size={11} />
 						</button>
@@ -307,6 +317,8 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 								() => setHoveredIndex(null),
 							)}
 							onMouseEnter={() => setHoveredIndex("zoom-out")}
+							onMouseLeave={() => setHoveredIndex(null)}
+							aria-label="Zoom Out"
 						>
 							<Minus size={11} />
 						</button>
@@ -352,6 +364,8 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 								() => setHoveredIndex(null),
 							)}
 							onMouseEnter={() => setHoveredIndex("pan-up")}
+							onMouseLeave={() => setHoveredIndex(null)}
+							aria-label="Pan Up"
 						>
 							<ArrowUp size={10} />
 						</button>
@@ -364,6 +378,8 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 								() => setHoveredIndex(null),
 							)}
 							onMouseEnter={() => setHoveredIndex("pan-down")}
+							onMouseLeave={() => setHoveredIndex(null)}
+							aria-label="Pan Down"
 						>
 							<ArrowDown size={10} />
 						</button>
@@ -376,6 +392,8 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 								() => setHoveredIndex(null),
 							)}
 							onMouseEnter={() => setHoveredIndex("pan-left")}
+							onMouseLeave={() => setHoveredIndex(null)}
+							aria-label="Pan Left"
 						>
 							<ArrowLeft size={10} />
 						</button>
@@ -388,6 +406,8 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 								() => setHoveredIndex(null),
 							)}
 							onMouseEnter={() => setHoveredIndex("pan-right")}
+							onMouseLeave={() => setHoveredIndex(null)}
+							aria-label="Pan Right"
 						>
 							<ArrowRight size={10} />
 						</button>

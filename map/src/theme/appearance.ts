@@ -470,11 +470,11 @@ export const porcelainAppearance: ThemeAppearance = {
 	view: { fov: 38, position: [9, 8, 13] },
 };
 
-/** Submerged carved stone, oxidized copper and translucent sea glass. */
+/** Rolling ocean light, wave-carved surfaces and translucent sea glass. */
 export const sunkenAppearance: ThemeAppearance = {
 	textures: {
 		wall: "sunkenStone",
-		wallBrightness: 0.76,
+		wallBrightness: 0.95,
 		card: "seaGlass",
 		glowCore: 0.06,
 		glowRim: 0.36,
@@ -495,9 +495,9 @@ export const sunkenAppearance: ThemeAppearance = {
 	walls: {
 		...matte,
 		metalness: 0.08,
-		roughness: 0.82,
-		clearcoat: 0.12,
-		clearcoatRoughness: 0.72,
+		roughness: 0.32,
+		clearcoat: 0.65,
+		clearcoatRoughness: 0.2,
 		envMapIntensity: 0.42,
 		emissiveIntensity: 0.08,
 	},
@@ -527,7 +527,7 @@ export const sunkenAppearance: ThemeAppearance = {
 		key: { position: [3, 18, 5], color: "#c8fff0", intensity: 1.2 },
 		fill: [
 			{ position: [-10, 5, -6], color: "#42b9bd", intensity: 0.68 },
-			{ position: [10, 3, 10], color: "#e1b8a0", intensity: 0.34 },
+			{ position: [10, 3, 10], color: "#79dcec", intensity: 0.34 },
 			{ position: [2, 6, -12], color: "#648fd1", intensity: 0.3 },
 		],
 		reflections: [
@@ -542,18 +542,18 @@ export const sunkenAppearance: ThemeAppearance = {
 	},
 	floor: {
 		pattern: "seabed",
-		tiles: ["#0d3e46", "#124b4d"],
+		tiles: ["#063f65", "#086487"],
 		opacity: 1,
-		roughness: 0.88,
+		roughness: 0.28,
 		metalness: 0.05,
 		gridMajor: "#83c7b8",
 		gridMinor: "#3b7471",
-		gridOpacity: 0.1,
+		gridOpacity: 0,
 	},
 	regions: {
 		tint: null,
 		signColor: null,
-		labelColor: "#e8e0c7",
+		labelColor: "#d5f8ff",
 		roughness: 0.62,
 		frame: 0.08,
 	},

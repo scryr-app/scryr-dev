@@ -77,6 +77,27 @@ test.afterEach(async ({}, info) => {
     if (info.status !== info.expectedStatus) await info.attach("server.log", { body: logs, contentType: "text/plain" });
     await rm(directory, { recursive: true, force: true });
 });
+test("fresh standalone install renders the map and ocean theme without browser errors", async ({ page, request }) => {
+    const errors: string[] = [];
+    page.on("pageerror", error => errors.push(error.message));
+    page.on("console", message => {
+        if (message.type() === "error") errors.push(message.text());
+    });
+    await launch(request);
+    await openEditor(page);
+    await expect(page.getByRole("status").filter({ hasText: "Loading…" })).toHaveCount(0);
+    await expect(page.locator("canvas").first()).toBeVisible();
+    await page.getByRole("button", { name: "Hide editor", exact: true }).click();
+    await page.getByRole("button", { name: "Choose diagram theme" }).click();
+    await page.getByRole("button", { name: /Sunken Sanctuary/ }).click();
+    await expect.poll(() => page.evaluate(() => localStorage.getItem("selectedTheme"))).toBe("SunkenSanctuary");
+    // Allow asynchronous font loads and the first full scene render to complete.
+    await page.waitForTimeout(3000);
+    await expect(page.getByText("Map render failed.", { exact: true })).toHaveCount(0);
+    await expect(page.locator("canvas").first()).toBeVisible();
+    expect(errors).toEqual([]);
+    await page.screenshot({ path: test.info().outputPath("sunken-sanctuary.png") });
+});
 test("standalone serve edits disk, refreshes fresh blocks, survives restart, and protects invalid/conflicting drafts", async ({ page, request }) => {
     await launch(request);
     await openEditor(page);
@@ -197,12 +218,10 @@ test("console controls align and the diagram menu stays above the editor", async
     const footer = panel.locator("footer");
     const runButton = footer.getByRole("button", { name: "Save and Run", exact: true });
     const reload = footer.getByRole("button", { name: "Reload source" });
-    const follow = footer.locator("label").filter({ hasText: "Follow selected block" });
     await expect(runButton).toBeVisible();
-    for (const control of [reload, follow]) {
-        await expect(control).toBeVisible();
-        expect((await control.boundingBox())?.y).toBe((await runButton.boundingBox())?.y);
-    }
+    await expect(reload).toBeVisible();
+    expect((await reload.boundingBox())?.y).toBe((await runButton.boundingBox())?.y);
+    await expect(footer.getByRole("checkbox", { name: "Follow selected block" })).toHaveCount(0);
     const hideEditor = page.getByRole("button", { name: "Hide diagram editor", exact: true });
     await hideEditor.click();
     await expect(panel).toBeHidden();

@@ -1,3 +1,4 @@
+import { Loading } from "./Loading";
 import { FileCode2, Folder, Layers } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { isLocalAuthMode } from "@/auth/env";
@@ -283,7 +284,9 @@ export function DiagramButton({ className = "" }: Props) {
 					style={{ background: "rgba(0,0,0,0.88)" }}
 				>
 					{mapsQuery.isLoading && (
-						<div className="px-4 py-2 text-[13px] text-white/45">Loading</div>
+						<div className="px-4 py-2 text-[13px] text-white/45">
+							<Loading />
+						</div>
 					)}
 					{Boolean(mapsQuery.error) && maps.length === 0 && (
 						<div className="px-4 py-2 text-[12px] text-white/45">

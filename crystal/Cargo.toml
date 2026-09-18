@@ -68,3 +68,9 @@ redundant_pub_crate = "allow"
 multiple_crate_versions = "allow"
 future_not_send = "allow"
 unused_async = "allow"
+
+# macOS 27 rejects stripped proc-macro dylibs with a misaligned LINKEDIT pool.
+# Build-time libraries are loaded by rustc and are not shipped in the CLI.
+# https://github.com/rust-lang/rust/issues/157750
+[profile.release.build-override]
+strip = "none"
