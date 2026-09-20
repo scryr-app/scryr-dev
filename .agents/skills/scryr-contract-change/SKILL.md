@@ -5,8 +5,8 @@ description: Coordinate Scryr changes to Python manifest serialization, Rust Gra
 
 # Scryr contract changes
 
-Read root/component AGENTS.md and CONTRIBUTING.md. Run `mise run verify:worktree`
-before writes. Resolve the repository root with Git; commands below run there.
+Read root/component AGENTS.md and CONTRIBUTING.md. Resolve the repository root
+with Git; commands below run there.
 
 Trace the actual producer and consumers before splitting work:
 
@@ -17,12 +17,12 @@ Trace the actual producer and consumers before splitting work:
   SDK bundle from the same Python source.
 
 State the intended field/type behavior, defaults, and compatibility for existing
-samples or stored data. Give each writing agent a dedicated worktree and explicit
-file ownership. Assign one integration owner for generation and shared files.
+samples or stored data. Give each writing agent explicit file ownership.
+Assign one integration owner for generation and shared files.
 Parallelize consumers only once their shared contract is concrete.
 
 Implement source changes and meaningful producer/consumer coverage. Integrate the
-source changes into one worktree before refreshing derived artifacts:
+source changes before refreshing derived artifacts:
 
 - `mise run contribute:generate:graphql` for GraphQL operations/types.
 - `mise run contribute:generate:manifest-types` for manifest field metadata.
@@ -31,8 +31,8 @@ source changes into one worktree before refreshing derived artifacts:
 - Crystal checks/release builds refresh the embedded SDK. Follow CONTRIBUTING.md
   on bundled assets and exclude unrelated build churn.
 
-Generation may reuse a running server on port 8000. Verify that it belongs to the
-integration worktree and includes the new schema before generating. Do not run
+Generation may reuse a running server on port 8000. Verify that it runs the
+integrated code and includes the new schema before generating. Do not run
 another default stack concurrently or terminate an unowned process.
 
 Run affected `verify:manifest`, `verify:crystal`, and `verify:map` suites during
