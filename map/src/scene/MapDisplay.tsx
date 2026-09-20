@@ -140,7 +140,7 @@ function MapEdges({ layout }: { layout: LayoutResult }) {
 }
 
 interface MapBlocksProps {
-	blocks: GraphqlBlock[];
+	blocks: GetBlocksQuery["blocks"];
 	layout: LayoutResult;
 }
 

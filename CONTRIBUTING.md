@@ -11,49 +11,6 @@ lists public commands; `internal:*` helpers are hidden from that list.
 
 ## Contribute
 
-### Parallel agents and worktrees
-
-Every new agent editing task must use a dedicated linked Git worktree. Root and
-component `AGENTS.md` files define ownership and validation; the repository skill
-in `.agents/skills/scryr-contract-change/SKILL.md` covers cross-component changes.
-Commit this setup before creating task worktrees so they inherit the guidance.
-
-From the primary checkout, create a task branch and checkout (choose a unique
-task name and an available destination):
-
-```bash
-git worktree add -b agent/my-task ../scryr-my-task HEAD
-cd ../scryr-my-task
-mise trust
-mise install
-mise run contribute:setup
-mise run contribute:agent
-```
-
-`contribute:agent` checks the checkout before launching interactive Codex and
-refuses to launch in the primary checkout. `mise run verify:worktree` is the same
-preflight for app sessions: select Worktree mode, then run it before editing.
-Detached linked worktrees created by the app are accepted. CLI use requires
-Codex installed separately. Read-only review may use the primary checkout.
-
-Give each writing agent its own worktree and task; read-only helpers may share
-one. Worktrees start from committed code, so uncommitted edits in another checkout
-are not included. Integrate prerequisite contracts before assigning dependent
-work. Keep task worktrees until their changes are reviewed and integrated.
-
-The launcher enforces its own entry point. `AGENTS.md` is agent guidance, not a
-filesystem security boundary: direct launches or editing tools can bypass it.
-For strict enforcement, provision an agent environment where only its linked
-worktree is writable and the primary checkout is read-only. Git hooks and CI
-cannot prevent arbitrary file edits; CI checkouts therefore do not run the local
-worktree preflight as part of `verify`.
-
-Development tasks currently fix API/UI ports at 8000/3000, including GraphQL
-generation's temporary server. Run one default stack at a time, and verify its
-revision before code generation. Per-worktree `.cache` state is isolated; do not
-symlink databases between worktrees. Personal ignored configuration is not copied
-automatically. Keep cloud credentials out of task instructions and commits.
-
 ### Local setup
 
 Install [mise](https://mise.jdx.dev/getting-started.html), then:
