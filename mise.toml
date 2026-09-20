@@ -301,37 +301,14 @@ PYTHON
 '''
 
 [tasks."contribute:generate:graphql"]
-description = "Generate frontend GraphQL types from the local server"
+description = "Generate the canonical GraphQL schema and frontend contracts"
 dir = "{{config_root}}"
-run = '''
-#!/usr/bin/env bash
-set -eu
-token="${SCRYR_API_TOKEN:-windrunner}"
+run = ["mise run contribute:generate:graphql-schema", "mise run internal:generate:map"]
 
-if ! curl --silent --show-error --fail \
-  -H "x-scryr-token: ${token}" \
-  -H "content-type: application/json" \
-  --data '{"query":"query { __typename }"}' \
-  http://127.0.0.1:8000/graphql >/dev/null; then
-  (
-    HOST=127.0.0.1 PORT=8000 AUTH_MODE=local mise run internal:contribute:oss:serve
-  ) >/tmp/scryr-codegen-server.log 2>&1 &
-  server_pid=$!
-  trap 'kill "${server_pid}" 2>/dev/null || true' EXIT
-
-  curl --silent --show-error --fail \
-    --retry 40 \
-    --retry-all-errors \
-    --retry-connrefused \
-    --retry-delay 1 \
-    -H "x-scryr-token: ${token}" \
-    -H "content-type: application/json" \
-    --data '{"query":"query { __typename }"}' \
-    http://127.0.0.1:8000/graphql >/dev/null
-fi
-
-mise run internal:generate:map
-'''
+[tasks."contribute:generate:graphql-schema"]
+description = "Generate the canonical GraphQL SDL from the Rust schema"
+dir = "{{config_root}}"
+run = "SCRYR_UPDATE_GRAPHQL_SCHEMA=1 cargo test --locked --manifest-path crystal/Cargo.toml -p crystal-server --lib graphql_schema_matches_snapshot"
 
 [tasks."contribute:generate:manifest-types"]
 description = "Generate manifest field type metadata via the Scryr CLI"
@@ -589,6 +566,7 @@ dir = "{{config_root}}"
 run = [
     "cargo test --locked --manifest-path crystal/Cargo.toml -p crystal-core --tests",
     "cargo test --locked --manifest-path crystal/Cargo.toml -p crystal-cli --test cli",
+    "cargo test --locked --manifest-path crystal/Cargo.toml -p crystal-cli --test native_polling",
 ]
 
 [tasks."verify:test:integration:manifest"]

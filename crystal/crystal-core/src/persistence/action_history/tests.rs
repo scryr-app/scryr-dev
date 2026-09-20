@@ -231,3 +231,175 @@ async fn job_snapshot_enriches_a_run_and_retries_are_idempotent()
     assert_eq!(history.runs[0].jobs.as_ref().map(Vec::len), Some(1));
     Ok(())
 }
+
+#[tokio::test]
+async fn api_polls_enrich_jobs_and_workflow_path_without_new_transitions()
+-> Result<(), Box<dyn std::error::Error>> {
+    let sqlite = sqlx::sqlite::SqlitePoolOptions::new()
+        .max_connections(1)
+        .connect("sqlite::memory:")
+        .await?;
+    let pool = DatabasePool::Sqlite(sqlite.clone());
+    let context = principal("org");
+    let mut active = run("in_progress", "2026-09-08T10:01:00Z", 1)?;
+    active.jobs = Some(serde_json::from_value(serde_json::json!([{
+        "id":99, "name":"tests", "status":"queued", "conclusion":null,
+        "startedAt":null, "completedAt":null,
+        "htmlUrl":"https://github.com/example/api/actions/runs/12345/jobs/99"
+    }]))?);
+    assert!(record_action_run(&pool, &context, "api", active.clone(), None, "api").await?);
+    let stale = active.clone();
+    active.updated_at = "2026-09-08T10:02:00Z".parse()?;
+    if let Some(jobs) = &mut active.jobs {
+        jobs[0].status = "in_progress".into();
+    }
+    assert!(record_action_run(&pool, &context, "api", active.clone(), None, "api").await?);
+    assert!(!record_action_run(&pool, &context, "api", active.clone(), None, "api").await?);
+    assert!(!record_action_run(&pool, &context, "api", stale, None, "api").await?);
+    let current = read_action_history(&pool, "org", "api", 100, 0).await?;
+    assert_eq!(current.runs[0].events.len(), 1);
+    assert_eq!(current.runs[0].updated_at, active.updated_at);
+    assert_eq!(
+        current.runs[0]
+            .jobs
+            .as_ref()
+            .map(|jobs| jobs[0].status.as_str()),
+        Some("in_progress")
+    );
+    active.workflow_path = Some(".github/workflows/ci.yml".into());
+    assert!(record_action_run(&pool, &context, "api", active.clone(), None, "api").await?);
+    assert!(!record_action_run(&pool, &context, "api", active, None, "api").await?);
+    let enriched = read_action_history(&pool, "org", "api", 100, 0).await?;
+    assert_eq!(
+        enriched.runs[0].workflow_path.as_deref(),
+        Some(".github/workflows/ci.yml")
+    );
+    assert_eq!(enriched.runs[0].events.len(), 1);
+    assert!(
+        record_action_run(
+            &pool,
+            &context,
+            "api",
+            run("completed", "2026-09-08T10:03:00Z", 1)?,
+            None,
+            "api"
+        )
+        .await?
+    );
+    let complete = read_action_history(&pool, "org", "api", 100, 0).await?;
+    assert_eq!(complete.runs[0].events.len(), 2);
+    assert_eq!(
+        complete.runs[0].workflow_path.as_deref(),
+        Some(".github/workflows/ci.yml")
+    );
+    assert!(complete.runs[0].jobs.is_some());
+    assert_eq!(
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM manifest_action_events")
+            .fetch_one(&sqlite)
+            .await?,
+        2
+    );
+    Ok(())
+}
+
+#[test]
+fn summaries_preserve_each_workflows_latest_outcome() -> Result<(), Box<dyn std::error::Error>> {
+    let mut failing = run("completed", "2026-09-08T10:01:00Z", 1)?;
+    failing.conclusion = Some("failure".into());
+    assert!(failing.workflow_path.is_none());
+    assert!(
+        serde_json::to_value(&failing)?
+            .get("workflowPath")
+            .is_none()
+    );
+    let mut passing = failing.clone();
+    passing.workflow_id = 99;
+    passing.run_id += 1;
+    passing.conclusion = Some("success".into());
+    let mut log = GithubActionsLog::default();
+    log.merge(failing.clone());
+    log.merge(passing.clone());
+    assert_eq!(log.build_status(), Some("failing"));
+    failing.run_attempt = 2;
+    failing.status = "in_progress".into();
+    failing.conclusion = None;
+    log.merge(failing.clone());
+    assert_eq!(log.build_status(), Some("pending"));
+    failing.status = "completed".into();
+    failing.conclusion = Some("cancelled".into());
+    log.merge(failing.clone());
+    assert_eq!(log.build_status(), None);
+    failing.run_attempt = 3;
+    failing.conclusion = Some("success".into());
+    log.merge(failing.clone());
+    assert_eq!(log.build_status(), Some("passing"));
+    failing.head_branch = Some("other".into());
+    failing.run_id += 2;
+    failing.conclusion = Some("failure".into());
+    log.merge(failing);
+    assert_eq!(log.build_status(), Some("failing"));
+    passing.host = "enterprise.example".into();
+    passing.conclusion = Some("failure".into());
+    log.merge(passing);
+    assert_eq!(log.build_status(), Some("failing"));
+    Ok(())
+}
+
+#[tokio::test]
+async fn api_snapshot_times_compare_fractional_seconds_chronologically()
+-> Result<(), Box<dyn std::error::Error>> {
+    let sqlite = sqlx::sqlite::SqlitePoolOptions::new()
+        .max_connections(1)
+        .connect("sqlite::memory:")
+        .await?;
+    let pool = DatabasePool::Sqlite(sqlite);
+    let context = principal("org");
+    // Old records use variable-width UTC fractions. Exercise every supported
+    // width plus nanosecond changes that SQLite datetime functions would round.
+    for (index, (before, after)) in [
+        ("2026-09-08T10:01:00Z", "2026-09-08T10:01:00.500Z"),
+        ("2026-09-08T10:01:00.500Z", "2026-09-08T10:01:00.500001Z"),
+        (
+            "2026-09-08T10:01:00.500001Z",
+            "2026-09-08T10:01:00.500001001Z",
+        ),
+        (
+            "2026-09-08T10:01:00.500001001Z",
+            "2026-09-08T10:01:00.500001002Z",
+        ),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let manifest = format!("api/{index}");
+        let mut observation = run("in_progress", before, 1)?;
+        observation.jobs = Some(Vec::new());
+        assert!(
+            record_action_run(&pool, &context, &manifest, observation.clone(), None, "api").await?
+        );
+        let stale = observation.clone();
+        observation.updated_at = after.parse()?;
+        observation.jobs = Some(serde_json::from_value(serde_json::json!([{
+            "id":99, "name":"tests", "status":"in_progress", "conclusion":null,
+            "startedAt":null, "completedAt":null,
+            "htmlUrl":"https://github.com/example/api/actions/runs/12345/jobs/99"
+        }]))?);
+        assert!(
+            record_action_run(&pool, &context, &manifest, observation.clone(), None, "api").await?
+        );
+        assert!(!record_action_run(&pool, &context, &manifest, stale.clone(), None, "api").await?);
+        // An older path-only enrichment must preserve the newer time and jobs.
+        let mut older_metadata = stale;
+        older_metadata.workflow_path = Some(".github/workflows/ci.yml".into());
+        assert!(record_action_run(&pool, &context, &manifest, older_metadata, None, "api").await?);
+        let history = read_action_history(&pool, "org", &manifest, 100, 0).await?;
+        assert_eq!(history.runs[0].updated_at, observation.updated_at);
+        assert_eq!(history.runs[0].jobs.as_ref().map(Vec::len), Some(1));
+        assert_eq!(
+            history.runs[0].workflow_path.as_deref(),
+            Some(".github/workflows/ci.yml")
+        );
+        assert_eq!(history.runs[0].events.len(), 1);
+    }
+    Ok(())
+}

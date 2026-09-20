@@ -4,7 +4,7 @@ use crystal_core::action_history::GithubActionRun;
 use serde_json::{Value, json};
 
 /// Parse GitHub's event into the existing validated wire model.
-fn observation(event: &Value) -> Result<GithubActionRun, String> {
+pub(super) fn observation(event: &Value) -> Result<GithubActionRun, String> {
     let run = event
         .get("workflow_run")
         .ok_or("expected a workflow_run event")?;
@@ -14,6 +14,7 @@ fn observation(event: &Value) -> Result<GithubActionRun, String> {
     let mapped = json!({
         "host": url.host_str(), "repositoryId": repo["id"],
         "repository": repo["full_name"], "workflowId": run["workflow_id"],
+        "workflowPath": run.get("path").filter(|value| value.is_string()).or_else(|| event["workflow"].get("path")),
         "workflowName": run["name"], "runId": run["id"],
         "runAttempt": run["run_attempt"], "headBranch": run["head_branch"],
         "headSha": run["head_sha"], "htmlUrl": run["html_url"],
@@ -88,9 +89,10 @@ async fn branch(
         .ok_or_else(|| "missing repository default branch".into())
 }
 
-/// Send one observation through Crystal's authenticated history mutation.
-pub(crate) async fn run(args: &ReportArgs) -> Result<(), String> {
+/// Apply declaration defaults while preserving explicit command-line overrides.
+fn configured(args: &ReportArgs) -> Result<(ReportArgs, Vec<String>), String> {
     let mut resolved = args.clone();
+    let mut workflow_files = Vec::new();
     if let Some((manifest, root)) = super::report_config::resolve(&args.source, &args.manifest_id)?
     {
         manifest["manifestId"]
@@ -98,6 +100,15 @@ pub(crate) async fn run(args: &ReportArgs) -> Result<(), String> {
             .ok_or("Missing manifest ID")?
             .clone_into(&mut resolved.manifest_id);
         let source = &manifest["cicd"]["source"];
+        if args.workflow_id.is_none() {
+            workflow_files = source["workflows"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter_map(Value::as_str)
+                .map(str::to_owned)
+                .collect();
+        }
         if resolved.jobs_file.is_none() {
             resolved.jobs_file = source["jobs_file"].as_str().map(|p| root.join(p));
         }
@@ -108,6 +119,12 @@ pub(crate) async fn run(args: &ReportArgs) -> Result<(), String> {
             resolved.branch = source["branch"].as_str().map(str::to_owned);
         }
     }
+    Ok((resolved, workflow_files))
+}
+
+/// Send one observation through Crystal's authenticated history mutation.
+pub(crate) async fn run(args: &ReportArgs) -> Result<(), String> {
+    let (resolved, workflow_files) = configured(args)?;
     let args = &resolved;
     crystal_core::reports::validate_manifest_id(&args.manifest_id)?;
     let event: Value = serde_json::from_slice(
@@ -115,6 +132,10 @@ pub(crate) async fn run(args: &ReportArgs) -> Result<(), String> {
     )
     .map_err(|error| error.to_string())?;
     let mut observation = observation(&event)?;
+    if !matches_workflow_files(&event, &workflow_files)? {
+        println!("Skipped unmatched workflow");
+        return Ok(());
+    }
     if let Some(file) = &args.jobs_file {
         let payload: Value =
             serde_json::from_slice(&std::fs::read(file).map_err(|e| e.to_string())?)
@@ -187,6 +208,22 @@ pub(crate) async fn run(args: &ReportArgs) -> Result<(), String> {
     Ok(())
 }
 
+/// Filename selectors retain the filtering behavior of numeric workflow selectors.
+fn matches_workflow_files(event: &Value, files: &[String]) -> Result<bool, String> {
+    if files.is_empty() {
+        return Ok(true);
+    }
+    let path = event["workflow_run"]["path"]
+        .as_str()
+        .or_else(|| event["workflow"]["path"].as_str())
+        .ok_or(
+            "Workflow filename selection requires workflow_run.path or workflow.path in the event",
+        )?;
+    Ok(files
+        .iter()
+        .any(|file| path == format!(".github/workflows/{file}")))
+}
+
 /// Share environment credentials and cached CLI login across reporters.
 pub(super) async fn reporting_token(target: &str) -> Result<Option<String>, String> {
     if let Ok(token) = std::env::var("SCRYR_TOKEN") {
@@ -200,7 +237,7 @@ pub(super) async fn reporting_token(target: &str) -> Result<Option<String>, Stri
 }
 
 /// Attach a complete, correctly scoped GitHub jobs response.
-fn attach_jobs(run: &mut GithubActionRun, payload: &Value) -> Result<(), String> {
+pub(super) fn attach_jobs(run: &mut GithubActionRun, payload: &Value) -> Result<(), String> {
     let jobs = payload["jobs"]
         .as_array()
         .ok_or("jobs file must contain a GitHub jobs response")?;
@@ -226,6 +263,26 @@ fn attach_jobs(run: &mut GithubActionRun, payload: &Value) -> Result<(), String>
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn event_filename_selection_does_not_accept_unrelated_workflows() -> Result<(), String> {
+        let files = vec!["ci.yml".into()];
+        assert!(matches_workflow_files(
+            &json!({"workflow_run":{"path":".github/workflows/ci.yml"}}),
+            &files
+        )?);
+        assert!(matches_workflow_files(
+            &json!({"workflow":{"path":".github/workflows/ci.yml"}}),
+            &files
+        )?);
+        assert!(!matches_workflow_files(
+            &json!({"workflow_run":{"path":".github/workflows/uptime.yml"}}),
+            &files
+        )?);
+        assert!(matches_workflow_files(&json!({}), &files).is_err());
+        assert!(matches_workflow_files(&json!({}), &[])?);
+        Ok(())
+    }
 
     #[test]
     fn parses_workflow_event_and_summarizes_latest_build() -> Result<(), String> {
