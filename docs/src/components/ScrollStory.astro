@@ -41,7 +41,7 @@ commerce = Diagram(
           <li>Open a sample architecture in the hosted app.</li>
           <li>Edit the sample to make it your own.</li>
         </ul>
-        <a class="spell-button" href="https://scryr.app">Log in to Scryr <span aria-hidden="true">↗</span></a>
+        <a class="spell-button" href="https://scryr.app" data-start-path="cloud">Log in to Scryr <span aria-hidden="true">↗</span></a>
       </article>
       <article class="quick-start-card" aria-labelledby="local-start-title">
         <p class="eyebrow">Open source (OSS)</p>
@@ -51,7 +51,7 @@ commerce = Diagram(
           <li>Copy the small <code>index.scry</code> example into an empty folder.</li>
           <li>Run <code>scryr serve</code>, then add Scryr to a repository when you are ready.</li>
         </ul>
-        <a class="spell-button" href="/getting-started/">Start locally <span aria-hidden="true">↗</span></a>
+        <a class="spell-button" href="/getting-started/" data-start-path="local">Start locally <span aria-hidden="true">↗</span></a>
       </article>
     </div>
   </section>
@@ -120,6 +120,17 @@ commerce = Diagram(
     </div>
   </section>
 </div>
+
+<script is:inline>
+  document.querySelectorAll('[data-start-path]').forEach((link) => {
+    link.addEventListener('click', () => {
+      window.posthog?.capture('quick_start_selected', {
+        start_path: link.getAttribute('data-start-path'),
+        placement: 'landing_quick_start',
+      });
+    });
+  });
+</script>
 
 <script>
   import { initStory } from '../scripts/story';
