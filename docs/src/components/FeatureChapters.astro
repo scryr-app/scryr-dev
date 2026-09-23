@@ -115,6 +115,17 @@ local = Forge(
 
 <div class="chapter-divider" aria-hidden="true"></div>
 
+<script is:inline>
+  document.querySelectorAll('.feature-chapter .chapter-link').forEach((link) => {
+    link.addEventListener('click', () => {
+      window.posthog?.capture('documentation_cta_clicked', {
+        feature_section: link.closest('.feature-chapter')?.id,
+        destination_path: link.getAttribute('href'),
+      });
+    });
+  });
+</script>
+
 <style is:global>
   .scryr-story .feature-chapter { padding-block: clamp(7rem, 14vw, 12rem); border-top: 1px solid #b889d922; background: radial-gradient(ellipse at 65% 45%, #66438518, transparent 70%); }
   .scryr-story .feature-chapter .chapter-heading::after { content: ''; display: block; width: 7rem; height: 1px; margin: 2.5rem auto 0; background: linear-gradient(90deg, transparent, var(--gold), transparent); }

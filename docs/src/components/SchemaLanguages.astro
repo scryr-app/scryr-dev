@@ -13,12 +13,21 @@ const languages = [
 ---
 <nav class:list={['schema-languages', { 'schema-languages-overview': overview }]} aria-label="Code generation by language">
   {languages.map(language => (
-    <a href={`${overview ? '/code-generation/' : ''}#${language.id}`}>
+    <a href={`${overview ? '/code-generation/' : ''}#${language.id}`} data-schema-language={language.id}>
       <span class="language-logo"><img src={`/assets/languages/${language.icon}.svg`} width="40" height="40" alt="" loading="lazy" /></span>
       <span><strong>{language.name}</strong>{overview && <span class="language-purpose">{language.sentence}</span>}</span>
     </a>
   ))}
 </nav>
+<script is:inline>
+  document.querySelectorAll('[data-schema-language]').forEach((link) => {
+    link.addEventListener('click', () => {
+      window.posthog?.capture('schema_language_selected', {
+        language: link.getAttribute('data-schema-language'),
+      });
+    });
+  });
+</script>
 <style>
   .schema-languages { display:flex;flex-wrap:wrap;gap:.75rem;margin-block:1.75rem 2.5rem; }
   .schema-languages a { display:flex;flex-direction:column;align-items:center;gap:.65rem;min-width:5.5rem;padding:.85rem;color:var(--sl-color-text-accent, #e7c77c);text-decoration:none;border-radius:.6rem;background:#b889d90b; }
