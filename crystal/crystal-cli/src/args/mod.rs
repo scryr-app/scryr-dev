@@ -8,6 +8,8 @@ mod report;
 pub(crate) use report::ReportArgs;
 mod generate;
 mod serve;
+mod sync;
+pub(crate) use sync::{GithubSyncArgs, SyncArgs, SyncCommand};
 mod workflow;
 pub(crate) use generate::{GenerateCommonArgs, resolve_generate_request};
 pub(crate) use workflow::*;
@@ -50,6 +52,8 @@ pub(crate) enum Command {
     Report(Box<ReportsArgs>),
     /// Run a named query declared in index.scry.
     Query(QueryArgs),
+    /// Collect current data from declared providers.
+    Sync(SyncArgs),
     /// Export JSON or Forge configuration.
     Export(ExportArgs),
     /// Inspect model schemas and runtime type metadata.
@@ -79,6 +83,8 @@ pub(crate) enum ResolvedCommand {
     Inspect(InspectArgs),
     /// Run a named query declared in index.scry.
     Query(QueryArgs),
+    /// Collect current data from declared providers.
+    Sync(SyncArgs),
     /// Apply database schema migrations without starting the HTTP server.
     Migrate,
     /// Report operational results.
@@ -99,6 +105,7 @@ impl Args {
                 Command::Export(args) => ResolvedCommand::Export(args),
                 Command::Inspect(args) => ResolvedCommand::Inspect(args),
                 Command::Query(args) => ResolvedCommand::Query(args),
+                Command::Sync(args) => ResolvedCommand::Sync(args),
                 Command::Report(args) => ResolvedCommand::Report(args),
                 Command::Migrate => ResolvedCommand::Migrate,
                 Command::Serve(args) => ResolvedCommand::Serve(args),
@@ -107,7 +114,7 @@ impl Args {
         }
 
         Err(
-            "missing command: use `check`, `format`, `lint`, `push`, `serve`, `report`, or `query`"
+            "missing command: use `check`, `format`, `lint`, `push`, `serve`, `sync`, `report`, or `query`"
                 .to_string(),
         )
     }
@@ -119,6 +126,61 @@ mod tests {
     use clap::Parser;
     use crystal_server::state::AuthMode;
     use std::path::PathBuf;
+
+    #[test]
+    fn poll_defaults_and_inclusive_bounds() -> Result<(), String> {
+        for (options, seconds) in [
+            (vec!["scryr", "serve"], 300),
+            (vec!["scryr", "serve", "--poll"], 300),
+            (vec!["scryr", "serve", "--poll", "15"], 15),
+            (vec!["scryr", "serve", "--poll", "3600"], 3600),
+            (vec!["scryr", "serve", "--poll=60", "--watch"], 60),
+        ] {
+            let args = Args::try_parse_from(options).map_err(|e| e.to_string())?;
+            let ResolvedCommand::Serve(args) = args.resolved_command()? else {
+                return Err("Expected serve".into());
+            };
+            assert_eq!(args.poll, seconds);
+        }
+        for value in [
+            "0",
+            "14",
+            "3601",
+            "-1",
+            "1.5",
+            "hello",
+            "18446744073709551616",
+        ] {
+            assert!(
+                Args::try_parse_from(["scryr", "serve", "--poll", value]).is_err(),
+                "{value}"
+            );
+        }
+        assert!(Args::try_parse_from(["scryr", "serve", "--server-only"]).is_ok());
+        assert!(Args::try_parse_from(["scryr", "serve", "--no-poll"]).is_ok());
+        assert!(
+            Args::try_parse_from(["scryr", "serve", "--server-only", "--poll", "300"]).is_err()
+        );
+        assert!(Args::try_parse_from(["scryr", "serve", "--no-poll", "--poll", "300"]).is_err());
+        Ok(())
+    }
+
+    #[test]
+    fn sync_accepts_native_source_and_destination_options() {
+        assert!(
+            Args::try_parse_from([
+                "scryr",
+                "sync",
+                "github",
+                "--manifest",
+                "services/api",
+                "--endpoint",
+                "http://127.0.0.1:8001/graphql",
+                "--json"
+            ])
+            .is_ok()
+        );
+    }
 
     #[test]
     fn push_command_accepts_command_local_scryr_dir() -> Result<(), String> {

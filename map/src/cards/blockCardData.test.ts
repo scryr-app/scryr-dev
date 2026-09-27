@@ -60,10 +60,31 @@ describe("reported card data", () => {
 				},
 			}),
 		);
+		expect(data.github.buildStatus).toBe("passing");
 		expect(data.cicd).toMatchObject({
 			platform: "github_actions",
 			buildStatus: "passing",
 			lastBuild: "2026-09-08T10:02:00Z",
 		});
+	});
+	it("uses current Actions results over a stale repository build status", () => {
+		const data = getBlockCardData(
+			block({
+				github: { buildStatus: "passing" },
+				cicd: { platform: "github_actions", buildStatus: "failing" },
+			}),
+		);
+		expect(data.github.buildStatus).toBe("failing");
+	});
+	it("preserves explicit repository results without treating other CI as GitHub", () => {
+		expect(
+			getBlockCardData(block({ github: { buildStatus: "pending" } })).github
+				.buildStatus,
+		).toBe("pending");
+		expect(
+			getBlockCardData(
+				block({ cicd: { platform: "jenkins", buildStatus: "passing" } }),
+			).github.buildStatus,
+		).toBeUndefined();
 	});
 });

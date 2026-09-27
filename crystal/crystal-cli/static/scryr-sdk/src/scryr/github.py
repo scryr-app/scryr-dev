@@ -93,6 +93,7 @@ class GithubActionRun(_ActionModel):
     repository: str = Field(pattern=r"^[^/\s]+/[^/\s]+$")
     workflow_id: int = Field(gt=0)
     workflow_name: str
+    workflow_path: str | None = Field(default=None, exclude_if=lambda value: value is None)
     run_id: int = Field(gt=0)
     run_attempt: int = Field(default=1, gt=0)
     head_branch: str | None = None
@@ -136,6 +137,7 @@ class GithubActionRun(_ActionModel):
             repository=repository["full_name"],
             workflow_id=run["workflow_id"],
             workflow_name=run.get("name") or "",
+            workflow_path=run.get("path") or (payload.get("workflow") or {}).get("path"),
             run_id=run["id"],
             run_attempt=run.get("run_attempt", 1),
             head_branch=run.get("head_branch"),
@@ -188,7 +190,7 @@ class GithubActionsLog(_ActionModel):
         source: ActionSource = "api",
         recorded_at: datetime | None = None,
     ) -> bool:
-        """Record a new observation; return False for a duplicate or unchanged poll."""
+        """Record an observation or enriched snapshot; ignore unchanged polls."""
         event = run.observation(event_id=event_id, source=source, recorded_at=recorded_at)
         current = next((item for item in self.runs if item.identity == run.identity), None)
         if current is None:
@@ -198,14 +200,26 @@ class GithubActionsLog(_ActionModel):
         else:
             if not current.events:
                 current.events = [current.observation(source="manual")]
+            enriched = False
+            if (
+                run.updated_at >= current.updated_at
+                and run.jobs is not None
+                and run.jobs != current.jobs
+            ):
+                current.jobs = [job.model_copy(deep=True) for job in run.jobs]
+                current.updated_at = run.updated_at
+                enriched = True
+            if run.workflow_path is not None and run.workflow_path != current.workflow_path:
+                current.workflow_path = run.workflow_path
+                enriched = True
             if any(item.event_id == event.event_id for item in current.events):
-                return False
+                return enriched
             if any(
                 (item.status, item.conclusion, item.source_updated_at)
                 == (event.status, event.conclusion, event.source_updated_at)
                 for item in current.events
             ):
-                return False
+                return enriched
             latest = max(current.events, key=lambda item: item.order_key, default=None)
             if (
                 source == "api"
@@ -215,7 +229,7 @@ class GithubActionsLog(_ActionModel):
                     and (latest.status, latest.conclusion) == (event.status, event.conclusion)
                 )
             ):
-                return False
+                return enriched
             current.events.append(event)
             current.events.sort(key=lambda item: item.order_key)
             winner = max(current.events, key=lambda item: item.order_key)
@@ -224,6 +238,8 @@ class GithubActionsLog(_ActionModel):
                 replacement.events = current.events
                 if replacement.jobs is None:
                     replacement.jobs = current.jobs
+                if replacement.workflow_path is None:
+                    replacement.workflow_path = current.workflow_path
                 self.runs[self.runs.index(current)] = replacement
         self.runs.sort(
             key=lambda item: (item.created_at, item.run_id, item.run_attempt), reverse=True
@@ -238,7 +254,7 @@ class GithubActionsLog(_ActionModel):
         branch: str | None = None,
         host: str = "github.com",
     ) -> Literal["passing", "failing", "pending"] | None:
-        """Summarize the latest matching observed build; cancellations have no summary."""
+        """Combine latest matching workflows, prioritizing failures over pending or success."""
         candidates = [
             run
             for run in self.runs
@@ -249,13 +265,23 @@ class GithubActionsLog(_ActionModel):
                 and (branch is None or run.head_branch == branch)
             )
         ]
-        if not candidates:
-            return None
-        latest = max(candidates, key=lambda run: (run.created_at, run.run_id, run.run_attempt))
-        if latest.status != "completed":
-            return "pending"
-        if latest.conclusion == "success":
-            return "passing"
-        if latest.conclusion in {"failure", "timed_out", "action_required", "startup_failure"}:
+        latest: dict[tuple[str, int, int, str | None], GithubActionRun] = {}
+        for run in candidates:
+            key = (run.host.lower(), run.repository_id, run.workflow_id, run.head_branch)
+            current = latest.get(key)
+            if current is None or (run.created_at, run.run_id, run.run_attempt) > (
+                current.created_at,
+                current.run_id,
+                current.run_attempt,
+            ):
+                latest[key] = run
+        if any(
+            run.conclusion in {"failure", "timed_out", "action_required", "startup_failure"}
+            for run in latest.values()
+        ):
             return "failing"
-        return None
+        if any(run.status != "completed" for run in latest.values()):
+            return "pending"
+        if not latest or any(run.conclusion != "success" for run in latest.values()):
+            return None
+        return "passing"

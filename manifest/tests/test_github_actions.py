@@ -271,3 +271,77 @@ def test_browser_history_matches_sdk() -> None:
             recorded_at=recorded_at,
         ) == sdk.record(GithubActionRun.from_github(observation), recorded_at=recorded_at)
     assert browser.to_dict() == sdk.model_dump(mode="json")
+
+
+def test_workflow_paths_are_optional_and_preserved_during_enrichment() -> None:
+    """Old history is readable, and native metadata enrichment adds no transition."""
+    old = GithubActionRun.from_github(payload())
+    assert old.workflow_path is None
+    assert "workflowPath" not in old.model_dump()
+    enriched = GithubActionRun.from_github(payload(path=".github/workflows/ci.yml"))
+    assert enriched.model_dump()["workflowPath"] == ".github/workflows/ci.yml"
+    fallback = GithubActionRun.from_github(
+        {"workflow_run": payload(), "workflow": {"path": ".github/workflows/ci.yml"}}
+    )
+    assert fallback.workflow_path == enriched.workflow_path
+    log = GithubActionsLog()
+    assert log.record(old)
+    assert log.record(enriched)
+    assert not log.record(enriched)
+    assert len(log.runs[0].events) == 1
+    assert log.runs[0].workflow_path == enriched.workflow_path
+    assert log.record(GithubActionRun.from_github(payload(status="in_progress")))
+    assert log.runs[0].workflow_path == enriched.workflow_path
+
+
+def test_build_summary_combines_latest_workflow_attempts() -> None:
+    """A later passing workflow cannot conceal another selected workflow's failure."""
+    log = GithubActionsLog()
+    assert log.build_status(repository="example/api") is None
+    assert log.record(
+        GithubActionRun.from_github(payload(status="completed", conclusion="failure"))
+    )
+    assert log.record(
+        GithubActionRun.from_github(
+            payload(id=12346, workflow_id=43, status="completed", conclusion="success")
+        )
+    )
+    assert log.build_status(repository="example/api") == "failing"
+    assert log.build_status(repository="example/api", workflow_id=43) == "passing"
+    assert log.record(GithubActionRun.from_github(payload(run_attempt=2, status="in_progress")))
+    assert log.build_status(repository="example/api") == "pending"
+    assert log.record(
+        GithubActionRun.from_github(
+            payload(run_attempt=2, status="completed", conclusion="cancelled")
+        )
+    )
+    assert log.build_status(repository="example/api") is None
+    assert log.record(
+        GithubActionRun.from_github(
+            payload(run_attempt=3, status="completed", conclusion="success")
+        )
+    )
+    assert log.build_status(repository="example/api") == "passing"
+
+
+def test_unchanged_api_run_accepts_new_job_snapshot() -> None:
+    """Job changes enrich a running workflow without appending fake transitions."""
+    from scryr.github import GithubActionJob
+
+    active = GithubActionRun.from_github(payload(status="in_progress"))
+    active.jobs = [
+        GithubActionJob(
+            id=1, name="Tests", status="queued", html_url="https://github.com/example/api/jobs/1"
+        )
+    ]
+    log = GithubActionsLog()
+    assert log.record(active)
+    next_poll = active.model_copy(deep=True)
+    next_poll.updated_at = datetime(2026, 9, 8, 10, 1, tzinfo=UTC)
+    assert next_poll.jobs is not None
+    next_poll.jobs[0].status = "in_progress"
+    assert log.record(next_poll)
+    assert not log.record(next_poll)
+    assert not log.record(active)
+    assert len(log.runs[0].events) == 1
+    assert log.runs[0].jobs == next_poll.jobs

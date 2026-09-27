@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping, Sequence
 from enum import Enum
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, Never, override
@@ -400,12 +401,46 @@ class TestReportSource(BaseModel):
 
 
 class ActionsReportSource(BaseModel):
-    """Workflow selection for scryr report actions."""
+    """Workflow selection for GitHub polling and scryr report actions."""
 
     model_config = ConfigDict(extra="forbid")
     workflow_id: int | None = Field(default=None, gt=0)
+    workflows: list[str] = Field(
+        default_factory=list,
+        description="Workflow filenames, such as ci.yml; mutually exclusive with workflow_id",
+    )
     jobs_file: str | None = None
     branch: str | None = None
+
+    @field_validator("workflows")
+    @classmethod
+    def validate_workflows(cls, workflows: list[str]) -> list[str]:
+        """Accept workflow filenames without paths or URL query components."""
+        for workflow in workflows:
+            if (
+                ".." in workflow
+                or re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9_.-]*\.ya?ml", workflow) is None
+            ):
+                msg = "workflows must contain plain .yml or .yaml filenames, such as ci.yml"
+                raise ValueError(msg)
+        return workflows
+
+    @field_validator("branch")
+    @classmethod
+    def validate_branch(cls, branch: str | None) -> str | None:
+        """An omitted branch selects the repository default; an empty one is invalid."""
+        if branch is not None and not branch.strip():
+            msg = "branch must be nonempty when provided"
+            raise ValueError(msg)
+        return branch
+
+    @model_validator(mode="after")
+    def validate_workflow_selection(self) -> ActionsReportSource:
+        """Keep numeric and filename selectors unambiguous."""
+        if self.workflow_id is not None and self.workflows:
+            msg = "workflow_id and workflows are mutually exclusive"
+            raise ValueError(msg)
+        return self
 
 
 class CICD(_Section):
@@ -521,8 +556,30 @@ class Tests(_Section):
     )
 
 
+class GithubDependencySource(BaseModel):
+    """Collect repository-wide SBOM and Dependabot data on GitHub's default branch."""
+
+    model_config = ConfigDict(extra="forbid")
+    provider: Literal["github"] = "github"
+    inventory: bool = True
+    security: bool = True
+
+    @model_validator(mode="after")
+    def validate_sections(self) -> GithubDependencySource:
+        """An explicit source must enable at least one dependency evidence section."""
+        if not self.inventory and not self.security:
+            msg = "GitHub dependency collection requires inventory or security"
+            raise ValueError(msg)
+        return self
+
+
 class Dependencies(_Section):
     """Manifest section for Dependencies data."""
+
+    source: GithubDependencySource | None = Field(
+        default=None,
+        description="Opt-in repository-wide GitHub collection, not per-component package ownership",
+    )
 
     reports: dict[str, Any] | None = Field(
         default=None, description="Current durable reports by kind and scope"

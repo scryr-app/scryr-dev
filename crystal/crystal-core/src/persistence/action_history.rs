@@ -25,21 +25,44 @@ CREATE TABLE IF NOT EXISTS manifest_action_events (
     UNIQUE (clerk_org_id, manifest_id, run_key, status, conclusion, source_updated_at)
 )";
 
+// Reuse the latest event key for unchanged API polls so enrichment updates the
+// snapshot atomically without inventing an additional workflow transition.
+// Shared models serialize UTC timestamps with 0, 3, 6, or 9 fractional digits.
+// Pad legacy JSON timestamps to nanoseconds before comparison; SQLite datetime
+// functions round away submillisecond precision. Parameter ?7 is already padded.
 const INSERT_EVENT: &str = r"
+WITH snapshot_times AS (
+    SELECT event_id,
+        substr(json_extract(content, '$.updatedAt'), 1, 19) || '.' ||
+        replace(substr(substr(json_extract(content, '$.updatedAt'), 21, 9) || '000000000', 1, 9), 'Z', '0') || 'Z' AS updated_at
+    FROM manifest_action_events
+    WHERE clerk_org_id = ?1 AND manifest_id = ?2 AND run_key = ?3
+)
 INSERT INTO manifest_action_events (
     clerk_org_id, manifest_id, run_key, event_id, status, conclusion,
     source_updated_at, phase, created_at, run_id, run_attempt, content
-) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-WHERE NOT (? = 'api' AND EXISTS (
-    SELECT 1 FROM (
-        SELECT status, conclusion, source_updated_at FROM manifest_action_events
-        WHERE clerk_org_id = ? AND manifest_id = ? AND run_key = ?
+) SELECT ?1, ?2, ?3,
+CASE WHEN ?13 = 'api' THEN COALESCE((
+    SELECT event_id FROM (
+        SELECT event_id, status, conclusion, source_updated_at FROM manifest_action_events
+        WHERE clerk_org_id = ?14 AND manifest_id = ?15 AND run_key = ?16
         ORDER BY source_updated_at DESC, phase DESC, event_id DESC LIMIT 1
-    ) WHERE status = ? AND conclusion = ? AND source_updated_at <= ?
-)) ON CONFLICT DO UPDATE SET
-content = json_set(manifest_action_events.content, '$.jobs', json_extract(excluded.content, '$.jobs'))
-WHERE json_type(excluded.content, '$.jobs') = 'array'
-AND json_extract(manifest_action_events.content, '$.jobs') IS NOT json_extract(excluded.content, '$.jobs')";
+    ) WHERE status = ?17 AND conclusion = ?18 AND source_updated_at <= ?19
+), ?4) ELSE ?4 END,
+?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12
+WHERE true ON CONFLICT DO UPDATE SET
+content = json_set(manifest_action_events.content,
+    '$.jobs', CASE WHEN json_type(excluded.content, '$.jobs') = 'array'
+        AND ?7 >= (SELECT updated_at FROM snapshot_times WHERE event_id = manifest_action_events.event_id)
+        THEN json_extract(excluded.content, '$.jobs') ELSE json_extract(manifest_action_events.content, '$.jobs') END,
+    '$.workflowPath', COALESCE(json_extract(excluded.content, '$.workflowPath'), json_extract(manifest_action_events.content, '$.workflowPath')),
+    '$.updatedAt', MAX(?7, (SELECT updated_at FROM snapshot_times WHERE event_id = manifest_action_events.event_id))
+)
+WHERE (json_type(excluded.content, '$.jobs') = 'array'
+    AND ?7 >= (SELECT updated_at FROM snapshot_times WHERE event_id = manifest_action_events.event_id)
+    AND json_extract(manifest_action_events.content, '$.jobs') IS NOT json_extract(excluded.content, '$.jobs'))
+OR (json_type(excluded.content, '$.workflowPath') = 'text'
+    AND json_extract(manifest_action_events.content, '$.workflowPath') IS NOT json_extract(excluded.content, '$.workflowPath'))";
 
 const READ_EVENTS: &str = r"
 WITH recent_runs AS (

@@ -53,6 +53,7 @@ ForgeTaskCommand = _manifest.ForgeTaskCommand
 ForgeTaskConfirm = _manifest.ForgeTaskConfirm
 ForgeTool = _manifest.ForgeTool
 Github = _manifest.Github
+GithubDependencySource = _manifest.GithubDependencySource
 Info = _manifest.Info
 Link = _manifest.Link
 Manifest = _manifest.Manifest
@@ -86,6 +87,7 @@ __all__ = [
     "GithubActionRun",
     "GithubActionsClient",
     "GithubActionsLog",
+    "GithubDependencySource",
     "IaCToolType",
     "Incremental",
     "IncrementalVersion",

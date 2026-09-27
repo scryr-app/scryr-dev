@@ -11,6 +11,52 @@ pub(crate) struct GeneratedManifestMutationRoot;
 
 #[Object]
 impl GeneratedManifestMutationRoot {
+    /// Record complete successful dependency components without rewriting the diagram.
+    async fn record_github_dependencies(
+        &self,
+        ctx: &Context<'_>,
+        manifest_id: String,
+        snapshot: async_graphql::Json<crystal_core::github_dependencies::GithubDependencySnapshot>,
+    ) -> async_graphql::Result<bool> {
+        let pool = ctx.data::<DatabasePool>()?;
+        let context = ctx
+            .data::<ManifestRequestContext>()
+            .map_err(|_| async_graphql::Error::new("request is missing active organization"))?;
+        crystal_core::persistence::record_github_dependencies(
+            pool,
+            context,
+            &manifest_id,
+            snapshot.0,
+        )
+        .await
+        .map_err(async_graphql::Error::new)
+    }
+
+    /// Record collection health independently of the provider's workflow outcomes.
+    async fn record_provider_sync(
+        &self,
+        ctx: &Context<'_>,
+        manifest_id: String,
+        provider: String,
+        error: Option<String>,
+        context: Option<async_graphql::Json<serde_json::Value>>,
+    ) -> async_graphql::Result<bool> {
+        let pool = ctx.data::<DatabasePool>()?;
+        let request_context = ctx
+            .data::<ManifestRequestContext>()
+            .map_err(|_| async_graphql::Error::new("request is missing active organization"))?;
+        crystal_core::persistence::record_provider_sync_with_context(
+            pool,
+            request_context,
+            &manifest_id,
+            &provider,
+            error,
+            context.map(|value| value.0),
+        )
+        .await
+        .map_err(async_graphql::Error::new)
+    }
+
     /// Save source and all its diagram artifacts with optimistic concurrency.
     async fn save_manifest_document(
         &self,

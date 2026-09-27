@@ -24,6 +24,13 @@ pub(crate) struct LocalServeArgs {
     /// Do not open the browser automatically.
     #[arg(long)]
     pub(crate) no_open: bool,
+    /// Poll declared background providers every 15–3600 seconds (default: five minutes).
+    #[arg(long, default_value = "300", default_missing_value = "300", num_args = 0..=1,
+        value_parser = clap::value_parser!(u64).range(15..=3600), conflicts_with = "server_only")]
+    pub(crate) poll: u64,
+    /// Disable background provider collection while keeping the diagram available.
+    #[arg(long, conflicts_with = "poll")]
+    pub(crate) no_poll: bool,
 }
 impl std::ops::Deref for LocalServeArgs {
     type Target = crystal_server::ServerArgs;

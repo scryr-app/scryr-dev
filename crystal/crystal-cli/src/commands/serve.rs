@@ -71,15 +71,33 @@ pub(super) async fn run(args: &ServerArgs) -> Result<(), String> {
         crystal_server::server::start_with_workspace(args.server.clone(), Some(workspace.clone()))
             .await
             .map_err(|e| e.to_string())?;
+    let (maps_tx, maps_rx) = tokio::sync::watch::channel(Vec::new());
+    let host = if args.host.contains(':') {
+        format!("[{}]", args.host)
+    } else {
+        args.host.clone()
+    };
+    let endpoint = format!("http://{host}:{}/graphql", args.port);
+    let background = async {
+        tokio::join!(
+            load_loop(args, &workspace, &maps_tx),
+            super::polling::serve(args, maps_rx, &endpoint)
+        );
+        std::future::pending::<()>().await;
+    };
     tokio::pin!(server);
     tokio::select! {
         result = &mut server => result.map_err(|e| e.to_string()),
-        () = load_loop(args, &workspace) => server.await.map_err(|e| e.to_string()),
+        () = background => server.await.map_err(|e| e.to_string()),
     }
 }
 
 /// Wait for this server, then refresh only when source contents change.
-async fn load_loop(args: &ServerArgs, workspace: &crystal_server::editor::LocalWorkspace) {
+async fn load_loop(
+    args: &ServerArgs,
+    workspace: &crystal_server::editor::LocalWorkspace,
+    maps: &tokio::sync::watch::Sender<Vec<String>>,
+) {
     let host = match args.host.as_str() {
         "0.0.0.0" => "127.0.0.1".to_owned(),
         "::" => "[::1]".to_owned(),
@@ -124,15 +142,21 @@ async fn load_loop(args: &ServerArgs, workspace: &crystal_server::editor::LocalW
                 Ok::<_, String>((project, checked, revision))
             })
             .await;
-            let (result, revision) = match prepared {
+            let (result, revision, identifiers) = match prepared {
                 Ok(Ok((project, checked, revision))) => {
-                    (publish(&project, checked).await, revision)
+                    let identifiers = checked
+                        .maps
+                        .iter()
+                        .map(|map| map.map_metadata.scry_identifier.clone())
+                        .collect();
+                    (publish(&project, checked).await, revision, identifiers)
                 }
-                Ok(Err(error)) => (Err(error), fingerprint.clone()),
-                Err(error) => (Err(error.to_string()), fingerprint.clone()),
+                Ok(Err(error)) => (Err(error), fingerprint.clone(), Vec::new()),
+                Err(error) => (Err(error.to_string()), fingerprint.clone(), Vec::new()),
             };
             match result {
                 Ok(url) => {
+                    maps.send_replace(identifiers);
                     if !opened && !args.no_open {
                         if let Err(error) = crate::auth::browser::open_browser(&url) {
                             eprintln!("{error}");
