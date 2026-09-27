@@ -8,20 +8,32 @@ Canonical links:
 - Live diagram: https://scryr.app
 - Source: https://github.com/scryr-app/scryr-dev
 
-Install:
+Choose a quick start:
+- Cloud: log in at https://scryr.app, open a sample architecture, and edit it in the hosted app. No installation is required.
+- Open source (OSS): install with Homebrew, try a small diagram in an empty folder, and then add `index.scry` to your own repository.
+
+Install the open-source CLI:
 ```sh
 brew install scryr-app/tap/scryr
-# or
-npm install --global @scryr/cli
-# or
-cargo install crystal-cli
 ```
 
-Primary local workflow:
+Try it without a repository by saving this file as `index.scry` in an empty folder:
+```python
+from scryr import Diagram, Manifest
+
+api = Manifest(name="API", connections=[Manifest(name="Database")])
+database = Manifest(name="Database")
+
+architecture = Diagram(name="Quick start", manifests=[api, database])
+```
+
+Then run:
 ```sh
 scryr check
 scryr serve --watch
 ```
+
+To use Scryr in your own repository, add a reviewed `index.scry` at its root and run the same commands there.
 
 Manifest rules:
 - The default entrypoint is `index.scry`.

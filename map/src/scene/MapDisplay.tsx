@@ -1,8 +1,10 @@
 import { Text } from "@react-three/drei/core/Text";
+import { Html } from "@react-three/drei/web/Html";
 import { useThree } from "@react-three/fiber";
 import { useMemo } from "react";
 import { Block } from "@/block";
 import { CameraController } from "@/camera";
+import { Loading } from "@/components/Loading";
 import type { GetBlocksQuery } from "@/graphql/generated";
 import { useSelectedMap } from "@/graphql/sampleStore";
 import { useBlocksData } from "@/graphql/useBlocksData";
@@ -238,7 +240,14 @@ export function MapDisplay() {
 	}
 
 	if (isLoading || !layout || !layoutView) {
-		return <Text>Loading</Text>;
+		return (
+			<Html
+				center
+				style={{ color: currentTheme.fontColor, whiteSpace: "nowrap" }}
+			>
+				<Loading />
+			</Html>
+		);
 	}
 
 	return (

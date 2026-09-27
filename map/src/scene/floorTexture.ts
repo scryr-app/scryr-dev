@@ -1,5 +1,6 @@
 import {
 	CanvasTexture,
+	LinearFilter,
 	NearestFilter,
 	RepeatWrapping,
 	SRGBColorSpace,
@@ -93,12 +94,26 @@ export function createFloorTexture(
 			context.stroke();
 		}
 	} else if (pattern === "seabed") {
-		for (let i = 0; i < 850; i++) {
-			const x = (i * 67.31) % TEXTURE_SIZE;
-			const y = (i * 31.73) % TEXTURE_SIZE;
-			context.fillStyle =
-				i % 4 ? "rgba(2,18,19,0.09)" : "rgba(126,188,168,0.08)";
-			context.fillRect(x, y, 1 + (i % 3), 1);
+		// A continuous ocean surface instead of the default checkerboard tiles.
+		context.fillStyle = evenColor;
+		context.fillRect(0, 0, TEXTURE_SIZE, TEXTURE_SIZE);
+		for (let band = -1; band < 9; band++) {
+			for (const [width, alpha] of [
+				[14, 0.05],
+				[5, 0.12],
+				[1.5, 0.3],
+			]) {
+				context.strokeStyle = `rgba(153,239,250,${alpha})`;
+				context.lineWidth = width;
+				context.beginPath();
+				for (let x = 0; x <= TEXTURE_SIZE; x += 2) {
+					const phase = (x / TEXTURE_SIZE) * Math.PI * 2;
+					const y = band * 32 + Math.sin(phase) * 12 + Math.sin(phase * 2) * 4;
+					if (x === 0) context.moveTo(x, y);
+					else context.lineTo(x, y);
+				}
+				context.stroke();
+			}
 		}
 	} else if (pattern === "velvet") {
 		for (let i = 0; i < 2200; i++) {
@@ -113,9 +128,12 @@ export function createFloorTexture(
 	const texture = new CanvasTexture(surface);
 	texture.wrapS = RepeatWrapping;
 	texture.wrapT = RepeatWrapping;
-	texture.repeat.set(10, 10);
-	texture.magFilter = NearestFilter;
-	texture.minFilter = NearestFilter;
+	texture.repeat.set(
+		pattern === "seabed" ? 3 : 10,
+		pattern === "seabed" ? 3 : 10,
+	);
+	texture.magFilter = pattern === "seabed" ? LinearFilter : NearestFilter;
+	texture.minFilter = pattern === "seabed" ? LinearFilter : NearestFilter;
 	texture.colorSpace = SRGBColorSpace;
 
 	return texture;

@@ -17,14 +17,25 @@ const links = [
   <div class="toolbar-search"><Search /></div>
   <div class="toolbar-actions">
   <div class="toolbar-desktop">
-    <nav aria-label="Main navigation">{links.map(link => <a href={link.href}><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={link.icon} /></svg>{link.label}</a>)}</nav>
+    <nav aria-label="Main navigation">{links.map(link => <a href={link.href} data-nav-label={link.label}><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={link.icon} /></svg>{link.label}</a>)}</nav>
   </div>
   <details class="toolbar-menu">
     <summary>Links <span aria-hidden="true"><svg viewBox="0 0 12 12"><path d="m2.5 4.5 3.5 3 3.5-3" /></svg></span></summary>
-    <nav aria-label="Main navigation">{links.map(link => <a href={link.href}><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={link.icon} /></svg>{link.label}</a>)}</nav>
+    <nav aria-label="Main navigation">{links.map(link => <a href={link.href} data-nav-label={link.label}><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={link.icon} /></svg>{link.label}</a>)}</nav>
   </details>
   </div>
 </div>
+
+<script is:inline>
+  document.querySelectorAll('.scryr-toolbar [data-nav-label]').forEach((link) => {
+    link.addEventListener('click', () => {
+      window.posthog?.capture('site_navigation_clicked', {
+        navigation_label: link.getAttribute('data-nav-label'),
+        destination_path: link.getAttribute('href'),
+      });
+    });
+  });
+</script>
 
 <style>
   .scryr-toolbar { position: relative; display: flex; align-items: center; gap: .5rem; height: 100%; white-space: nowrap; }

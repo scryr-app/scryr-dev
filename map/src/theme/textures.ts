@@ -110,11 +110,21 @@ export function useWallTexture(color: string): THREE.CanvasTexture | null {
 				ctx.stroke();
 			}
 		} else if (wall === "sunkenStone") {
-			for (let i = 0; i < 5200; i++) {
-				const x = (i * 71.91) % size;
-				const y = (i * 29.47) % size;
-				ctx.fillStyle = i % 5 ? "rgba(0,12,13,0.11)" : "rgba(119,181,165,0.1)";
-				ctx.fillRect(x, y, 1 + (i % 3), 1);
+			const depth = ctx.createLinearGradient(0, 0, 0, size);
+			depth.addColorStop(0, "rgba(113,229,242,0.24)");
+			depth.addColorStop(1, "rgba(0,19,65,0.3)");
+			ctx.fillStyle = depth;
+			ctx.fillRect(0, 0, size, size);
+			for (let band = -1; band < 10; band++) {
+				ctx.strokeStyle = "rgba(181,248,255,0.28)";
+				ctx.lineWidth = 1.6;
+				ctx.beginPath();
+				for (let x = 0; x <= size; x += 2) {
+					const y = band * 30 + Math.sin(x / 32 + band * 0.7) * 10;
+					if (x === 0) ctx.moveTo(x, y);
+					else ctx.lineTo(x, y);
+				}
+				ctx.stroke();
 			}
 		} else if (wall === "velvet") {
 			// Broad directional shading and fine nap give the gold its fabric depth.

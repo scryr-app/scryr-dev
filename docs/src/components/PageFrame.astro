@@ -1,4 +1,8 @@
+---
+import PostHog from './posthog.astro';
+---
 <!-- Header owns the shared page drawer on both landing and documentation pages. -->
+<PostHog />
 <div class="page">
   <header class="header"><slot name="header" /></header>
   <div class="main-frame"><slot /></div>

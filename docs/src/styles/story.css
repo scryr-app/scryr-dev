@@ -159,6 +159,7 @@ body:has(.scryr-story) { overflow-x: clip; }
 .scryr-story .panel-label { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .85rem 1.2rem; border-bottom: 1px solid #b889d92e; font-size: .62rem; color: #d6b4f0; }
 .scryr-story .panel-label > span:last-child { color: #9986b0; }
 .scryr-story .grimoire pre { padding: 1.5rem; font-size: clamp(.59rem, .9vw, .78rem); line-height: 1.8; color: #d6bee8; overflow-x: auto; }
+.scryr-story .grimoire pre.astro-code { background: transparent !important; }
 .scryr-story .spell-checks { display: flex; gap: .5rem; flex-wrap: wrap; border-top: 1px solid #b889d92e; padding: .8rem 1.2rem; }
 .scryr-story .spell-checks span { color: #d0b879; font-size: .55rem; }
 .scryr-story .spell-checks span::before { content: '✧ '; }

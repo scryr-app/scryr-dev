@@ -11,6 +11,7 @@ import {
 	type SelectedMap,
 	useSelectedMap,
 } from "@/graphql/sampleStore";
+import { Loading } from "./Loading";
 
 interface Props {
 	/** Extra CSS classes applied to the trigger pill/button */
@@ -283,7 +284,9 @@ export function DiagramButton({ className = "" }: Props) {
 					style={{ background: "rgba(0,0,0,0.88)" }}
 				>
 					{mapsQuery.isLoading && (
-						<div className="px-4 py-2 text-[13px] text-white/45">Loading</div>
+						<div className="px-4 py-2 text-[13px] text-white/45">
+							<Loading />
+						</div>
 					)}
 					{Boolean(mapsQuery.error) && maps.length === 0 && (
 						<div className="px-4 py-2 text-[12px] text-white/45">
