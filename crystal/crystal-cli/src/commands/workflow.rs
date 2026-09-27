@@ -102,6 +102,7 @@ pub(crate) fn validate_json(json: &str, key: &str) -> Result<Vec<GeneratedMapArt
     if value["diagrams"].as_array().is_none_or(Vec::is_empty) {
         return Err("Scryr rules: define at least one public Diagram in index.scry".into());
     }
+    crystal_core::collectors::declarations(&value)?;
     map_artifacts_from_manifest_json(json, key).map_err(|e| format!("Scryr rules: {e}"))
 }
 /// Publish previously checked data to the selected deployment.
@@ -111,7 +112,7 @@ pub(crate) async fn publish(project: &Project, checked: Checked) -> Result<Strin
         .graphql_url
         .clone()
         .unwrap_or_else(default_local_graphql_url);
-    let mut url = super::report::endpoint(&target)?;
+    let mut url = endpoint(&target)?;
     let token = upload_bearer_token(&target).await?;
     persist_generated_artifacts(GeneratedArtifactPersistence {
         graphql_url: &target,
@@ -135,6 +136,20 @@ pub(crate) async fn push(common: GenerateCommonArgs) -> Result<(), String> {
     let checked = project.check()?;
     publish(&project, checked).await?;
     Ok(())
+}
+
+/// Validate credential-bearing upload targets.
+fn endpoint(value: &str) -> Result<url::Url, String> {
+    let url = url::Url::parse(value).map_err(|e| e.to_string())?;
+    if !url.username().is_empty()
+        || url.password().is_some()
+        || !(url.scheme() == "https"
+            || (url.scheme() == "http"
+                && matches!(url.host_str(), Some("localhost" | "127.0.0.1" | "[::1]"))))
+    {
+        return Err("endpoint must use HTTPS (HTTP is allowed on loopback only)".into());
+    }
+    Ok(url)
 }
 
 #[cfg(test)]

@@ -8,11 +8,11 @@ Architecture reference: https://github.com/calcom/cal.com
 Source: https://github.com/calcom/cal.com
 """
 
-from scryr import CICD, Diagram, Github, Info, Link, Manifest
+from scryr import Diagram, Info, Link, Manifest
+from scryr.collectors import GitHubActionsCollector, GitHubPullRequestCollector, Schedule
 from scryr.saas import Classification
 from scryr.types import (
     AuthType,
-    CICDToolType,
     DeploymentTarget,
     IaCToolType,
     LogAggregationType,
@@ -26,12 +26,12 @@ from scryr.types import (
 
 _SOURCE = Url("https://github.com/calcom/cal.com")
 _DOCS = Url("https://cal.com/docs")
-_CICD = CICDToolType.github_actions
 _IAC = IaCToolType.none
 _MONITOR = MonitoringType.none
 _LOGS = LogAggregationType.none
 _TRACING = TracingType.none
 postgres_block = Manifest(
+    manifest_id="calcom/postgres_block",
     name="PostgreSQL",
     icon="🐘",
     classification=Classification.database,
@@ -52,14 +52,13 @@ postgres_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Cal.com Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="calcom/cal.com", schedule=Schedule(manual=True)),
+        GitHubActionsCollector(repository="calcom/cal.com", schedule=Schedule(manual=True)),
+    ],
 )
 redis_block = Manifest(
+    manifest_id="calcom/redis_block",
     name="Redis",
     icon="🔴",
     classification=Classification.cache_store,
@@ -80,14 +79,13 @@ redis_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Cal.com Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="calcom/cal.com", schedule=Schedule(manual=True)),
+        GitHubActionsCollector(repository="calcom/cal.com", schedule=Schedule(manual=True)),
+    ],
 )
 web_block = Manifest(
+    manifest_id="calcom/web_block",
     name="Web App",
     icon="📅",
     classification=Classification.public_ui,
@@ -118,14 +116,13 @@ web_block = Manifest(
             Link(site_name="Source", http_url=_SOURCE),
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="calcom/cal.com", schedule=Schedule(manual=True)),
+        GitHubActionsCollector(repository="calcom/cal.com", schedule=Schedule(manual=True)),
+    ],
 )
 api_v2_block = Manifest(
+    manifest_id="calcom/api_v2_block",
     name="API v2",
     icon="🔌",
     classification=Classification.public_api,
@@ -152,14 +149,13 @@ api_v2_block = Manifest(
             )
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="calcom/cal.com", schedule=Schedule(manual=True)),
+        GitHubActionsCollector(repository="calcom/cal.com", schedule=Schedule(manual=True)),
+    ],
 )
 email_block = Manifest(
+    manifest_id="calcom/email_block",
     name="Email",
     icon="✉️",
     classification=Classification.public_api,
@@ -180,14 +176,13 @@ email_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Cal.com Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="calcom/cal.com", schedule=Schedule(manual=True)),
+        GitHubActionsCollector(repository="calcom/cal.com", schedule=Schedule(manual=True)),
+    ],
 )
 workflow_cron_block = Manifest(
+    manifest_id="calcom/workflow_cron_block",
     name="Workflow Cron",
     icon="⏰",
     classification=Classification.scheduler,
@@ -208,14 +203,13 @@ workflow_cron_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Cal.com Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="calcom/cal.com", schedule=Schedule(manual=True)),
+        GitHubActionsCollector(repository="calcom/cal.com", schedule=Schedule(manual=True)),
+    ],
 )
 daily_video_block = Manifest(
+    manifest_id="calcom/daily_video_block",
     name="Daily.co",
     icon="📹",
     classification=Classification.public_api,
@@ -236,14 +230,12 @@ daily_video_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Daily Docs", http_url=Url("https://docs.daily.co/reference"))],
     ),
-    github=Github(
-        repo_url=Url("https://github.com/daily-co/daily-js"),
-    ),
-    cicd=CICD(
-        platform=CICDToolType.none,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="daily-co/daily-js", schedule=Schedule(manual=True))
+    ],
 )
 app_store_block = Manifest(
+    manifest_id="calcom/app_store_block",
     name="App Store",
     icon="🧩",
     classification=Classification.sdk,
@@ -264,12 +256,10 @@ app_store_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="App Store", http_url=Url("https://app.cal.com/apps"))],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="calcom/cal.com", schedule=Schedule(manual=True)),
+        GitHubActionsCollector(repository="calcom/cal.com", schedule=Schedule(manual=True)),
+    ],
 )
 
 calcom_diagram = Diagram(

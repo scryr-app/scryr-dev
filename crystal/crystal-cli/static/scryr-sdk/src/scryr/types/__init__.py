@@ -6,7 +6,6 @@ place while providing a single import surface for all Manifest-related types.
 
 from __future__ import annotations
 
-from scryr.saas.cicd_tool import CICDToolType
 from scryr.saas.classification import Classification
 from scryr.saas.data_persistence import IaCToolType
 from scryr.saas.deployment_target import DeploymentTarget
@@ -27,7 +26,6 @@ from scryr.version import (
 
 __all__ = [
     "AuthType",
-    "CICDToolType",
     "CalendarVersion",
     "Classification",
     "DeploymentTarget",

@@ -1,4 +1,4 @@
-import { graphqlFetcher } from "./client";
+import { canApplyLocalDocument, graphqlFetcher } from "./client";
 
 export type ManifestDocument = {
 	identifier: string;
@@ -26,14 +26,20 @@ export const readDocument = (identifier: string) =>
 		"query EditorSource($identifier: String!) { manifestDocument(identifier: $identifier) }",
 		{ identifier },
 	)();
-export const saveDocument = (
+export async function saveDocument(
 	document: ManifestDocument,
 	envelope: ManifestEnvelope,
-) =>
-	graphqlFetcher<
+) {
+	if (document.local && !canApplyLocalDocument()) {
+		throw new Error(
+			"Local source changes require the Scryr UI opened from this laptop's scryr serve address. Open that address to apply collector schedules; this preview cannot authorize local commands.",
+		);
+	}
+	return graphqlFetcher<
 		{ saveManifestDocument: ManifestDocument },
 		{ identifier: string; revision: string; envelope: ManifestEnvelope }
 	>(
 		"mutation SaveEditorSource($identifier: String!, $revision: String!, $envelope: JSON!) { saveManifestDocument(identifier: $identifier, revision: $revision, envelope: $envelope) }",
 		{ identifier: document.identifier, revision: document.revision, envelope },
 	)();
+}

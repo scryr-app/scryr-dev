@@ -45,7 +45,10 @@ pub(crate) async fn graphql_handler(
     );
     let mut graphql_request = inner_request
         .data(auth.clone())
-        .data(crate::editor::EditorRequestAllowed(local_editor_allowed));
+        .data(crate::editor::EditorRequestAllowed(local_editor_allowed))
+        .data(crate::editor::LocalCapabilityAllowed(
+            local_capability_allowed(&request, app_state.get_ref()),
+        ));
     match resolve_manifest_request_context(&request, &auth, app_state.get_ref()).await {
         Ok(manifest_request_context) => {
             graphql_request = graphql_request.data(manifest_request_context);
@@ -83,10 +86,12 @@ fn local_editor_origin_allowed(origin: Option<&str>, expected: &str, trusted: &[
 
 /// Return whether a GraphQL document uses fields that require Scryr map tenant context.
 fn request_requires_manifest_context(query: &str) -> bool {
-    query.contains("recordActionRun")
+    query.contains("recordEvidence")
+        || query.contains("recordCollectorStatus")
+        || query.contains("evidenceHistory")
+        || query.contains("evidenceObservation")
         || query.contains("manifestDocument")
         || query.contains("saveManifestDocument")
-        || query.contains("actionHistory")
         || query.contains("upsertGeneratedManifest")
         || query.contains("scryrMaps")
         || query.contains("blocks")
@@ -123,7 +128,7 @@ pub(crate) async fn map_ui_handler(
         && let Some(asset) = static_assets::get(asset_path)
     {
         if asset_path == "index.html" {
-            return runtime_index(asset.bytes, &state);
+            return runtime_index(asset.bytes, &state, &request);
         }
         return HttpResponse::Ok()
             .content_type(asset.content_type)
@@ -136,13 +141,18 @@ pub(crate) async fn map_ui_handler(
                 .content_type("text/plain; charset=utf-8")
                 .body("Scryr map UI index.html is missing from this binary.")
         },
-        |asset| runtime_index(asset.bytes, &state),
+        |asset| runtime_index(asset.bytes, &state, &request),
     )
 }
 
-fn runtime_index(bytes: &[u8], state: &AppState) -> HttpResponse {
-    let config =
+fn runtime_index(bytes: &[u8], state: &AppState, request: &HttpRequest) -> HttpResponse {
+    let mut config =
         serde_json::json!({ "authMode": state.auth_mode.as_str(), "graphqlEndpoint": "/graphql" });
+    if loopback_initial_ui_allowed(request, state.local_port)
+        && let Some(capability) = &state.local_capability
+    {
+        config["localCapability"] = serde_json::json!(capability);
+    }
     let html = String::from_utf8_lossy(bytes).replacen(
         "<head>",
         &format!("<head><script>window.__SCRYR_RUNTIME__={config};</script>"),
@@ -152,6 +162,39 @@ fn runtime_index(bytes: &[u8], state: &AppState) -> HttpResponse {
         .insert_header(("cache-control", "no-store"))
         .content_type("text/html; charset=utf-8")
         .body(html)
+}
+
+/// Check the raw Host header, never a forwarded/proxy-derived authority.
+fn loopback_initial_ui_allowed(request: &HttpRequest, port: Option<u16>) -> bool {
+    let Some(port) = port else {
+        return false;
+    };
+    let Some(host) = request.headers().get("host").and_then(|v| v.to_str().ok()) else {
+        return false;
+    };
+    let allowed = [
+        format!("localhost:{port}"),
+        format!("127.0.0.1:{port}"),
+        format!("[::1]:{port}"),
+    ];
+    if !allowed.iter().any(|v| v == host) {
+        return false;
+    }
+    request
+        .headers()
+        .get("origin")
+        .is_none_or(|v| v.to_str().is_ok_and(|v| v == format!("http://{host}")))
+}
+fn local_capability_allowed(request: &HttpRequest, state: &AppState) -> bool {
+    loopback_initial_ui_allowed(request, state.local_port)
+        && request.headers().contains_key("origin")
+        && state.local_capability.as_ref().is_some_and(|expected| {
+            request
+                .headers()
+                .get("x-scryr-local-capability")
+                .and_then(|v| v.to_str().ok())
+                .is_some_and(|actual| actual == expected)
+        })
 }
 
 /// Return whether a requested path can be resolved inside the embedded asset set.
@@ -213,6 +256,60 @@ mod tests {
         ] {
             assert!(!allowed(Some(origin), server, &[origin.into()]));
         }
+    }
+
+    #[tokio::test]
+    async fn capability_is_only_served_and_accepted_on_the_local_origin()
+    -> Result<(), Box<dyn std::error::Error>> {
+        use crate::state::{AppState, AuthMode};
+        use actix_web::{body::to_bytes, test::TestRequest};
+        use crystal_core::persistence::DatabasePool;
+        let state = AppState {
+            sample: None,
+            auth_mode: AuthMode::Local,
+            clerk_authorizer: None,
+            clerk_client: None,
+            db_pool: DatabasePool::Sqlite(sqlx::SqlitePool::connect("sqlite::memory:").await?),
+            local_capability: Some("capability-test-token".into()),
+            local_port: Some(8000),
+        };
+        let local = TestRequest::get()
+            .insert_header(("host", "127.0.0.1:8000"))
+            .to_http_request();
+        let body =
+            to_bytes(super::runtime_index(b"<head></head>", &state, &local).into_body()).await?;
+        assert!(String::from_utf8_lossy(&body).contains("capability-test-token"));
+        assert!(!super::local_capability_allowed(&local, &state));
+        for (host, origin) in [
+            ("evil.example:8000", "http://evil.example:8000"),
+            ("127.0.0.1:8000", "https://evil.example"),
+            ("127.0.0.1:9000", "http://127.0.0.1:9000"),
+            ("127.0.0.1:8000", "http://localhost:3000"),
+        ] {
+            let request = TestRequest::get()
+                .insert_header(("host", host))
+                .insert_header(("origin", origin))
+                .insert_header(("x-scryr-local-capability", "capability-test-token"))
+                .insert_header(("forwarded", "host=127.0.0.1:8000"))
+                .to_http_request();
+            assert!(!super::local_capability_allowed(&request, &state));
+            let body =
+                to_bytes(super::runtime_index(b"<head></head>", &state, &request).into_body())
+                    .await?;
+            assert!(!String::from_utf8_lossy(&body).contains("capability-test-token"));
+        }
+        let valid = TestRequest::post()
+            .insert_header(("host", "127.0.0.1:8000"))
+            .insert_header(("origin", "http://127.0.0.1:8000"))
+            .insert_header(("x-scryr-local-capability", "capability-test-token"))
+            .to_http_request();
+        assert!(super::local_capability_allowed(&valid, &state));
+        let missing = TestRequest::post()
+            .insert_header(("host", "127.0.0.1:8000"))
+            .insert_header(("origin", "http://127.0.0.1:8000"))
+            .to_http_request();
+        assert!(!super::local_capability_allowed(&missing, &state));
+        Ok(())
     }
 
     #[test]

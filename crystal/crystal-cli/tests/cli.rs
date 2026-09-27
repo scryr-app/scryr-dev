@@ -86,6 +86,8 @@ fn deprecated_commands_are_rejected() -> Result<(), Box<dyn Error>> {
         vec!["generate", "devcontainer"],
         vec!["generate", "artifact-json"],
         vec!["report-action-status"],
+        vec!["report"],
+        vec!["query"],
     ] {
         cli_command()?
             .args(args)
@@ -641,8 +643,10 @@ fn workflow_commands_have_help_and_serve_requires_explicit_server_only()
         vec!["push"],
         vec!["export", "json"],
         vec!["inspect", "types"],
-        vec!["query"],
-        vec!["report", "tests"],
+        vec!["collect", "list"],
+        vec!["collect", "doctor"],
+        vec!["collect", "run"],
+        vec!["collect", "status"],
         vec!["serve"],
     ] {
         cli_command()?.args(args).arg("--help").assert().success();
@@ -651,6 +655,6 @@ fn workflow_commands_have_help_and_serve_requires_explicit_server_only()
         .args(["serve", "--server-only", "--watch"])
         .assert()
         .failure();
-    cli_command()?.args(["query"]).assert().failure();
+    cli_command()?.args(["collect"]).assert().failure();
     Ok(())
 }

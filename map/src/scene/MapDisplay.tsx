@@ -198,7 +198,6 @@ function MapBlocks({ blocks, layout }: MapBlocksProps) {
 						monitoring={block.monitoring || undefined}
 						tracing={block.tracing || undefined}
 						logAggregation={block.logAggregation || undefined}
-						cicdTool={block.cicdTool || undefined}
 						docs={block.docs}
 						links={block.links}
 						diagrams={blockDiagrams}

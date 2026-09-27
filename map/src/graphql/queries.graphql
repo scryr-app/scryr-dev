@@ -21,8 +21,16 @@ query GetScryrMaps {
 	}
 }
 
-query GetBlocks($scryIdentifier: String, $sample: String) {
-	blocks(scryIdentifier: $scryIdentifier, sample: $sample) {
+query GetBlocks(
+	$scryIdentifier: String
+	$sample: String
+	$workspaceId: String
+) {
+	blocks(
+		scryIdentifier: $scryIdentifier
+		sample: $sample
+		workspaceId: $workspaceId
+	) {
 		name
 		description
 		version
@@ -33,7 +41,6 @@ query GetBlocks($scryIdentifier: String, $sample: String) {
 		frameworks
 		deployment
 		deploymentProvider
-		sourceCodeUrl
 		connections
 		docs
 		ownerTeam
@@ -43,13 +50,340 @@ query GetBlocks($scryIdentifier: String, $sample: String) {
 		logAggregation
 		tracing
 		iacTool
-		cicdTool
 		maxReplicas
 		minReplicas
 		links {
 			siteName
 			httpUrl
 		}
+		evidence {
+			...CollectorEvidenceFields
+		}
 		rawJsonString
+	}
+}
+
+fragment EvidenceObservationIdentity on EvidenceObservation {
+	schemaVersion
+	observationId
+	manifestId
+	section
+	collectorId
+	integration
+	workspaceId
+	environment
+	scope
+	planRevision
+	collectorRevision
+	runId
+	attempt
+	observedAt
+	sourceUpdatedAt
+	startedAt
+	recordedAt
+	inputFingerprint
+	commitSha
+	branch
+	dirty
+	toolVersion
+	upstreamFingerprint
+	policyRevision
+}
+fragment NonDependencyEvidenceFields on EvidenceResult {
+	__typename
+	... on GitResult {
+		branch
+		commit
+		dirty
+		changedFiles
+		ahead
+		behind
+		remoteUrl
+	}
+	... on PullRequestsResult {
+		repository
+		complete
+		items {
+			number
+			title
+			url
+			state
+			reviewDecision
+			headRefName
+			headRefOid
+		}
+	}
+	... on WorkflowsResult {
+		repository
+		complete
+		items {
+			runId
+			attempt
+			name
+			status
+			conclusion
+			branch
+			commit
+			url
+			updatedAt
+		}
+	}
+	... on CheckResult {
+		name
+		passed
+		durationSeconds
+		diagnostics {
+			message
+			path
+			line
+			severity
+		}
+	}
+	... on TestResult {
+		suite
+		passing
+		failing
+		errors
+		skipped
+		durationSeconds
+		cases {
+			name
+			suite
+			status
+			message
+			durationSeconds
+		}
+	}
+	... on CoverageResult {
+		suite
+		covered
+		total
+	}
+	... on MetricsResult {
+		scrapedAt
+		complete
+		samples {
+			name
+			title
+			labels {
+				name
+				value
+			}
+			value
+			unit
+			metricType
+		}
+	}
+	... on BenchmarkResult {
+		name
+		meanSeconds
+		stddevSeconds
+		medianSeconds
+		runs
+		command
+		baselineMeanSeconds
+		machine
+	}
+}
+fragment PackageFields on Package {
+	id
+	name
+	version
+	ecosystem
+	purl
+	paths
+	licenses
+}
+fragment LicenseFindingFields on LicenseFinding {
+	packageId
+	expression
+	decision
+	reason
+}
+fragment VulnerabilityFindingFields on VulnerabilityFinding {
+	packageId
+	advisoryId
+	aliases
+	severity
+	fixVersions
+	advisoryUrl: url
+}
+fragment InventorySummary on InventoryResult {
+	complete
+	artifactHash
+	totalPackages
+	totalRelationships
+	licensedPackages
+	unknownLicensePackages
+}
+fragment LicenseSummary on LicenseResult {
+	policyRevision
+	inventoryHash
+	complete
+	totalItems
+	allowedCount
+	deniedCount
+	reviewCount
+}
+fragment VulnerabilitySummary on VulnerabilityResult {
+	inventoryHash
+	databaseAgeSeconds
+	databaseVersion
+	complete
+	totalFindings
+	affectedPackages
+	criticalCount
+	highCount
+	mediumCount
+	lowCount
+	unknownSeverityCount
+}
+
+fragment EvidenceObservationFields on EvidenceObservation {
+	...EvidenceObservationIdentity
+	result {
+		...NonDependencyEvidenceFields
+		... on InventoryResult {
+			...InventorySummary
+			packages(limit: 0) {
+				...PackageFields
+			}
+			relationships(limit: 0) {
+				from
+				to
+			}
+		}
+		... on LicenseResult {
+			...LicenseSummary
+			items(limit: 0) {
+				...LicenseFindingFields
+			}
+		}
+		... on VulnerabilityResult {
+			...VulnerabilitySummary
+			items(limit: 0) {
+				...VulnerabilityFindingFields
+			}
+		}
+	}
+}
+
+fragment CollectorEvidenceFields on CollectorEvidence {
+	manifestId
+	section
+	collectorId
+	integration
+	workspaceId
+	state
+	message
+	updatedAt
+	freshnessSeconds
+	stale
+	outdated
+	latest {
+		...EvidenceObservationFields
+	}
+}
+
+query GetEvidenceHistory(
+	$manifestId: String!
+	$section: EvidenceSection!
+	$collectorId: String!
+	$workspaceId: String!
+	$limit: Int! = 20
+	$offset: Int! = 0
+) {
+	evidenceHistory(
+		manifestId: $manifestId
+		section: $section
+		collectorId: $collectorId
+		workspaceId: $workspaceId
+		limit: $limit
+		offset: $offset
+	) {
+		...EvidenceObservationFields
+	}
+}
+
+query GetEvidenceObservation(
+	$observationId: String!
+	$workspaceId: String!
+	$limit: Int! = 25
+	$offset: Int! = 0
+	$search: String
+	$filter: String
+) {
+	evidenceObservation(
+		observationId: $observationId
+		workspaceId: $workspaceId
+	) {
+		...EvidenceObservationIdentity
+		result {
+			...NonDependencyEvidenceFields
+			... on InventoryResult {
+				...InventorySummary
+				matchingPackages(search: $search, filter: $filter)
+				packages(
+					limit: $limit
+					offset: $offset
+					search: $search
+					filter: $filter
+				) {
+					...PackageFields
+				}
+				relationships(limit: 0) {
+					from
+					to
+				}
+			}
+			... on LicenseResult {
+				...LicenseSummary
+				matchingItems(search: $search, filter: $filter)
+				items(
+					limit: $limit
+					offset: $offset
+					search: $search
+					filter: $filter
+				) {
+					...LicenseFindingFields
+				}
+			}
+			... on VulnerabilityResult {
+				...VulnerabilitySummary
+				matchingFindings(search: $search, filter: $filter)
+				items(
+					limit: $limit
+					offset: $offset
+					search: $search
+					filter: $filter
+				) {
+					...VulnerabilityFindingFields
+				}
+			}
+		}
+	}
+}
+
+query GetInventoryPackages(
+	$observationId: String!
+	$workspaceId: String!
+	$ids: [String!]!
+) {
+	evidenceObservation(
+		observationId: $observationId
+		workspaceId: $workspaceId
+	) {
+		observationId
+		workspaceId
+		environment
+		result {
+			__typename
+			... on InventoryResult {
+				artifactHash
+				packages(ids: $ids, limit: 100) {
+					...PackageFields
+				}
+			}
+		}
 	}
 }

@@ -47,6 +47,10 @@ pub(crate) struct AppState {
     pub clerk_client: Option<Clerk>,
     /// Shared database connection pool used for health checks and generated manifests.
     pub db_pool: DatabasePool,
+    /// A random process-local write capability; never persisted or served cross-origin.
+    pub local_capability: Option<String>,
+    /// Bound port used to validate the raw HTTP Host header for capability requests.
+    pub local_port: Option<u16>,
 }
 
 /// Authentication provider selected for this server process.

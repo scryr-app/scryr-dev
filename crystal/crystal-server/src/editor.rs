@@ -25,6 +25,8 @@ pub struct LocalWorkspace {
     /// Serializes the watch pipeline with browser saves.
     pub gate: Arc<Mutex<()>>,
     validate: ValidateLocal,
+    source_revision: Arc<std::sync::atomic::AtomicU64>,
+    capability: String,
 }
 impl LocalWorkspace {
     /// Resolve and register one entrypoint.
@@ -45,7 +47,20 @@ impl LocalWorkspace {
             folder,
             gate: Arc::new(Mutex::new(())),
             validate,
+            source_revision: Arc::new(std::sync::atomic::AtomicU64::new(0)),
+            capability: uuid::Uuid::new_v4().simple().to_string(),
         })
+    }
+    /// Process-scoped capability for writes that can change the local execution plan.
+    #[must_use]
+    pub fn capability(&self) -> &str {
+        &self.capability
+    }
+    /// Monotonic signal for a successful editor disk/database commit.
+    #[must_use]
+    pub fn source_revision(&self) -> u64 {
+        self.source_revision
+            .load(std::sync::atomic::Ordering::Acquire)
     }
     fn matches(&self, doc: &ManifestDocument) -> bool {
         doc.folder_path == self.folder
@@ -128,6 +143,8 @@ fn collect_files(
 
 /// Request marker set by the HTTP handler after checking the browser's origin.
 pub(crate) struct EditorRequestAllowed(pub bool);
+/// Separate permission for source writes in a process with local execution capabilities.
+pub(crate) struct LocalCapabilityAllowed(pub bool);
 
 /// Editing service shared by all workers of a server.
 #[derive(Clone, Default)]
@@ -240,6 +257,11 @@ impl EditorService {
                     .map_err(|restore| format!("{error}; restoring source failed: {restore}"))?;
             }
             return Err(error);
+        }
+        if let Some(local) = &self.local {
+            local
+                .source_revision
+                .fetch_add(1, std::sync::atomic::Ordering::Release);
         }
         let selected = inputs
             .iter()

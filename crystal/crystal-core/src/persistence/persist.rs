@@ -16,6 +16,11 @@ pub(crate) async fn persist_generated_manifest(
     input: &UpsertGeneratedManifestInput,
     request_context: &ManifestRequestContext,
 ) -> Result<Uuid, String> {
+    if input.artifact_kind == ArtifactKind::Value {
+        let value: serde_json::Value =
+            serde_json::from_str(&input.content).map_err(|e| e.to_string())?;
+        crate::collectors::declarations_for_projection(&value)?;
+    }
     persistence::ensure_table(pool).await?;
     let metadata = ManifestUploadMetadata::from_input(input);
     let id = upsert_generated_manifest_row(pool, input, &metadata, request_context).await?;

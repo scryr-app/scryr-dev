@@ -21,6 +21,9 @@ pub(crate) struct LocalServeArgs {
     /// Check formatting without rewriting source files.
     #[arg(long)]
     pub(crate) no_format: bool,
+    /// Pause local collector schedules until explicitly resumed.
+    #[arg(long)]
+    pub(crate) no_collect: bool,
     /// Do not open the browser automatically.
     #[arg(long)]
     pub(crate) no_open: bool,

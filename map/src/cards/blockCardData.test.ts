@@ -1,69 +1,76 @@
 import { describe, expect, it } from "vitest";
-import type { Block } from "@/graphql/generated";
 import { getBlockCardData } from "./blockCardData";
+import { evidence, results } from "./evidenceFixtures";
 
-function block(raw: unknown = {}): Block {
-	return {
-		name: "api",
-		links: [],
-		tags: ["api"],
-		frameworks: [],
-		connections: [],
-		docs: [],
-		version: "1.0.0",
-		rawJsonString: JSON.stringify(raw),
-	} as unknown as Block;
-}
-
-describe("reported card data", () => {
-	it("does not invent observations from architecture metadata", () => {
-		const data = getBlockCardData(block());
-		for (const section of [
-			data.github,
-			data.metrics,
-			data.cicd,
-			data.tests,
-			data.dependencies,
-			data.performance,
-		]) {
-			expect(Object.values(section).every((value) => value === undefined)).toBe(
-				true,
-			);
-		}
-		expect(data.reports).toEqual([]);
-	});
-	it("preserves real zeroes and numeric history without estimating missing fields", () => {
-		const data = getBlockCardData(
-			block({
-				github: { stars: 0 },
+describe("typed collector card data", () => {
+	it("never synthesizes results from static card values or metadata", () => {
+		const data = getBlockCardData({
+			rawJsonString: JSON.stringify({
 				metrics: { errorRate: 0 },
-				performance: { cpuHistory: [0, 23, "45", null] },
-				cicd: { failedBuilds: 0, deployStatusProd: "bogus" },
+				tests: { passing: 99 },
+				repository: { stars: 100 },
 			}),
-		);
-		expect(data.github.stars).toBe(0);
-		expect(data.metrics.errorRate).toBe(0);
-		expect(data.metrics.successRate).toBeUndefined();
-		expect(data.performance.cpuHistory).toEqual([0, 23]);
-		expect(data.performance.cpuAvg).toBeUndefined();
-		expect(data.cicd.failedBuilds).toBe(0);
-		expect(data.cicd.deployStatusProd).toBeUndefined();
-	});
-	it("renders durable GitHub Actions summaries attached by the server", () => {
-		const data = getBlockCardData(
-			block({
-				cicd: {
-					platform: "github_actions",
-					buildStatus: "passing",
-					lastBuild: "2026-09-08T10:02:00Z",
-					githubActions: { runs: [{ runId: 12345 }] },
-				},
-			}),
-		);
-		expect(data.cicd).toMatchObject({
-			platform: "github_actions",
-			buildStatus: "passing",
-			lastBuild: "2026-09-08T10:02:00Z",
+			evidence: [],
 		});
+		expect(Object.values(data)).toEqual([[], [], [], [], [], []]);
+	});
+	it("keeps configured collectors visible before their first result and preserves list order", () => {
+		const data = getBlockCardData({
+			rawJsonString: JSON.stringify({
+				manifestId: "services/api",
+				tests: [
+					{ kind: "junit", id: "integration" },
+					{ kind: "pytest", id: "unit" },
+				],
+			}),
+			evidence: [evidence()],
+		});
+		expect(data.tests.map((item) => item.collectorId)).toEqual([
+			"integration",
+			"unit",
+		]);
+		expect(data.tests[0]).toMatchObject({ state: "WAITING", latest: null });
+		expect(data.tests[1].latest?.result).toEqual(results.tests);
+	});
+	it("removes undeclared collectors immediately and rejects an observation from a replaced integration", () => {
+		const data = getBlockCardData({
+			rawJsonString: JSON.stringify({
+				tests: [{ kind: "vitest", id: "unit" }],
+			}),
+			evidence: [
+				evidence(),
+				evidence(results.coverage, {
+					collectorId: "coverage",
+					integration: "lcov",
+				}),
+			],
+		});
+		expect(data.tests).toHaveLength(1);
+		expect(data.tests[0]).toMatchObject({
+			integration: "vitest",
+			state: "WAITING",
+			latest: null,
+		});
+	});
+	it("keeps remote workflows in Repository and local checks in Checks", () => {
+		const workflow = evidence(results.workflows, {
+			section: "REPOSITORY" as ReturnType<typeof evidence>["section"],
+			collectorId: "ci",
+			integration: "github_actions",
+		});
+		const check = evidence(results.check, {
+			section: "CHECKS" as ReturnType<typeof evidence>["section"],
+			collectorId: "lint",
+			integration: "ruff",
+		});
+		const data = getBlockCardData({
+			rawJsonString: JSON.stringify({
+				repository: [{ kind: "github_actions", id: "ci" }],
+				checks: [{ kind: "ruff", id: "lint" }],
+			}),
+			evidence: [check, workflow],
+		});
+		expect(data.repository).toEqual([workflow]);
+		expect(data.checks).toEqual([check]);
 	});
 });

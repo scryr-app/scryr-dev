@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+from scryr.collectors import GitHubPullRequestCollector
 from scryr.manifest import (
     Diagram,
     Forge,
@@ -12,7 +13,6 @@ from scryr.manifest import (
     ForgeTaskBatch,
     ForgeTaskCommand,
     ForgeTool,
-    Github,
     Info,
     Link,
     Manifest,
@@ -77,14 +77,15 @@ def test_manifest_to_dict_returns_plain_json_safe_types() -> None:
             links=[Link(site_name="Docs", http_url=Url("https://example.com/docs"))],
             docs=[Url("https://docs.example.com"), "README"],
         ),
-        github=Github(repo_url=Url("https://example.com/repo")),
+        manifest_id="example/repo",
+        repository=[GitHubPullRequestCollector(repository="example/repo")],
     )
 
     data = manifest.to_dict()
 
     assert isinstance(data, dict)
     assert data["info"]["version"] == "2026.3"
-    assert data["github"]["repoUrl"] == "https://example.com/repo"
+    assert data["repository"][0]["repository"] == "example/repo"
     assert data["info"]["links"][0]["site_name"] == "Docs"
     assert data["info"]["links"][0]["http_url"] == "https://example.com/docs"
     assert data["info"]["docs"] == ["https://docs.example.com", "README"]
@@ -95,13 +96,14 @@ def test_manifest_exposes_embedded_section_constructors() -> None:
     manifest = Manifest(
         name="EmbeddedSections",
         info=Manifest.Info(description="visible"),
-        github=Manifest.Github(repo_url=Url("https://example.com/repo")),
+        manifest_id="example/repo",
+        repository=[GitHubPullRequestCollector(repository="example/repo")],
     )
 
     assert isinstance(manifest.info, Info)
-    assert isinstance(manifest.github, Github)
+    assert isinstance(manifest.repository[0], GitHubPullRequestCollector)
     assert manifest.to_dict()["info"]["description"] == "visible"
-    assert manifest.to_dict()["github"]["repoUrl"] == "https://example.com/repo"
+    assert manifest.to_dict()["repository"][0]["repository"] == "example/repo"
 
 
 def test_manifest_accepts_flat_section_constructor_fields() -> None:
@@ -111,8 +113,8 @@ def test_manifest_accepts_flat_section_constructor_fields() -> None:
         description="visible",
         language=ProgrammingLanguage.javascript,
         frameworks=[WebFramework.nextjs],
-        repo_url=Url("https://example.com/repo"),
-        cicd_tool="github_actions",
+        manifest_id="example/repo",
+        repository=[GitHubPullRequestCollector(repository="example/repo")],
     )
 
     data = manifest.to_dict()
@@ -120,8 +122,7 @@ def test_manifest_accepts_flat_section_constructor_fields() -> None:
     assert data["info"]["description"] == "visible"
     assert data["info"]["language"] == "javascript"
     assert data["info"]["frameworks"] == ["nextjs"]
-    assert data["github"]["repoUrl"] == "https://example.com/repo"
-    assert data["cicd"]["platform"] == "github_actions"
+    assert data["repository"][0]["repository"] == "example/repo"
 
 
 def test_forge_serializes_typed_mise_toml_sections() -> None:
@@ -238,15 +239,15 @@ def test_manifest_query_filters_by_nested_field_paths() -> None:
     """ManifestQuery accepts nested mappings and Python-safe double-underscore paths."""
     api = Manifest(
         name="API",
-        github=Github(repo_url=Url("https://example.com/api")),
+        info=Info(owner_team="api"),
     )
     web = Manifest(
         name="Web",
-        github=Github(repo_url=Url("https://example.com/web")),
+        info=Info(owner_team="web"),
     )
 
     query = ManifestQuery(
-        where={"github": {"repoUrl": "https://example.com/api"}},
+        where={"info": {"ownerTeam": "api"}},
         info__language=ProgrammingLanguage.python,
     )
 

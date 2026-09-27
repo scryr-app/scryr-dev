@@ -1,19 +1,17 @@
 from scryr import (
-    CICD,
     Diagram,
     Forge,
     ForgeTask,
     ForgeTool,
-    Github,
     Info,
     Link,
     Manifest,
     ManifestQuery,
 )
+from scryr.collectors import GitHubActionsCollector, GitHubPullRequestCollector, Schedule
 from scryr.saas import Classification
 from scryr.types import (
     AuthType,
-    CICDToolType,
     DeploymentTarget,
     IaCToolType,
     LogAggregationType,
@@ -56,6 +54,7 @@ mern_forge = Forge(
     },
 )
 react_block = Manifest(
+    manifest_id="mern/react_block",
     name="React it all yo",
     icon="🌐",
     classification=Classification.public_ui,
@@ -79,12 +78,10 @@ react_block = Manifest(
         links=[Link(site_name="Example Site", http_url=Url("https://www.example.com"))],
         docs=["https://www.mongodb.com/docs/", "https://expressjs.com/", "https://reactjs.org/"],
     ),
-    github=Github(
-        repo_url=Url("https://github.com/example/mern-app"),
-    ),
-    cicd=CICD(
-        platform=CICDToolType.github_actions,
-    ),
+    repository=[
+        GitHubPullRequestCollector(repository="example/mern-app", schedule=Schedule(manual=True)),
+        GitHubActionsCollector(repository="example/mern-app", schedule=Schedule(manual=True)),
+    ],
 )
 redis_pubsub_block = Manifest(
     name="Redis Pub/Sub",
@@ -112,9 +109,6 @@ redis_pubsub_block = Manifest(
             )
         ],
         docs=["https://redis.io/docs/latest/", "https://redis.io/docs/latest/apis/"],
-    ),
-    cicd=CICD(
-        platform=CICDToolType.gitlab_ci,
     ),
 )
 express_block = Manifest(
@@ -150,11 +144,9 @@ mongo_block = Manifest(
         max_replicas=3,
         min_replicas=1,
     ),
-    cicd=CICD(
-        platform=CICDToolType.github_actions,
-    ),
 )
 angularjs_admin_block = Manifest(
+    manifest_id="mern/angularjs_admin_block",
     name="AngularJS Admin Console",
     icon="🛠️",
     classification=Classification.admin_ui,
@@ -176,9 +168,11 @@ angularjs_admin_block = Manifest(
         links=[Link(site_name="Admin Portal", http_url=Url("https://admin.example.com"))],
         docs=["https://docs.angularjs.org/"],
     ),
-    github=Github(
-        repo_url=Url("https://github.com/example/angularjs-admin"),
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="example/angularjs-admin", schedule=Schedule(manual=True)
+        )
+    ],
 )
 
 mern_diagram = Diagram(

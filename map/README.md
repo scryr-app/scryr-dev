@@ -22,7 +22,7 @@ file directly; it is overwritten on each codegen run.
 When you add or change GraphQL operations:
 
 1. Update `src/graphql/**/*.graphql`.
-2. Make sure the GraphQL server is available at the endpoint configured by `mise`.
+2. Integrate the matching server schema source into the same checkout.
 3. Run `mise run contribute:generate:graphql`.
 4. Import the generated hooks in your components.
 
@@ -123,3 +123,32 @@ rebuilds the 3D scene while keeping the editor, its draft, and map selection mou
 The Pyodide console follows each theme with coordinated syntax colors and surfaces. Console text uses 97% opacity (3% transparency).
 
 Drag the console’s top bar to reposition it. Its controls remain clickable, and dragging and resizing keep the panel within the viewport.
+
+## Local evidence cards
+
+Repository, Checks, Metrics, Tests, Dependencies, and Performance are backed by
+`Block.evidence` typed GraphQL observations. A section appears only when its typed
+collector list is present in `index.scry`; the list order controls collector pages.
+Repository contains Git state, pull requests, and remote workflow runs. Checks
+contains local verification tasks. Metrics displays CLI-collected OpenMetrics
+samples without a browser-side provider connection.
+
+Each card distinguishes collector lifecycle from findings, preserves the last
+result with stale/outdated indicators, and opens a keyboard-accessible details
+dialog. Dependencies has inventory, license, and vulnerability panels with filters
+and server-paginated rows from immutable observation IDs. Polling reads only
+summary counts; details are loaded on demand. Package names are joined only to a matching inventory hash,
+workspace, and environment. Unknown licenses and incomplete scans remain explicit.
+Details include observation provenance, paginated run history, and the exact local
+`scryr collect run` command. Reading a card never executes a command. The map polls
+passive results every five seconds while visible; editor preview remains inert.
+
+The editor derives public SDK constructors and their typed parameters from the
+same generated Python bundle used to execute previews. Update the SDK source and
+regenerate its bundle rather than maintaining a separate completion schema.
+
+Local editor writes require the process capability supplied by the embedded UI.
+The transport sends it only to the same loopback origin, in a request header.
+Opening the standalone `scryr serve` address enables local applies; a Vite preview
+without that capability can read and evaluate declarations but cannot save a
+command-bearing source file. Hosted stored-source editing remains independent.

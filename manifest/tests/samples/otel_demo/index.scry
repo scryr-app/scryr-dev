@@ -7,11 +7,11 @@ Architecture reference: https://opentelemetry.io/docs/demo/architecture/
 Source: https://github.com/open-telemetry/opentelemetry-demo
 """
 
-from scryr import CICD, Diagram, Github, Info, Link, Manifest
+from scryr import Diagram, Info, Link, Manifest
+from scryr.collectors import GitHubActionsCollector, GitHubPullRequestCollector, Schedule
 from scryr.saas import Classification
 from scryr.types import (
     AuthType,
-    CICDToolType,
     DeploymentTarget,
     IaCToolType,
     LogAggregationType,
@@ -26,12 +26,12 @@ from scryr.types import (
 _SOURCE = Url("https://github.com/open-telemetry/opentelemetry-demo")
 _DOCS = Url("https://opentelemetry.io/docs/demo/")
 _DEPLOYMENT = DeploymentTarget.k8s_cluster
-_CICD = CICDToolType.github_actions
 _IAC = IaCToolType.helm
 _MONITOR = MonitoringType.prometheus
 _LOGS = LogAggregationType.loki
 _TRACING = TracingType.jaeger
 kafka_block = Manifest(
+    manifest_id="otel_demo/kafka_block",
     name="Kafka",
     icon="📨",
     classification=Classification.queue,
@@ -52,14 +52,17 @@ kafka_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+    ],
 )
 valkey_block = Manifest(
+    manifest_id="otel_demo/valkey_block",
     name="Valkey",
     icon="🗄️",
     classification=Classification.cache_store,
@@ -80,14 +83,17 @@ valkey_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+    ],
 )
 postgres_block = Manifest(
+    manifest_id="otel_demo/postgres_block",
     name="PostgreSQL",
     icon="🐘",
     classification=Classification.database,
@@ -108,14 +114,17 @@ postgres_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+    ],
 )
 flagd_block = Manifest(
+    manifest_id="otel_demo/flagd_block",
     name="Flagd",
     icon="🚩",
     classification=Classification.internal_api,
@@ -136,14 +145,17 @@ flagd_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+    ],
 )
 accounting_block = Manifest(
+    manifest_id="otel_demo/accounting_block",
     name="Accounting",
     icon="🧾",
     classification=Classification.worker,
@@ -164,14 +176,17 @@ accounting_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+    ],
 )
 ad_block = Manifest(
+    manifest_id="otel_demo/ad_block",
     name="Ad",
     icon="📢",
     classification=Classification.internal_api,
@@ -193,14 +208,17 @@ ad_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+    ],
 )
 cart_block = Manifest(
+    manifest_id="otel_demo/cart_block",
     name="Cart",
     icon="🛒",
     classification=Classification.internal_api,
@@ -221,14 +239,17 @@ cart_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+    ],
 )
 checkout_block = Manifest(
+    manifest_id="otel_demo/checkout_block",
     name="Checkout",
     icon="💳",
     classification=Classification.internal_api,
@@ -257,14 +278,17 @@ checkout_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+    ],
 )
 currency_block = Manifest(
+    manifest_id="otel_demo/currency_block",
     name="Currency",
     icon="💱",
     classification=Classification.internal_api,
@@ -285,14 +309,17 @@ currency_block = Manifest(
         min_replicas=2,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+    ],
 )
 email_block = Manifest(
+    manifest_id="otel_demo/email_block",
     name="Email",
     icon="✉️",
     classification=Classification.internal_api,
@@ -314,14 +341,17 @@ email_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+    ],
 )
 flagd_ui_block = Manifest(
+    manifest_id="otel_demo/flagd_ui_block",
     name="Flagd-UI",
     icon="🎛️",
     classification=Classification.admin_ui,
@@ -342,14 +372,17 @@ flagd_ui_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+    ],
 )
 fraud_detection_block = Manifest(
+    manifest_id="otel_demo/fraud_detection_block",
     name="Fraud Detection",
     icon="🕵️",
     classification=Classification.worker,
@@ -370,14 +403,17 @@ fraud_detection_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+    ],
 )
 image_provider_block = Manifest(
+    manifest_id="otel_demo/image_provider_block",
     name="Image Provider",
     icon="🖼️",
     classification=Classification.object_storage,
@@ -398,14 +434,17 @@ image_provider_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+    ],
 )
 payment_block = Manifest(
+    manifest_id="otel_demo/payment_block",
     name="Payment",
     icon="💰",
     classification=Classification.internal_api,
@@ -427,14 +466,17 @@ payment_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+    ],
 )
 product_catalog_block = Manifest(
+    manifest_id="otel_demo/product_catalog_block",
     name="Product Catalog",
     icon="📦",
     classification=Classification.internal_api,
@@ -455,14 +497,17 @@ product_catalog_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+    ],
 )
 product_reviews_block = Manifest(
+    manifest_id="otel_demo/product_reviews_block",
     name="Product Reviews",
     icon="⭐",
     classification=Classification.internal_api,
@@ -484,14 +529,17 @@ product_reviews_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+    ],
 )
 quote_block = Manifest(
+    manifest_id="otel_demo/quote_block",
     name="Quote",
     icon="📬",
     classification=Classification.internal_api,
@@ -513,14 +561,17 @@ quote_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+    ],
 )
 recommendation_block = Manifest(
+    manifest_id="otel_demo/recommendation_block",
     name="Recommendation",
     icon="👍",
     classification=Classification.internal_api,
@@ -542,14 +593,17 @@ recommendation_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+    ],
 )
 shipping_block = Manifest(
+    manifest_id="otel_demo/shipping_block",
     name="Shipping",
     icon="🚚",
     classification=Classification.internal_api,
@@ -570,14 +624,17 @@ shipping_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+    ],
 )
 frontend_block = Manifest(
+    manifest_id="otel_demo/frontend_block",
     name="Frontend",
     icon="🌐",
     classification=Classification.public_ui,
@@ -613,14 +670,17 @@ frontend_block = Manifest(
             )
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+    ],
 )
 frontend_proxy_block = Manifest(
+    manifest_id="otel_demo/frontend_proxy_block",
     name="Frontend Proxy",
     icon="🔀",
     classification=Classification.network_gateway,
@@ -645,14 +705,17 @@ frontend_proxy_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+    ],
 )
 load_generator_block = Manifest(
+    manifest_id="otel_demo/load_generator_block",
     name="Load Generator",
     icon="⚡",
     classification=Classification.worker,
@@ -673,14 +736,17 @@ load_generator_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+    ],
 )
 react_native_app_block = Manifest(
+    manifest_id="otel_demo/react_native_app_block",
     name="React Native App",
     icon="📱",
     classification=Classification.mobile_app,
@@ -701,12 +767,14 @@ react_native_app_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
+    repository=[
+        GitHubPullRequestCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+        GitHubActionsCollector(
+            repository="open-telemetry/opentelemetry-demo", schedule=Schedule(manual=True)
+        ),
+    ],
 )
 
 otel_demo_diagram = Diagram(

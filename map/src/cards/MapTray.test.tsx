@@ -23,13 +23,13 @@ it.each([
 			<MapTray isPyodideOpen={false} onTogglePyodide={vi.fn()} />
 		</MapTrayProvider>,
 	);
-	const card = screen.getByRole("button", { name: "GitHub" });
+	const card = screen.getByRole("button", { name: "Repository" });
 	fireEvent.mouseEnter(card);
-	expect(screen.getByText("GitHub")).toBeDefined();
+	expect(screen.getByText("Repository")).toBeDefined();
 	fireEvent.mouseLeave(card);
 	const camera = screen.getByRole("button", { name: label });
 	fireEvent.mouseEnter(camera);
-	expect(screen.queryByText("GitHub")).toBeNull();
+	expect(screen.queryByText("Repository")).toBeNull();
 	expect(screen.getByText(label)).toBeDefined();
 	fireEvent.mouseLeave(camera);
 	fireEvent.mouseEnter(screen.getByRole("button", { name: "Select map view" }));

@@ -23,6 +23,8 @@ async fn hosted_listing_seeds_editable_sources_and_local_listing_stays_empty()
         clerk_authorizer: None,
         clerk_client: None,
         db_pool: DatabasePool::Sqlite(sqlite.clone()),
+        local_capability: None,
+        local_port: None,
     };
     let auth = authenticate_request(&TestRequest::default().to_http_request(), &state).await?;
     let context = auth.manifest_request_context()?;
@@ -140,6 +142,8 @@ async fn first_reader_can_initialize_without_gaining_edit_permissions()
         clerk_authorizer: None,
         clerk_client: None,
         db_pool: DatabasePool::Sqlite(pool),
+        local_capability: None,
+        local_port: None,
     };
     let context = ManifestRequestContext {
         clerk_user_id: "reader".into(),

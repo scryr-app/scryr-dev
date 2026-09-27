@@ -6,6 +6,7 @@ Rust CLI and GraphQL server for Scryr.
 
 - serves the embedded map UI and block data through `scryr serve`
 - exposes the GraphQL API used by the UI
+- runs declared laptop collectors and records their evidence in local SQLite
 - generates bundled manifest artifacts for Docker/runtime use
 
 ## Crates
@@ -19,6 +20,12 @@ Dependencies flow from CLI to server/core, and from server to core. Core uses
 `graphql_types` and `manifest`. The CLI and server use those same definitions:
 upload models also derive Serde, and persistence returns the shared `ScryrMap`
 GraphQL model directly. There are no separate server DTOs or model conversions.
+
+Core's `collectors` module defines the typed configuration contract. `evidence`
+defines observations, collector status, provenance, and card projections. The CLI
+owns schedules, installed-tool execution, report parsing, and cancellation. The
+server exposes stored results through GraphQL; ordinary API writes and browser
+previews cannot start laptop commands.
 
 Core's `generation` module exposes renderers and map splitting; `persistence`
 groups storage connections, reads, and writes. `generated_manifest_envelope`
@@ -40,6 +47,19 @@ cargo run -p crystal-cli --bin scryr -- --help
 The server uses SQLite by default for local development. If `DATABASE_URL` is
 unset, Scryr creates a SQLite database at `SCRYR_SQLITE_PATH`, or at
 `.scryr/scryr.db` when that variable is unset.
+
+Local collection requires file-backed SQLite. `scryr serve` and `scryr collect`
+must resolve the same project root and database path to share an execution owner
+and history. Relative database paths are relative to the command's working
+directory; use an absolute `SCRYR_SQLITE_PATH` when invoking commands elsewhere.
+`--scryr-dir` moves managed collector/runtime state, not the database.
+
+Collector state, bounded report artifacts, and pending observations live under
+`<project>/.scryr/collection/<workspace>` (or the selected managed state directory).
+Observations retain source identity, tool version, input revision, and collection
+time. Existing-report collectors also preserve file age, so reading an old JUnit
+or coverage file does not make the source fresh. Failures retain the previous
+successful observation with its original age.
 
 Use a SQLite URL when you want to override the local database file:
 
@@ -133,11 +153,34 @@ For `scryr` against a hosted Clerk-backed endpoint, authenticate first with
 ## Scryr CLI
 
 ```bash
-cargo run -p crystal-cli -- serve --sample mern
+scryr collect list
+scryr collect doctor
+scryr serve --watch
+scryr collect run --manifest api --section tests
+scryr collect status
+scryr collect pause
+scryr collect resume
+scryr serve --no-collect
+```
+
+Declare the six typed lists (`repository`, `checks`, `metrics`, `tests`,
+`dependencies`, `performance`) in `index.scry`. Use concrete SDK classes such as
+`GitStatusCollector`, `RuffCheckCollector`, `PytestCollector`, and
+`SyftInventoryCollector`; importing or constructing them does not run tools.
+Install the desired CLIs separately; collection does not auto-install them.
+`serve --no-collect` starts with collection paused; `collect resume` enables the
+declared schedules. `serve --server-only` has no laptop execution owner.
+
+Other architecture workflows remain available:
+
+```bash
 cargo run -p crystal-cli -- inspect types --path ../manifest/tests/samples/mern/index.scry --manifest-dir ../manifest
 cargo run -p crystal-cli -- export compose --path ../manifest/tests/samples/mern/index.scry --manifest-dir ../manifest --forge "MERN Forge"
 cargo run -p crystal-cli -- auth whoami
 ```
+
+See [the CLI README](crystal-cli/README.md) for typed examples, supported tools,
+selectors, runtime state, and collector lifecycle behavior.
 
 
 Fly deployment health checks use `/ready`, while `/health` remains a lightweight

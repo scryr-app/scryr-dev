@@ -1,69 +1,54 @@
 # Scryr Manifest
 
-Define your architecture in a simple manifest format.
-
-The installable Python package lives in `scryr/` and exposes the public API from
-`scryr`:
+The Python SDK defines architecture and laptop evidence in one typed `index.scry`.
+The Rust `scryr serve` process executes declared collectors; constructing or
+serializing SDK objects never runs tools or connects to a service.
 
 ```python
-from scryr import CICD, Github, Info, Manifest, ProgrammingLanguage, WebFramework
+from scryr import Diagram, Info, Manifest, ProgrammingLanguage
+from scryr.collectors import GitStatusCollector, PytestCollector, RuffCheckCollector
 
 api = Manifest(
+    manifest_id="services/api",
     name="Public API",
-    info=Info(
-        language=ProgrammingLanguage.python,
-        frameworks=[WebFramework.fastapi],
-    ),
-    github=Github(repo_url="https://github.com/example/api"),
-    cicd=CICD(platform="github_actions"),
+    info=Info(language=ProgrammingLanguage.python),
+    repository=[GitStatusCollector()],
+    checks=[RuffCheckCollector()],
+    tests=[PytestCollector()],
 )
+architecture = Diagram(name="Local architecture", manifests=[api])
 ```
 
-The section models are `Info`, `Github`, `CICD`, `Metrics`, `Tests`,
-`Dependencies`, `Performance`, and `OtherDiagram`. All samples use these short
-names directly.
+The six evidence fields are `repository`, `checks`, `metrics`, `tests`,
+`dependencies`, and `performance`. Each accepts a typed list of concrete
+integration classes from `scryr.collectors`; empty lists hide their cards.
+`Info` and `OtherDiagram` describe architecture. `Forge` describes tools/tasks.
 
-For local development:
+Read the [SDK guide](scryr/README.md) for collectors, schedules, inventory
+references, and their wire format. The [local development sample](tests/samples/local_development/index.scry)
+shows all six cards. The [GitHub Actions sample](tests/samples/github_actions/index.scry)
+keeps remote workflow context in Repository and local lint in Checks.
 
-```bash
+## Development
+
+Run mise commands from the repository root:
+
+```sh
 mise run contribute:setup
-mise run verify:test:manifest
-cd manifest
-uv run python -m scryr.cli tests/samples/open_saas/index.scry --json
+mise run verify:manifest
 ```
 
-Manifest files may also use the `.scry` extension. A `.scry` file is Python
-syntax loaded through Scryr's manifest importer, so it can import normal Python
-modules and sibling `.scry` modules:
+A `.scry` file uses Python syntax and may import normal Python or sibling `.scry`
+modules. It is executable Python, so only load trusted source. Public `Manifest`,
+`Diagram`, and `Forge` values are serialized; public collectors live inside the
+manifest's section lists, not as new top-level constructs.
 
-```python
-from scryr import Manifest
-from shared_blocks import database
-from labels import service_name
+The Rust CLI manages pinned uv/Python and a per-project virtual environment under
+`<scryr-dir>/python-envs/<project-id>/.venv`. These support manifest evaluation;
+collectors use the project's actual tool environment. First execution can require
+network access to provision the SDK runtime. See the
+[CLI reference](../crystal/crystal-cli/README.md).
 
-api = Manifest(name=f"{service_name} API")
-```
-
-When the Scryr CLI executes manifests, the Rust CLI manages its own Python
-runtime. It installs Scryr's pinned `uv` into `<scryr-dir>/bin`, installs
-uv-managed Python into `<scryr-dir>/python`, and runs each manifest project in
-an isolated virtual environment under
-`<scryr-dir>/python-envs/<project-id>/.venv`. The project id is derived from the
-manifest project directory, which keeps dependencies for different manifest
-projects separate while still reusing the same environment for repeated runs of
-one project.
-
-The Rust `crystal-cli` exposes higher-level generation commands for map uploads,
-`mise.toml`, Docker Compose, devcontainers, schemas, and type metadata. See
-[`../crystal/crystal-cli/README.md`](../crystal/crystal-cli/README.md) for the full
-CLI reference.
-
-The workspace includes `scryr.toml` to opt local Rust CLI generation into this
-Python workspace and its locked dependencies. Other directories use the CLI's
-embedded SDK unless they also contain `scryr.toml`; `pyproject.toml` alone does
-not enable project mode.
-
-The [GitHub Actions sample](tests/samples/github_actions/index.scry) demonstrates short
-section names (`Info`, `Github`, `CICD`), a stable `manifest_id`, and an attached
-workflow status timeline. See the [SDK guide](scryr/README.md#github-actions-history)
-for durable storage and polling.
+This workspace's `scryr.toml` opts SDK evaluation into the locked Python workspace.
+It is contributor/runtime selection, not a second authored collector configuration.
+Normal standalone usage needs only the SDK declarations in `index.scry`.

@@ -84,6 +84,31 @@ export function shouldRetrySameOriginGraphqlEndpoint(
 	}
 }
 
+/** A process capability is only sent to the same loopback origin that issued it. */
+export function localCapabilityHeaders(
+	endpoint = GRAPHQL_ENDPOINT,
+	capability = runtimeConfig?.localCapability,
+	authMode = scryrAuthMode,
+	origin = browserOrigin(),
+): Record<string, string> {
+	if (!capability || !origin || !isScryrLocalAuthMode(authMode)) return {};
+	try {
+		const url = new URL(endpoint, origin);
+		const page = new URL(origin);
+		if (
+			url.origin !== page.origin ||
+			!["localhost", "127.0.0.1", "[::1]"].includes(page.hostname)
+		)
+			return {};
+		return { "X-Scryr-Local-Capability": capability };
+	} catch {
+		return {};
+	}
+}
+export function canApplyLocalDocument(): boolean {
+	return !!localCapabilityHeaders()["X-Scryr-Local-Capability"];
+}
+
 /**
  * Custom fetcher function for React Query
  * This will be used by the generated hooks from graphql-codegen
@@ -95,21 +120,19 @@ export function graphqlFetcher<TData, TVariables>(
 ) {
 	return async (): Promise<TData> => {
 		const clerkToken = await clerkTokenGetter?.();
-		const headers: Record<string, string> | null = clerkToken
-			? {
-					Authorization: `Bearer ${clerkToken}`,
-				}
-			: null;
-
-		if (!headers && !isLocalAuthMode) {
+		const authorization: Record<string, string> = clerkToken
+			? { Authorization: `Bearer ${clerkToken}` }
+			: {};
+		if (!clerkToken && !isLocalAuthMode) {
 			throw new Error("Missing Clerk session token. Please sign in.");
 		}
+		const headers = { ...authorization, ...localCapabilityHeaders() };
 
 		try {
 			return await graphqlClient.request<TData>(
 				query,
 				variables as Record<string, unknown>,
-				headers ?? undefined,
+				headers,
 			);
 		} catch (error) {
 			if (
@@ -127,7 +150,10 @@ export function graphqlFetcher<TData, TVariables>(
 				return await fallbackClient.request<TData>(
 					query,
 					variables as Record<string, unknown>,
-					headers ?? undefined,
+					{
+						...authorization,
+						...localCapabilityHeaders(resolveSameOriginGraphqlEndpoint()),
+					},
 				);
 			}
 

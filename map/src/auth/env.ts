@@ -4,7 +4,11 @@ export function isScryrLocalAuthMode(authMode: string | undefined): boolean {
 
 declare global {
 	interface Window {
-		__SCRYR_RUNTIME__?: { authMode: string; graphqlEndpoint: string };
+		__SCRYR_RUNTIME__?: {
+			authMode: string;
+			graphqlEndpoint: string;
+			localCapability?: string;
+		};
 	}
 }
 export const runtimeConfig =

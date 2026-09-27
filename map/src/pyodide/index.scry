@@ -1,9 +1,12 @@
 """Browser-runner MERN sample manifest."""
 
-from scryr import CICD, Diagram, Github, Info, Link, Manifest
+from scryr import (
+    Diagram, Info, Link, Manifest, GitStatusCollector,
+    GitHubPullRequestCollector, GitHubActionsCollector, BiomeCheckCollector,
+    VitestCollector, OpenMetricsCollector,
+)
 from scryr.types import (
     AuthType,
-    CICDToolType,
     DeploymentTarget,
     IaCToolType,
     LogAggregationType,
@@ -18,6 +21,7 @@ from scryr.types import (
 # Full type hints and autocomplete! IDE knows all parameter types
 react_block = Manifest(
     name="React",
+    manifest_id="services/react",
     icon="🌐",
     tags=["user_interface"],
     connections=[Manifest(name="Express")],
@@ -41,15 +45,13 @@ react_block = Manifest(
         links=[Link(site_name="Example Site", http_url=Url("https://www.example.com"))],
         docs=["https://www.mongodb.com/docs/", "https://expressjs.com/", "https://reactjs.org/"],
     ),
-    github=Github(
-        repo_url=Url("https://github.com/example/mern-app"),
-    ),
-    cicd=CICD(
-        platform=CICDToolType.github_actions,
-    ),
+    repository=[GitStatusCollector(), GitHubPullRequestCollector(repository="example/mern-app"), GitHubActionsCollector(repository="example/mern-app")],
+    checks=[BiomeCheckCollector()],
+    tests=[VitestCollector()],
 )
 redis_pubsub_block = Manifest(
     name="Redis Pub/Sub",
+    manifest_id="services/redis",
     icon="📡",
     tags=["user_interface"],
     connections=[Manifest(name="Express"), Manifest(name="React")],
@@ -74,9 +76,7 @@ redis_pubsub_block = Manifest(
         ],
         docs=["https://redis.io/docs/latest/", "https://redis.io/docs/latest/apis/"],
     ),
-    cicd=CICD(
-        platform=CICDToolType.gitlab_ci,
-    ),
+    metrics=[OpenMetricsCollector(endpoint="http://localhost:9121/metrics")],
 )
 express_block = Manifest(
     name="Express",
@@ -107,13 +107,12 @@ mongo_block = Manifest(
         max_replicas=3,
         min_replicas=1,
     ),
-    cicd=CICD(
-        platform=CICDToolType.github_actions,
-    ),
+
 )
 # Legacy AngularJS admin console (static site)
 angularjs_admin_block = Manifest(
     name="AngularJS Admin Console",
+    manifest_id="services/admin",
     icon="🛠️",
     connections=[Manifest(name="Express")],
     info=Info(
@@ -132,9 +131,7 @@ angularjs_admin_block = Manifest(
         links=[Link(site_name="Admin Portal", http_url=Url("https://admin.example.com"))],
         docs=["https://docs.angularjs.org/"],
     ),
-    github=Github(
-        repo_url=Url("https://github.com/example/angularjs-admin"),
-    ),
+    repository=[GitHubPullRequestCollector(repository="example/angularjs-admin")],
 )
 
 diagram = Diagram(

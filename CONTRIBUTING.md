@@ -74,8 +74,9 @@ mise run contribute:generate:samples        # Refresh bundled cloud starter diag
 mise run contribute:build                   # Build all development artifacts
 ```
 
-GraphQL generation and sample upload reuse the local server or start one
-temporarily. `contribute:build:manifest`, `contribute:build:crystal`, and
+GraphQL generation exports the schema directly from the server crate; sample
+upload reuses the local server or starts one temporarily.
+`contribute:build:manifest`, `contribute:build:crystal`, and
 `contribute:build:map` build individual components after contributor setup.
 Development builds do not prepare the standalone CLI's embedded UI; use
 `release:build` for that.
@@ -115,7 +116,7 @@ mise run pre-commit   # Apply fixes, then run the same complete verification
 ```
 
 `verify` sequentially runs `verify:automation`, `verify:manifest`,
-`verify:crystal`, `verify:map`, and `verify:release`. GitHub Actions calls those
+`verify:crystal`, `verify:collectors`, `verify:map`, and `verify:release`. GitHub Actions calls those
 same tasks in separate jobs. Component suites prepare their dependencies;
 verification does not apply source fixes or publish anything. Builds can refresh
 generated assets. The automation suite checks workflow policy, runs automation
@@ -134,6 +135,7 @@ For faster feedback after `contribute:setup`:
 | `verify:test:unit:crystal`                          | Rust unit tests                                      |
 | `verify:test:integration:manifest`                  | Python sample integration tests                      |
 | `verify:workflows`                                  | Mise-only workflow and local composite-action policy |
+| `verify:collectors`                                 | Isolated local polling, manual collection, and pause/resume smoke test |
 | `verify:release`                                    | Build and smoke-test the standalone CLI              |
 
 Use `contribute:fix` to apply formatting and lint fixes without verification.

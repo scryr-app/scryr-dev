@@ -569,7 +569,7 @@ export interface InfoCardProps {
 
 /**
  * InfoCard displays service metadata on a 3D card, matching the
- * card family (GithubCard, MetricsCard, etc.). Contains the same
+ * card family (RepositoryCard, MetricsCard, etc.). Contains the same
  * information previously shown on the block's front face.
  */
 export function InfoCard({

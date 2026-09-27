@@ -15,7 +15,7 @@ Represent the architecture that actually exists so humans and coding agents can 
 
 Scryr model
 - A .scry file is executable Python.
-- Import public models from scryr: Manifest, Diagram, Info, Github, CICD, Tests, Dependencies, Metrics, Performance, Link, Forge, and ManifestQuery as needed.
+- Import public models from scryr: Manifest, Diagram, Info, Link, Forge, and ManifestQuery as needed.
 - Import enums and value types from scryr.types when useful.
 - Each real deployable, application, datastore, queue, worker, external integration, or important infrastructure boundary may become one public Manifest variable.
 - Set a stable manifest_id for each important component, using repository-relative identities such as "apps/web" or "services/catalog-api".
@@ -34,7 +34,13 @@ Authoring rules
 - Keep the file readable and typed. Reuse component variables in Diagram.manifests.
 - Add Info(description=...) that explains responsibility and interactions in one or two precise sentences.
 - Add tags for meaningful filtering, not decorative labels.
-- Add Github(repo_url=...) only when the canonical repository URL is known.
+- Evidence sections are typed lists named repository, checks, metrics, tests, dependencies, and performance.
+- Import concrete integrations from scryr.collectors and place them directly in the matching list. For example: repository=[GitStatusCollector()] or tests=[PytestCollector()].
+- Use GitHubPullRequestCollector/GitHubActionsCollector in repository only when the canonical owner/repository is known. Remote CI never belongs in checks.
+- Dependencies displays inventory, licenses, and vulnerabilities equally; use SyftInventoryCollector, GrantLicenseCollector, and GrypeScanCollector with typed SbomRef/LicensePolicy.
+- Metrics uses OpenMetricsCollector(endpoint=...) to scrape instrumented application/exporter metrics, without provider-query configuration.
+- Never invent test counts, security findings, performance scores, or timestamps in source. Collector construction is inert; test/check/benchmark execution defaults to manual.
+- Preserve stable manifest_id and section-scoped collector IDs; do not add old section wrappers, static summary fields, or a manifest-wide collectors list.
 - Use supported Scryr enums when you can verify them; omit uncertain optional fields rather than guessing.
 - Model directed connections according to the actual dependency or call direction used by the repository.
 - If the repository is a monorepo, group components logically and consider multiple diagrams for system context, runtime flow, and operations.

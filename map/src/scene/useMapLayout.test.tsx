@@ -1,8 +1,7 @@
 // @vitest-environment jsdom
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { Block } from "@/graphql/generated";
-import type { LayoutResult } from "./layout";
+import type { LayoutBlock, LayoutResult } from "./layout";
 import { type LayoutView, layoutBlocksForView } from "./layoutOverview";
 import { useMapLayout } from "./useMapLayout";
 
@@ -14,15 +13,11 @@ const layout: LayoutResult = {
 	width: 100,
 	height: 100,
 };
-const blocks: Block[] = [
+const blocks: LayoutBlock[] = [
 	{
 		name: "a",
 		connections: [],
 		tags: [],
-		docs: [],
-		frameworks: [],
-		links: [],
-		rawJsonString: "{}",
 	},
 ];
 const view: LayoutView = { position: [8, 6, 8], fov: 40, aspect: 16 / 9 };
@@ -43,7 +38,7 @@ describe("layout request lifecycle", () => {
 		rerender({
 			blocks: blocks.map((block) => ({
 				...block,
-				rawJsonString: '{"runtimeMetrics":{"values":{"rps":42}}}',
+				rawJsonString: '{"metrics":[{"kind":"openmetrics","id":"http"}]}',
 			})),
 			view: portraitView,
 		});

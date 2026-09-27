@@ -30,27 +30,22 @@ cd scryr-quick-start
 Save this small example as `index.scry`:
 
 ```python title="index.scry"
-from scryr import Diagram, Github, Info, Manifest
+from scryr import Diagram, Info, Manifest
 from scryr.types import ProgrammingLanguage, WebFramework
 
-api = Manifest(name="API", connections=[Manifest(name="Database")])
-database = Manifest(name="Database")
-
+database = Manifest(name="Postgres")
 api = Manifest(
     manifest_id="services/api",
     name="Public API",
-    connections=[Manifest(name="Postgres")],
+    connections=[database],
     info=Info(
         description="Business API",
         language=ProgrammingLanguage.python,
         frameworks=[WebFramework.fastapi],
         owner_team="Platform",
     ),
-    github=Github(repo_url="https://github.com/acme/api"),
 )
-
-database = Manifest(name="Postgres")
-architecture = Diagram(name="System architecture", manifests=[web, api, database])
+architecture = Diagram(name="System architecture", manifests=[api, database])
 ```
 
 ### 3. Check and open the diagram
@@ -60,6 +55,9 @@ scryr serve --watch
 ```
 
 By default, `serve` starts the embedded UI and GraphQL server at `127.0.0.1:8000`, formats and validates the source, uploads the artifact, and opens the browser.
+
+On first execution, Scryr provisions its own pinned `uv`, managed Python runtime, and per-project environment. It does not change your system Python.
+
 ## Use Scryr in your own repository
 
 ### 1. Open your repository
@@ -81,6 +79,7 @@ scryr check
 scryr serve --watch
 ```
 
+Collector schedules run independently of source watching. Watch mode keeps the previous valid diagram and collector plan when a later edit fails; collection errors remain visible. Add typed collectors to enable local evidence cards; see the [integration guide](/integrations/).
 
 ## Use another entrypoint
 

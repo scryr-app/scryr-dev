@@ -1,6 +1,6 @@
 ---
 title: CLI reference
-description: Check, format, serve, push, inspect, export, report, and query Scryr manifests.
+description: Check, format, serve, push, inspect, export, and collect local project evidence.
 ---
 
 Run commands from the repository containing `index.scry`.
@@ -13,10 +13,10 @@ scryr format
 scryr lint --fix
 scryr push
 scryr serve --watch
-scryr report tests --run-id "$GITHUB_RUN_ID" --observed-at "$RESULTS_COMPLETED_AT"
-scryr report actions
-scryr query --list
-scryr query request_latency --json
+scryr collect doctor
+scryr collect list
+scryr collect run --manifest services/api --section tests --collector unit
+scryr collect status
 ```
 
 ## Check, format, and lint
@@ -25,7 +25,7 @@ scryr query request_latency --json
 
 Checks formatting, lint, Python types, manifest execution, serialization, and Scryr diagram rules. It requires at least one public `Diagram`, unique diagram identifiers, and valid references to public `Manifest` objects.
 
-`check` does not rewrite source or contact Scryr/provider APIs. Manifest execution itself runs user Python code and can have whatever side effects that code defines.
+`check` does not rewrite source or contact Scryr APIs. Manifest execution itself runs user Python code and can have whatever side effects that code defines.
 
 ### `scryr format`
 
@@ -44,10 +44,11 @@ scryr serve --no-format --no-open
 scryr serve --server-only --sample mern
 ```
 
-`serve` starts the embedded diagram and GraphQL server, waits for readiness, formats and checks the source, uploads the artifact, and opens the browser.
+`serve` starts the embedded diagram and GraphQL server, waits for readiness, formats and checks the source, uploads the artifact, and opens the browser. After valid local publication it starts the declared collector schedules; `--watch` controls source reload only.
 
 - `--watch`: repeat after source changes.
-- `--server-only`: do not read, format, execute, or upload a local manifest.
+- `--server-only`: do not read, format, execute, or upload a local manifest; never register collectors.
+- `--no-collect`: serve the map with collection paused.
 - `--no-format`: verify formatting without changing files.
 - `--no-open`: do not launch a browser.
 - `--host`: bind interface; default `127.0.0.1`.
@@ -57,7 +58,7 @@ scryr serve --server-only --sample mern
 
 ## Shared path options
 
-These apply to check, format, lint, push, serve, export, inspect, and query:
+These apply to check, format, lint, push, serve, export, inspect, and collect:
 
 ```text
 --path <file>          Manifest file. Defaults to index.scry.
@@ -95,6 +96,19 @@ scryr export devcontainer --forge "Developer environment"
 ```
 
 Compose export currently supports PostgreSQL, MongoDB, Redis, MySQL, and MariaDB service tools declared in a `Forge`.
+
+## Collect local evidence
+
+`collect` uses the concrete integration declarations in the six section lists.
+`doctor` explains tool/version/auth availability, `list` shows effective declarations,
+`run` executes the selected manifest/section/collector, and `status` shows attempts
+and freshness. Manual runs use the active local owner when available or claim the
+workspace lease themselves. Tests/checks/benchmarks are manual unless explicitly
+scheduled. Watching a report file never starts its producer.
+
+Tool installation is explicit; server startup does not install scanners. Reads of
+GraphQL or the cards never execute tools. Only locally selected trusted source can
+register execution. Source constructor/preview evaluation does not run collectors.
 
 ## Authentication
 
