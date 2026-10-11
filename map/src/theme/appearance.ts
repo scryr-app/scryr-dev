@@ -561,21 +561,21 @@ export const sunkenAppearance: ThemeAppearance = {
 	view: { fov: 36, position: [11, 10, 16] },
 };
 
-/** Champagne velvet and ivory cards in the soft gold light of a Greek sanctuary. */
+/** Deep plum velvet and lavender cards with soft gold sanctuary light. */
 export const velvetAppearance: ThemeAppearance = {
 	textures: {
 		wall: "velvet",
 		wallBrightness: 0.9,
 		card: "oracle",
-		paperColor: "#faf7e9",
+		paperColor: "#faf5ff",
 		glowCore: 0,
 		glowRim: 0,
 	},
 	content: {
-		text: "#353b34",
-		muted: "#68705f",
-		link: "#356578",
-		inset: "rgba(126,111,62,0.08)",
+		text: "#32183f",
+		muted: "#705a7d",
+		link: "#704294",
+		inset: "rgba(84,36,95,0.08)",
 	},
 	shapes: {
 		flatFaces: false,
@@ -591,7 +591,7 @@ export const velvetAppearance: ThemeAppearance = {
 		clearcoat: 0,
 		envMapIntensity: 0.12,
 		sheen: 0.75,
-		sheenColor: "#f5e6bc",
+		sheenColor: "#dcc1ef",
 		sheenRoughness: 0.86,
 	},
 	innerWalls: {
@@ -599,7 +599,7 @@ export const velvetAppearance: ThemeAppearance = {
 		metalness: 0,
 		roughness: 0.9,
 		sheen: 0.5,
-		sheenColor: "#f5e6bc",
+		sheenColor: "#dcc1ef",
 		sheenRoughness: 0.9,
 	},
 	cards: {
@@ -616,9 +616,9 @@ export const velvetAppearance: ThemeAppearance = {
 	},
 	lighting: {
 		ambient: 0.62,
-		hemisphere: { sky: "#fff8e3", ground: "#7a8064", intensity: 0.68 },
+		hemisphere: { sky: "#f8edff", ground: "#53335f", intensity: 0.68 },
 		key: { position: [-7, 15, 10], color: "#fff0cc", intensity: 1.35 },
-		fill: [{ position: [10, 7, -8], color: "#d4e6ee", intensity: 0.38 }],
+		fill: [{ position: [10, 7, -8], color: "#dfccf5", intensity: 0.38 }],
 		reflections: [
 			{
 				position: [2, 8, 4],
@@ -630,21 +630,21 @@ export const velvetAppearance: ThemeAppearance = {
 	},
 	floor: {
 		pattern: "velvet",
-		tiles: ["#bbb08b", "#beb48f"],
+		tiles: ["#593565", "#603c6c"],
 		opacity: 0.98,
 		roughness: 0.95,
 		metalness: 0,
-		gridMajor: "#eee2b6",
-		gridMinor: "#8c916f",
+		gridMajor: "#e2c780",
+		gridMinor: "#b49bc9",
 		gridOpacity: 0.075,
 	},
 	regions: {
-		tint: "#c5cbb4",
-		signColor: "#696b4f",
-		labelColor: "#fff6d9",
+		tint: "#ccb6de",
+		signColor: "#593565",
+		labelColor: "#faf0ff",
 		roughness: 0.86,
 		frame: 0,
 	},
-	connections: { color: "#a58a48", luminous: false, haloOpacity: 0 },
+	connections: { color: "#b38a3f", luminous: false, haloOpacity: 0 },
 	view: { fov: 37, position: [10, 9, 15] },
 };

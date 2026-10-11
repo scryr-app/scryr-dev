@@ -127,19 +127,19 @@ export function useWallTexture(color: string): THREE.CanvasTexture | null {
 				ctx.stroke();
 			}
 		} else if (wall === "velvet") {
-			// Broad directional shading and fine nap give the gold its fabric depth.
+			// Broad directional shading and fine nap give the velvet its fabric depth.
 			const nap = ctx.createLinearGradient(0, size, size, 0);
-			nap.addColorStop(0, "rgba(38,43,28,0.14)");
-			nap.addColorStop(0.45, "rgba(255,248,218,0.025)");
-			nap.addColorStop(0.7, "rgba(255,248,218,0.16)");
-			nap.addColorStop(1, "rgba(38,43,28,0.05)");
+			nap.addColorStop(0, "rgba(50,24,63,0.14)");
+			nap.addColorStop(0.45, "rgba(239,222,255,0.025)");
+			nap.addColorStop(0.7, "rgba(239,222,255,0.16)");
+			nap.addColorStop(1, "rgba(50,24,63,0.05)");
 			ctx.fillStyle = nap;
 			ctx.fillRect(0, 0, size, size);
 			for (let i = 0; i < 5200; i++) {
 				const x = (i * 73.17) % size;
 				const y = (i * 41.39) % size;
 				ctx.fillStyle =
-					i % 3 ? "rgba(255,248,218,0.065)" : "rgba(38,43,28,0.055)";
+					i % 3 ? "rgba(239,222,255,0.065)" : "rgba(50,24,63,0.055)";
 				ctx.fillRect(x, y, 0.6, 1.8);
 			}
 		} else {
@@ -326,7 +326,7 @@ export function useGroundTexture(
 				const x = (i * 73.17) % size;
 				const y = (i * 41.39) % size;
 				ctx.fillStyle =
-					i % 3 ? "rgba(255,248,218,0.04)" : "rgba(38,43,28,0.035)";
+					i % 3 ? "rgba(239,222,255,0.04)" : "rgba(50,24,63,0.035)";
 				ctx.fillRect(x, y, 0.7, 2);
 			}
 		}
