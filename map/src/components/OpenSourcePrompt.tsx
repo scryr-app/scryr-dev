@@ -1,5 +1,6 @@
 import { ArrowUpRight, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import styles from "./OpenSourcePrompt.module.css";
 
 const DISMISSED_KEY = "scryr.openSourcePrompt.dismissed";
 
@@ -52,22 +53,17 @@ export function OpenSourcePrompt() {
 	if (!visible) return null;
 
 	return (
-		<aside
-			aria-label="Install open-source Scryr"
-			className="fixed bottom-4 right-4 z-[1200] w-80 max-w-[calc(100vw-2rem)] rounded-2xl border border-white/15 bg-slate-950/95 p-5 text-slate-100 shadow-2xl shadow-black/40 backdrop-blur-xl"
-		>
+		<aside aria-label="Install open-source Scryr" className={styles.prompt}>
 			<button
 				type="button"
 				aria-label="Dismiss install prompt"
 				onClick={dismiss}
-				className="absolute right-2 top-2 rounded-lg p-2 text-slate-400 hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-cyan-300"
+				className={styles.dismiss}
 			>
 				<X size={16} />
 			</button>
-			<h2 className="pr-6 text-base font-semibold">
-				Run Scryr on your machine
-			</h2>
-			<p className="mt-2 text-sm leading-relaxed text-slate-300">
+			<h2 className={styles.title}>Run Scryr on your machine</h2>
+			<p className={styles.description}>
 				Scryr is open source. Install it locally and explore your own
 				architecture.
 			</p>
@@ -75,7 +71,7 @@ export function OpenSourcePrompt() {
 				href="https://scryr.dev/getting-started/#install"
 				target="_blank"
 				rel="noopener noreferrer"
-				className="mt-4 inline-flex items-center gap-2 rounded-lg bg-cyan-300 px-3 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
+				className={styles.install}
 			>
 				Install open-source Scryr <ArrowUpRight size={16} />
 			</a>

@@ -1,0 +1,171 @@
+.panel {
+	position: fixed;
+	z-index: 920;
+	display: flex;
+	height: calc(100vh - 6rem);
+	max-height: 46rem;
+	max-width: calc(100vw - 1rem);
+	overflow: hidden;
+	border-radius: 28px;
+	border: 1px solid color-mix(in oklab, currentColor 15%, transparent);
+	box-shadow: 0 25px 50px -12px rgb(0 0 0 / 25%);
+	backdrop-filter: blur(12px);
+}
+.content {
+	display: flex;
+	min-width: 0;
+	flex: 1;
+	flex-direction: column;
+}
+.header {
+	display: flex;
+	cursor: grab;
+	touch-action: none;
+	user-select: none;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+	border-bottom: 1px solid color-mix(in oklab, currentColor 15%, transparent);
+	padding: 0.75rem;
+}
+.header:active {
+	cursor: grabbing;
+}
+.filename {
+	min-width: 0;
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-family: var(
+		--font-mono,
+		ui-monospace,
+		SFMono-Regular,
+		Menlo,
+		Monaco,
+		Consolas,
+		"Liberation Mono",
+		"Courier New",
+		monospace
+	);
+	font-size: 0.75rem;
+	line-height: 1rem;
+}
+.conflict,
+.notice {
+	padding: 0.75rem;
+	font-size: 0.875rem;
+	line-height: 1.25rem;
+}
+.conflict {
+	background: oklch(0.769 0.188 70.08 / 15%);
+}
+.editor {
+	min-height: 0;
+	flex: 1;
+	overflow: hidden;
+}
+.footer {
+	border-top: 1px solid color-mix(in oklab, currentColor 15%, transparent);
+	padding: 0.75rem;
+	font-size: 0.75rem;
+	line-height: 1rem;
+}
+.actions {
+	margin-bottom: 0.5rem;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+}
+.primaryActions {
+	margin-left: auto;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 0.5rem;
+}
+.cancelButton,
+.reloadButton,
+.runButton {
+	display: inline-flex;
+	align-items: center;
+	border-radius: var(--radius);
+	border: 1px solid color-mix(in oklab, currentColor 15%, transparent);
+	background: rgb(255 255 255 / 5%);
+	padding: 0.375rem 0.625rem;
+	font-weight: 500;
+	transition:
+		color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+		background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+		border-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.cancelButton {
+	margin-right: auto;
+}
+.reloadButton,
+.runButton {
+	gap: 0.375rem;
+	box-shadow:
+		0 1px 3px 0 rgb(0 0 0 / 10%),
+		0 1px 2px -1px rgb(0 0 0 / 10%);
+}
+@media (hover: hover) {
+	.cancelButton:hover,
+	.reloadButton:hover {
+		border-color: color-mix(in oklab, currentColor 30%, transparent);
+		background: rgb(255 255 255 / 10%);
+	}
+}
+.cancelButton:focus-visible,
+.reloadButton:focus-visible,
+.runButton:focus-visible {
+	outline: none;
+	box-shadow: 0 0 0 2px currentColor;
+}
+.runButton {
+	border-color: color-mix(in oklab, currentColor 20%, transparent);
+	font-weight: 600;
+	transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+@media (hover: hover) {
+	.runButton:hover {
+		filter: brightness(1.1);
+	}
+}
+.runButton:focus-visible {
+	box-shadow:
+		0 0 0 2px white,
+		0 0 0 4px currentColor;
+}
+.reloadButton:disabled,
+.runButton:disabled {
+	cursor: not-allowed;
+	opacity: 0.4;
+}
+.spinner {
+	animation: spin 1s linear infinite;
+}
+.output {
+	margin-top: 0.5rem;
+	max-height: 9rem;
+	overflow: auto;
+	white-space: pre-wrap;
+}
+.resizeHandle {
+	width: 0.75rem;
+	flex-shrink: 0;
+	touch-action: none;
+	cursor: col-resize;
+}
+@media (hover: hover) {
+	.resizeHandle:hover {
+		background: rgb(255 255 255 / 10%);
+	}
+}
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}

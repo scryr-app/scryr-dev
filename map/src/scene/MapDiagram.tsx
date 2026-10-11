@@ -12,6 +12,7 @@ import type { OrbitControls as OrbitControlsType } from "three-stdlib";
 import { cameraStore } from "@/camera";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { currentTheme } from "@/theme/theme";
+import styles from "./MapDiagram.module.css";
 import { MapDisplay } from "./MapDisplay";
 
 function MovingThemeLight() {
@@ -51,11 +52,7 @@ export function MapDiagram() {
 	return (
 		<ErrorBoundary
 			name="Diagram"
-			fallback={
-				<div className="absolute inset-0 flex items-center justify-center text-slate-100">
-					Map render failed.
-				</div>
-			}
+			fallback={<div className={styles.error}>Map render failed.</div>}
 		>
 			<DiagramSurface
 				shadows="percentage"

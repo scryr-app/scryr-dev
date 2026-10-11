@@ -123,3 +123,11 @@ rebuilds the 3D scene while keeping the editor, its draft, and map selection mou
 The Pyodide console follows each theme with coordinated syntax colors and surfaces. Console text uses 97% opacity (3% transparency).
 
 Drag the console’s top bar to reposition it. Its controls remain clickable, and dragging and resizing keep the panel within the viewport.
+
+## UI styles
+
+DOM components use colocated `*.module.css` files imported as `styles`. Keep
+layout, interaction states, and animations in those modules. `src/styles.css`
+contains only shared browser defaults and theme variables; dynamic theme values
+and panel geometry can still use inline styles. Vite handles CSS Modules without
+an additional styling plugin.

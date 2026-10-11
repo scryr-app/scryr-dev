@@ -1,0 +1,111 @@
+.container {
+	position: relative;
+}
+.embeddedButton {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	border-radius: 9999px;
+	padding: 0.375rem 0.75rem;
+	color: rgb(255 255 255 / 0.6);
+	transition:
+		color 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+		background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.standaloneButton {
+	border: 1px solid oklch(0.372 0.044 257.287);
+	border-radius: calc(var(--radius) + 4px);
+	background: rgb(0 0 0 / 0.45);
+	padding: 0.375rem;
+	box-shadow:
+		0 10px 15px -3px rgb(0 0 0 / 0.3),
+		0 4px 6px -4px rgb(0 0 0 / 0.3);
+	backdrop-filter: blur(24px);
+	transition:
+		color 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+		background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+		border-color 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+		box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.embeddedButton:focus,
+.standaloneButton:focus {
+	outline: none;
+	box-shadow: 0 0 0 2px oklch(0.789 0.154 211.53);
+}
+.standaloneButton:focus {
+	box-shadow:
+		0 0 0 2px oklch(0.789 0.154 211.53),
+		0 10px 15px -3px rgb(0 0 0 / 0.3),
+		0 4px 6px -4px rgb(0 0 0 / 0.3);
+}
+.embeddedAvatar,
+.standaloneAvatar {
+	box-shadow: 0 0 0 1px rgb(255 255 255 / 0.1);
+}
+.embeddedAvatar {
+	width: 1.5rem;
+	height: 1.5rem;
+}
+.standaloneAvatar {
+	width: 2rem;
+	height: 2rem;
+}
+.menu {
+	position: absolute;
+	right: 0;
+	top: calc(100% + 0.75rem);
+	min-width: 14rem;
+	border-radius: 1rem;
+	border: 1px solid rgb(255 255 255 / 0.1);
+	background: rgb(0 0 0 / 0.55);
+	padding: 0.5rem;
+	color: oklch(0.968 0.007 247.896);
+	box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.5);
+	backdrop-filter: blur(40px);
+}
+.menuItem {
+	display: flex;
+	width: 100%;
+	align-items: center;
+	gap: 0.75rem;
+	border-radius: calc(var(--radius) + 4px);
+	padding: 0.5rem 0.75rem;
+	text-align: left;
+	font-size: 0.875rem;
+	line-height: 1.25rem;
+	color: oklch(0.929 0.013 255.508);
+	transition:
+		color 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+		background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+		opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.menuItem:disabled {
+	opacity: 0.5;
+}
+.menuIcon {
+	color: oklch(0.704 0.04 256.788);
+}
+.divider {
+	margin-block: 0.25rem;
+	border-top: 1px solid rgb(255 255 255 / 0.1);
+}
+.error {
+	padding: 0.5rem 0.75rem;
+	font-size: 0.875rem;
+	line-height: 1.25rem;
+	color: oklch(0.808 0.114 19.571);
+}
+@media (hover: hover) {
+	.embeddedButton:hover {
+		background: rgb(255 255 255 / 0.1);
+		color: rgb(255 255 255 / 0.9);
+	}
+	.standaloneButton:hover {
+		border-color: oklch(0.554 0.046 257.417);
+		background: rgb(0 0 0 / 0.6);
+	}
+	.menuItem:hover {
+		background: rgb(255 255 255 / 0.1);
+		color: white;
+	}
+}

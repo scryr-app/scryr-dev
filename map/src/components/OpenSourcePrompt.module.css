@@ -1,0 +1,70 @@
+.prompt {
+	position: fixed;
+	bottom: 1rem;
+	right: 1rem;
+	z-index: 1200;
+	width: 20rem;
+	max-width: calc(100vw - 2rem);
+	border-radius: 1rem;
+	border: 1px solid rgb(255 255 255 / 15%);
+	background: oklch(12.9% 0.042 264.695 / 95%);
+	padding: 1.25rem;
+	color: oklch(96.8% 0.007 247.896);
+	box-shadow: 0 25px 50px -12px rgb(0 0 0 / 40%);
+	backdrop-filter: blur(24px);
+}
+
+.dismiss {
+	position: absolute;
+	right: 0.5rem;
+	top: 0.5rem;
+	border-radius: var(--radius);
+	padding: 0.5rem;
+	color: oklch(70.4% 0.04 256.788);
+	@media (hover: hover) {
+		&:hover {
+			background: rgb(255 255 255 / 10%);
+			color: white;
+		}
+	}
+	&:focus-visible {
+		outline: 2px solid oklch(86.5% 0.127 207.078);
+	}
+}
+
+.title {
+	padding-right: 1.5rem;
+	font-size: 1rem;
+	line-height: 1.5rem;
+	font-weight: 600;
+}
+
+.description {
+	margin-top: 0.5rem;
+	font-size: 0.875rem;
+	line-height: 1.625;
+	color: oklch(86.9% 0.022 252.894);
+}
+
+.install {
+	margin-top: 1rem;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	border-radius: var(--radius);
+	background: oklch(86.5% 0.127 207.078);
+	padding: 0.5rem 0.75rem;
+	font-size: 0.875rem;
+	line-height: 1.25rem;
+	font-weight: 600;
+	color: oklch(12.9% 0.042 264.695);
+	@media (hover: hover) {
+		&:hover {
+			background: oklch(91.7% 0.08 205.041);
+		}
+	}
+	&:focus-visible {
+		outline: 2px solid oklch(86.5% 0.127 207.078);
+		outline-offset: 2px;
+	}
+}
