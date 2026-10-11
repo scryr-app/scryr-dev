@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { Block } from "@/block";
 import { CameraController } from "@/camera";
 import { Loading } from "@/components/Loading";
-import type { GetBlocksQuery } from "@/graphql/generated";
+import type { BlockViewModel } from "@/graphql/blockViewModel";
 import { useSelectedMap } from "@/graphql/sampleStore";
 import { useBlocksData } from "@/graphql/useBlocksData";
 import { currentTheme } from "@/theme/theme";
@@ -140,7 +140,7 @@ function MapEdges({ layout }: { layout: LayoutResult }) {
 }
 
 interface MapBlocksProps {
-	blocks: GetBlocksQuery["blocks"];
+	blocks: BlockViewModel[];
 	layout: LayoutResult;
 }
 

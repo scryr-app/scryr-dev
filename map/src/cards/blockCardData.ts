@@ -1,3 +1,11 @@
+import {
+	firstBoolean,
+	firstNumber,
+	firstString,
+	getValue,
+	type RawRecord,
+} from "@/graphql/blockJson";
+import type { BlockViewModel } from "@/graphql/blockViewModel";
 import type { Block } from "@/graphql/generated";
 import type { RuntimeMetricSnapshot } from "../graphql/useDiagramMetrics";
 import type { CICDCardProps } from "./CICDCard";
@@ -7,84 +15,6 @@ import type { MetricsCardProps } from "./MetricsCard";
 import type { PerformanceCardProps } from "./PerformanceCard";
 import { isOperationalReport, type OperationalReport } from "./ReportCard";
 import type { TestsCardProps } from "./TestsCard";
-
-type RawRecord = Record<string, unknown>;
-
-function asRecord(value: unknown): RawRecord | undefined {
-	return value && typeof value === "object" && !Array.isArray(value)
-		? (value as RawRecord)
-		: undefined;
-}
-
-function parseRawJsonString(
-	rawJsonString?: string | null,
-): RawRecord | undefined {
-	if (!rawJsonString) {
-		return undefined;
-	}
-
-	try {
-		return asRecord(JSON.parse(rawJsonString));
-	} catch {
-		return undefined;
-	}
-}
-
-function getValue(source: RawRecord | undefined, path: string[]): unknown {
-	let current: unknown = source;
-
-	for (const part of path) {
-		const record = asRecord(current);
-		if (!record) {
-			return undefined;
-		}
-		current = record[part];
-	}
-
-	return current;
-}
-
-function firstString(
-	source: RawRecord | undefined,
-	paths: string[][],
-): string | undefined {
-	for (const path of paths) {
-		const value = getValue(source, path);
-		if (typeof value === "string" && value.length > 0) {
-			return value;
-		}
-	}
-
-	return undefined;
-}
-
-function firstNumber(
-	source: RawRecord | undefined,
-	paths: string[][],
-): number | undefined {
-	for (const path of paths) {
-		const value = getValue(source, path);
-		if (typeof value === "number" && Number.isFinite(value)) {
-			return value;
-		}
-	}
-
-	return undefined;
-}
-
-function firstBoolean(
-	source: RawRecord | undefined,
-	paths: string[][],
-): boolean | undefined {
-	for (const path of paths) {
-		const value = getValue(source, path);
-		if (typeof value === "boolean") {
-			return value;
-		}
-	}
-
-	return undefined;
-}
 
 function getRepoUrl(
 	block: Block,
@@ -132,8 +62,10 @@ export interface BlockCardData {
 	performance: PerformanceCardProps;
 }
 
-export function getBlockCardData(block: Block): BlockCardData {
-	const raw = parseRawJsonString(block.rawJsonString);
+export function normalizeBlockCardData(
+	block: Block,
+	raw: RawRecord | undefined,
+): BlockCardData {
 	const number = (section: string, key: string) =>
 		firstNumber(raw, [[section, key]]);
 	const string = (section: string, key: string) =>
@@ -147,10 +79,6 @@ export function getBlockCardData(block: Block): BlockCardData {
 	const cpuHistory = getValue(raw, ["performance", "cpuHistory"]);
 
 	return {
-		runtimeAnalytics: raw?.runtimeAnalytics as
-			| RuntimeMetricSnapshot
-			| undefined,
-		runtimeMetrics: raw?.runtimeMetrics as RuntimeMetricSnapshot | undefined,
 		reports: ["tests", "dependencies", "cicd"].flatMap((section) => {
 			const value = raw?.[section];
 			if (!value || typeof value !== "object" || !("reports" in value))
@@ -280,9 +208,10 @@ export function getBlockCardData(block: Block): BlockCardData {
 	};
 }
 
-export function blockHasGraphData(block: Block): boolean {
-	const raw = parseRawJsonString(block.rawJsonString);
-
+export function hasGraphData(
+	block: Block,
+	raw: RawRecord | undefined,
+): boolean {
 	return Boolean(
 		block.sourceCodeUrl ||
 			block.cicdTool ||
@@ -291,4 +220,16 @@ export function blockHasGraphData(block: Block): boolean {
 			firstBoolean(raw, [["github", "enabled"]]) ||
 			firstBoolean(raw, [["metrics", "enabled"]]),
 	);
+}
+
+export function getBlockCardData(block: BlockViewModel): BlockCardData {
+	return {
+		...block.cards,
+		runtimeMetrics: block.observations.metrics,
+		runtimeAnalytics: block.observations.analytics,
+	};
+}
+
+export function blockHasGraphData(block: BlockViewModel): boolean {
+	return block.hasGraphData;
 }

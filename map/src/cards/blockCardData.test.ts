@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
-import type { Block } from "@/graphql/generated";
+import { normalizeBlock } from "@/graphql/blockViewModel";
+import type { GetBlocksQuery } from "@/graphql/generated";
 import { getBlockCardData } from "./blockCardData";
 
-function block(raw: unknown = {}): Block {
-	return {
+function block(raw: unknown = {}) {
+	return normalizeBlock({
 		name: "api",
 		links: [],
 		tags: ["api"],
@@ -12,7 +13,7 @@ function block(raw: unknown = {}): Block {
 		docs: [],
 		version: "1.0.0",
 		rawJsonString: JSON.stringify(raw),
-	} as unknown as Block;
+	} as unknown as GetBlocksQuery["blocks"][number]);
 }
 
 describe("reported card data", () => {

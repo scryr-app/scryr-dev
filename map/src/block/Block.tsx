@@ -3,7 +3,7 @@ import { cameraStore } from "@/camera";
 import { InfoCard, OtherDiagramCard } from "@/cards";
 import { getBlockCardData } from "@/cards/blockCardData";
 import { useMapTray } from "@/cards/MapTrayContext";
-import type { Block as GraphqlBlock } from "@/graphql/generated";
+import type { BlockViewModel } from "@/graphql/blockViewModel";
 import { currentTheme } from "@/theme/theme";
 import { CardSlots } from "./CardSlots";
 import { type BlockCardGroup, createBlockDataCards } from "./defaultCards";
@@ -43,7 +43,7 @@ export interface BlockProps {
 	docs?: string[];
 	links?: BlockLink[];
 	diagrams?: string[];
-	blockData?: GraphqlBlock;
+	blockData?: BlockViewModel;
 }
 
 /**
