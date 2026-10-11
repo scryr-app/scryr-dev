@@ -12,6 +12,7 @@ import { MapTrayProvider } from "@/cards/MapTrayContext";
 import { consoleTextColor } from "@/theme/console";
 import { getTheme, setThemePreset, type Theme } from "@/theme/theme";
 import { PyodideConsole } from "./PyodideConsole";
+import styles from "./PyodideConsole.module.css";
 
 const editor = vi.hoisted(() => ({
 	doc: {
@@ -103,7 +104,7 @@ it("updates the console palette with each theme without remounting the editor", 
 		expect(code.parentElement?.style.backgroundColor).toBe(
 			expected.style.backgroundColor,
 		);
-		expect(panel.classList.contains("backdrop-blur-md")).toBe(true);
+		expect(panel.classList.contains(styles.panel)).toBe(true);
 	}
 });
 

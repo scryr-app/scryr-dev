@@ -1,0 +1,138 @@
+/* biome-ignore-all lint/complexity/noImportantStyles: Clerk appearance overrides must take precedence over injected widget styles. */
+.organizationTrigger {
+	min-height: 2.25rem !important;
+	border-radius: 9999px !important;
+	border: 0 !important;
+	background: transparent !important;
+	padding: 0.25rem 0.625rem !important;
+	color: oklch(0.968 0.007 247.896);
+	transition:
+		color 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+		background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+		box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.organizationTrigger:focus {
+	box-shadow: 0 0 0 2px oklch(0.789 0.154 211.53);
+}
+.organizationPreview {
+	gap: 0.5rem;
+}
+.organizationAvatar {
+	height: 1.5rem;
+	width: 1.5rem;
+}
+.organizationName {
+	max-width: 12rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 0.875rem;
+	line-height: 1.25rem;
+	font-weight: 500;
+}
+.darkName {
+	color: oklch(0.968 0.007 247.896) !important;
+}
+.lightName {
+	color: black !important;
+}
+.muted {
+	color: oklch(0.704 0.04 256.788);
+}
+.organizationPopover {
+	border: 1px solid rgb(255 255 255 / 0.1);
+	background: rgb(0 0 0 / 0.75);
+	color: oklch(0.968 0.007 247.896);
+	box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.5);
+	backdrop-filter: blur(40px);
+}
+.accountControls {
+	display: flex;
+	align-items: center;
+	gap: 0.125rem;
+	border-radius: 9999px;
+	border: 1px solid rgb(255 255 255 / 0.15);
+	background: rgb(0 0 0 / 0.4);
+	padding: 0.25rem 0.375rem;
+	box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+	backdrop-filter: blur(12px);
+}
+.divider {
+	height: 1.5rem;
+	width: 1px;
+	background: rgb(255 255 255 / 0.1);
+}
+.loadingScreen,
+.organizationScreen {
+	display: grid;
+	height: 100vh;
+	width: 100vw;
+	place-items: center;
+}
+.organizationScreen {
+	padding-inline: 1.5rem;
+	color: oklch(0.968 0.007 247.896);
+}
+.spinner {
+	height: 2.25rem;
+	width: 2.25rem;
+	animation: spin 1s linear infinite;
+	border-radius: 9999px;
+	border: 1px solid rgb(255 255 255 / 0.15);
+	border-top-color: oklch(0.865 0.127 207.078);
+}
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+.accountPosition {
+	position: absolute;
+	right: 1rem;
+	top: 1rem;
+	z-index: 50;
+}
+.organizationCard {
+	width: 100%;
+	max-width: 24rem;
+	border-radius: calc(var(--radius) + 4px);
+	border: 1px solid rgb(255 255 255 / 0.1);
+	background: rgb(0 0 0 / 0.5);
+	padding: 1.25rem;
+	box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.4);
+	backdrop-filter: blur(24px);
+}
+.cardHeader {
+	margin-bottom: 1rem;
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+}
+.organizationIcon {
+	display: grid;
+	height: 2.25rem;
+	width: 2.25rem;
+	place-items: center;
+	border-radius: var(--radius);
+	border: 1px solid rgb(255 255 255 / 0.1);
+	background: rgb(255 255 255 / 0.08);
+}
+.buildingIcon {
+	color: oklch(0.917 0.08 205.041);
+}
+.heading {
+	font-size: 1rem;
+	line-height: 1.5rem;
+	font-weight: 600;
+	color: white;
+}
+.description {
+	font-size: 0.875rem;
+	line-height: 1.25rem;
+	color: oklch(0.704 0.04 256.788);
+}
+@media (hover: hover) {
+	.organizationTrigger:hover {
+		background: rgb(255 255 255 / 0.1) !important;
+	}
+}

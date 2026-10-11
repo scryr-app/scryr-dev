@@ -1,6 +1,7 @@
 import { UserAvatar, useClerk } from "@clerk/react";
 import { CreditCard, KeyRound, LogOut, Shield, UserCog } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
+import styles from "./AccountButton.module.css";
 
 type UserProfilePath = "/account" | "/security" | "/billing" | "/api-keys";
 
@@ -27,13 +28,9 @@ export function AccountButton({ variant = "standalone" }: AccountButtonProps) {
 	const menuId = useId();
 	const containerRef = useRef<HTMLDivElement>(null);
 	const buttonClassName =
-		variant === "embedded"
-			? "flex items-center gap-2 rounded-full px-3 py-1.5 text-white/60 transition-colors hover:bg-white/10 hover:text-white/90 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-			: "rounded-xl border border-slate-700 bg-black/45 p-1.5 shadow-lg shadow-black/30 backdrop-blur-xl transition hover:border-slate-500 hover:bg-black/60 focus:outline-none focus:ring-2 focus:ring-cyan-400";
+		variant === "embedded" ? styles.embeddedButton : styles.standaloneButton;
 	const avatarClassName =
-		variant === "embedded"
-			? "h-6 w-6 ring-1 ring-white/10"
-			: "h-8 w-8 ring-1 ring-white/10";
+		variant === "embedded" ? styles.embeddedAvatar : styles.standaloneAvatar;
 
 	useEffect(() => {
 		if (!isOpen) {
@@ -79,7 +76,7 @@ export function AccountButton({ variant = "standalone" }: AccountButtonProps) {
 	};
 
 	return (
-		<div ref={containerRef} className="relative">
+		<div ref={containerRef} className={styles.container}>
 			<button
 				type="button"
 				aria-label="Account menu"
@@ -100,11 +97,7 @@ export function AccountButton({ variant = "standalone" }: AccountButtonProps) {
 				/>
 			</button>
 			{isOpen ? (
-				<div
-					id={menuId}
-					role="menu"
-					className="absolute right-0 top-[calc(100%+0.75rem)] min-w-56 rounded-2xl border border-white/10 bg-black/55 p-2 text-slate-100 shadow-2xl shadow-black/50 backdrop-blur-2xl"
-				>
+				<div id={menuId} role="menu" className={styles.menu}>
 					{accountMenuItems.map(({ label, path, icon: Icon }) => (
 						<button
 							key={path}
@@ -113,25 +106,25 @@ export function AccountButton({ variant = "standalone" }: AccountButtonProps) {
 							onClick={() => {
 								openProfile(path);
 							}}
-							className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm text-slate-200 transition hover:bg-white/10 hover:text-white"
+							className={styles.menuItem}
 						>
-							<Icon size={16} className="text-slate-400" />
+							<Icon size={16} className={styles.menuIcon} />
 							{label}
 						</button>
 					))}
-					<div className="my-1 border-t border-white/10" />
+					<div className={styles.divider} />
 					<button
 						type="button"
 						role="menuitem"
 						disabled={isSigningOut}
 						onClick={() => void logout()}
-						className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm text-slate-200 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
+						className={styles.menuItem}
 					>
-						<LogOut size={16} className="text-slate-400" />
+						<LogOut size={16} className={styles.menuIcon} />
 						{isSigningOut ? "Logging out…" : "Log out"}
 					</button>
 					{signOutError && (
-						<p role="alert" className="px-3 py-2 text-sm text-red-300">
+						<p role="alert" className={styles.error}>
 							Unable to log out. Please try again.
 						</p>
 					)}

@@ -57,7 +57,9 @@ it("opens the cloud customer path and groups samples together without moving use
 	fireEvent.click(screen.getByRole("button", { name: /MERN Customer Path/ }));
 	expect(screen.getAllByText("Samples")).toHaveLength(1);
 	expect(
-		screen.getByText("services/api", { selector: 'span[class="truncate"]' }),
+		screen
+			.getAllByText("services/api")
+			.find((label) => !label.closest("button")),
 	).toBeTruthy();
 	fireEvent.click(screen.getByRole("button", { name: /My service/ }));
 	expect(mapSelectionStore.get().id).toBe("custom");

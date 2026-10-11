@@ -19,6 +19,7 @@ import {
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import { pythonEnumCompletionSource } from "@/pyodide/pythonEnumCompletions";
 import type { Theme } from "@/theme/theme";
+import styles from "./PythonCodeEditor.module.css";
 import { createThemeExtensions } from "./pythonEditorTheme";
 
 interface PythonCodeEditorProps {
@@ -145,5 +146,5 @@ export const PythonCodeEditor = forwardRef<
 		[],
 	);
 
-	return <div ref={containerRef} className="h-full min-h-0 flex-1" />;
+	return <div ref={containerRef} className={styles.editor} />;
 });
