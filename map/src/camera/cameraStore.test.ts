@@ -13,7 +13,7 @@ afterEach(() => {
 });
 
 it.each([16 / 9, 9 / 16])(
-	"frames the full card after OrbitControls.update at aspect %s",
+	"frames the full block after OrbitControls.update at aspect %s",
 	(aspect) => {
 		const canvas = document.createElement("canvas");
 		document.body.append(canvas);

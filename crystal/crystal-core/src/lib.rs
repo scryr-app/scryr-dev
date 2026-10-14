@@ -1,11 +1,6 @@
 //! GraphQL-backed manifest models, pure artifact generation, and persistence for Scryr.
 #![allow(clippy::missing_docs_in_private_items)]
 
-/// GitHub Actions run and status history models.
-pub mod action_history;
-/// Typed operational report observations.
-pub mod reports;
-
 mod error;
 pub use error::Error;
 

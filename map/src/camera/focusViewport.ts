@@ -5,7 +5,7 @@ export interface FocusViewport {
 	maxY: number;
 }
 
-/** Reserve breathing room around the card, including space for the toolbar. */
+/** Reserve breathing room around the block, including space for the toolbar. */
 export const DEFAULT_FOCUS_VIEWPORT: FocusViewport = {
 	minX: -0.82,
 	maxX: 0.82,

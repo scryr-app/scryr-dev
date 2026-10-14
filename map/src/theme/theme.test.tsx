@@ -56,7 +56,6 @@ it("switches the whole appearance and persists it without remounting the draft",
 		"dark / leather / matte",
 	);
 	expect(localStorage.getItem("selectedTheme")).toBe("ScholarsGrimoire");
-	expect(getTheme().cardTextColor).toBe("#fff5df");
 	expect((draft as HTMLInputElement).value).toBe("keep my changes");
 	fireEvent.click(screen.getByRole("button", { name: /Industrial Forest/ }));
 	expect(screen.getByLabelText("Appearance").textContent).toBe(

@@ -417,7 +417,6 @@ dependencies = [
  "asynk-strim",
  "base64 0.22.1",
  "bytes",
- "chrono",
  "fast_chemail",
  "fnv",
  "futures-util",
@@ -768,10 +767,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1aa79e62e7697b8e29b513a68abacf485adcd1fe8284a4316c5ae868e6633327"
 dependencies = [
  "iana-time-zone",
- "js-sys",
  "num-traits",
  "serde",
- "wasm-bindgen",
  "windows-link",
 ]
 
@@ -1029,7 +1026,6 @@ dependencies = [
  "predicates",
  "rand 0.10.2",
  "reqwest",
- "roxmltree",
  "serde",
  "serde_json",
  "sha2 0.11.0",
@@ -1043,7 +1039,6 @@ name = "crystal-core"
 version = "0.7.1"
 dependencies = [
  "async-graphql",
- "chrono",
  "libsql",
  "serde",
  "serde_json",
@@ -1062,13 +1057,11 @@ dependencies = [
  "actix-web",
  "async-graphql",
  "async-graphql-actix-web",
- "chrono",
  "clap",
  "clerk-rs",
  "crystal-core",
  "futures-util",
  "libsql",
- "reqwest",
  "serde",
  "serde_json",
  "sqlx",
@@ -3020,15 +3013,6 @@ dependencies = [
  "libc",
  "untrusted",
  "windows-sys 0.52.0",
-]
-
-[[package]]
-name = "roxmltree"
-version = "0.21.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f1964b10c76125c36f8afe190065a4bf9a87bf324842c05701330bba9f1cacbb"
-dependencies = [
- "memchr",
 ]
 
 [[package]]

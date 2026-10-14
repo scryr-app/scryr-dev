@@ -149,19 +149,6 @@ function MapBlocks({ blocks, layout }: MapBlocksProps) {
 		() => new Map(layout.nodes.map((node) => [node.id, node])),
 		[layout.nodes],
 	);
-	const diagramTagsByBlockName = useMemo(() => {
-		const tagsByBlockName = new Map<string, string[]>();
-
-		for (const group of layout.groups) {
-			for (const nodeId of group.nodeIds) {
-				const tags = tagsByBlockName.get(nodeId) ?? [];
-				tags.push(group.tag);
-				tagsByBlockName.set(nodeId, tags);
-			}
-		}
-
-		return tagsByBlockName;
-	}, [layout.groups]);
 
 	return (
 		<>
@@ -177,7 +164,6 @@ function MapBlocks({ blocks, layout }: MapBlocksProps) {
 					layoutNode.y + layoutNode.height / 2,
 				);
 				const blockHeight = getBlockHeight(blockName, layout);
-				const blockDiagrams = diagramTagsByBlockName.get(blockName) ?? [];
 
 				return (
 					<Block
@@ -186,22 +172,6 @@ function MapBlocks({ blocks, layout }: MapBlocksProps) {
 						color={currentTheme.getColorByIndex(index)}
 						name={blockName}
 						icon={block.icon || ""}
-						classification={block.consumerType || undefined}
-						description={block.description || undefined}
-						version={block.version || undefined}
-						language={block.language || undefined}
-						frameworks={block.frameworks}
-						deployment={block.deployment || undefined}
-						ownerTeam={block.ownerTeam || undefined}
-						authType={block.authType || undefined}
-						iacTool={block.iacTool || undefined}
-						monitoring={block.monitoring || undefined}
-						tracing={block.tracing || undefined}
-						logAggregation={block.logAggregation || undefined}
-						cicdTool={block.cicdTool || undefined}
-						docs={block.docs}
-						links={block.links}
-						diagrams={blockDiagrams}
 						blockData={block}
 					/>
 				);

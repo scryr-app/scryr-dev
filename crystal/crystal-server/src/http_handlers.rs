@@ -83,10 +83,8 @@ fn local_editor_origin_allowed(origin: Option<&str>, expected: &str, trusted: &[
 
 /// Return whether a GraphQL document uses fields that require Scryr map tenant context.
 fn request_requires_manifest_context(query: &str) -> bool {
-    query.contains("recordActionRun")
-        || query.contains("manifestDocument")
+    query.contains("manifestDocument")
         || query.contains("saveManifestDocument")
-        || query.contains("actionHistory")
         || query.contains("upsertGeneratedManifest")
         || query.contains("scryrMaps")
         || query.contains("blocks")

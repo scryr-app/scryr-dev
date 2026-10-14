@@ -23,33 +23,13 @@ query GetScryrMaps {
 
 query GetBlocks($scryIdentifier: String, $sample: String) {
 	blocks(scryIdentifier: $scryIdentifier, sample: $sample) {
+		manifestId
 		name
-		description
-		version
 		lineNumber
 		consumerType
 		icon
-		language
-		frameworks
-		deployment
-		deploymentProvider
-		sourceCodeUrl
 		connections
-		docs
-		ownerTeam
 		tags
-		authType
-		monitoring
-		logAggregation
-		tracing
-		iacTool
-		cicdTool
-		maxReplicas
-		minReplicas
-		links {
-			siteName
-			httpUrl
-		}
 		rawJsonString
 	}
 }

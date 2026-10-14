@@ -131,10 +131,10 @@ def test_emit_diagram_values_resolves_query_backed_diagrams(tmp_path: Path) -> N
     """A Diagram query filters public manifests from the same module during emission."""
     manifest_file = tmp_path / "main.scry"
     manifest_file.write_text(
-        "from scryr import Diagram, Manifest, ProgrammingLanguage\n"
-        'api = Manifest(name="API", language=ProgrammingLanguage.python, tags=["backend"])\n'
-        'web = Manifest(name="Web", language=ProgrammingLanguage.typescript, tags=["frontend"])\n'
-        'main = Diagram(name="Backend", query=Diagram.Query(language="python", tags="backend"))\n',
+        "from scryr import Diagram, Manifest\n"
+        'api = Manifest(name="API", tags=["backend"])\n'
+        'web = Manifest(name="Web", tags=["frontend"])\n'
+        'main = Diagram(name="Backend", query=Diagram.Query(tags="backend"))\n',
     )
     module = load_manifest_module(manifest_file)
 

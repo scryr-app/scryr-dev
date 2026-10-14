@@ -18,7 +18,7 @@ export function useMapLayout(
 		layoutView: null,
 		layoutError: null,
 	});
-	// Runtime metrics/card metadata refresh independently of the graph. They
+	// Non-layout attributes refresh independently of the graph. They
 	// must not rerun ELK or reset a camera the user has already positioned.
 	const topology = JSON.stringify(
 		blocks.map(({ name, connections, tags }) => ({ name, connections, tags })),

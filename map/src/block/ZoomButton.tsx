@@ -10,7 +10,6 @@ interface ZoomButtonProps {
 	blockWidth: number;
 	blockHeight: number;
 	blockDepth: number;
-	onSelectBlock: () => void;
 }
 
 export function ZoomButton({
@@ -20,7 +19,6 @@ export function ZoomButton({
 	blockWidth,
 	blockHeight,
 	blockDepth,
-	onSelectBlock,
 }: ZoomButtonProps) {
 	const [isHovered, setIsHovered] = useState(false);
 	const color = currentTheme.isDarkDiagram ? "#ffffff" : "#0f172a";
@@ -31,7 +29,6 @@ export function ZoomButton({
 	const glyphScale = (Math.min(blockWidth, blockDepth) * 0.26) / 0.123;
 
 	const focusBlock = () => {
-		onSelectBlock();
 		cameraStore.focusBlock({
 			id: blockId,
 			position: blockPosition,
@@ -54,7 +51,7 @@ export function ZoomButton({
 				focusBlock();
 			}}
 		>
-			{/* A single top-facing hit plane leaves the card faces unobstructed. */}
+			{/* A single top-facing hit plane leaves the block faces unobstructed. */}
 			<mesh>
 				<planeGeometry args={[overlayWidth, overlayHeight]} />
 				<meshBasicMaterial transparent opacity={0} depthWrite={false} />

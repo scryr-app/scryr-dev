@@ -13,10 +13,6 @@ scryr format
 scryr lint --fix
 scryr push
 scryr serve --watch
-scryr report tests --run-id "$GITHUB_RUN_ID" --observed-at "$RESULTS_COMPLETED_AT"
-scryr report actions
-scryr query --list
-scryr query request_latency --json
 ```
 
 ## Check, format, and lint

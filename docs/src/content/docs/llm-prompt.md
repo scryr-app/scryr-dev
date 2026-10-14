@@ -3,7 +3,7 @@ title: Generate index.scry with an LLM
 description: Give humans a reviewable diagram of agent-written software with a repository-grounded Scryr manifest.
 ---
 
-AI agents can create software faster than a reviewer can reconstruct its runtime shape from a diff. A generated `index.scry` gives that reviewer a typed, explorable account of the system: its components, connections, owners, deployment targets, source links, and operational evidence.
+AI agents can create software faster than a reviewer can reconstruct its runtime shape from a diff. A generated `index.scry` gives that reviewer a typed, explorable account of the system: its components, classifications, tags, and connections.
 
 Use a coding agent that can read your repository. Paste the prompt below; it asks the agent to inspect real runtime boundaries before authoring and to avoid fabricated architecture. The resulting `.scry` file belongs in the same review as the code it describes.
 
@@ -15,7 +15,7 @@ Represent the architecture that actually exists so humans and coding agents can 
 
 Scryr model
 - A .scry file is executable Python.
-- Import public models from scryr: Manifest, Diagram, Info, Github, CICD, Tests, Dependencies, Metrics, Performance, Link, Forge, and ManifestQuery as needed.
+- Import public models from scryr: Manifest, Diagram, Forge, and ManifestQuery as needed.
 - Import enums and value types from scryr.types when useful.
 - Each real deployable, application, datastore, queue, worker, external integration, or important infrastructure boundary may become one public Manifest variable.
 - Set a stable manifest_id for each important component, using repository-relative identities such as "apps/web" or "services/catalog-api".
@@ -27,14 +27,12 @@ Investigation
 1. Read the main README and contribution/build instructions.
 2. Inspect workspace/package manifests, lockfiles, containers, infrastructure, CI workflows, deployment config, API schemas, and executable entrypoints.
 3. Identify runtime boundaries and data/control flow, not just folders.
-4. Derive languages, frameworks, deployment targets, ownership, auth, observability, documentation links, and source repositories only from evidence.
+4. Derive component classifications, tags, and connections only from evidence.
 5. Notice background workers, scheduled jobs, message brokers, databases, third-party APIs, and CI/CD paths.
 
 Authoring rules
 - Keep the file readable and typed. Reuse component variables in Diagram.manifests.
-- Add Info(description=...) that explains responsibility and interactions in one or two precise sentences.
 - Add tags for meaningful filtering, not decorative labels.
-- Add Github(repo_url=...) only when the canonical repository URL is known.
 - Use supported Scryr enums when you can verify them; omit uncertain optional fields rather than guessing.
 - Model directed connections according to the actual dependency or call direction used by the repository.
 - If the repository is a monorepo, group components logically and consider multiple diagrams for system context, runtime flow, and operations.
@@ -72,4 +70,4 @@ scryr serve --watch
 
 You've reached the end of the introductory guides. The pages that follow are **Developer Docs**: technical guides and references for writing manifests, using the CLI, generating code, and connecting Scryr to your development tools.
 
-Start with the [Manifest language](/manifests/), or jump to the [CLI reference](/cli/), [code generation](/code-generation/), [integrations](/integrations/), or [editor highlighting](/editors/).
+Start with the [Manifest language](/manifests/), or jump to the [CLI reference](/cli/), [code generation](/code-generation/), [developer tooling](/developer-tooling/), or [editor highlighting](/editors/).

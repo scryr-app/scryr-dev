@@ -18,14 +18,10 @@ def test_top_level_package_exports_core_manifest_api() -> None:
     )
     manifest = scryr.Manifest(
         name="PackageAPI",
-        info=scryr.Info(
-            language=scryr.ProgrammingLanguage.python,
-            frameworks=[scryr.WebFramework.fastapi],
-        ),
         forges=[forge.name],
     )
     diagram = scryr.Diagram(name="Package Diagram", manifests=[manifest])
-    query = scryr.ManifestQuery(language=scryr.ProgrammingLanguage.python)
+    query = scryr.ManifestQuery(name="PackageAPI")
 
     assert forge.to_mise_dict()["tools"]["python"]["version"] == "3.14"
     assert manifest.to_dict()["name"] == "PackageAPI"
@@ -33,9 +29,6 @@ def test_top_level_package_exports_core_manifest_api() -> None:
     assert query.matches(manifest)
     assert scryr.Diagram.Query is scryr.ManifestQuery
     assert manifest.to_dict()["forges"] == ["Package Forge"]
-    assert scryr.Info is scryr.Manifest.Info
-    assert scryr.Github is scryr.Manifest.Github
-    assert scryr.CICD is scryr.Manifest.CICD
     assert scryr.parse_version("1.2.3") == scryr.SemVer("1.2.3")
     assert callable(scryr.run_manifest_file)
     for name in (
@@ -48,9 +41,8 @@ def test_top_level_package_exports_core_manifest_api() -> None:
         "Performance",
         "OtherDiagram",
     ):
-        model = getattr(scryr, name)
-        assert model.__name__ == name
-        assert not hasattr(scryr.manifest, name + "ManifestSection")
+        assert not hasattr(scryr, name)
+        assert not hasattr(scryr.Manifest, name)
 
 
 def test_console_main_returns_usage_error_without_arguments(capsys) -> None:

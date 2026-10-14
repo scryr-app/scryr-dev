@@ -4,18 +4,14 @@ import FeatureChapters from './FeatureChapters.astro';
 import MapPortal from './MapPortal.astro';
 import '../styles/story.css';
 const particles = Array.from({ length: 64 }, (_, i) => ({ x: (i * 73 + 11) % 100, y: (i * 47 + 7) % 100, size: i % 5 === 0 ? 3 : 2, delay: -i * 1.3, duration: 9 + (i % 7) * 2 }));
-const scryCode = `from scryr import Diagram, Info, Manifest
-from scryr.types import ProgrammingLanguage
+const scryCode = `from scryr import Diagram, Manifest
 
 cache = Manifest(name="northwind_redis")
 api = Manifest(
     manifest_id="services/api",
     name="nwapi",
     connections=[cache],
-    info=Info(
-        language=ProgrammingLanguage.python,
-        owner_team="Platform",
-    ),
+    tags=["backend"],
 )
 
 commerce = Diagram(
@@ -100,7 +96,7 @@ commerce = Diagram(
     <div class="chapter-sticky">
       <div class="chapter-heading" data-reveal><h2 id="spell-title">Generate Diagrams from<br /><em>Typed Python Code.</em></h2><p>Give it a repository. Ask for <code>index.scry</code>.<br />Turn its understanding into something you can examine.</p></div>
       <div class="spell-workbench">
-        <div class="grimoire" data-reveal><div class="panel-label"><span>✧ index.scry</span><span>Typed Python</span></div><Code code={scryCode} lang="python" theme="github-dark" /><div class="spell-checks"><span>Imports</span><span>Types</span><span>Connections</span><span>Ownership</span></div></div>
+        <div class="grimoire" data-reveal><div class="panel-label"><span>✧ index.scry</span><span>Typed Python</span></div><Code code={scryCode} lang="python" theme="github-dark" /><div class="spell-checks"><span>Imports</span><span>Types</span><span>Connections</span><span>Classification</span></div></div>
         <div class="conjure-arrow" aria-hidden="true"><span>✧</span><i></i></div>
         <figure class="product-vision" data-reveal><a href="https://scryr.app" aria-label="Open Scryr"><img src="/assets/scryr-product-editor.png" alt="Actual Scryr product with index.scry open beside the Northwind Commerce architecture diagram" width="1440" height="900" loading="lazy" /></a><figcaption>The source and its world, side by side. <span>Actual Scryr product</span></figcaption></figure>
       </div>

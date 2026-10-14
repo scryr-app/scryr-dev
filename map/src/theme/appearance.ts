@@ -26,28 +26,17 @@ export interface ThemeAppearance {
 			| "porcelain"
 			| "sunkenStone"
 			| "velvet";
-		card?: "parchment" | "porcelain" | "seaGlass" | "oracle";
-		paperColor?: string;
 		wallBrightness: number;
 		glowCore: number;
 		glowRim: number;
 	};
-	content?: { text: string; muted: string; link: string; inset: string };
 	shapes: {
 		flatFaces: boolean;
-		cardRadius: number;
 		frameFront: number;
 		frameBack: number;
-		frameCard: number;
 	};
 	walls: SurfaceStyle;
 	innerWalls: SurfaceStyle;
-	cards: SurfaceStyle & {
-		brightness: number;
-		useBlockColor: boolean;
-		overlayOpacity: number;
-		rimHighlight: number;
-	};
 	lighting: {
 		ambient: number;
 		hemisphere: { sky: string; ground: string; intensity: number };
@@ -91,21 +80,11 @@ export const industrialAppearance: ThemeAppearance = {
 	textures: { wall: "ribbed", wallBrightness: 1, glowCore: 0, glowRim: 0 },
 	shapes: {
 		flatFaces: false,
-		cardRadius: 0.0125,
 		frameFront: 0,
 		frameBack: 0,
-		frameCard: 0,
 	},
 	walls: { ...matte },
 	innerWalls: { ...matte, metalness: 0.16, roughness: 0.62 },
-	cards: {
-		...matte,
-		metalness: 0.16,
-		brightness: 1,
-		useBlockColor: false,
-		overlayOpacity: 0.12,
-		rimHighlight: 0.22,
-	},
 	lighting: {
 		ambient: 0.4,
 		hemisphere: { sky: "#ffffff", ground: "#ffffff", intensity: 0 },
@@ -142,10 +121,8 @@ export const neonAppearance: ThemeAppearance = {
 	},
 	shapes: {
 		flatFaces: true,
-		cardRadius: 0.0125,
 		frameFront: 0.65,
 		frameBack: 0.4,
-		frameCard: 0.6,
 	},
 	walls: {
 		metalness: 0.18,
@@ -162,19 +139,6 @@ export const neonAppearance: ThemeAppearance = {
 		roughness: 0.55,
 		clearcoat: 0.15,
 		emissiveIntensity: 0.12,
-	},
-	cards: {
-		...matte,
-		metalness: 0.03,
-		roughness: 0.4,
-		clearcoat: 0.32,
-		clearcoatRoughness: 0.5,
-		envMapIntensity: 0.18,
-		emissiveIntensity: 0.18,
-		brightness: 0.12,
-		useBlockColor: true,
-		overlayOpacity: 0.04,
-		rimHighlight: 0,
 	},
 	lighting: {
 		ambient: 0.18,
@@ -230,22 +194,13 @@ export const grimoireAppearance: ThemeAppearance = {
 	textures: {
 		wall: "leather",
 		wallBrightness: 1,
-		card: "parchment",
 		glowCore: 0,
 		glowRim: 0,
 	},
-	content: {
-		text: "#fff5df",
-		muted: "#e1d2b5",
-		link: "#d9c8ff",
-		inset: "rgba(20,14,9,0.16)",
-	},
 	shapes: {
 		flatFaces: true,
-		cardRadius: 0.007,
 		frameFront: 0,
 		frameBack: 0,
-		frameCard: 0,
 	},
 	walls: {
 		...matte,
@@ -256,15 +211,6 @@ export const grimoireAppearance: ThemeAppearance = {
 		envMapIntensity: 0.25,
 	},
 	innerWalls: { ...matte, metalness: 0, roughness: 0.95 },
-	cards: {
-		...matte,
-		metalness: 0,
-		roughness: 0.96,
-		brightness: 1,
-		useBlockColor: true,
-		overlayOpacity: 0,
-		rimHighlight: 0,
-	},
 	lighting: {
 		ambient: 0.7,
 		hemisphere: { sky: "#f5e8cd", ground: "#483a2c", intensity: 0.7 },
@@ -311,18 +257,10 @@ export const celestialAppearance: ThemeAppearance = {
 		glowCore: 0.035,
 		glowRim: 0.16,
 	},
-	content: {
-		text: "#f5f0d8",
-		muted: "#b9c4d8",
-		link: "#f0cf86",
-		inset: "rgba(3,10,30,0.35)",
-	},
 	shapes: {
 		flatFaces: true,
-		cardRadius: 0.006,
 		frameFront: 0.18,
 		frameBack: 0.08,
-		frameCard: 0.12,
 	},
 	walls: {
 		...matte,
@@ -334,18 +272,6 @@ export const celestialAppearance: ThemeAppearance = {
 		emissiveIntensity: 0.11,
 	},
 	innerWalls: { ...matte, metalness: 0.58, roughness: 0.4 },
-	cards: {
-		...matte,
-		metalness: 0.34,
-		roughness: 0.4,
-		clearcoat: 0.18,
-		envMapIntensity: 0.55,
-		emissiveIntensity: 0.04,
-		brightness: 0.44,
-		useBlockColor: true,
-		overlayOpacity: 0.12,
-		rimHighlight: 0.42,
-	},
 	lighting: {
 		ambient: 0.24,
 		hemisphere: { sky: "#7f9dce", ground: "#070d1b", intensity: 0.45 },
@@ -390,23 +316,13 @@ export const porcelainAppearance: ThemeAppearance = {
 	textures: {
 		wall: "porcelain",
 		wallBrightness: 1.04,
-		card: "porcelain",
-		paperColor: "#fffaf0",
 		glowCore: 0,
 		glowRim: 0,
 	},
-	content: {
-		text: "#183a67",
-		muted: "#68758a",
-		link: "#205fa4",
-		inset: "rgba(22,58,103,0.07)",
-	},
 	shapes: {
 		flatFaces: false,
-		cardRadius: 0.025,
 		frameFront: 0,
 		frameBack: 0,
-		frameCard: 0,
 	},
 	walls: {
 		...matte,
@@ -422,18 +338,6 @@ export const porcelainAppearance: ThemeAppearance = {
 		roughness: 0.3,
 		clearcoat: 0.6,
 		clearcoatRoughness: 0.22,
-	},
-	cards: {
-		...matte,
-		metalness: 0.01,
-		roughness: 0.2,
-		clearcoat: 0.9,
-		clearcoatRoughness: 0.15,
-		envMapIntensity: 0.6,
-		brightness: 1,
-		useBlockColor: false,
-		overlayOpacity: 0.08,
-		rimHighlight: 0.25,
 	},
 	lighting: {
 		ambient: 0.68,
@@ -475,22 +379,13 @@ export const sunkenAppearance: ThemeAppearance = {
 	textures: {
 		wall: "sunkenStone",
 		wallBrightness: 0.95,
-		card: "seaGlass",
 		glowCore: 0.06,
 		glowRim: 0.36,
 	},
-	content: {
-		text: "#e7f5ec",
-		muted: "#9dbfb8",
-		link: "#a9e0d8",
-		inset: "rgba(2,24,29,0.3)",
-	},
 	shapes: {
 		flatFaces: true,
-		cardRadius: 0.016,
 		frameFront: 0.12,
 		frameBack: 0.04,
-		frameCard: 0.18,
 	},
 	walls: {
 		...matte,
@@ -506,20 +401,6 @@ export const sunkenAppearance: ThemeAppearance = {
 		metalness: 0.24,
 		roughness: 0.7,
 		emissiveIntensity: 0.05,
-	},
-	cards: {
-		...matte,
-		metalness: 0.05,
-		roughness: 0.2,
-		clearcoat: 0.72,
-		clearcoatRoughness: 0.18,
-		transmission: 0.12,
-		envMapIntensity: 0.75,
-		emissiveIntensity: 0.12,
-		brightness: 0.4,
-		useBlockColor: true,
-		overlayOpacity: 0.08,
-		rimHighlight: 0.34,
 	},
 	lighting: {
 		ambient: 0.32,
@@ -561,28 +442,18 @@ export const sunkenAppearance: ThemeAppearance = {
 	view: { fov: 36, position: [11, 10, 16] },
 };
 
-/** Champagne velvet and ivory cards in the soft gold light of a Greek sanctuary. */
+/** Champagne velvet and ivory accents in the soft gold light of a Greek sanctuary. */
 export const velvetAppearance: ThemeAppearance = {
 	textures: {
 		wall: "velvet",
 		wallBrightness: 0.9,
-		card: "oracle",
-		paperColor: "#faf7e9",
 		glowCore: 0,
 		glowRim: 0,
 	},
-	content: {
-		text: "#353b34",
-		muted: "#68705f",
-		link: "#356578",
-		inset: "rgba(126,111,62,0.08)",
-	},
 	shapes: {
 		flatFaces: false,
-		cardRadius: 0.035,
 		frameFront: 0,
 		frameBack: 0,
-		frameCard: 0,
 	},
 	walls: {
 		...matte,
@@ -601,18 +472,6 @@ export const velvetAppearance: ThemeAppearance = {
 		sheen: 0.5,
 		sheenColor: "#f5e6bc",
 		sheenRoughness: 0.9,
-	},
-	cards: {
-		...matte,
-		metalness: 0.08,
-		roughness: 0.48,
-		clearcoat: 0.25,
-		clearcoatRoughness: 0.5,
-		envMapIntensity: 0.4,
-		brightness: 1,
-		useBlockColor: false,
-		overlayOpacity: 0.09,
-		rimHighlight: 0.3,
 	},
 	lighting: {
 		ambient: 0.62,

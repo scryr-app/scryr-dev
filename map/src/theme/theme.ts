@@ -247,25 +247,6 @@ export class Theme {
 		return this.attributes.mode === "dark";
 	}
 
-	// Additional derived colors for UI elements
-	get cardTextColor(): string {
-		return this.appearance.content?.text ?? "#FFFFFF";
-	}
-
-	get cardMutedTextColor() {
-		return this.appearance.content?.muted ?? "rgba(255,255,255,0.40)";
-	}
-	get cardLinkColor() {
-		return this.appearance.content?.link ?? "#93c5fd";
-	}
-	get cardInsetColor() {
-		return this.appearance.content?.inset ?? "rgba(0,0,0,0.22)";
-	}
-
-	get cardHighlightColor(): string {
-		return "#ffffff";
-	}
-
 	get innerWallColor(): string {
 		return "#ffffff";
 	}
@@ -456,7 +437,7 @@ export const ThemePresets = {
 		...originalPalette,
 		id: "SunkenSanctuary",
 		name: "Sunken Sanctuary",
-		description: "Ocean blues, sea-glass cards and rolling waves",
+		description: "Ocean blues, sea-glass surfaces and rolling waves",
 		mode: "dark",
 		appearance: sunkenAppearance,
 		console: sunkenConsole,

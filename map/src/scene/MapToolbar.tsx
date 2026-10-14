@@ -1,5 +1,4 @@
 import {
-	Activity,
 	ArrowDown,
 	ArrowLeft,
 	ArrowRight,
@@ -9,42 +8,18 @@ import {
 	ChevronLeft,
 	ChevronRight,
 	ChevronUp,
-	Gauge,
-	GitFork,
-	Info,
-	Layers,
 	Map as MapIcon,
 	Minus,
-	Package,
 	Palette,
 	PencilLine,
 	Plus,
-	Rocket,
-	TestTube,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { cameraStore } from "@/camera";
 import { Button } from "@/components/button";
 import { ThemeOptions } from "@/theme/ThemeSwitcher";
 import { cn } from "@/utils";
-import { useMapTray } from "./MapTrayContext";
 
-const CARD_TYPES = [
-	{ index: 0, icon: Info, label: "Info" },
-	{ index: 1, icon: GitFork, label: "GitHub" },
-	{ index: 2, icon: Activity, label: "Metrics" },
-	{ index: 3, icon: Rocket, label: "CI/CD" },
-	{ index: 4, icon: TestTube, label: "Tests" },
-	{ index: 5, icon: Package, label: "Dependencies" },
-	{ index: 6, icon: Gauge, label: "Performance" },
-	{ index: 7, icon: Layers, label: "Diagrams" },
-] as const;
-
-/**
- * Floating pill toolbar at the bottom of the screen.
- * Left section: card-type selectors.
- * Right section (after divider): theme palette picker.
- */
 /** Returns mousedown/mouseup/mouseleave props that fire `action` immediately
  * then repeatedly at ~60 fps while the button is held.
  * `onLeave` is called on mouseup and mouseleave (e.g. to clear hover state). */
@@ -73,13 +48,15 @@ function holdAction(action: () => void, onLeave?: () => void) {
 	};
 }
 
-interface MapTrayProps {
+interface MapToolbarProps {
 	isPyodideOpen: boolean;
 	onTogglePyodide: () => void;
 }
 
-export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
-	const { activeCardIndex, toggleCard } = useMapTray();
+export function MapToolbar({
+	isPyodideOpen,
+	onTogglePyodide,
+}: MapToolbarProps) {
 	const [themeOpen, setThemeOpen] = useState(false);
 	const [viewMenuOpen, setViewMenuOpen] = useState(false);
 	const [viewMode, setViewMode] = useState<"top-down" | "isometric" | null>(
@@ -90,7 +67,6 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 		action();
 	};
 	const [hoveredIndex, setHoveredIndex] = useState<
-		| number
 		| "editor"
 		| "theme"
 		| "zoom-in"
@@ -415,74 +391,6 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 				</div>
 
 				{/* Vertical divider */}
-				<div className="w-px h-6 bg-white/20 mx-1.5" />
-
-				{/* Info button — middle section */}
-				{(() => {
-					const { icon: Icon, label, index } = CARD_TYPES[0];
-					return (
-						<div className="relative">
-							{hoveredIndex === index && (
-								<div
-									className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 rounded-md bg-black/70 backdrop-blur-sm border border-white/15 text-white text-xs font-medium whitespace-nowrap pointer-events-none flex items-center gap-1.5"
-									style={{ animation: "traySlideUp 0.1s ease-out" }}
-								>
-									{label}
-								</div>
-							)}
-							<Button
-								type="button"
-								variant="ghost"
-								size="icon"
-								className={cn(
-									"rounded-full size-10 text-white/50 hover:text-white hover:bg-white/15 transition-all duration-150",
-									activeCardIndex === index &&
-										"bg-white/20 text-white shadow-inner",
-								)}
-								aria-label={label}
-								aria-pressed={activeCardIndex === index}
-								onClick={() => toggleCard(index)}
-								onMouseEnter={() => setHoveredIndex(index)}
-								onMouseLeave={() => setHoveredIndex(null)}
-							>
-								<Icon size={18} />
-							</Button>
-						</div>
-					);
-				})()}
-
-				{/* Remaining card type buttons */}
-				{CARD_TYPES.slice(1).map(({ index, icon: Icon, label }) => (
-					<div key={index} className="relative">
-						{hoveredIndex === index && (
-							<div
-								className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 rounded-md bg-black/70 backdrop-blur-sm border border-white/15 text-white text-xs font-medium whitespace-nowrap pointer-events-none flex items-center gap-1.5"
-								style={{ animation: "traySlideUp 0.1s ease-out" }}
-							>
-								{label}
-							</div>
-						)}
-						<Button
-							type="button"
-							variant="ghost"
-							size="icon"
-							className={cn(
-								"rounded-full size-10 text-white/50 hover:text-white hover:bg-white/15 transition-all duration-150",
-								activeCardIndex === index &&
-									"bg-white/20 text-white shadow-inner",
-							)}
-							aria-label={label}
-							aria-pressed={activeCardIndex === index}
-							onClick={() => toggleCard(index)}
-							onMouseEnter={() => setHoveredIndex(index)}
-							onMouseLeave={() => setHoveredIndex(null)}
-						>
-							<Icon size={18} />
-						</Button>
-					</div>
-				))}
-
-				{/* Divider between card diagrams and the editor */}
 				<div className="w-px h-6 bg-white/20 mx-1.5" />
 
 				{/* Theme section */}
