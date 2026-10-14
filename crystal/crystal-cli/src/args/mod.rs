@@ -32,6 +32,8 @@ pub(crate) struct Args {
 /// Top-level CLI commands.
 #[derive(Subcommand, Debug, Clone)]
 pub(crate) enum Command {
+    /// Run the selected local manifest's collectors once and store their observations.
+    Collect(CollectArgs),
     /// Check formatting, lint, Python types, execution, and Scryr rules.
     Check(GenerateCommonArgs),
     /// Format manifest source files in place.
@@ -55,6 +57,8 @@ pub(crate) enum Command {
 /// Fully resolved top-level command consumed by execution.
 #[derive(Debug, Clone)]
 pub(crate) enum ResolvedCommand {
+    /// Run local collectors once.
+    Collect(CollectArgs),
     /// Check formatting, lint, Python types, execution, and Scryr rules.
     Check(GenerateCommonArgs),
     /// Format manifest source files in place.
@@ -80,6 +84,7 @@ impl Args {
     pub(crate) fn resolved_command(&self) -> Result<ResolvedCommand, String> {
         if let Some(command) = &self.command {
             return Ok(match command.clone() {
+                Command::Collect(args) => ResolvedCommand::Collect(args),
                 Command::Check(args) => ResolvedCommand::Check(args),
                 Command::Format(args) => ResolvedCommand::Format(args),
                 Command::Lint(args) => ResolvedCommand::Lint(args),
@@ -105,6 +110,14 @@ mod tests {
     use clap::Parser;
     use crystal_server::state::AuthMode;
     use std::path::PathBuf;
+
+    #[test]
+    fn collection_execution_requires_an_explicit_supported_mode() {
+        assert!(Args::try_parse_from(["scryr", "collect", "--collector", "api"]).is_ok());
+        assert!(Args::try_parse_from(["scryr", "serve", "--collect"]).is_ok());
+        assert!(Args::try_parse_from(["scryr", "serve", "--collect", "--watch"]).is_err());
+        assert!(Args::try_parse_from(["scryr", "serve", "--collect", "--server-only"]).is_err());
+    }
 
     #[test]
     fn push_command_accepts_command_local_scryr_dir() -> Result<(), String> {

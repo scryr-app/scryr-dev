@@ -42,6 +42,8 @@ pub(crate) struct PythonScryrValue {
     forge: Option<Value>,
     /// Serialized Pydantic diagram object.
     diagram: Option<Value>,
+    /// Optional typed local collection execution plan.
+    collection_plan: Option<Value>,
 }
 
 /// Parsed Python adapter output for one requested mode.
@@ -127,9 +129,22 @@ fn build_manifest_json_artifact(
     let mut manifests = Vec::new();
     let mut forges = Vec::new();
     let mut diagrams = Vec::new();
+    let mut collection_plan = None;
 
     for value in values {
         match value.kind.as_deref() {
+            Some("collection_plan") => {
+                if collection_plan.is_some() {
+                    return Err("Manifest emitted more than one collection plan".into());
+                }
+                let plan = value
+                    .collection_plan
+                    .ok_or("Missing collection plan payload")?;
+                let typed: crystal_core::collection::CollectionPlan =
+                    serde_json::from_value(plan.clone()).map_err(|error| error.to_string())?;
+                typed.validate()?;
+                collection_plan = Some(plan);
+            }
             Some("forge") => {
                 let forge = attach_scryr_metadata(
                     value.forge.ok_or_else(|| {
@@ -181,12 +196,15 @@ fn build_manifest_json_artifact(
         }
     }
 
-    let envelope = GeneratedManifestEnvelope::from_adapter_values(
+    let mut envelope = GeneratedManifestEnvelope::from_adapter_values(
         collect_manifest_source_files(manifest_file)?,
         manifests,
         forges,
         diagrams,
     )?;
+    if let Some(plan) = collection_plan {
+        envelope.extra.insert("collection_plan".into(), plan);
+    }
     format_json(&envelope)
 }
 
@@ -240,4 +258,47 @@ fn attach_scryr_metadata(
 /// Pretty-print any serializable value.
 fn format_json<T: Serialize>(value: &T) -> Result<String, String> {
     serde_json::to_string_pretty(value).map_err(|error| format!("Failed to format JSON: {error}"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{ManifestPythonMode, PythonAdapterOutput, format_manifest_adapter_output};
+    use serde_json::json;
+
+    #[test]
+    fn collection_plan_survives_adapter_without_executing_commands() -> Result<(), String> {
+        let directory = tempfile::tempdir().map_err(|error| error.to_string())?;
+        let file = directory.path().join("index.scry");
+        std::fs::write(&file, "api = Manifest(name='API')\n").map_err(|error| error.to_string())?;
+        let values = json!([
+            {"kind":"manifest", "variable_name":"api", "manifest":{"name":"API"}},
+            {"kind":"collection_plan", "variable_name":"collection_plan", "collection_plan":{
+                "version":1,"tasks":[],"collectors":[],"cards":[]
+            }}
+        ]);
+        let output =
+            PythonAdapterOutput::parse(&file, ManifestPythonMode::Json, &values.to_string())?;
+        let artifact = format_manifest_adapter_output(&file, ManifestPythonMode::Json, output)?;
+        let value: serde_json::Value =
+            serde_json::from_str(&artifact).map_err(|error| error.to_string())?;
+        assert_eq!(value["collection_plan"]["version"], 1);
+        assert_eq!(value["manifests"][0]["line_number"], 1);
+        assert!(!directory.path().join(".scryr").exists());
+        Ok(())
+    }
+
+    #[test]
+    fn duplicate_collection_plans_are_rejected() -> Result<(), String> {
+        let directory = tempfile::tempdir().map_err(|error| error.to_string())?;
+        let file = directory.path().join("index.scry");
+        std::fs::write(&file, "# plan\n").map_err(|error| error.to_string())?;
+        let plan = json!({"kind":"collection_plan", "variable_name":"collection_plan", "collection_plan":{
+            "version":1,"tasks":[],"collectors":[],"cards":[]
+        }});
+        let values = json!([plan, plan]);
+        let output =
+            PythonAdapterOutput::parse(&file, ManifestPythonMode::Json, &values.to_string())?;
+        assert!(format_manifest_adapter_output(&file, ManifestPythonMode::Json, output).is_err());
+        Ok(())
+    }
 }

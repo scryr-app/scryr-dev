@@ -13,6 +13,28 @@ pub(crate) struct QueryRoot;
 
 #[Object]
 impl QueryRoot {
+    /// Read stored observations shared by this local manifest's cards. Never runs commands.
+    async fn collector_cards(
+        &self,
+        ctx: &async_graphql::Context<'_>,
+    ) -> Result<Vec<crystal_core::collection::CollectorCard>, String> {
+        require_authenticated_request(ctx).map_err(|error| error.message)?;
+        let state = ctx.data::<AppState>().map_err(|error| error.message)?;
+        let runtime = ctx
+            .data_opt::<Option<crystal_core::collection::CollectionRuntime>>()
+            .and_then(Option::as_ref);
+        let Some(runtime) = runtime else {
+            return Ok(Vec::new());
+        };
+        if state.auth_mode != crate::state::AuthMode::Local
+            || !ctx
+                .data_opt::<crate::editor::EditorRequestAllowed>()
+                .is_some_and(|allowed| allowed.0)
+        {
+            return Err("Collection observations require the local UI's trusted origin".into());
+        }
+        runtime.snapshot().await
+    }
     /// Read the selected diagram's complete source document.
     async fn manifest_document(
         &self,

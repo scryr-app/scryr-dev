@@ -16,6 +16,7 @@ from pathlib import Path
 from types import CodeType, UnionType
 from typing import TYPE_CHECKING, Any, Union, cast, get_args, get_origin
 
+from scryr.collection import collection_plan
 from scryr.manifest import Diagram, Forge, Manifest
 
 if TYPE_CHECKING:
@@ -409,7 +410,17 @@ def emit_diagram_values(module: ModuleType) -> list[DiagramValueRecord]:
 
 def emit_scryr_values(module: ModuleType) -> list[ScryrValueRecord]:
     """Serialize all public top-level Scryr constructs from a loaded module."""
-    return [*emit_manifest_values(module), *emit_forge_values(module), *emit_diagram_values(module)]
+    records = [
+        *emit_manifest_values(module),
+        *emit_forge_values(module),
+        *emit_diagram_values(module),
+    ]
+    plan = collection_plan(module)
+    if plan is not None:
+        records.append(
+            {"kind": "collection_plan", "variable_name": "collection_plan", "collection_plan": plan}
+        )
+    return records
 
 
 def emit_manifest_types(module: ModuleType) -> list[ManifestTypeRecord]:

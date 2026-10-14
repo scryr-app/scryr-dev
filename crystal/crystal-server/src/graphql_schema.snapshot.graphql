@@ -47,6 +47,52 @@ type Block {
 	connections: [String!]!
 }
 
+"""
+A read-only card with shared collector observations.
+"""
+type CollectorCard {
+	"""
+	Stable card identifier.
+	"""
+	id: String!
+	"""
+	Presentation primitive.
+	"""
+	kind: String!
+	"""
+	Display title.
+	"""
+	title: String!
+	"""
+	Architecture manifest identifier.
+	"""
+	target: String!
+	"""
+	Source collector identifier.
+	"""
+	collectorId: String!
+	"""
+	Environment label.
+	"""
+	environment: String!
+	"""
+	Successful data freshness threshold.
+	"""
+	staleAfterSeconds: Int!
+	"""
+	Latest execution outcome.
+	"""
+	latest: Observation
+	"""
+	Latest valid report from this plan revision.
+	"""
+	lastSuccess: Observation
+	"""
+	Up to twenty recent executions, newest first.
+	"""
+	history: [Observation!]!
+}
+
 type GeneratedManifestMutationRoot {
 	"""
 	Save source and all its diagram artifacts with optimistic concurrency.
@@ -81,7 +127,53 @@ A scalar that can represent any JSON value.
 """
 scalar JSON
 
+"""
+A persisted execution outcome; failures never expose raw process output.
+"""
+type Observation {
+	"""
+	Unique run identifier.
+	"""
+	id: String!
+	"""
+	Source collector identifier.
+	"""
+	collectorId: String!
+	"""
+	Execution start in UTC.
+	"""
+	startedAt: String!
+	"""
+	Execution end in UTC.
+	"""
+	finishedAt: String!
+	"""
+	success, failed, timeout, or `invalid_output`.
+	"""
+	status: String!
+	"""
+	Process exit code, when available.
+	"""
+	exitCode: Int
+	"""
+	Sanitized collection failure description.
+	"""
+	error: String
+	"""
+	Validated JSON report on successful collection.
+	"""
+	data: JSON
+	"""
+	Digest of the active collection plan.
+	"""
+	planRevision: String!
+}
+
 type QueryRoot {
+	"""
+	Read stored observations shared by this local manifest's cards. Never runs commands.
+	"""
+	collectorCards: [CollectorCard!]!
 	"""
 	Read the selected diagram's complete source document.
 	"""

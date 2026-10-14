@@ -1,0 +1,53 @@
+"""One safe local collector feeding three read-only cards."""
+
+from datetime import timedelta
+from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, Field
+
+from scryr import (
+    Collector,
+    Command,
+    Diagram,
+    Every,
+    HistoryCard,
+    JsonOutput,
+    Manifest,
+    StatusCard,
+    TableCard,
+    Task,
+)
+
+
+class DeploymentSnapshot(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    version: str
+    state: Literal["healthy", "degraded"]
+    ready_instances: int = Field(ge=0)
+
+
+api = Manifest(name="API", manifest_id="collectors-api")
+deployment = Task[DeploymentSnapshot](
+    id="deployment-status",
+    command=Command(
+        argv=["printf", "%s", '{"version":"demo-v1","state":"healthy","ready_instances":3}']
+    ),
+    output=JsonOutput(model=DeploymentSnapshot),
+)
+production = Collector[DeploymentSnapshot](
+    id="api-deployment",
+    task=deployment,
+    schedule=Every(timedelta(seconds=30)),
+)
+status = StatusCard[DeploymentSnapshot](
+    id="deployment", title="Deployment", source=production, target=api
+)
+details = TableCard[DeploymentSnapshot](
+    id="deployment-details", title="Deployment details", source=production, target=api
+)
+history = HistoryCard[DeploymentSnapshot](
+    id="deployment-history", title="Deployment history", source=production, target=api
+)
+
+diagram = Diagram(name="Local collectors", manifests=[api])

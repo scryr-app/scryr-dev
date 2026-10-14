@@ -603,6 +603,131 @@
       }
     ]
   },
+  "collectors": {
+    "collection_plan": {
+      "cards": [
+        {
+          "collector_id": "api-deployment",
+          "id": "deployment",
+          "kind": "status",
+          "target": "collectors-api",
+          "title": "Deployment"
+        },
+        {
+          "collector_id": "api-deployment",
+          "id": "deployment-details",
+          "kind": "table",
+          "target": "collectors-api",
+          "title": "Deployment details"
+        },
+        {
+          "collector_id": "api-deployment",
+          "id": "deployment-history",
+          "kind": "history",
+          "target": "collectors-api",
+          "title": "Deployment history"
+        }
+      ],
+      "collectors": [
+        {
+          "environment": "local",
+          "id": "api-deployment",
+          "interval_seconds": 30,
+          "retain_for_seconds": 2592000,
+          "stale_after_seconds": 120,
+          "task_id": "deployment-status"
+        }
+      ],
+      "tasks": [
+        {
+          "accepted_exit_codes": [
+            0
+          ],
+          "command": {
+            "argv": [
+              "printf",
+              "%s",
+              "{\"version\":\"demo-v1\",\"state\":\"healthy\",\"ready_instances\":3}"
+            ],
+            "cwd": "."
+          },
+          "id": "deployment-status",
+          "max_output_bytes": 1048576,
+          "output_schema": {
+            "additionalProperties": false,
+            "properties": {
+              "ready_instances": {
+                "minimum": 0,
+                "title": "Ready Instances",
+                "type": "integer"
+              },
+              "state": {
+                "enum": [
+                  "healthy",
+                  "degraded"
+                ],
+                "title": "State",
+                "type": "string"
+              },
+              "version": {
+                "title": "Version",
+                "type": "string"
+              }
+            },
+            "required": [
+              "version",
+              "state",
+              "ready_instances"
+            ],
+            "title": "DeploymentSnapshot",
+            "type": "object"
+          },
+          "timeout_seconds": 30
+        }
+      ],
+      "version": 1
+    },
+    "diagrams": [
+      {
+        "description": "",
+        "line_number": 53,
+        "manifests": [
+          {
+            "classification": "public_api",
+            "connections": [],
+            "forges": [],
+            "icon": "",
+            "manifestId": "collectors-api",
+            "name": "API",
+            "tags": []
+          }
+        ],
+        "name": "Local collectors",
+        "query": null,
+        "variable_name": "diagram"
+      }
+    ],
+    "files": [
+      {
+        "content": "\"\"\"One safe local collector feeding three read-only cards.\"\"\"\n\nfrom datetime import timedelta\nfrom typing import Literal\n\nfrom pydantic import BaseModel, ConfigDict, Field\n\nfrom scryr import (\n    Collector,\n    Command,\n    Diagram,\n    Every,\n    HistoryCard,\n    JsonOutput,\n    Manifest,\n    StatusCard,\n    TableCard,\n    Task,\n)\n\n\nclass DeploymentSnapshot(BaseModel):\n    model_config = ConfigDict(extra=\"forbid\", strict=True)\n\n    version: str\n    state: Literal[\"healthy\", \"degraded\"]\n    ready_instances: int = Field(ge=0)\n\n\napi = Manifest(name=\"API\", manifest_id=\"collectors-api\")\ndeployment = Task[DeploymentSnapshot](\n    id=\"deployment-status\",\n    command=Command(\n        argv=[\"printf\", \"%s\", '{\"version\":\"demo-v1\",\"state\":\"healthy\",\"ready_instances\":3}']\n    ),\n    output=JsonOutput(model=DeploymentSnapshot),\n)\nproduction = Collector[DeploymentSnapshot](\n    id=\"api-deployment\",\n    task=deployment,\n    schedule=Every(timedelta(seconds=30)),\n)\nstatus = StatusCard[DeploymentSnapshot](\n    id=\"deployment\", title=\"Deployment\", source=production, target=api\n)\ndetails = TableCard[DeploymentSnapshot](\n    id=\"deployment-details\", title=\"Deployment details\", source=production, target=api\n)\nhistory = HistoryCard[DeploymentSnapshot](\n    id=\"deployment-history\", title=\"Deployment history\", source=production, target=api\n)\n\ndiagram = Diagram(name=\"Local collectors\", manifests=[api])\n",
+        "path": "index.scry"
+      }
+    ],
+    "forges": [],
+    "manifests": [
+      {
+        "classification": "public_api",
+        "connections": [],
+        "forges": [],
+        "icon": "",
+        "line_number": 30,
+        "manifestId": "collectors-api",
+        "name": "API",
+        "tags": [],
+        "variable_name": "api"
+      }
+    ]
+  },
   "dokku": {
     "diagrams": [
       {

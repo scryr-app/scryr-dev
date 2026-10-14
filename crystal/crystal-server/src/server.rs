@@ -41,6 +41,28 @@ pub async fn start_with_workspace(
     args: ServerArgs,
     workspace: Option<crate::editor::LocalWorkspace>,
 ) -> std::io::Result<actix_web::dev::Server> {
+    start_with_collections(args, workspace, None).await
+}
+
+/// Start a local server with an optional read-only collection runtime.
+/// Collection execution remains owned by the explicitly invoked CLI.
+///
+/// # Errors
+/// Returns configuration, storage, or listener errors.
+pub async fn start_with_collections(
+    args: ServerArgs,
+    workspace: Option<crate::editor::LocalWorkspace>,
+    collections: Option<crystal_core::collection::CollectionRuntime>,
+) -> std::io::Result<actix_web::dev::Server> {
+    if collections.is_some()
+        && (workspace.is_none()
+            || args.auth_mode == Some(AuthMode::Clerk)
+            || !matches!(args.host.as_str(), "127.0.0.1" | "localhost" | "::1"))
+    {
+        return Err(std::io::Error::other(
+            "Collectors require an explicitly selected local workspace, local authentication, and a loopback host",
+        ));
+    }
     if workspace.is_some() && !matches!(args.host.as_str(), "127.0.0.1" | "localhost" | "::1") {
         return Err(std::io::Error::other(
             "Local source editing requires a loopback host; use --server-only for network hosting",
@@ -72,6 +94,7 @@ pub async fn start_with_workspace(
 
     let schema = Schema::build(QueryRoot, MutationRoot::default(), EmptySubscription)
         .data(crate::editor::EditorService { local: workspace })
+        .data(collections)
         .data(app_state.clone())
         .data(app_state.db_pool.clone())
         .finish();
@@ -262,6 +285,79 @@ mod tests {
         );
         drop(response);
         pool.close().await;
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod collection_tests {
+    use super::graphql_resource;
+    use crate::roots::{MutationRoot, QueryRoot};
+    use crate::state::{AppState, AuthMode};
+    use actix_web::{App, test, web};
+    use async_graphql::{EmptySubscription, Schema};
+    use crystal_core::{
+        collection::{CollectionPlan, CollectionRuntime},
+        persistence::DatabasePool,
+    };
+
+    #[actix_web::test]
+    async fn collector_query_is_origin_guarded_and_does_not_execute()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let directory =
+            std::env::temp_dir().join(format!("scryr-collection-query-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir_all(&directory)?;
+        let plan: CollectionPlan = serde_json::from_value(serde_json::json!({
+            "version":1,
+            "tasks":[{"id":"task","command":{"argv":["must-not-execute"],"cwd":"."},"output_schema":{"type":"object"},"timeout_seconds":1,"max_output_bytes":1024,"accepted_exit_codes":[0]}],
+            "collectors":[{"id":"collector","task_id":"task","environment":"local","interval_seconds":30,"stale_after_seconds":60,"retain_for_seconds":3600}],
+            "cards":[{"id":"card","kind":"status","title":"Deployment","collector_id":"collector","target":"api"}]
+        }))?;
+        let runtime = CollectionRuntime::open(directory.clone(), plan).await?;
+        let pool = sqlx::SqlitePool::connect("sqlite::memory:").await?;
+        let state = AppState {
+            sample: None,
+            auth_mode: AuthMode::Local,
+            clerk_authorizer: None,
+            clerk_client: None,
+            db_pool: DatabasePool::Sqlite(pool.clone()),
+        };
+        let schema = Schema::build(QueryRoot, MutationRoot::default(), EmptySubscription)
+            .data(state.clone())
+            .data(Some(runtime.clone()))
+            .finish();
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(schema))
+                .app_data(web::Data::new(state))
+                .service(graphql_resource()),
+        )
+        .await;
+        for (origin, permitted) in [
+            ("http://evil.example", false),
+            ("http://127.0.0.1:8000", true),
+        ] {
+            let request = test::TestRequest::post().uri("/graphql")
+                .insert_header(("host","127.0.0.1:8000")).insert_header(("origin",origin))
+                .set_json(serde_json::json!({"query":"{ collectorCards { id latest { id } lastSuccess { id } history { id } } }"})).to_request();
+            let response: serde_json::Value = test::call_and_read_body_json(&app, request).await;
+            if permitted {
+                assert!(response.get("errors").is_none(), "{response}");
+                assert_eq!(response["data"]["collectorCards"][0]["id"], "card");
+                assert!(response["data"]["collectorCards"][0]["latest"].is_null());
+                assert_eq!(
+                    response["data"]["collectorCards"][0]["history"],
+                    serde_json::json!([])
+                );
+            } else {
+                assert!(response.get("errors").is_some(), "{response}");
+            }
+        }
+        assert!(runtime.snapshot().await?[0].latest.is_none());
+        drop(app);
+        drop(runtime);
+        pool.close().await;
+        std::fs::remove_dir_all(directory)?;
         Ok(())
     }
 }

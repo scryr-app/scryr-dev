@@ -1,0 +1,32 @@
+fragment CollectionObservation on Observation {
+	id
+	collectorId
+	startedAt
+	finishedAt
+	status
+	exitCode
+	error
+	data
+	planRevision
+}
+
+query GetCollectorCards {
+	collectorCards {
+		id
+		kind
+		title
+		target
+		collectorId
+		environment
+		staleAfterSeconds
+		latest {
+			...CollectionObservation
+		}
+		lastSuccess {
+			...CollectionObservation
+		}
+		history {
+			...CollectionObservation
+		}
+	}
+}

@@ -4,6 +4,9 @@
 mod error;
 pub use error::Error;
 
+/// Typed local collectors, execution, and persisted card observations.
+pub mod collection;
+
 /// Shared generated manifest envelope models.
 pub mod generated_manifest_envelope;
 /// Pure manifest transformations and artifact renderers.

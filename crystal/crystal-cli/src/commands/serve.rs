@@ -22,6 +22,10 @@ pub(super) async fn run(args: &ServerArgs) -> Result<(), String> {
         .canonicalize()
         .map_err(|e| e.to_string())?;
     let file = crate::manifest_paths::resolve_manifest_file(&root, &args.common.manifest_file)?;
+    let collections = prepare_collections(args).await?;
+    if args.collect && collections.is_none() {
+        return Err("This manifest defines no collectors".into());
+    }
     let common = args.common.clone();
     let format = !args.no_format;
     let workspace = crystal_server::editor::LocalWorkspace::new(
@@ -67,15 +71,64 @@ pub(super) async fn run(args: &ServerArgs) -> Result<(), String> {
             serde_json::from_str(&project.check()?.json).map_err(|e| e.to_string())
         }),
     )?;
-    let server =
-        crystal_server::server::start_with_workspace(args.server.clone(), Some(workspace.clone()))
-            .await
-            .map_err(|e| e.to_string())?;
+    let server = crystal_server::server::start_with_collections(
+        args.server.clone(),
+        Some(workspace.clone()),
+        collections.clone(),
+    )
+    .await
+    .map_err(|e| e.to_string())?;
+    let scheduler = schedule(args.collect, collections.as_ref());
     tokio::pin!(server);
+    tokio::pin!(scheduler);
+    let loader = load_loop(args, &workspace);
+    tokio::pin!(loader);
     tokio::select! {
         result = &mut server => result.map_err(|e| e.to_string()),
-        () = load_loop(args, &workspace) => server.await.map_err(|e| e.to_string()),
+        result = &mut scheduler => result,
+        () = &mut loader => {
+            tokio::select! {
+                result = &mut server => result.map_err(|e| e.to_string()),
+                result = &mut scheduler => result,
+            }
+        },
     }
+}
+
+/// Keep ordinary source editing available when a draft cannot compile.
+async fn prepare_collections(
+    args: &ServerArgs,
+) -> Result<Option<crystal_core::collection::CollectionRuntime>, String> {
+    match super::collect::prepare(
+        args.common.clone(),
+        args.collect && !args.no_format,
+        args.collect,
+    )
+    .await
+    {
+        Ok(runtime) => Ok(runtime),
+        Err(error) if !args.collect => {
+            eprintln!(
+                "Collection definitions unavailable; continuing without observations.\n{error}"
+            );
+            Ok(None)
+        }
+        Err(error) => Err(error),
+    }
+}
+
+/// Keep collection execution separate from read-only serving and source loading.
+async fn schedule(
+    enabled: bool,
+    runtime: Option<&crystal_core::collection::CollectionRuntime>,
+) -> Result<(), String> {
+    if enabled && let Some(runtime) = runtime {
+        eprintln!(
+            "Collectors enabled for the startup plan. Restart to activate changed definitions."
+        );
+        return runtime.run_scheduler().await;
+    }
+    std::future::pending::<Result<(), String>>().await
 }
 
 /// Wait for this server, then refresh only when source contents change.

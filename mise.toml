@@ -429,6 +429,7 @@ run = [
   "mise run verify:types:crystal",
   "mise run verify:test:crystal",
   "mise run contribute:generate:samples --check",
+  "mise run verify:collectors",
 ]
 dir = "{{config_root}}"
 
@@ -2371,5 +2372,127 @@ class WorkflowPolicyTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+PYTHON
+'''
+
+[tasks."verify:collectors"]
+description = "Exercise Python-to-Rust collection, shared cards, and opt-in scheduling locally"
+dir = "{{config_root}}"
+run = '''
+python - <<'PYTHON'
+import json
+import os
+from pathlib import Path
+import socket
+import subprocess
+import tempfile
+import time
+import urllib.request
+
+root = Path.cwd()
+subprocess.run(["mise", "run", "internal:embed:manifest"], check=True)
+subprocess.run(["cargo", "build", "--locked", "--manifest-path", "crystal/Cargo.toml", "-p", "crystal-cli"], check=True)
+binary = root / "crystal/target/debug/scryr"
+with tempfile.TemporaryDirectory(prefix="scryr-collectors-") as temporary:
+    project = Path(temporary)
+    source = (root / "manifest/tests/samples/collectors/index.scry").read_text()
+    (project / "index.scry").write_text(source.replace("seconds=30", "seconds=1"))
+    common = ["--manifest-dir", str(project), "--scryr-dir", str(root / ".cache/collector-smoke-runtime")]
+    env = {key: value for key, value in os.environ.items() if not key.startswith(("SCRYR_", "TURSO_", "CLERK_")) and key not in ("AUTH_MODE", "DATABASE_URL", "HOST", "PORT")}
+    env["SCRYR_SQLITE_PATH"] = str(project / "maps.sqlite")
+    env["AUTH_MODE"] = "local"
+    # The copied sample now uses standalone tooling defaults, not repo Ruff config.
+    subprocess.run([str(binary), "lint", "--fix", *common], env=env, check=True, capture_output=True)
+    subprocess.run([str(binary), "format", *common], env=env, check=True, capture_output=True)
+    manual = subprocess.run([str(binary), "collect", *common], env=env, check=True, text=True, capture_output=True)
+    cards = json.loads(manual.stdout)
+    assert len(cards) == 3, cards
+    observation = cards[0]["latest"]["id"]
+    assert all(card["latest"]["id"] == observation for card in cards)
+    assert cards[0]["latest"]["data"]["version"] == "demo-v1"
+    query = "{ collectorCards { id latest { id status data } history { id } } }"
+    def serve(scheduled, require_cards=True):
+        with socket.socket() as listener:
+            listener.bind(("127.0.0.1", 0))
+            port = listener.getsockname()[1]
+        base = f"http://127.0.0.1:{port}"
+        command = [str(binary), "serve", *common, "--port", str(port), "--no-open"]
+        if scheduled:
+            command.append("--collect")
+        with (project / "server.log").open("w+") as log:
+            process = subprocess.Popen(command, env=env, stdout=log, stderr=log)
+            try:
+                for attempt in range(600):
+                    if process.poll() is not None:
+                        log.seek(0)
+                        raise AssertionError(log.read())
+                    try:
+                        request = urllib.request.Request(base + "/graphql", data=json.dumps({"query":query}).encode(), headers={"Content-Type":"application/json", "Origin":base})
+                        response = json.load(urllib.request.urlopen(request, timeout=2))
+                        assert "errors" not in response, response
+                        current = response["data"]["collectorCards"]
+                        if not require_cards or current and (not scheduled or len(current[0]["history"]) >= 3):
+                            break
+                    except (OSError, AssertionError):
+                        pass
+                    time.sleep(.1)
+                else:
+                    log.seek(0)
+                    raise AssertionError("Collector server did not produce expected data: " + log.read())
+                if not require_cards:
+                    assert current == [], current
+                elif not scheduled:
+                    time.sleep(1.2)
+                    current = json.load(urllib.request.urlopen(request, timeout=2))["data"]["collectorCards"]
+                    assert all(card["latest"]["id"] == observation and len(card["history"]) == 1 for card in current)
+                else:
+                    assert len({card["latest"]["id"] for card in current}) == 1
+                    assert current[0]["latest"]["id"] != observation
+            finally:
+                process.terminate()
+                try:
+                    process.wait(timeout=15)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait()
+    serve(False)
+    serve(True)
+    # Interrupting the CLI must cancel the detached collector process group.
+    import signal
+    for cancellation in (signal.SIGINT, signal.SIGTERM):
+        isolated = project / str(cancellation)
+        isolated.mkdir()
+        marker_source = source.replace('["printf", "%s",', '["sh", "-c", ' + repr("touch started; sleep 2; touch escaped") + ',')
+        (isolated / "index.scry").write_text(marker_source)
+        cancel_args = ["--manifest-dir", str(isolated), "--scryr-dir", str(root / ".cache/collector-smoke-runtime")]
+        process = subprocess.Popen([str(binary), "collect", *cancel_args], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try:
+            for attempt in range(300):
+                if (isolated / "started").exists():
+                    break
+                assert process.poll() is None, "collector exited before starting fixture"
+                time.sleep(.1)
+            else:
+                raise AssertionError("collector did not start")
+            process.send_signal(cancellation)
+            assert process.wait(timeout=10) != 0
+            time.sleep(2.2)
+            assert not (isolated / "escaped").exists(), "interrupted collector escaped cleanup"
+        finally:
+            if process.poll() is None:
+                process.kill()
+                process.wait()
+    # Failed source checks must precede scheduled command activation.
+    invalid = project / "invalid"
+    invalid.mkdir()
+    (invalid / "index.scry").write_text(marker_source + '\nbroken: int = "wrong type"\n')
+    rejected = subprocess.run([str(binary), "serve", "--collect", "--no-open", "--manifest-dir", str(invalid), "--scryr-dir", str(root / ".cache/collector-smoke-runtime")], env=env, capture_output=True, timeout=60)
+    assert rejected.returncode != 0, rejected.stdout
+    assert not (invalid / "started").exists(), "failed manifest checks still activated a collector"
+    (invalid / "index.scry").write_text("this is not valid Python !")
+    common[1] = str(invalid)
+    serve(False, require_cards=False)
+    assert not (invalid / "started").exists(), "ordinary editor startup executed a command"
+print("Collector smoke passed: typed output, persistent shared observations, read-only serving, opt-in scheduling")
 PYTHON
 '''

@@ -26,12 +26,12 @@ async function port() {
     await new Promise<void>((resolve, reject) => listener.close(error => error ? reject(error) : resolve()));
     return address.port;
 }
-async function launch(request: APIRequestContext, serverOnly = false, watch = false, entrypoint = "index.scry") {
+async function launch(request: APIRequestContext, serverOnly = false, watch = false, entrypoint = "index.scry", collect = false) {
     const bindPort = await port();
     base = `http://127.0.0.1:${bindPort}`;
     logs = "";
     server = spawn(binary, ["serve", "--host", "127.0.0.1", "--port", String(bindPort),
-        ...(serverOnly ? ["--server-only"] : ["--no-open", "--path", entrypoint, ...(watch ? ["--watch"] : [])])],
+        ...(serverOnly ? ["--server-only"] : ["--no-open", "--path", entrypoint, ...(watch ? ["--watch"] : []), ...(collect ? ["--collect"] : [])])],
         { cwd: directory, env: environment(), stdio: ["ignore", "pipe", "pipe"] });
     server.stdout?.on("data", data => logs += data);
     server.stderr?.on("data", data => logs += data);
@@ -55,6 +55,9 @@ async function gql(request: APIRequestContext, query: string, variables = {}) {
 async function openEditor(page: Page) {
     await page.goto(base);
     await expect(page.getByRole("region", { name: "Manifest source editor" })).toBeVisible();
+    // Source retrieval and the software-rendered scene initialize independently.
+    // Wait for the source-backed action before inspecting CodeMirror's viewport.
+    await expect(page.getByRole("button", { name: "Save and Run", exact: true })).toBeEnabled({ timeout: 15_000 });
     await expect(page.locator(".cm-content")).toContainText("from scryr");
 }
 async function run(page: Page, code: string, location: "disk" | "cloud") {
@@ -187,7 +190,14 @@ test("console controls align and the diagram menu stays above the editor", async
     const reload = footer.getByRole("button", { name: "Reload source" });
     await expect(runButton).toBeVisible();
     await expect(reload).toBeVisible();
-    expect((await reload.boundingBox())?.y).toBe((await runButton.boundingBox())?.y);
+    // Measure both controls in one layout frame; separate protocol calls can
+    // return a detached/null box during the initial scene layout.
+    await expect.poll(() => footer.evaluate(element => {
+        const buttons = Array.from(element.querySelectorAll("button"));
+        const reload = buttons.find(button => button.textContent?.includes("Reload source"))?.getBoundingClientRect();
+        const run = buttons.find(button => button.textContent?.includes("Save and Run"))?.getBoundingClientRect();
+        return Boolean(reload?.width && reload.height && run?.width && run.height && reload.y === run.y);
+    }), { message: "Both editor controls have visible, aligned layout boxes" }).toBe(true);
     await expect(footer.getByRole("checkbox", { name: "Follow selected block" })).toHaveCount(0);
     const hideEditor = page.getByRole("button", { name: "Hide diagram editor", exact: true });
     await hideEditor.click();
@@ -210,4 +220,31 @@ test("console controls align and the diagram menu stays above the editor", async
     await expect(page.locator(".cm-content")).toContainText("from scryr");
     await expect(runButton).toBeVisible();
     await page.screenshot({ path: test.info().outputPath("console-dark.png") });
+});
+
+test("one scheduled collector feeds three cards and survives a browser Python roundtrip", async ({ page, request }) => {
+    initial = await readFile(resolve(root, "manifest/tests/samples/collectors/index.scry"), "utf8");
+    // Native source validation separates third-party and first-party imports.
+    initial = initial.replace("from pydantic import BaseModel, ConfigDict, Field\nfrom scryr", "from pydantic import BaseModel, ConfigDict, Field\n\nfrom scryr");
+    await writeFile(resolve(directory, "index.scry"), initial);
+    await launch(request, false, false, "index.scry", true);
+    await openEditor(page);
+    const observations = page.getByRole("button", { name: "Observations (3)", exact: true });
+    await expect(observations).toBeVisible();
+    await observations.click();
+    const panel = page.getByRole("complementary", { name: "Collector observations" });
+    await expect(page.getByRole("region", { name: "Manifest source editor" })).toBeHidden();
+    await expect(panel.getByRole("article")).toHaveCount(3);
+    await expect(panel.getByRole("article", { name: "Deployment", exact: true })).toContainText("demo-v1");
+    await expect(panel.getByRole("table")).toContainText("demo-v1");
+    await expect(panel.getByRole("list")).toContainText("demo-v1");
+    await page.screenshot({ path: test.info().outputPath("collector-cards.png") });
+    await page.getByRole("button", { name: "Show diagram editor", exact: true }).click();
+    await expect(panel.getByRole("article")).toHaveCount(0);
+    await run(page, initial.replaceAll("demo-v1", "demo-v2"), "disk");
+    expect(await readFile(resolve(directory, "index.scry"), "utf8")).toContain("demo-v2");
+    await observations.click();
+    await expect(panel).toContainText("Definitions are pinned at server startup");
+    await expect(panel.getByRole("article", { name: "Deployment", exact: true })).toContainText("demo-v1");
+    await expect(panel).not.toContainText("demo-v2");
 });
