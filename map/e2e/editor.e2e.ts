@@ -1,5 +1,6 @@
 import { test, expect, type Page, type APIRequestContext } from "@playwright/test";
-import { spawn, type ChildProcess } from "node:child_process";
+import { execFile, spawn, type ChildProcess } from "node:child_process";
+import { promisify } from "node:util";
 import { mkdtemp, mkdir, copyFile, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -224,9 +225,11 @@ test("console controls align and the diagram menu stays above the editor", async
 
 test("one scheduled collector feeds three cards and survives a browser Python roundtrip", async ({ page, request }) => {
     initial = await readFile(resolve(root, "manifest/tests/samples/collectors/index.scry"), "utf8");
-    // Native source validation separates third-party and first-party imports.
-    initial = initial.replace("from pydantic import BaseModel, ConfigDict, Field\nfrom scryr", "from pydantic import BaseModel, ConfigDict, Field\n\nfrom scryr");
     await writeFile(resolve(directory, "index.scry"), initial);
+    // The isolated install classifies scryr differently from the repository's
+    // first-party Ruff configuration. Normalize using the installed CLI itself.
+    await promisify(execFile)(binary, ["lint", "--fix", "--path", "index.scry"], { cwd: directory, env: environment() });
+    initial = await readFile(resolve(directory, "index.scry"), "utf8");
     await launch(request, false, false, "index.scry", true);
     await openEditor(page);
     const observations = page.getByRole("button", { name: "Observations (3)", exact: true });
