@@ -11,6 +11,7 @@ import {
 	type SelectedMap,
 	useSelectedMap,
 } from "@/graphql/sampleStore";
+import styles from "./DiagramButton.module.css";
 import { Loading } from "./Loading";
 
 interface Props {
@@ -255,22 +256,20 @@ export function DiagramButton({ className = "" }: Props) {
 	const currentTitle = selectedMapTitle(currentMap, current.key);
 
 	return (
-		<div className={`relative ${className}`} ref={panelRef}>
+		<div className={`${styles.container} ${className}`} ref={panelRef}>
 			{/* Trigger */}
 			<button
 				type="button"
 				onClick={() => setOpen((v) => !v)}
 				title={currentTitle}
 				aria-expanded={open}
-				className="flex max-w-[min(42rem,calc(100vw-16rem))] items-center gap-4 text-white/60 hover:text-white/90 hover:bg-white/10 transition-colors rounded-full px-5 py-1.5 text-[13px]"
+				className={styles.trigger}
 			>
-				<Layers size={13} strokeWidth={2.2} className="shrink-0" />
-				<span className="flex min-w-0 flex-col text-left leading-snug">
-					<span className="truncate text-lg font-medium">
-						{currentLabels.primary}
-					</span>
+				<Layers size={13} strokeWidth={2.2} className={styles.triggerIcon} />
+				<span className={styles.triggerLabels}>
+					<span className={styles.triggerPrimary}>{currentLabels.primary}</span>
 					{currentLabels.secondary && (
-						<span className="truncate text-[11px] text-white/40">
+						<span className={styles.triggerSecondary}>
 							{currentLabels.secondary}
 						</span>
 					)}
@@ -280,26 +279,24 @@ export function DiagramButton({ className = "" }: Props) {
 			{/* Dropdown panel */}
 			{open && (
 				<div
-					className="absolute top-full left-0 mt-2 w-[min(28rem,calc(100vw-2rem))] rounded-xl border border-white/15 shadow-2xl z-[1100] overflow-hidden py-1"
+					className={styles.panel}
 					style={{ background: "rgba(0,0,0,0.88)" }}
 				>
 					{mapsQuery.isLoading && (
-						<div className="px-4 py-2 text-[13px] text-white/45">
+						<div className={styles.loading}>
 							<Loading />
 						</div>
 					)}
 					{Boolean(mapsQuery.error) && maps.length === 0 && (
-						<div className="px-4 py-2 text-[12px] text-white/45">
-							Unable to load diagrams
-						</div>
+						<div className={styles.error}>Unable to load diagrams</div>
 					)}
-					<div className="max-h-[min(28rem,calc(100vh-7rem))] overflow-y-auto">
+					<div className={styles.list}>
 						{orderedGroups.map(([groupName, groupMaps]) => (
 							<div key={groupName}>
 								{groupName && (
-									<div className="flex items-center gap-2 border-t border-white/10 px-4 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-widest text-white/45 first:border-t-0">
-										<Folder size={13} className="text-white/50" />
-										<span className="truncate">{groupName}</span>
+									<div className={styles.groupHeading}>
+										<Folder size={13} className={styles.folderIcon} />
+										<span className={styles.groupLabel}>{groupName}</span>
 									</div>
 								)}
 								{groupMaps.map((map) => {
@@ -314,28 +311,24 @@ export function DiagramButton({ className = "" }: Props) {
 											type="button"
 											onClick={() => select({ id: map.id, key: map.key })}
 											title={labels.title}
-											className={`w-full min-w-0 text-left px-4 py-2.5 text-[13px] transition-colors ${
-												isSelected
-													? "text-white bg-white/10"
-													: "text-white/60 hover:text-white hover:bg-white/5"
-											}`}
+											className={`${styles.option} ${isSelected ? styles.selectedOption : ""}`}
 										>
 											<div
-												className={`flex min-w-0 items-stretch gap-3 ${groupName ? "pl-5" : ""}`}
+												className={`${styles.optionContent} ${groupName ? styles.groupedOption : ""}`}
 											>
-												<span className="flex shrink-0 items-center border-r border-white/15 pr-3">
+												<span className={styles.sourceIconContainer}>
 													<FileCode2
 														size={16}
-														className="text-white/35"
+														className={styles.sourceIcon}
 														aria-hidden="true"
 													/>
 												</span>
-												<span className="min-w-0">
-													<span className="block whitespace-normal break-words font-medium leading-snug">
+												<span className={styles.optionLabels}>
+													<span className={styles.optionPrimary}>
 														{labels.primary}
 													</span>
 													{labels.secondary && (
-														<span className="mt-0.5 block truncate text-[12px] text-white/40">
+														<span className={styles.optionSecondary}>
 															{labels.secondary}
 														</span>
 													)}

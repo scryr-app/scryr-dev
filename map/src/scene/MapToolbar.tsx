@@ -19,6 +19,7 @@ import { cameraStore } from "@/camera";
 import { Button } from "@/components/button";
 import { ThemeOptions } from "@/theme/ThemeSwitcher";
 import { cn } from "@/utils";
+import styles from "./MapToolbar.module.css";
 
 /** Returns mousedown/mouseup/mouseleave props that fire `action` immediately
  * then repeatedly at ~60 fps while the button is held.
@@ -95,32 +96,19 @@ export function MapToolbar({
 	}, [themeOpen]);
 
 	return (
-		<div
-			ref={menuRef}
-			data-camera-occluder
-			style={{
-				position: "fixed",
-				bottom: "1.5rem",
-				left: "50%",
-				transform: "translateX(-50%)",
-				zIndex: 1000,
-			}}
-		>
+		<div ref={menuRef} data-camera-occluder className={styles.tray}>
 			{/* Theme dropdown — opens above the pill */}
 			{themeOpen && (
-				<div
-					className="absolute bottom-full mb-2 right-0 max-h-[min(70vh,38rem)] min-w-[280px] overflow-y-auto rounded-xl border border-white/15 bg-black/70 p-1.5 shadow-2xl backdrop-blur-md"
-					style={{ animation: "traySlideUp 0.15s ease-out" }}
-				>
+				<div className={styles.themeMenu}>
 					<ThemeOptions onSelect={() => setThemeOpen(false)} />
 				</div>
 			)}
 
 			{/* Pill */}
-			<div className="flex items-center gap-0.5 rounded-full px-1.5 py-1 bg-black/40 backdrop-blur-md border border-white/15 shadow-2xl">
-				<div className="relative">
+			<div className={styles.pill}>
+				<div className={styles.control}>
 					{viewMenuOpen && (
-						<div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 flex flex-col gap-0.5 rounded-xl bg-black/70 p-1.5 text-xs text-white shadow-2xl backdrop-blur-md">
+						<div className={styles.viewMenu}>
 							<button
 								type="button"
 								onClick={() => {
@@ -129,8 +117,8 @@ export function MapToolbar({
 									setViewMenuOpen(false);
 								}}
 								className={cn(
-									"flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left",
-									viewMode === "top-down" && "bg-white/20 text-white",
+									styles.viewOption,
+									viewMode === "top-down" && styles.selected,
 								)}
 							>
 								<MapIcon size={14} /> Top Down
@@ -143,8 +131,8 @@ export function MapToolbar({
 									setViewMenuOpen(false);
 								}}
 								className={cn(
-									"flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left",
-									viewMode === "isometric" && "bg-white/20 text-white",
+									styles.viewOption,
+									viewMode === "isometric" && styles.selected,
 								)}
 							>
 								<Box size={14} /> Isometric
@@ -155,10 +143,7 @@ export function MapToolbar({
 						type="button"
 						variant="ghost"
 						size="icon"
-						className={cn(
-							"rounded-full size-10 text-white/50 hover:text-white hover:bg-white/15",
-							viewMode && "bg-white/20 text-white",
-						)}
+						className={cn(styles.viewButton, viewMode && styles.selected)}
 						onClick={() => setViewMenuOpen((open) => !open)}
 						aria-label="Select map view"
 					>
@@ -171,15 +156,12 @@ export function MapToolbar({
 				</div>
 
 				{/* Rotate section — 4-quadrant circle */}
-				<div className="relative">
+				<div className={styles.control}>
 					{(hoveredIndex === "rotate-up" ||
 						hoveredIndex === "rotate-down" ||
 						hoveredIndex === "rotate-left" ||
 						hoveredIndex === "rotate-right") && (
-						<div
-							className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 rounded-md bg-black/70 backdrop-blur-sm border border-white/15 text-white text-xs font-medium whitespace-nowrap pointer-events-none flex items-center gap-1.5"
-							style={{ animation: "traySlideUp 0.1s ease-out" }}
-						>
+						<div className={styles.tooltip}>
 							{hoveredIndex === "rotate-up"
 								? "Rotate Up"
 								: hoveredIndex === "rotate-down"
@@ -187,7 +169,7 @@ export function MapToolbar({
 									: hoveredIndex === "rotate-left"
 										? "Rotate Left"
 										: "Rotate Right"}
-							<span className="opacity-50 text-[10px] font-mono border border-white/30 rounded px-1">
+							<span className={styles.shortcut}>
 								{hoveredIndex === "rotate-up"
 									? "W"
 									: hoveredIndex === "rotate-down"
@@ -198,11 +180,10 @@ export function MapToolbar({
 							</span>
 						</div>
 					)}
-					<div className="relative w-10 h-10 overflow-hidden rounded-full">
+					<div className={styles.directionControl}>
 						<button
 							type="button"
-							className="absolute inset-0 flex items-start justify-center pt-1 text-white/50 hover:text-white hover:bg-white/15 transition-all duration-150 cursor-pointer"
-							style={{ clipPath: "polygon(50% 50%, 0 0, 100% 0)" }}
+							className={styles.upButton}
 							{...holdAction(
 								() => cameraAction(() => cameraStore.rotateUp()),
 								() => setHoveredIndex(null),
@@ -215,8 +196,7 @@ export function MapToolbar({
 						</button>
 						<button
 							type="button"
-							className="absolute inset-0 flex items-end justify-center pb-1 text-white/50 hover:text-white hover:bg-white/15 transition-all duration-150 cursor-pointer"
-							style={{ clipPath: "polygon(50% 50%, 100% 100%, 0 100%)" }}
+							className={styles.downButton}
 							{...holdAction(
 								() => cameraAction(() => cameraStore.rotateDown()),
 								() => setHoveredIndex(null),
@@ -229,8 +209,7 @@ export function MapToolbar({
 						</button>
 						<button
 							type="button"
-							className="absolute inset-0 flex items-center justify-start pl-1 text-white/50 hover:text-white hover:bg-white/15 transition-all duration-150 cursor-pointer"
-							style={{ clipPath: "polygon(50% 50%, 0 0, 0 100%)" }}
+							className={styles.leftButton}
 							{...holdAction(
 								() => cameraAction(() => cameraStore.rotateLeft()),
 								() => setHoveredIndex(null),
@@ -243,8 +222,7 @@ export function MapToolbar({
 						</button>
 						<button
 							type="button"
-							className="absolute inset-0 flex items-center justify-end pr-1 text-white/50 hover:text-white hover:bg-white/15 transition-all duration-150 cursor-pointer"
-							style={{ clipPath: "polygon(50% 50%, 100% 0, 100% 100%)" }}
+							className={styles.rightButton}
 							{...holdAction(
 								() => cameraAction(() => cameraStore.rotateRight()),
 								() => setHoveredIndex(null),
@@ -259,22 +237,19 @@ export function MapToolbar({
 				</div>
 
 				{/* Zoom section — top/bottom half split */}
-				<div className="relative">
+				<div className={styles.control}>
 					{(hoveredIndex === "zoom-in" || hoveredIndex === "zoom-out") && (
-						<div
-							className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 rounded-md bg-black/70 backdrop-blur-sm border border-white/15 text-white text-xs font-medium whitespace-nowrap pointer-events-none flex items-center gap-1.5"
-							style={{ animation: "traySlideUp 0.1s ease-out" }}
-						>
+						<div className={styles.tooltip}>
 							{hoveredIndex === "zoom-in" ? "Zoom In" : "Zoom Out"}
-							<span className="opacity-50 text-[10px] font-mono border border-white/30 rounded px-1">
+							<span className={styles.shortcut}>
 								{hoveredIndex === "zoom-in" ? "E" : "Q"}
 							</span>
 						</div>
 					)}
-					<div className="flex flex-col w-10 h-10 overflow-hidden rounded-full">
+					<div className={styles.zoomControl}>
 						<button
 							type="button"
-							className="flex w-full h-1/2 items-end justify-center pb-0.5 text-white/50 hover:text-white hover:bg-white/15 transition-all duration-150 cursor-pointer"
+							className={styles.zoomInButton}
 							{...holdAction(
 								() => cameraAction(() => cameraStore.zoomIn()),
 								() => setHoveredIndex(null),
@@ -287,7 +262,7 @@ export function MapToolbar({
 						</button>
 						<button
 							type="button"
-							className="flex w-full h-1/2 items-start justify-center pt-0.5 text-white/50 hover:text-white hover:bg-white/15 transition-all duration-150 cursor-pointer"
+							className={styles.zoomOutButton}
 							{...holdAction(
 								() => cameraAction(() => cameraStore.zoomOut()),
 								() => setHoveredIndex(null),
@@ -302,15 +277,12 @@ export function MapToolbar({
 				</div>
 
 				{/* Pan section — 4-quadrant circle */}
-				<div className="relative">
+				<div className={styles.control}>
 					{(hoveredIndex === "pan-up" ||
 						hoveredIndex === "pan-down" ||
 						hoveredIndex === "pan-left" ||
 						hoveredIndex === "pan-right") && (
-						<div
-							className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 rounded-md bg-black/70 backdrop-blur-sm border border-white/15 text-white text-xs font-medium whitespace-nowrap pointer-events-none flex items-center gap-1.5"
-							style={{ animation: "traySlideUp 0.1s ease-out" }}
-						>
+						<div className={styles.tooltip}>
 							{hoveredIndex === "pan-up"
 								? "Pan Up"
 								: hoveredIndex === "pan-down"
@@ -318,8 +290,8 @@ export function MapToolbar({
 									: hoveredIndex === "pan-left"
 										? "Pan Left"
 										: "Pan Right"}
-							<span className="opacity-50 text-[10px] font-mono border border-white/30 rounded px-1 flex items-center gap-0.5">
-								<span className="text-[13px]">⇧</span>
+							<span className={styles.panShortcut}>
+								<span className={styles.shiftKey}>⇧</span>
 								{hoveredIndex === "pan-up"
 									? "W"
 									: hoveredIndex === "pan-down"
@@ -330,11 +302,10 @@ export function MapToolbar({
 							</span>
 						</div>
 					)}
-					<div className="relative w-10 h-10 overflow-hidden rounded-full">
+					<div className={styles.directionControl}>
 						<button
 							type="button"
-							className="absolute inset-0 flex items-start justify-center pt-1 text-white/50 hover:text-white hover:bg-white/15 transition-all duration-150 cursor-pointer"
-							style={{ clipPath: "polygon(50% 50%, 0 0, 100% 0)" }}
+							className={styles.upButton}
 							{...holdAction(
 								() => cameraAction(() => cameraStore.panUp()),
 								() => setHoveredIndex(null),
@@ -347,8 +318,7 @@ export function MapToolbar({
 						</button>
 						<button
 							type="button"
-							className="absolute inset-0 flex items-end justify-center pb-1 text-white/50 hover:text-white hover:bg-white/15 transition-all duration-150 cursor-pointer"
-							style={{ clipPath: "polygon(50% 50%, 100% 100%, 0 100%)" }}
+							className={styles.downButton}
 							{...holdAction(
 								() => cameraAction(() => cameraStore.panDown()),
 								() => setHoveredIndex(null),
@@ -361,8 +331,7 @@ export function MapToolbar({
 						</button>
 						<button
 							type="button"
-							className="absolute inset-0 flex items-center justify-start pl-1 text-white/50 hover:text-white hover:bg-white/15 transition-all duration-150 cursor-pointer"
-							style={{ clipPath: "polygon(50% 50%, 0 0, 0 100%)" }}
+							className={styles.leftButton}
 							{...holdAction(
 								() => cameraAction(() => cameraStore.panLeft()),
 								() => setHoveredIndex(null),
@@ -375,8 +344,7 @@ export function MapToolbar({
 						</button>
 						<button
 							type="button"
-							className="absolute inset-0 flex items-center justify-end pr-1 text-white/50 hover:text-white hover:bg-white/15 transition-all duration-150 cursor-pointer"
-							style={{ clipPath: "polygon(50% 50%, 100% 0, 100% 100%)" }}
+							className={styles.rightButton}
 							{...holdAction(
 								() => cameraAction(() => cameraStore.panRight()),
 								() => setHoveredIndex(null),
@@ -391,15 +359,12 @@ export function MapToolbar({
 				</div>
 
 				{/* Vertical divider */}
-				<div className="w-px h-6 bg-white/20 mx-1.5" />
+				<div className={styles.divider} />
 
 				{/* Theme section */}
-				<div className="relative">
+				<div className={styles.control}>
 					{hoveredIndex === "editor" && (
-						<div
-							className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 rounded-md bg-black/70 backdrop-blur-sm border border-white/15 text-white text-xs font-medium whitespace-nowrap pointer-events-none"
-							style={{ animation: "traySlideUp 0.1s ease-out" }}
-						>
+						<div className={styles.tooltip}>
 							{isPyodideOpen ? "Hide Editor" : "Show Editor"}
 						</div>
 					)}
@@ -407,10 +372,7 @@ export function MapToolbar({
 						type="button"
 						variant="ghost"
 						size="icon"
-						className={cn(
-							"rounded-full size-10 text-white/50 hover:text-white hover:bg-white/15 transition-all duration-150",
-							isPyodideOpen && "bg-white/20 text-white",
-						)}
+						className={cn(styles.trayButton, isPyodideOpen && styles.selected)}
 						onClick={onTogglePyodide}
 						onMouseEnter={() => setHoveredIndex("editor")}
 						onMouseLeave={() => setHoveredIndex(null)}
@@ -420,23 +382,15 @@ export function MapToolbar({
 					</Button>
 				</div>
 
-				<div className="relative">
+				<div className={styles.control}>
 					{hoveredIndex === "theme" && (
-						<div
-							className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 rounded-md bg-black/70 backdrop-blur-sm border border-white/15 text-white text-xs font-medium whitespace-nowrap pointer-events-none"
-							style={{ animation: "traySlideUp 0.1s ease-out" }}
-						>
-							Style
-						</div>
+						<div className={styles.tooltip}>Style</div>
 					)}
 					<Button
 						type="button"
 						variant="ghost"
 						size="icon"
-						className={cn(
-							"rounded-full size-10 text-white/50 hover:text-white hover:bg-white/15 transition-all duration-150",
-							themeOpen && "bg-white/20 text-white",
-						)}
+						className={cn(styles.trayButton, themeOpen && styles.selected)}
 						aria-label="Choose diagram theme"
 						aria-expanded={themeOpen}
 						onClick={() => setThemeOpen((o) => !o)}
@@ -447,13 +401,6 @@ export function MapToolbar({
 					</Button>
 				</div>
 			</div>
-
-			<style>{`
-				@keyframes traySlideUp {
-					from { opacity: 0; transform: translateY(6px); }
-					to   { opacity: 1; transform: translateY(0); }
-				}
-			`}</style>
 		</div>
 	);
 }

@@ -5,6 +5,7 @@ import { PyodideConsole } from "@/components/PyodideConsole";
 import { TopCornerButtons } from "@/components/TopCornerButtons";
 import { useTheme } from "@/theme/theme";
 import { MapDiagram } from "./MapDiagram";
+import styles from "./MapSceneShell.module.css";
 import { MapToolbar } from "./MapToolbar";
 
 interface MapSceneShellProps {
@@ -41,7 +42,7 @@ export function MapSceneShell({ header }: MapSceneShellProps) {
 					onPanelWidthChange={setPyodidePanelWidth}
 				/>
 			</ErrorBoundary>
-			<div className="relative min-w-0 h-full">
+			<div className={styles.scene}>
 				{header}
 				<MapDiagram key={theme.id} />
 				<ErrorBoundary name="MapToolbar" fallback={null}>

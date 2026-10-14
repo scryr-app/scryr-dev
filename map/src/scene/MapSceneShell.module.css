@@ -1,0 +1,5 @@
+.scene {
+	position: relative;
+	min-width: 0;
+	height: 100%;
+}

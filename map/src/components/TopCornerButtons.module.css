@@ -1,0 +1,47 @@
+.diagramPosition {
+	position: fixed;
+	left: 1rem;
+	top: 1rem;
+	z-index: 1000;
+}
+.diagramControls {
+	display: flex;
+	align-items: center;
+	border-radius: 9999px;
+	border: 1px solid rgb(255 255 255 / 0.15);
+	background: rgb(0 0 0 / 0.4);
+}
+.editorButton {
+	margin-right: 0.5rem;
+	display: flex;
+	width: 2.25rem;
+	height: 2.25rem;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	border-radius: 9999px;
+	color: rgb(255 255 255 / 0.6);
+	transition:
+		color 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+		background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.editorButton:focus-visible {
+	outline: none;
+	box-shadow: 0 0 0 2px rgb(255 255 255 / 0.6);
+}
+.editorButton[aria-pressed="true"] {
+	background: rgb(255 255 255 / 0.15);
+	color: white;
+}
+.accountPosition {
+	position: fixed;
+	right: 1rem;
+	top: 1rem;
+	z-index: 900;
+}
+@media (hover: hover) {
+	.editorButton:hover {
+		background: rgb(255 255 255 / 0.15);
+		color: white;
+	}
+}

@@ -7,6 +7,7 @@ import {
 } from "@/auth";
 import { OpenSourcePrompt } from "@/components/OpenSourcePrompt";
 import { MapSceneShell } from "@/scene";
+import styles from "./App.module.css";
 
 function App() {
 	if (isLocalAuthMode) {
@@ -22,7 +23,7 @@ function App() {
 				<AuthenticatedSession>
 					<MapSceneShell
 						header={
-							<div className="absolute right-4 top-4 z-50">
+							<div className={styles.accountControls}>
 								<OrganizationAccountControls />
 							</div>
 						}

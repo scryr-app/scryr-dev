@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useManifestEditor } from "@/graphql/useManifestEditor";
 import { consoleTextColor } from "@/theme/console";
 import { useTheme } from "@/theme/theme";
+import styles from "./PyodideConsole.module.css";
 import { PythonCodeEditor } from "./PythonCodeEditor";
 
 interface PyodideConsoleProps {
@@ -135,11 +136,11 @@ export function PyodideConsole({
 				backgroundColor: palette.panel,
 				color: consoleTextColor(palette.text),
 			}}
-			className="fixed z-[920] flex h-[calc(100vh-6rem)] max-h-[46rem] max-w-[calc(100vw-1rem)] overflow-hidden rounded-[28px] border border-current/15 shadow-2xl backdrop-blur-md"
+			className={styles.panel}
 		>
-			<div className="flex min-w-0 flex-1 flex-col">
+			<div className={styles.content}>
 				<header
-					className="flex cursor-grab touch-none select-none flex-wrap items-center gap-2 border-b border-current/15 p-3 active:cursor-grabbing"
+					className={styles.header}
 					title="Drag to move console"
 					onPointerDown={(event) => {
 						if ((event.target as HTMLElement).closest("button")) return;
@@ -153,10 +154,7 @@ export function PyodideConsole({
 					>
 						<X size={16} />
 					</button>
-					<span
-						className="min-w-0 flex-1 truncate font-mono text-xs"
-						title={editor.doc?.folderPath}
-					>
+					<span className={styles.filename} title={editor.doc?.folderPath}>
 						{editor.doc
 							? [editor.doc.folderPath, editor.doc.entrypoint]
 									.filter(Boolean)
@@ -166,18 +164,18 @@ export function PyodideConsole({
 					</span>
 				</header>
 				{editor.conflict && (
-					<div role="alert" className="bg-amber-500/15 p-3 text-sm">
+					<div role="alert" className={styles.conflict}>
 						Source changed elsewhere. Your draft is retained; copy it before
 						reloading the current source.
 					</div>
 				)}
 				{editor.doc && !editor.doc.writable && (
-					<div role="status" className="p-3 text-sm">
+					<div role="status" className={styles.notice}>
 						This source is read-only in the current session.
 					</div>
 				)}
 				<div
-					className="min-h-0 flex-1 overflow-hidden"
+					className={styles.editor}
 					style={{ backgroundColor: palette.background }}
 				>
 					<PythonCodeEditor
@@ -186,18 +184,18 @@ export function PyodideConsole({
 						theme={theme}
 					/>
 				</div>
-				<footer className="border-t border-current/15 p-3 text-xs">
-					<div className="mb-2 flex flex-wrap items-center gap-2">
+				<footer className={styles.footer}>
+					<div className={styles.actions}>
 						{editor.canCancel && (
 							<button
 								type="button"
 								onClick={editor.cancel}
-								className="mr-auto inline-flex items-center rounded-lg border border-current/15 bg-white/5 px-2.5 py-1.5 font-medium transition-colors hover:border-current/30 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current"
+								className={styles.cancelButton}
 							>
 								Cancel run
 							</button>
 						)}
-						<div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+						<div className={styles.primaryActions}>
 							<button
 								type="button"
 								disabled={editor.running}
@@ -210,7 +208,7 @@ export function PyodideConsole({
 									)
 										void editor.reload();
 								}}
-								className="inline-flex items-center gap-1.5 rounded-lg border border-current/15 bg-white/5 px-2.5 py-1.5 font-medium shadow-sm transition-colors hover:border-current/30 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current disabled:cursor-not-allowed disabled:opacity-40"
+								className={styles.reloadButton}
 							>
 								<RefreshCw size={14} strokeWidth={2} aria-hidden="true" />
 								Reload source
@@ -221,14 +219,14 @@ export function PyodideConsole({
 								disabled={
 									!editor.doc?.writable || editor.running || editor.conflict
 								}
-								className="inline-flex items-center gap-1.5 rounded-lg border border-current/20 px-2.5 py-1.5 font-semibold shadow-sm transition-all hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+								className={styles.runButton}
 								style={{
 									backgroundColor: palette.accent,
 									color: consoleTextColor(palette.background),
 								}}
 							>
 								{editor.running ? (
-									<LoaderCircle size={14} className="animate-spin" />
+									<LoaderCircle size={14} className={styles.spinner} />
 								) : (
 									<Play size={14} />
 								)}{" "}
@@ -243,7 +241,7 @@ export function PyodideConsole({
 						<pre
 							role="log"
 							aria-label="Python output"
-							className="mt-2 max-h-36 overflow-auto whitespace-pre-wrap"
+							className={styles.output}
 						>
 							{editor.output}
 						</pre>
@@ -253,7 +251,7 @@ export function PyodideConsole({
 			<button
 				type="button"
 				aria-label="Resize terminal panel"
-				className="w-3 shrink-0 touch-none cursor-col-resize hover:bg-white/10"
+				className={styles.resizeHandle}
 				onPointerDown={(event) => startGesture(event, "resize")}
 			/>
 		</section>
