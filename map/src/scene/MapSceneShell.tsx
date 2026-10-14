@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { useState } from "react";
+import { CollectorCards } from "@/collections/CollectorCards";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PyodideConsole } from "@/components/PyodideConsole";
 import { TopCornerButtons } from "@/components/TopCornerButtons";
@@ -45,6 +46,12 @@ export function MapSceneShell({ header }: MapSceneShellProps) {
 			<div className={styles.scene}>
 				{header}
 				<MapDiagram key={theme.id} />
+				<ErrorBoundary name="CollectorCards" fallback={null}>
+					<CollectorCards
+						isEditorOpen={isPyodideOpen}
+						onExpand={() => setIsPyodideOpen(false)}
+					/>
+				</ErrorBoundary>
 				<ErrorBoundary name="MapToolbar" fallback={null}>
 					<MapToolbar
 						isPyodideOpen={isPyodideOpen}

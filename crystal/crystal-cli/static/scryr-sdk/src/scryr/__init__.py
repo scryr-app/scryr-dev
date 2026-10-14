@@ -1,6 +1,16 @@
 """Public Python API for Scryr manifests."""
 
 from . import manifest as _manifest
+from .collection import (
+    Collector,
+    Command,
+    Every,
+    HistoryCard,
+    JsonOutput,
+    StatusCard,
+    TableCard,
+    Task,
+)
 from .runtime import (
     emit_diagram_values,
     emit_forge_values,
@@ -42,7 +52,10 @@ ManifestQuery = _manifest.ManifestQuery
 __all__ = [
     "CalendarVersion",
     "Classification",
+    "Collector",
+    "Command",
     "Diagram",
+    "Every",
     "Forge",
     "ForgeEnvDirective",
     "ForgeTask",
@@ -50,14 +63,19 @@ __all__ = [
     "ForgeTaskCommand",
     "ForgeTaskConfirm",
     "ForgeTool",
+    "HistoryCard",
     "Incremental",
     "IncrementalVersion",
     "InterfaceType",
+    "JsonOutput",
     "Label",
     "Manifest",
     "ManifestQuery",
     "Markdown",
     "SemVer",
+    "StatusCard",
+    "TableCard",
+    "Task",
     "Url",
     "Version",
     "emit_diagram_values",

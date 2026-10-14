@@ -13,7 +13,7 @@ pub(crate) struct LocalServeArgs {
     #[command(flatten)]
     pub(crate) common: GenerateCommonArgs,
     /// Run only the server, without reading or changing local manifest files.
-    #[arg(long, conflicts_with_all = ["watch", "no_format", "no_open"])]
+    #[arg(long, conflicts_with_all = ["watch", "no_format", "no_open", "collect"])]
     pub(crate) server_only: bool,
     /// Reload after manifest source changes.
     #[arg(long)]
@@ -24,6 +24,10 @@ pub(crate) struct LocalServeArgs {
     /// Do not open the browser automatically.
     #[arg(long)]
     pub(crate) no_open: bool,
+    /// Execute this local manifest's collectors on their schedules until shutdown.
+    /// The collection plan is pinned at startup; restart to activate changes.
+    #[arg(long, conflicts_with = "watch")]
+    pub(crate) collect: bool,
 }
 impl std::ops::Deref for LocalServeArgs {
     type Target = crystal_server::ServerArgs;

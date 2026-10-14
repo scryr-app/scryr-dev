@@ -43,6 +43,9 @@ envelope = {"files": document["files"], "manifests": [], "forges": [], "diagrams
 for record in values:
     kind = record["kind"]
     value = record[kind]
+    if kind == "collection_plan":
+        envelope["collection_plan"] = value
+        continue
     variable = record["variable_name"]
     if variable not in lines:
         raise ValueError(f"Cannot find source location for {variable}")

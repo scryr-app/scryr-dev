@@ -57,6 +57,31 @@ export type Block = {
   tags: Array<Scalars['String']['output']>;
 };
 
+/** A read-only card with shared collector observations. */
+export type CollectorCard = {
+  __typename?: 'CollectorCard';
+  /** Source collector identifier. */
+  collectorId: Scalars['String']['output'];
+  /** Environment label. */
+  environment: Scalars['String']['output'];
+  /** Up to twenty recent executions, newest first. */
+  history: Array<Observation>;
+  /** Stable card identifier. */
+  id: Scalars['String']['output'];
+  /** Presentation primitive. */
+  kind: Scalars['String']['output'];
+  /** Latest valid report from this plan revision. */
+  lastSuccess?: Maybe<Observation>;
+  /** Latest execution outcome. */
+  latest?: Maybe<Observation>;
+  /** Successful data freshness threshold. */
+  staleAfterSeconds: Scalars['Int']['output'];
+  /** Architecture manifest identifier. */
+  target: Scalars['String']['output'];
+  /** Display title. */
+  title: Scalars['String']['output'];
+};
+
 export type GeneratedManifestMutationRoot = {
   __typename?: 'GeneratedManifestMutationRoot';
   /** Save source and all its diagram artifacts with optimistic concurrency. */
@@ -88,6 +113,29 @@ export type HealthStatus = {
   status: Scalars['String']['output'];
 };
 
+/** A persisted execution outcome; failures never expose raw process output. */
+export type Observation = {
+  __typename?: 'Observation';
+  /** Source collector identifier. */
+  collectorId: Scalars['String']['output'];
+  /** Validated JSON report on successful collection. */
+  data?: Maybe<Scalars['JSON']['output']>;
+  /** Sanitized collection failure description. */
+  error?: Maybe<Scalars['String']['output']>;
+  /** Process exit code, when available. */
+  exitCode?: Maybe<Scalars['Int']['output']>;
+  /** Execution end in UTC. */
+  finishedAt: Scalars['String']['output'];
+  /** Unique run identifier. */
+  id: Scalars['String']['output'];
+  /** Digest of the active collection plan. */
+  planRevision: Scalars['String']['output'];
+  /** Execution start in UTC. */
+  startedAt: Scalars['String']['output'];
+  /** success, failed, timeout, or `invalid_output`. */
+  status: Scalars['String']['output'];
+};
+
 export type QueryRoot = {
   __typename?: 'QueryRoot';
   /**
@@ -95,6 +143,8 @@ export type QueryRoot = {
    * Pass `scry_identifier` to load an exact Scryr map, or `sample` for legacy lookup.
    */
   blocks: Array<Block>;
+  /** Read stored observations shared by this local manifest's cards. Never runs commands. */
+  collectorCards: Array<CollectorCard>;
   health: HealthStatus;
   /** Read the selected diagram's complete source document. */
   manifestDocument: Scalars['JSON']['output'];
@@ -165,6 +215,13 @@ export type UpsertGeneratedManifestPayload = {
   id: Scalars['UUID']['output'];
 };
 
+export type CollectionObservationFragment = { id: string, collectorId: string, startedAt: string, finishedAt: string, status: string, exitCode: number | null, error: string | null, data: unknown, planRevision: string };
+
+export type GetCollectorCardsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetCollectorCardsQuery = { collectorCards: Array<{ id: string, kind: string, title: string, target: string, collectorId: string, environment: string, staleAfterSeconds: number, latest: { id: string, collectorId: string, startedAt: string, finishedAt: string, status: string, exitCode: number | null, error: string | null, data: unknown, planRevision: string } | null, lastSuccess: { id: string, collectorId: string, startedAt: string, finishedAt: string, status: string, exitCode: number | null, error: string | null, data: unknown, planRevision: string } | null, history: Array<{ id: string, collectorId: string, startedAt: string, finishedAt: string, status: string, exitCode: number | null, error: string | null, data: unknown, planRevision: string }> }> };
+
 export type HealthCheckQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -202,6 +259,71 @@ export class TypedDocumentString<TResult, TVariables>
     return this.value;
   }
 }
+export const CollectionObservationFragmentDoc = new TypedDocumentString(`
+    fragment CollectionObservation on Observation {
+  id
+  collectorId
+  startedAt
+  finishedAt
+  status
+  exitCode
+  error
+  data
+  planRevision
+}
+    `, {"fragmentName":"CollectionObservation"});
+export const GetCollectorCardsDocument = new TypedDocumentString(`
+    query GetCollectorCards {
+  collectorCards {
+    id
+    kind
+    title
+    target
+    collectorId
+    environment
+    staleAfterSeconds
+    latest {
+      ...CollectionObservation
+    }
+    lastSuccess {
+      ...CollectionObservation
+    }
+    history {
+      ...CollectionObservation
+    }
+  }
+}
+    fragment CollectionObservation on Observation {
+  id
+  collectorId
+  startedAt
+  finishedAt
+  status
+  exitCode
+  error
+  data
+  planRevision
+}`);
+
+export const useGetCollectorCardsQuery = <
+      TData = GetCollectorCardsQuery,
+      TError = unknown
+    >(
+      variables?: GetCollectorCardsQueryVariables,
+      options?: Omit<UseQueryOptions<GetCollectorCardsQuery, TError, TData>, 'queryKey'> & { queryKey?: UseQueryOptions<GetCollectorCardsQuery, TError, TData>['queryKey'] }
+    ) => {
+    
+    return useQuery<GetCollectorCardsQuery, TError, TData>(
+      {
+    queryKey: variables === undefined ? ['GetCollectorCards'] : ['GetCollectorCards', variables],
+    queryFn: graphqlFetcher<GetCollectorCardsQuery, GetCollectorCardsQueryVariables>(GetCollectorCardsDocument, variables),
+    ...options
+  }
+    )};
+
+useGetCollectorCardsQuery.document = GetCollectorCardsDocument;
+
+useGetCollectorCardsQuery.getKey = (variables?: GetCollectorCardsQueryVariables) => variables === undefined ? ['GetCollectorCards'] : ['GetCollectorCards', variables];
 
 export const HealthCheckDocument = new TypedDocumentString(`
     query HealthCheck {

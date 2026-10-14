@@ -1,6 +1,7 @@
 //! Top-level CLI command dispatch.
 
 mod auth;
+mod collect;
 mod generate;
 mod migrate;
 mod serve;
@@ -11,6 +12,7 @@ use crate::args::ResolvedCommand;
 /// Execute a fully resolved top-level command.
 pub(crate) async fn run(command: ResolvedCommand) -> Result<(), String> {
     match command {
+        ResolvedCommand::Collect(args) => collect::run(args).await,
         ResolvedCommand::Check(args) => workflow::Project::new(args)?.check().map(|_| ()),
         ResolvedCommand::Format(args) => workflow::Project::new(args.common)?.tool(if args.check {
             "--format-check"

@@ -4,6 +4,16 @@ use super::generate::GenerateForgeArgs;
 use super::{GenerateCommonArgs, GenerateOutput, GenerateRequest, resolve_generate_request};
 use clap::{Args, Subcommand};
 
+/// Run local collectors once, explicitly authorizing their commands.
+#[derive(Args, Debug, Clone)]
+pub(crate) struct CollectArgs {
+    #[command(flatten)]
+    pub common: GenerateCommonArgs,
+    /// Run only this collector ID; by default run all collectors once.
+    #[arg(long)]
+    pub collector: Option<String>,
+}
+
 #[derive(Args, Debug, Clone)]
 pub(crate) struct FormatArgs {
     #[command(flatten)]
