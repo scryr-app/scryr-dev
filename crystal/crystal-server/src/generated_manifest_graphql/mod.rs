@@ -39,6 +39,45 @@ impl GeneratedManifestMutationRoot {
             .map(async_graphql::Json)
             .map_err(async_graphql::Error::new)
     }
+    /// Append a typed operational observation for the active organization.
+    async fn record_report(
+        &self,
+        ctx: &Context<'_>,
+        manifest_id: String,
+        report: async_graphql::Json<crystal_core::reports::Report>,
+    ) -> async_graphql::Result<bool> {
+        let pool = ctx.data::<DatabasePool>()?;
+        let context = ctx.data::<ManifestRequestContext>()?;
+        crystal_core::persistence::record_report(pool, context, &manifest_id, report.0)
+            .await
+            .map_err(async_graphql::Error::new)
+    }
+
+    /// Record one GitHub Actions observation without rewriting a generated Manifest.
+    async fn record_action_run(
+        &self,
+        ctx: &Context<'_>,
+        manifest_id: String,
+        run: async_graphql::Json<crystal_core::action_history::GithubActionRun>,
+        event_id: Option<String>,
+        #[graphql(default = "api")] source: String,
+    ) -> async_graphql::Result<bool> {
+        let pool = ctx.data::<DatabasePool>()?;
+        let context = ctx
+            .data::<ManifestRequestContext>()
+            .map_err(|_| async_graphql::Error::new("request is missing active organization"))?;
+        crystal_core::persistence::record_action_run(
+            pool,
+            context,
+            &manifest_id,
+            run.0,
+            event_id,
+            &source,
+        )
+        .await
+        .map_err(async_graphql::Error::new)
+    }
+
     /// Upsert a generated manifest artifact into storage.
     async fn upsert_generated_manifest(
         &self,

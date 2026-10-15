@@ -34,6 +34,10 @@ scryr format
 scryr lint --fix
 scryr push
 scryr serve --watch
+scryr report tests --run-id "$GITHUB_RUN_ID" --observed-at "$RESULTS_COMPLETED_AT"
+scryr report actions
+scryr query --list
+scryr query request_latency --json
 ```
 
 ## Check, format, and lint
@@ -108,7 +112,7 @@ restart `scryr serve` to regenerate artifacts from the authoritative disk source
 
 ## Shared manifest options
 
-These options are accepted by check, format, lint, push, serve, export, and inspect:
+These options are accepted by check, format, lint, push, serve, export, inspect, and query:
 
 ```bash
 --path <file>          Manifest file to execute. Defaults to index.scry.
@@ -183,7 +187,7 @@ GraphQL endpoints use tokenless local auth; all other endpoints require `SCRYR_T
 
 Endpoint precedence is `--endpoint` (alias `--graphql-url`), `SCRYR_ENDPOINT`,
 legacy `SCRYR_GRAPHQL_URL`, then loopback using `PORT` or port 8000. This applies
-to push.
+to push, report, and query.
 
 ## `inspect types`
 
@@ -330,6 +334,65 @@ Upload a sample to a local GraphQL server:
 cargo run -p crystal-cli -- push --path ../manifest/tests/samples/mern/index.scry --manifest-dir ../manifest
 ```
 
+## Report existing results
+
+Declare a stable `manifest_id` and optional typed input settings:
+
+```python
+from scryr import ActionsReportSource, CICD, Diagram, Manifest, TestReportSource, Tests
+
+api = Manifest(
+    manifest_id="services/api",
+    name="API",
+    tests=Tests(source=TestReportSource(files=["results/junit.xml"], suite="unit")),
+    cicd=CICD(source=ActionsReportSource(workflow_id=42, branch="main", jobs_file="results/jobs.json")),
+)
+diagram = Diagram(name="System", manifests=[api])
+```
+
+```bash
+scryr report tests --manifest api --run-id "$GITHUB_RUN_ID" --observed-at "$RESULTS_COMPLETED_AT"
+scryr report actions --manifest api --event-file workflow-run.json
+```
+
+Artifact paths in declarations are relative to the entrypoint. Explicit flags
+such as `--file`, `--format`, `--suite`, `--workflow-id`, `--branch`, and `--jobs-file`
+override declared defaults. Multiple manifests require `--manifest` (public variable,
+name, or stable ID). Reporting executes the manifest to resolve its declarations;
+it does not run tests, regenerate diagrams, or automatically push diagrams.
+
+Explicit `--manifest-id` without `--path` or `--manifest` retains the existing
+Python-free reporting mode. Test reporting still requires a run ID and a stable
+source completion time (`--observed-at`); `GITHUB_RUN_ID` supplies the former in CI.
+
+Actions reporting reads `workflow_run` events from `GITHUB_EVENT_PATH` or
+`--event-file`. Automatic branch selection uses `GITHUB_TOKEN` to check main,
+master, then the repository default; `--branch` or the declaration avoids that lookup.
+The optional jobs file is a complete GitHub jobs API response with `total_count`
+and `jobs`; combine all pages first. Every job must belong to the exact workflow
+run and attempt. Jobs enrich existing run history, and identical retries are idempotent.
+
+The existing `report coverage`, `report dependencies`, and `report deployment`
+commands remain supported. All reporters support `--dry-run` and `--json`.
+
+## Query declared providers
+
+```bash
+scryr query --list
+scryr query request_latency --manifest api
+scryr query page_views --json --endpoint https://your-scryr.example/graphql
+```
+
+Query names come from `metrics.provider.queries` and `analytics.queries` in the
+local manifest. Listing executes the manifest but makes no provider request.
+Duplicate query names require a manifest selector; use `--provider prometheus` or
+`--provider posthog` when both providers on one manifest use the same query name. Queries execute through a
+running Scryr server and its organization-scoped `SCRYR_METRICS_CONNECTIONS_FILE`
+connections; they do not publish the local manifest. Provider failures return a
+nonzero exit status. JSON output includes timestamps, status, values, and units.
+Grafana support uses Prometheus-compatible data sources; PostHog uses declared
+HogQL aggregates. Credentials remain in server connections, outside artifacts.
+
 ## Export and inspect
 
 `export json` prints checked diagram JSON. `export mise`, `export compose`, and
@@ -347,6 +410,7 @@ cargo run -p crystal-cli -- push --path ../manifest/tests/samples/mern/index.scr
 | `generate mise` | `export mise` |
 | `generate compose` | `export compose` |
 | `generate devcontainer` | `export devcontainer` |
+| `report-action-status` | `report actions` |
 
 These legacy commands have been removed. The hidden `generate artifact-json`
 command has also been removed; use `export json` for checked diagram JSON.

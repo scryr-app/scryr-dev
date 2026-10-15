@@ -229,9 +229,11 @@ mod tests {
             .and_then(Value::as_array)
             .ok_or_else(|| "expected diagram array".to_string())?;
 
-        assert_eq!(diagrams.len(), 2);
+        assert_eq!(diagrams.len(), 4);
         assert!(manifest_json.contains("\"name\": \"MERN\""));
         assert!(manifest_json.contains("\"name\": \"MERN Customer Path\""));
+        assert!(manifest_json.contains("\"name\": \"MERN Terraform Managed\""));
+        assert!(manifest_json.contains("\"name\": \"MERN Operability\""));
         assert!(
             diagrams
                 .iter()

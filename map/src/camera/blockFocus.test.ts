@@ -26,7 +26,7 @@ function focusedCamera(
 	return focus;
 }
 
-function expectFullBlock(camera: PerspectiveCamera, viewport: FocusViewport) {
+function expectFullCard(camera: PerspectiveCamera, viewport: FocusViewport) {
 	const [x, y, z] = block.position;
 	for (const dx of [-block.width / 2, block.width / 2]) {
 		for (const dy of [-block.height / 2, block.height / 2]) {
@@ -47,7 +47,7 @@ function expectFullBlock(camera: PerspectiveCamera, viewport: FocusViewport) {
 
 function expectUnobstructed(camera: PerspectiveCamera, blockers: FocusBlock[]) {
 	const [x, y, z] = block.position;
-	// Independent dense segment sampling across the actual block surface.
+	// Independent dense segment sampling across the actual card surface.
 	for (let ix = 0; ix <= 10; ix++) {
 		for (let iy = 0; iy <= 10; iy++) {
 			const target = new Vector3(
@@ -81,7 +81,7 @@ function expectUnobstructed(camera: PerspectiveCamera, blockers: FocusBlock[]) {
 
 describe("individual block focus", () => {
 	it.each(Object.entries(appearances))(
-		"frames the full block for %s",
+		"frames the full card for %s",
 		(_name, appearance) => {
 			for (const aspect of [16 / 9, 9 / 16, 0.35]) {
 				for (const zoom of [1, 2]) {
@@ -95,7 +95,7 @@ describe("individual block focus", () => {
 					camera.updateProjectionMatrix();
 					const focus = focusedCamera(camera);
 					expect(focus.obstructionCount).toBe(0);
-					expectFullBlock(camera, DEFAULT_FOCUS_VIEWPORT);
+					expectFullCard(camera, DEFAULT_FOCUS_VIEWPORT);
 					const offset = camera.position.clone().sub(focus.target);
 					expect(Math.acos(offset.y / offset.length())).toBeLessThanOrEqual(
 						Math.PI / 2 - Math.PI / 18,
@@ -115,15 +115,15 @@ describe("individual block focus", () => {
 			depth: 0.4,
 		},
 		{ id: "raised", position: [4, 2.5, 0], width: 2, height: 1.2, depth: 1 },
-	] satisfies FocusBlock[])("avoids $id across the whole block", (blocker) => {
+	] satisfies FocusBlock[])("avoids $id across the whole card", (blocker) => {
 		const camera = new PerspectiveCamera(40, 16 / 9, 0.1, 1000);
 		const focus = focusedCamera(camera, [blocker]);
 		expect(focus.obstructionCount).toBe(0);
-		expectFullBlock(camera, DEFAULT_FOCUS_VIEWPORT);
+		expectFullCard(camera, DEFAULT_FOCUS_VIEWPORT);
 		expectUnobstructed(camera, [blocker]);
 	});
 
-	it("ignores the selected block and blocks behind its block", () => {
+	it("ignores the selected block and blocks behind its card", () => {
 		const camera = new PerspectiveCamera(32, 0.6, 0.1, 1000);
 		const baseline = focusedCamera(camera);
 		const behind: FocusBlock = {
@@ -137,18 +137,18 @@ describe("individual block focus", () => {
 		expect(focus).toEqual(baseline);
 	});
 
-	it("keeps the block in free canvas space beside the editor and above the toolbar", () => {
+	it("keeps the card in free canvas space beside the editor and above the toolbar", () => {
 		const viewport = { minX: -0.05, maxX: 0.9, minY: -0.72, maxY: 0.9 };
 		const camera = new PerspectiveCamera(35, 1.4, 0.1, 1000);
 		focusedCamera(camera, [], viewport);
-		expectFullBlock(camera, viewport);
+		expectFullCard(camera, viewport);
 	});
 
 	it.each([
 		{ minX: 0.45, maxX: 0.95, minY: -0.9, maxY: 0.9 },
 		{ minX: -0.95, maxX: -0.45, minY: -0.9, maxY: 0.9 },
 		{ minX: -0.9, maxX: 0.9, minY: -0.95, maxY: -0.45 },
-	])("keeps an off-center focus in front of the block", (viewport) => {
+	])("keeps an off-center focus in front of the card", (viewport) => {
 		const camera = new PerspectiveCamera(65, 2.5, 0.1, 1000);
 		const blocker: FocusBlock = {
 			id: "front",
@@ -162,7 +162,7 @@ describe("individual block focus", () => {
 			block.position[2] + block.depth / 2 + 0.1,
 		);
 		expect(focus.obstructionCount).toBe(0);
-		expectFullBlock(camera, viewport);
+		expectFullCard(camera, viewport);
 		expectUnobstructed(camera, [blocker]);
 	});
 
@@ -174,7 +174,7 @@ describe("individual block focus", () => {
 		camera.position.copy(focus.position);
 		camera.lookAt(focus.target);
 		camera.updateMatrixWorld(true);
-		expectFullBlock(camera, DEFAULT_FOCUS_VIEWPORT);
+		expectFullCard(camera, DEFAULT_FOCUS_VIEWPORT);
 		const direction = focus.position.clone().sub(focus.target).normalize();
 		expect(Math.acos(direction.y)).toBeLessThanOrEqual(Math.PI / 4 + 1e-8);
 	});

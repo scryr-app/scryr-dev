@@ -109,7 +109,7 @@ def test_scryr_types_module_reexports_manifest_types(manifest_dir: Path) -> None
     )
 
     output = json.loads(result.stdout)
-    assert output["name_type"] in {"Label", "str"}
+    assert output["name_type"] == "Label"
     assert output["description_type"] == "Markdown"
     assert output["version_type"] == "SemVer"
 
@@ -168,11 +168,11 @@ sample = load_module_from_path('{manifest_dir / "tests" / "samples" / "mern" / "
 
 output = {{
     "name_type": type(sample.react_block.name).__name__,
-    "description_type": type(Markdown("Description")).__name__,
-    "version_type": type(SemVer("1.0.0")).__name__,
+    "description_type": type(sample.react_block.info.description).__name__,
+    "version_type": type(sample.react_block.info.version).__name__,
     "label_isinstance": isinstance(sample.react_block.name, (Label, str)),
-    "markdown_isinstance": isinstance(Markdown("Description"), (Markdown, str)),
-    "semver_isinstance": isinstance(SemVer("1.0.0"), SemVer),
+    "markdown_isinstance": isinstance(sample.react_block.info.description, (Markdown, str)),
+    "semver_isinstance": isinstance(sample.react_block.info.version, SemVer),
 }}
 print(json.dumps(output))
 """

@@ -12,12 +12,116 @@ from scryr.manifest import (
     ForgeTaskBatch,
     ForgeTaskCommand,
     ForgeTool,
+    Github,
+    Info,
+    Link,
     Manifest,
     ManifestQuery,
 )
 from scryr.types import (
+    AuthType,
+    CalendarVersion,
     Classification,
+    DeploymentTarget,
+    IaCToolType,
+    LogAggregationType,
+    MonitoringType,
+    ProgrammingLanguage,
+    SemVer,
+    TracingType,
+    Url,
+    WebFramework,
 )
+
+
+def test_manifest_dict_serializes_enums_and_version_to_strings() -> None:
+    """Manifest.dict converts enums and version models into JSON-friendly identifiers."""
+    manifest = Manifest(
+        name="SerializeMe",
+        classification=Classification.internal_api,
+        info=Info(
+            version=SemVer("1.2.3"),
+            language=ProgrammingLanguage.javascript,
+            frameworks=[WebFramework.express, WebFramework.nextjs],
+            deployment=DeploymentTarget.cloud_run,
+            auth_type=AuthType.oauth2,
+            monitoring=MonitoringType.datadog,
+            log_aggregation=LogAggregationType.elk_stack,
+            tracing=TracingType.jaeger,
+            iac_tool=IaCToolType.terraform,
+        ),
+    )
+
+    data = manifest.dict()
+
+    info = data["info"]
+    assert info["version"] == "1.2.3"
+    assert info["language"] == "javascript"
+    assert info["frameworks"] == ["express", "nextjs"]
+    assert info["deployment"] == "cloud_run"
+    assert data["classification"] == "internal_api"
+    assert info["authType"] == "oauth2"
+    assert info["monitoring"] == "datadog"
+    assert info["logAggregation"] == "elk_stack"
+    assert info["tracing"] == "jaeger"
+    assert info["iacTool"] == "terraform"
+    assert data["icon"] == ""
+
+
+def test_manifest_to_dict_returns_plain_json_safe_types() -> None:
+    """to_dict returns JSON-safe primitives and lists, including version as a string."""
+    manifest = Manifest(
+        name="JsonSafe",
+        info=Info(
+            version=CalendarVersion("2026.3"),
+            links=[Link(site_name="Docs", http_url=Url("https://example.com/docs"))],
+            docs=[Url("https://docs.example.com"), "README"],
+        ),
+        github=Github(repo_url=Url("https://example.com/repo")),
+    )
+
+    data = manifest.to_dict()
+
+    assert isinstance(data, dict)
+    assert data["info"]["version"] == "2026.3"
+    assert data["github"]["repoUrl"] == "https://example.com/repo"
+    assert data["info"]["links"][0]["site_name"] == "Docs"
+    assert data["info"]["links"][0]["http_url"] == "https://example.com/docs"
+    assert data["info"]["docs"] == ["https://docs.example.com", "README"]
+
+
+def test_manifest_exposes_embedded_section_constructors() -> None:
+    """Manifest exposes short constructors for embedding typed sections."""
+    manifest = Manifest(
+        name="EmbeddedSections",
+        info=Manifest.Info(description="visible"),
+        github=Manifest.Github(repo_url=Url("https://example.com/repo")),
+    )
+
+    assert isinstance(manifest.info, Info)
+    assert isinstance(manifest.github, Github)
+    assert manifest.to_dict()["info"]["description"] == "visible"
+    assert manifest.to_dict()["github"]["repoUrl"] == "https://example.com/repo"
+
+
+def test_manifest_accepts_flat_section_constructor_fields() -> None:
+    """Manifest accepts common section fields directly while serializing sections."""
+    manifest = Manifest(
+        name="FlatSections",
+        description="visible",
+        language=ProgrammingLanguage.javascript,
+        frameworks=[WebFramework.nextjs],
+        repo_url=Url("https://example.com/repo"),
+        cicd_tool="github_actions",
+    )
+
+    data = manifest.to_dict()
+
+    assert data["info"]["description"] == "visible"
+    assert data["info"]["language"] == "javascript"
+    assert data["info"]["frameworks"] == ["nextjs"]
+    assert data["github"]["repoUrl"] == "https://example.com/repo"
+    assert data["cicd"]["platform"] == "github_actions"
 
 
 def test_forge_serializes_typed_mise_toml_sections() -> None:
@@ -60,7 +164,7 @@ def test_forge_serializes_typed_mise_toml_sections() -> None:
 
 def test_manifest_dict_respects_model_dump_kwargs() -> None:
     """Dict should forward model_dump kwargs rather than ignore them."""
-    manifest = Manifest(name="IncludeOnly")
+    manifest = Manifest(name="IncludeOnly", info=Info(description="visible"))
 
     data = manifest.dict(include={"name"})
 
@@ -90,8 +194,8 @@ def test_manifest_preserves_explicit_icon() -> None:
 
 def test_diagram_serializes_included_manifests() -> None:
     """Diagram captures a high-level list of manifests to render together."""
-    web = Manifest(name="Web")
-    api = Manifest(name="API")
+    web = Manifest(name="Web", language=ProgrammingLanguage.typescript)
+    api = Manifest(name="API", language=ProgrammingLanguage.python)
     diagram = Diagram(name="Product", description="Product surface", manifests=[web, api])
 
     data = diagram.to_dict()
@@ -101,11 +205,59 @@ def test_diagram_serializes_included_manifests() -> None:
     assert [manifest["name"] for manifest in data["manifests"]] == ["Web", "API"]
 
 
+def test_manifest_query_filters_by_shorthand_and_list_fields() -> None:
+    """ManifestQuery matches common Pydantic fields with compact keyword syntax."""
+    api = Manifest(
+        name="API",
+        language=ProgrammingLanguage.python,
+        frameworks=[WebFramework.fastapi],
+        tags=["backend", "public"],
+    )
+    web = Manifest(
+        name="Web",
+        language=ProgrammingLanguage.typescript,
+        frameworks=[WebFramework.nextjs],
+        tags=["frontend", "public"],
+    )
+
+    query = ManifestQuery(
+        language=ProgrammingLanguage.python,
+        frameworks=WebFramework.fastapi,
+        tags="backend",
+    )
+
+    assert query.filter([api, web]) == [api]
+    assert query.model_dump(mode="json", by_alias=True)["where"] == {
+        "info.language": "python",
+        "info.frameworks": "fastapi",
+        "tags": "backend",
+    }
+
+
+def test_manifest_query_filters_by_nested_field_paths() -> None:
+    """ManifestQuery accepts nested mappings and Python-safe double-underscore paths."""
+    api = Manifest(
+        name="API",
+        github=Github(repo_url=Url("https://example.com/api")),
+    )
+    web = Manifest(
+        name="Web",
+        github=Github(repo_url=Url("https://example.com/web")),
+    )
+
+    query = ManifestQuery(
+        where={"github": {"repoUrl": "https://example.com/api"}},
+        info__language=ProgrammingLanguage.python,
+    )
+
+    assert query.filter([api, web]) == [api]
+
+
 def test_diagram_query_resolves_against_manifest_pool() -> None:
     """Diagram can use a query instead of an explicit manifest list."""
-    web = Manifest(name="Web")
-    api = Manifest(name="API")
-    diagram = Diagram(name="Python Services", query=Diagram.Query(name="API"))
+    web = Manifest(name="Web", language=ProgrammingLanguage.typescript)
+    api = Manifest(name="API", language=ProgrammingLanguage.python)
+    diagram = Diagram(name="Python Services", query=Diagram.Query(language="python"))
 
     data = diagram.to_dict(manifest_pool=[web, api])
 
@@ -114,7 +266,7 @@ def test_diagram_query_resolves_against_manifest_pool() -> None:
 
 def test_diagram_rejects_mixed_manifest_selection_modes() -> None:
     """Diagram treats query as an alternative to explicit manifests."""
-    api = Manifest(name="API")
+    api = Manifest(name="API", language=ProgrammingLanguage.python)
 
     with pytest.raises(ValueError, match="either manifests or query"):
-        Diagram(name="Mixed", manifests=[api], query=ManifestQuery(name="API"))
+        Diagram(name="Mixed", manifests=[api], query=ManifestQuery(language="python"))

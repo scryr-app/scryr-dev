@@ -9,9 +9,30 @@ Architecture reference: https://dokku.com/docs/development/architecture/
 Source: https://github.com/dokku/dokku
 """
 
-from scryr import Diagram, Manifest
+from scryr import CICD, Diagram, Github, Info, Link, Manifest
 from scryr.saas import Classification
+from scryr.types import (
+    AuthType,
+    CICDToolType,
+    DeploymentTarget,
+    IaCToolType,
+    LogAggregationType,
+    MonitoringType,
+    ProgrammingLanguage,
+    TracingType,
+    Url,
+    WebFramework,
+    parse_version,
+)
 
+_SOURCE = Url("https://github.com/dokku/dokku")
+_DOCS = Url("https://dokku.com/docs/")
+_DEPLOYMENT = DeploymentTarget.bare_metal
+_CICD = CICDToolType.github_actions
+_IAC = IaCToolType.none
+_MONITOR = MonitoringType.none
+_LOGS = LogAggregationType.none
+_TRACING = TracingType.none
 dokku_core_block = Manifest(
     name="Dokku Core",
     icon="🚀",
@@ -23,6 +44,31 @@ dokku_core_block = Manifest(
         Manifest(name="Docker Scheduler"),
         Manifest(name="Nginx Proxy"),
     ],
+    info=Info(
+        description="Central PaaS engine (Go + Shell, v0.37.7). Provides the `dokku` CLI, the plugin trigger dispatcher, app lifecycle management (create / deploy / scale / destroy / run), environment config, and the admin HTTP API used by CI integrations and the Dokku Pro dashboard.",
+        version=parse_version("0.37.7"),
+        language=ProgrammingLanguage.go,
+        frameworks=[WebFramework.chi],
+        deployment=_DEPLOYMENT,
+        owner_team="Platform",
+        auth_type=AuthType.api_key,
+        monitoring=_MONITOR,
+        log_aggregation=_LOGS,
+        tracing=_TRACING,
+        iac_tool=_IAC,
+        max_replicas=1,
+        min_replicas=1,
+        links=[
+            Link(site_name="Dokku Docs", http_url=_DOCS),
+            Link(site_name="Source", http_url=_SOURCE),
+        ],
+    ),
+    github=Github(
+        repo_url=_SOURCE,
+    ),
+    cicd=CICD(
+        platform=_CICD,
+    ),
 )
 ssh_gateway_block = Manifest(
     name="SSH Gateway",
@@ -30,6 +76,32 @@ ssh_gateway_block = Manifest(
     classification=Classification.network_gateway,
     tags=["ssh", "auth", "access-control"],
     connections=[Manifest(name="Git Server")],
+    info=Info(
+        description="SSH server layer built on `sshcommand`. Authenticates incoming connections using stored public keys (`dokku ssh-keys:add`), then translates the git push command into a dokku deploy trigger — without granting shell access to the server.",
+        version=parse_version("0.37.7"),
+        language=ProgrammingLanguage.bash,
+        deployment=_DEPLOYMENT,
+        owner_team="Platform",
+        auth_type=AuthType.api_key,
+        monitoring=_MONITOR,
+        log_aggregation=_LOGS,
+        tracing=_TRACING,
+        iac_tool=_IAC,
+        max_replicas=1,
+        min_replicas=1,
+        links=[
+            Link(
+                site_name="User Mgmt Docs",
+                http_url=Url("https://dokku.com/docs/deployment/user-management/"),
+            )
+        ],
+    ),
+    github=Github(
+        repo_url=_SOURCE,
+    ),
+    cicd=CICD(
+        platform=_CICD,
+    ),
 )
 git_server_block = Manifest(
     name="Git Server",
@@ -37,6 +109,32 @@ git_server_block = Manifest(
     classification=Classification.internal_api,
     tags=["git", "vcs", "deploy-trigger"],
     connections=[Manifest(name="App Builder")],
+    info=Info(
+        description="Bare git repository manager (Go plugin). Maintains one bare repo per app under `/var/lib/dokku/`. On `git push`, the post-receive hook fires and passes the source archive to the build pipeline.",
+        version=parse_version("0.37.7"),
+        language=ProgrammingLanguage.go,
+        deployment=_DEPLOYMENT,
+        owner_team="Platform",
+        auth_type=AuthType.api_key,
+        monitoring=_MONITOR,
+        log_aggregation=_LOGS,
+        tracing=_TRACING,
+        iac_tool=_IAC,
+        max_replicas=1,
+        min_replicas=1,
+        links=[
+            Link(
+                site_name="Git Deploy Docs",
+                http_url=Url("https://dokku.com/docs/deployment/methods/git/"),
+            )
+        ],
+    ),
+    github=Github(
+        repo_url=_SOURCE,
+    ),
+    cicd=CICD(
+        platform=_CICD,
+    ),
 )
 app_builder_block = Manifest(
     name="App Builder",
@@ -44,6 +142,33 @@ app_builder_block = Manifest(
     classification=Classification.job_processor,
     tags=["buildpack", "docker", "image-build"],
     connections=[Manifest(name="Docker Scheduler")],
+    info=Info(
+        description="Pluggable build subsystem. Default builder is Herokuish — auto-detects language via official Heroku Buildpacks and compiles a Docker image. Alternatives include Dockerfile, Cloud Native Buildpacks (pack), Nixpacks, and Railpack. Outputs a tagged Docker image pushed to the local daemon.",
+        version=parse_version("0.37.7"),
+        language=ProgrammingLanguage.go,
+        deployment=_DEPLOYMENT,
+        owner_team="Platform",
+        auth_type=AuthType.none,
+        monitoring=_MONITOR,
+        log_aggregation=_LOGS,
+        tracing=_TRACING,
+        iac_tool=_IAC,
+        max_replicas=1,
+        min_replicas=1,
+        links=[
+            Link(
+                site_name="Builders Docs",
+                http_url=Url("https://dokku.com/docs/deployment/builders/builder-management/"),
+            ),
+            Link(site_name="Herokuish", http_url=Url("https://github.com/gliderlabs/herokuish")),
+        ],
+    ),
+    github=Github(
+        repo_url=_SOURCE,
+    ),
+    cicd=CICD(
+        platform=_CICD,
+    ),
 )
 docker_scheduler_block = Manifest(
     name="Docker Scheduler",
@@ -51,6 +176,32 @@ docker_scheduler_block = Manifest(
     classification=Classification.scheduler,
     tags=["scheduler", "containers", "runtime"],
     connections=[Manifest(name="Nginx Proxy")],
+    info=Info(
+        description="Default container scheduler (`scheduler-docker-local`). Runs app processes defined in `Procfile` as Docker containers on the local daemon, enforces resource limits, performs zero-downtime deploy checks, and manages persistent storage mounts.",
+        version=parse_version("0.37.7"),
+        language=ProgrammingLanguage.go,
+        deployment=_DEPLOYMENT,
+        owner_team="Platform",
+        auth_type=AuthType.none,
+        monitoring=_MONITOR,
+        log_aggregation=_LOGS,
+        tracing=_TRACING,
+        iac_tool=_IAC,
+        max_replicas=1,
+        min_replicas=1,
+        links=[
+            Link(
+                site_name="Scheduler Docs",
+                http_url=Url("https://dokku.com/docs/deployment/schedulers/docker-local/"),
+            )
+        ],
+    ),
+    github=Github(
+        repo_url=_SOURCE,
+    ),
+    cicd=CICD(
+        platform=_CICD,
+    ),
 )
 cron_scheduler_block = Manifest(
     name="Cron Scheduler",
@@ -58,6 +209,32 @@ cron_scheduler_block = Manifest(
     classification=Classification.scheduler,
     tags=["cron", "tasks", "scheduler"],
     connections=[Manifest(name="Docker Scheduler")],
+    info=Info(
+        description="Manages scheduled one-off tasks declared in `app.json` (cron section). Writes systemd crontab entries per app and fires `dokku run` containers on schedule, with full log capture.",
+        version=parse_version("0.37.7"),
+        language=ProgrammingLanguage.go,
+        deployment=_DEPLOYMENT,
+        owner_team="Platform",
+        auth_type=AuthType.none,
+        monitoring=_MONITOR,
+        log_aggregation=_LOGS,
+        tracing=_TRACING,
+        iac_tool=_IAC,
+        max_replicas=1,
+        min_replicas=1,
+        links=[
+            Link(
+                site_name="Cron Docs",
+                http_url=Url("https://dokku.com/docs/processes/scheduled-cron-tasks/"),
+            )
+        ],
+    ),
+    github=Github(
+        repo_url=_SOURCE,
+    ),
+    cicd=CICD(
+        platform=_CICD,
+    ),
 )
 nginx_proxy_block = Manifest(
     name="Nginx Proxy",
@@ -65,6 +242,32 @@ nginx_proxy_block = Manifest(
     classification=Classification.network_gateway,
     tags=["proxy", "routing", "tls"],
     connections=[],
+    info=Info(
+        description="Default HTTP/HTTPS reverse proxy (`nginx-vhosts` plugin). Renders per-app nginx vhost configs on every deploy, routes `$APP.domain.tld` to the running container port, upgrades WebSocket connections, and terminates TLS. Caddy, Traefik, HAProxy, and OpenResty are plug-in alternatives.",
+        version=parse_version("1.27.0"),
+        language=ProgrammingLanguage.c,
+        deployment=_DEPLOYMENT,
+        owner_team="Platform",
+        auth_type=AuthType.none,
+        monitoring=_MONITOR,
+        log_aggregation=_LOGS,
+        tracing=_TRACING,
+        iac_tool=_IAC,
+        max_replicas=1,
+        min_replicas=1,
+        links=[
+            Link(
+                site_name="Proxy Docs",
+                http_url=Url("https://dokku.com/docs/networking/proxies/nginx/"),
+            )
+        ],
+    ),
+    github=Github(
+        repo_url=_SOURCE,
+    ),
+    cicd=CICD(
+        platform=_CICD,
+    ),
 )
 certs_plugin_block = Manifest(
     name="Certs Plugin",
@@ -72,6 +275,29 @@ certs_plugin_block = Manifest(
     classification=Classification.worker,
     tags=["tls", "certs", "security"],
     connections=[Manifest(name="Nginx Proxy")],
+    info=Info(
+        description="TLS certificate manager. Stores and applies per-app or wildcard certs (`dokku certs:add`). Integrates with the community `dokku-letsencrypt` plugin for automatic ACME certificate issuance and renewal via the Nginx HTTP-01 challenge.",
+        version=parse_version("0.37.7"),
+        language=ProgrammingLanguage.go,
+        deployment=_DEPLOYMENT,
+        owner_team="Platform",
+        auth_type=AuthType.none,
+        monitoring=_MONITOR,
+        log_aggregation=_LOGS,
+        tracing=_TRACING,
+        iac_tool=_IAC,
+        max_replicas=1,
+        min_replicas=1,
+        links=[
+            Link(site_name="SSL Docs", http_url=Url("https://dokku.com/docs/configuration/ssl/"))
+        ],
+    ),
+    github=Github(
+        repo_url=_SOURCE,
+    ),
+    cicd=CICD(
+        platform=_CICD,
+    ),
 )
 plugin_system_block = Manifest(
     name="Plugin System",
@@ -79,6 +305,36 @@ plugin_system_block = Manifest(
     classification=Classification.sdk,
     tags=["plugins", "extensibility", "hooks"],
     connections=[Manifest(name="Dokku Core")],
+    info=Info(
+        description="Bash-based plugin trigger and lifecycle system. Installs community plugins from git URLs (`dokku plugin:install`), manages plugin updates, and dispatches named trigger hooks (50+ built-in triggers) to all registered plugins in priority order, enabling the full plugin ecosystem.",
+        version=parse_version("0.37.7"),
+        language=ProgrammingLanguage.bash,
+        deployment=_DEPLOYMENT,
+        owner_team="Platform",
+        auth_type=AuthType.none,
+        monitoring=_MONITOR,
+        log_aggregation=_LOGS,
+        tracing=_TRACING,
+        iac_tool=_IAC,
+        max_replicas=1,
+        min_replicas=1,
+        links=[
+            Link(
+                site_name="Plugin Docs",
+                http_url=Url("https://dokku.com/docs/advanced-usage/plugin-management/"),
+            ),
+            Link(
+                site_name="Plugin Triggers",
+                http_url=Url("https://dokku.com/docs/development/plugin-triggers/"),
+            ),
+        ],
+    ),
+    github=Github(
+        repo_url=_SOURCE,
+    ),
+    cicd=CICD(
+        platform=_CICD,
+    ),
 )
 
 dokku_diagram = Diagram(

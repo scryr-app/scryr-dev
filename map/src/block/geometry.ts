@@ -9,7 +9,7 @@ interface GeometryDimensions {
 }
 
 /**
- * Creates a custom box geometry with six closed faces.
+ * Creates a custom box geometry with 5 faces (no right face for card slots).
  */
 export function useBlockGeometry({ hw, hh, hd }: GeometryDimensions) {
 	const { flatFaces } = currentTheme.appearance.shapes;
@@ -37,8 +37,7 @@ export function useBlockGeometry({ hw, hh, hd }: GeometryDimensions) {
 		}
 
 		// Define faces (each face has 2 triangles = 6 indices)
-		// Right face (facing positive X)
-		indices.push(4, 7, 6, 4, 5, 7);
+		// We exclude the right face (would be indices [4,7,6,4,5,7])
 
 		// Left face (facing negative X)
 		indices.push(0, 3, 2, 0, 1, 3);
@@ -65,9 +64,9 @@ export function useBlockGeometry({ hw, hh, hd }: GeometryDimensions) {
 				y = positions.getY(i),
 				z = positions.getZ(i);
 			// Project each face in its own plane so adjacent triangles share UVs.
-			const u = face <= 1 ? (z + hd) / (2 * hd) : (x + hw) / (2 * hw);
+			const u = face === 0 ? (z + hd) / (2 * hd) : (x + hw) / (2 * hw);
 			const v =
-				face === 2 || face === 3 ? (z + hd) / (2 * hd) : (y + hh) / (2 * hh);
+				face === 1 || face === 2 ? (z + hd) / (2 * hd) : (y + hh) / (2 * hh);
 			uvs.push(u, v);
 		}
 		faces.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));

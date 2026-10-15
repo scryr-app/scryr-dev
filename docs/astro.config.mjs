@@ -30,7 +30,7 @@ export default defineConfig({
           { label: 'Manifest language', slug: 'manifests' },
           { label: 'CLI reference', slug: 'cli' },
           { label: 'Generate code from JSON Schema', slug: 'code-generation' },
-          { label: 'Developer tooling', slug: 'developer-tooling' },
+          { label: 'Integrations', slug: 'integrations' },
           { label: 'Editor highlighting', slug: 'editors' },
         ] },
       ],

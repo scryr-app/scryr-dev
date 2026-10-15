@@ -3,6 +3,10 @@
 mod auth;
 mod generate;
 mod migrate;
+mod observations;
+mod query;
+mod report;
+mod report_config;
 mod serve;
 mod workflow;
 
@@ -34,6 +38,8 @@ pub(crate) async fn run(command: ResolvedCommand) -> Result<(), String> {
                 generate::run(&request).await
             }
         }
+        ResolvedCommand::Query(args) => query::run(args).await,
+        ResolvedCommand::Report(args) => observations::run(&args).await,
         ResolvedCommand::Migrate => migrate::run().await,
         ResolvedCommand::Serve(args) => serve::run(&args).await,
         ResolvedCommand::Auth(args) => auth::run(&args).await,

@@ -301,20 +301,36 @@ PYTHON
 '''
 
 [tasks."contribute:generate:graphql"]
-description = "Export the server schema and generate frontend GraphQL types"
+description = "Generate frontend GraphQL types from the local server"
 dir = "{{config_root}}"
 run = '''
-python - <<'PYTHON'
-from pathlib import Path
-import subprocess
+#!/usr/bin/env bash
+set -eu
+token="${SCRYR_API_TOKEN:-windrunner}"
 
-schema = subprocess.run([
-    "cargo", "run", "--locked", "--manifest-path", "crystal/Cargo.toml",
-    "-p", "crystal-server", "--bin", "export_schema",
-], check=True, text=True, stdout=subprocess.PIPE)
-Path("crystal/crystal-server/src/graphql_schema.snapshot.graphql").write_text(schema.stdout)
-subprocess.run(["mise", "run", "internal:generate:map"], check=True)
-PYTHON
+if ! curl --silent --show-error --fail \
+  -H "x-scryr-token: ${token}" \
+  -H "content-type: application/json" \
+  --data '{"query":"query { __typename }"}' \
+  http://127.0.0.1:8000/graphql >/dev/null; then
+  (
+    HOST=127.0.0.1 PORT=8000 AUTH_MODE=local mise run internal:contribute:oss:serve
+  ) >/tmp/scryr-codegen-server.log 2>&1 &
+  server_pid=$!
+  trap 'kill "${server_pid}" 2>/dev/null || true' EXIT
+
+  curl --silent --show-error --fail \
+    --retry 40 \
+    --retry-all-errors \
+    --retry-connrefused \
+    --retry-delay 1 \
+    -H "x-scryr-token: ${token}" \
+    -H "content-type: application/json" \
+    --data '{"query":"query { __typename }"}' \
+    http://127.0.0.1:8000/graphql >/dev/null
+fi
+
+mise run internal:generate:map
 '''
 
 [tasks."contribute:generate:manifest-types"]
@@ -448,11 +464,6 @@ dir = "{{config_root}}"
 description = "Build and smoke-test the standalone CLI"
 run = ["mise run release:build", "mise run verify:release:smoke"]
 dir = "{{config_root}}"
-
-[tasks."verify:docs"]
-description = "Check and build the documentation site"
-dir = "{{config_root}}"
-run = "npm --prefix docs run build"
 
 [tasks."verify:static"]
 description = "Run formatting checks, linters, and type checks"

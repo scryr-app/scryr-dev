@@ -1,4 +1,5 @@
 import {
+	Activity,
 	ArrowDown,
 	ArrowLeft,
 	ArrowRight,
@@ -8,19 +9,43 @@ import {
 	ChevronLeft,
 	ChevronRight,
 	ChevronUp,
+	Gauge,
+	GitFork,
+	Info,
+	Layers,
 	Map as MapIcon,
 	Minus,
+	Package,
 	Palette,
 	PencilLine,
 	Plus,
+	Rocket,
+	TestTube,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { cameraStore } from "@/camera";
 import { Button } from "@/components/button";
 import { ThemeOptions } from "@/theme/ThemeSwitcher";
 import { cn } from "@/utils";
-import styles from "./MapToolbar.module.css";
+import styles from "./MapTray.module.css";
+import { useMapTray } from "./MapTrayContext";
 
+const CARD_TYPES = [
+	{ index: 0, icon: Info, label: "Info" },
+	{ index: 1, icon: GitFork, label: "GitHub" },
+	{ index: 2, icon: Activity, label: "Metrics" },
+	{ index: 3, icon: Rocket, label: "CI/CD" },
+	{ index: 4, icon: TestTube, label: "Tests" },
+	{ index: 5, icon: Package, label: "Dependencies" },
+	{ index: 6, icon: Gauge, label: "Performance" },
+	{ index: 7, icon: Layers, label: "Diagrams" },
+] as const;
+
+/**
+ * Floating pill toolbar at the bottom of the screen.
+ * Left section: card-type selectors.
+ * Right section (after divider): theme palette picker.
+ */
 /** Returns mousedown/mouseup/mouseleave props that fire `action` immediately
  * then repeatedly at ~60 fps while the button is held.
  * `onLeave` is called on mouseup and mouseleave (e.g. to clear hover state). */
@@ -49,15 +74,13 @@ function holdAction(action: () => void, onLeave?: () => void) {
 	};
 }
 
-interface MapToolbarProps {
+interface MapTrayProps {
 	isPyodideOpen: boolean;
 	onTogglePyodide: () => void;
 }
 
-export function MapToolbar({
-	isPyodideOpen,
-	onTogglePyodide,
-}: MapToolbarProps) {
+export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
+	const { activeCardIndex, toggleCard } = useMapTray();
 	const [themeOpen, setThemeOpen] = useState(false);
 	const [viewMenuOpen, setViewMenuOpen] = useState(false);
 	const [viewMode, setViewMode] = useState<"top-down" | "isometric" | null>(
@@ -68,6 +91,7 @@ export function MapToolbar({
 		action();
 	};
 	const [hoveredIndex, setHoveredIndex] = useState<
+		| number
 		| "editor"
 		| "theme"
 		| "zoom-in"
@@ -359,6 +383,62 @@ export function MapToolbar({
 				</div>
 
 				{/* Vertical divider */}
+				<div className={styles.divider} />
+
+				{/* Info button — middle section */}
+				{(() => {
+					const { icon: Icon, label, index } = CARD_TYPES[0];
+					return (
+						<div className={styles.control}>
+							{hoveredIndex === index && (
+								<div className={styles.tooltip}>{label}</div>
+							)}
+							<Button
+								type="button"
+								variant="ghost"
+								size="icon"
+								className={cn(
+									styles.trayButton,
+									activeCardIndex === index && styles.selectedCard,
+								)}
+								aria-label={label}
+								aria-pressed={activeCardIndex === index}
+								onClick={() => toggleCard(index)}
+								onMouseEnter={() => setHoveredIndex(index)}
+								onMouseLeave={() => setHoveredIndex(null)}
+							>
+								<Icon size={18} />
+							</Button>
+						</div>
+					);
+				})()}
+
+				{/* Remaining card type buttons */}
+				{CARD_TYPES.slice(1).map(({ index, icon: Icon, label }) => (
+					<div key={index} className={styles.control}>
+						{hoveredIndex === index && (
+							<div className={styles.tooltip}>{label}</div>
+						)}
+						<Button
+							type="button"
+							variant="ghost"
+							size="icon"
+							className={cn(
+								styles.trayButton,
+								activeCardIndex === index && styles.selectedCard,
+							)}
+							aria-label={label}
+							aria-pressed={activeCardIndex === index}
+							onClick={() => toggleCard(index)}
+							onMouseEnter={() => setHoveredIndex(index)}
+							onMouseLeave={() => setHoveredIndex(null)}
+						>
+							<Icon size={18} />
+						</Button>
+					</div>
+				))}
+
+				{/* Divider between card diagrams and the editor */}
 				<div className={styles.divider} />
 
 				{/* Theme section */}

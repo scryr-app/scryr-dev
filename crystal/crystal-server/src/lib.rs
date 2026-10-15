@@ -9,6 +9,7 @@ mod generated_manifest_graphql;
 mod health;
 mod http_handlers;
 mod roots;
+mod runtime_metrics;
 mod samples;
 /// GraphQL HTTP server bootstrap.
 pub mod server;
@@ -18,62 +19,15 @@ mod static_assets;
 
 pub use state::ServerArgs;
 
-/// Export the canonical GraphQL schema for frontend generation and compatibility checks.
-#[must_use]
-pub fn graphql_schema_sdl() -> String {
-    async_graphql::Schema::build(
-        roots::QueryRoot,
-        roots::MutationRoot::default(),
-        async_graphql::EmptySubscription,
-    )
-    .finish()
-    .sdl()
-}
-
 #[cfg(test)]
 mod schema_snapshot_tests {
-
-    #[test]
-    fn operational_card_and_collection_api_is_removed() {
-        let sdl = super::graphql_schema_sdl();
-        for removed in [
-            "githubActions:",
-            "sourceCodeUrl:",
-            "description:",
-            "version:",
-            "language:",
-            "frameworks:",
-            "deployment:",
-            "ownerTeam:",
-            "cicdTool:",
-            "manifestQuery(",
-            "diagramMetrics(",
-            "reportHistory(",
-            "actionHistory(",
-            "recordReport(",
-            "recordActionRun(",
-        ] {
-            assert!(
-                !sdl.contains(removed),
-                "removed GraphQL field remains: {removed}"
-            );
-        }
-        for retained in [
-            "blocks(",
-            "scryrMaps:",
-            "manifestDocument(",
-            "saveManifestDocument(",
-        ] {
-            assert!(
-                sdl.contains(retained),
-                "architecture API missing: {retained}"
-            );
-        }
-    }
+    use super::roots::{MutationRoot, QueryRoot};
+    use async_graphql::{EmptySubscription, Schema};
 
     #[test]
     fn graphql_schema_matches_snapshot() {
-        let sdl = super::graphql_schema_sdl();
+        let schema = Schema::build(QueryRoot, MutationRoot::default(), EmptySubscription).finish();
+        let sdl = schema.sdl();
         let expected = include_str!("graphql_schema.snapshot.graphql");
 
         if expected.trim().is_empty() {

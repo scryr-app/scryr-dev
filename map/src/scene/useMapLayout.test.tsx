@@ -19,6 +19,9 @@ const blocks: Block[] = [
 		name: "a",
 		connections: [],
 		tags: [],
+		docs: [],
+		frameworks: [],
+		links: [],
 		rawJsonString: "{}",
 	},
 ];
@@ -40,7 +43,7 @@ describe("layout request lifecycle", () => {
 		rerender({
 			blocks: blocks.map((block) => ({
 				...block,
-				rawJsonString: '{"extraMetadata":{"example":42}}',
+				rawJsonString: '{"runtimeMetrics":{"values":{"rps":42}}}',
 			})),
 			view: portraitView,
 		});

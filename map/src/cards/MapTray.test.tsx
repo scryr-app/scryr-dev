@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
-import { MapToolbar } from "./MapToolbar";
+import { MapTray } from "./MapTray";
+import { MapTrayProvider } from "./MapTrayContext";
 
 vi.mock("@/theme/ThemeSwitcher", () => ({ ThemeOptions: () => null }));
 afterEach(cleanup);
@@ -16,30 +17,21 @@ it.each([
 	"Rotate Down",
 	"Rotate Left",
 	"Rotate Right",
-])("clears %s rollover when moving through the toolbar", (label) => {
-	render(<MapToolbar isPyodideOpen={false} onTogglePyodide={vi.fn()} />);
+])("clears %s rollover when moving through the tray", (label) => {
+	render(
+		<MapTrayProvider>
+			<MapTray isPyodideOpen={false} onTogglePyodide={vi.fn()} />
+		</MapTrayProvider>,
+	);
+	const card = screen.getByRole("button", { name: "GitHub" });
+	fireEvent.mouseEnter(card);
+	expect(screen.getByText("GitHub")).toBeDefined();
+	fireEvent.mouseLeave(card);
 	const camera = screen.getByRole("button", { name: label });
 	fireEvent.mouseEnter(camera);
+	expect(screen.queryByText("GitHub")).toBeNull();
 	expect(screen.getByText(label)).toBeDefined();
 	fireEvent.mouseLeave(camera);
 	fireEvent.mouseEnter(screen.getByRole("button", { name: "Select map view" }));
 	expect(screen.queryByText(label)).toBeNull();
-});
-it("keeps editor controls without exposing removed cards", () => {
-	const toggle = vi.fn();
-	render(<MapToolbar isPyodideOpen={false} onTogglePyodide={toggle} />);
-	fireEvent.click(screen.getByRole("button", { name: "Show editor" }));
-	expect(toggle).toHaveBeenCalledOnce();
-	for (const name of [
-		"Info",
-		"GitHub",
-		"Metrics",
-		"CI/CD",
-		"Tests",
-		"Dependencies",
-		"Performance",
-		"Diagrams",
-	]) {
-		expect(screen.queryByRole("button", { name })).toBeNull();
-	}
 });

@@ -2,9 +2,10 @@
 
 mod block;
 mod health;
+mod json_access;
 mod map;
 
-pub use block::Block;
+pub use block::{Block, Link};
 pub use health::HealthStatus;
 pub use map::ScryrMap;
 

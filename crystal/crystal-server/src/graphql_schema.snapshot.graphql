@@ -14,9 +14,13 @@ enum ArtifactKind {
 
 type Block {
 	"""
-	Stable identity for the architecture component.
+	Stable Manifest identity used to attach operational history.
 	"""
 	manifestId: String
+	"""
+	Recent GitHub workflow runs and their observed status history.
+	"""
+	githubActions: JSON
 	"""
 	Display name for the component (used as the block label).
 	"""
@@ -26,6 +30,18 @@ type Block {
 	"""
 	icon: String
 	"""
+	Repository or source URL (also used by `GithubCard`).
+	"""
+	sourceCodeUrl: String
+	"""
+	Short description of the component.
+	"""
+	description: String
+	"""
+	Semver-like version string (e.g. "1.2.3").
+	"""
+	version: String
+	"""
 	1-based line number of the manifest assignment in the source file.
 	"""
 	lineNumber: Int
@@ -34,17 +50,77 @@ type Block {
 	"""
 	consumerType: String
 	"""
+	Primary programming language.
+	"""
+	language: String
+	"""
+	Web frameworks in use.
+	"""
+	frameworks: [String!]!
+	"""
+	Primary deployment target identifier.
+	"""
+	deployment: String
+	"""
+	Cloud provider extracted from the deployment tuple.
+	"""
+	deploymentProvider: String
+	"""
+	Team responsible for this service.
+	"""
+	ownerTeam: String
+	"""
+	Primary authentication mechanism.
+	"""
+	authType: String
+	"""
 	Arbitrary tags for categorization and filtering.
 	"""
 	tags: [String!]!
+	"""
+	Monitoring and metrics platform.
+	"""
+	monitoring: String
+	"""
+	Log aggregation and analysis platform.
+	"""
+	logAggregation: String
+	"""
+	Distributed tracing and APM platform.
+	"""
+	tracing: String
+	"""
+	Documentation URLs.
+	"""
+	docs: [String!]!
+	"""
+	Helpful external links with display name and URL.
+	"""
+	links: [Link!]!
 	"""
 	Returns the raw JSON as a string for debugging.
 	"""
 	rawJsonString: String!
 	"""
+	CI/CD pipeline platform (`github_actions`, `jenkins`, `circleci`, etc.).
+	"""
+	cicdTool: String
+	"""
 	Named connections to other components in the graph.
 	"""
 	connections: [String!]!
+	"""
+	Infrastructure as Code tooling (terraform, pulumi, cdk, etc.).
+	"""
+	iacTool: String
+	"""
+	Maximum number of service replicas.
+	"""
+	maxReplicas: Int
+	"""
+	Minimum number of service replicas.
+	"""
+	minReplicas: Int
 }
 
 type GeneratedManifestMutationRoot {
@@ -52,6 +128,14 @@ type GeneratedManifestMutationRoot {
 	Save source and all its diagram artifacts with optimistic concurrency.
 	"""
 	saveManifestDocument(identifier: String!, revision: String!, envelope: JSON!): JSON!
+	"""
+	Append a typed operational observation for the active organization.
+	"""
+	recordReport(manifestId: String!, report: JSON!): Boolean!
+	"""
+	Record one GitHub Actions observation without rewriting a generated Manifest.
+	"""
+	recordActionRun(manifestId: String!, run: JSON!, eventId: String, source: String! = "api"): Boolean!
 	"""
 	Upsert a generated manifest artifact into storage.
 	"""
@@ -81,11 +165,41 @@ A scalar that can represent any JSON value.
 """
 scalar JSON
 
+"""
+External reference associated with a block (e.g., repo, docs, dashboard).
+"""
+type Link {
+	"""
+	Human-readable name for the link target.
+	"""
+	siteName: String
+	"""
+	URL of the target resource.
+	"""
+	httpUrl: String
+}
+
 type QueryRoot {
 	"""
 	Read the selected diagram's complete source document.
 	"""
 	manifestDocument(identifier: String!): JSON!
+	"""
+	Execute a named local declaration without persisting a diagram.
+	"""
+	manifestQuery(source: JSON!, name: String!): JSON!
+	"""
+	Fetch configured runtime metrics once when opening a diagram. Block polling never calls this.
+	"""
+	diagramMetrics(scryIdentifier: String, sample: String): JSON!
+	"""
+	Read operational observations for the active organization.
+	"""
+	reportHistory(manifestId: String!, limit: Int! = 100, offset: Int! = 0): JSON!
+	"""
+	Read complete workflow attempts, newest first, scoped to the active organization.
+	"""
+	actionHistory(manifestId: String!, limit: Int! = 100, offset: Int! = 0): JSON!
 	health: HealthStatus!
 	"""
 	Lists persisted Scryr maps available in the configured database.

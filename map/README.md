@@ -6,7 +6,7 @@ Frontend for the Scryr architecture map.
 
 - renders the 3D map UI
 - fetches block data from `crystal` over GraphQL
-- displays regions, lines, and block labels
+- displays regions, lines, labels, and detail cards
 
 
 ## GraphQL Workflow
@@ -103,8 +103,8 @@ tests exercise both SQLite and libSQL transactions and organization isolation.
 
 The palette button selects a complete theme:
 
-- **Industrial Forest** includes Light Mode, the original ribbed blocks and matte surfaces, daylight, and the original camera view.
-- **Scholarly Grimoire** includes Dark Mode, gilt leather covers, warm reading light, brass connections, and walnut floorboards.
+- **Industrial Forest** includes Light Mode, the original ribbed blocks and matte cards, daylight, and the original camera view.
+- **Scholarly Grimoire** includes Dark Mode, gilt leather covers, parchment cards tinted to their blocks with ivory text, warm reading light, brass connections, and walnut floorboards.
 - **Luminous Crystal** includes Dark Mode, dark crystal materials, layered glowing edges, violet connections, a subdued grid, and an elevated camera view.
 - **Celestial Observatory** includes Dark Mode, midnight-blue precision instruments, brushed-brass orbital engravings, starlight, and a slowly moving celestial highlight.
 - **Porcelain Reverie** includes Light Mode, glazed ivory ceramic, cobalt botanical borders, delicate gold details, and kintsugi cracks.
@@ -112,7 +112,7 @@ The palette button selects a complete theme:
 - **Velvet Oracle** includes Light Mode, deep plum velvet with a soft lavender sheen, warm gold lighting, and gold connections.
 
 Each preset in `src/theme/theme.ts` owns its mode and palette. Its typed
-`ThemeAppearance` in `src/theme/appearance.ts` defines textures, face
+`ThemeAppearance` in `src/theme/appearance.ts` defines textures, face and card
 shapes, materials, lighting, floor, regions, connections, and view. Add a preset
 and appearance definition to extend the chooser; mode is never stored separately.
 

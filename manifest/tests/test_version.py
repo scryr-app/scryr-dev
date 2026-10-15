@@ -1,7 +1,9 @@
 """Tests for typed version parsing and ordering."""
 
 import pytest
+from pydantic import ValidationError
 
+from scryr.manifest import Info, Manifest
 from scryr.types import (
     CalendarVersion,
     Incremental,
@@ -66,6 +68,41 @@ def test_incremental_rejects_leading_zeros(value: str) -> None:
 
     with pytest.raises(ValueError, match="Unsupported version format"):
         parse_version(value)
+
+
+def test_manifest_serializes_version_as_string() -> None:
+    """Manifest JSON output remains a string for version."""
+    calendar_manifest = Manifest.model_validate(
+        {"name": "CalendarSvc", "info": {"version": "2026.12"}}
+    )
+    incremental_manifest = Manifest.model_validate(
+        {"name": "IncrementalSvc", "info": {"version": "7"}}
+    )
+
+    assert calendar_manifest.to_dict()["info"]["version"] == "2026.12"
+    assert incremental_manifest.to_dict()["info"]["version"] == "7"
+
+
+def test_manifest_keeps_version_typed_models() -> None:
+    """Manifest stores version as typed version models internally."""
+    semver_manifest = Manifest(
+        name="SemVerSvc",
+        info=Info(version=SemVer.parse("1.2.3")),
+    )
+    calendar_manifest = Manifest(
+        name="CalendarSvc",
+        info=Info(version=parse_version("2026.12")),
+    )
+
+    assert isinstance(semver_manifest.info.version, SemVer)
+    assert isinstance(calendar_manifest.info.version, CalendarVersion)
+
+
+@pytest.mark.parametrize("value", ["2026.13", "2026.0", "latest", ""])
+def test_manifest_rejects_unsupported_version_values(value: str) -> None:
+    """Unsupported versions should fail validation at the Manifest layer."""
+    with pytest.raises(ValidationError):
+        Manifest.model_validate({"name": "BadVersion", "info": {"version": value}})
 
 
 def test_versions_support_direct_string_or_int_constructors() -> None:

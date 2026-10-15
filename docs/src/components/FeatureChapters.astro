@@ -13,9 +13,13 @@ local = Forge(
 <section class="story-chapter feature-chapter" id="the-signal" aria-labelledby="signal-title">
   <div class="chapter-heading" data-reveal>
     <h2 id="signal-title">Find the service.<br /><em>Follow the context.</em></h2>
-    <p>Trace connections and explore the components in each diagram.<br />Keep the architecture beside you while you change the code.</p>
+    <p>Trace connections. Open a component’s Info card for its stack, owner, docs, and source.<br />Keep the architecture beside you while you change the code.</p>
   </div>
   <div class="feature-explore">
+    <figure class="product-vision" data-reveal>
+      <a href="https://scryr.app" aria-label="Open Scryr"><img src="/assets/scryr-product-map.png" alt="Scryr’s Northwind Commerce diagram: API connected to Redis, Stripe, and the web app, with Info cards and Docs and Source links" width="1440" height="900" loading="lazy" /></a>
+      <figcaption>Northwind Commerce in Scryr<span>Connected services with their Info cards visible.</span></figcaption>
+    </figure>
     <div class="feature-side" data-reveal>
       <h3>Review the model as you edit.</h3>
       <p>Check types and diagram references, then open the local diagram. Watch mode rebuilds it when your manifest changes.</p>
@@ -32,9 +36,42 @@ local = Forge(
 <section class="story-chapter feature-chapter" id="the-revelation" aria-labelledby="revelation-title">
   <div class="chapter-heading" data-reveal>
     <h2 id="revelation-title">A service is more<br />than <em>its name.</em></h2>
-    <p>Describe services and their relationships in typed Python.<br />Reuse the same architecture model in your own tools.</p>
+    <p>Connect test results and runtime evidence to each service.<br />Reuse the same architecture model in your own tools.</p>
   </div>
   <div class="feature-evidence">
+    <article>
+      <div class="feature-evidence-copy" data-reveal>
+      <h3>Did this service pass?</h3>
+      <p>Publish JUnit results and completed GitHub Actions runs. See pass/fail counts and workflow status in the diagram.</p>
+      <a class="chapter-link" href="/integrations/#github-actions-and-test-reports">Connect CI evidence <span aria-hidden="true">↗</span></a>
+      </div>
+      <div class="feature-example" data-reveal>
+      <div class="terminal-spell">
+        <div class="panel-label"><span>Report completed runs</span><span>terminal</span></div>
+        <pre><code><span>$</span> scryr report tests --manifest api \
+    --run-id "$GITHUB_RUN_ID" \
+    --observed-at "$RESULTS_COMPLETED_AT"
+<span>$</span> scryr report actions --manifest api \
+    --event-file workflow-run.json --branch main</code></pre>
+      </div>
+      </div>
+    </article>
+    <article>
+      <div class="feature-evidence-copy" data-reveal>
+      <h3>What’s happening at runtime?</h3>
+      <p>Open a component’s provider-backed snapshot. Run its named query from the CLI and export JSON for a script or investigation.</p>
+      <a class="chapter-link" href="/integrations/#prometheus-compatible-metrics">Connect runtime metrics <span aria-hidden="true">↗</span></a>
+      </div>
+      <div class="feature-example" data-reveal>
+      <div class="terminal-spell">
+        <div class="panel-label"><span>Query the same source</span><span>terminal</span></div>
+        <pre><code><span>$</span> scryr query --list
+<span>$</span> scryr query requestRate --manifest api
+<span>$</span> scryr query requestRate --manifest api \
+    --json &gt; request-rate.json</code></pre>
+      </div>
+      </div>
+    </article>
     <article>
       <div class="feature-evidence-copy" data-reveal>
         <h3>What can your tools build from it?</h3>
@@ -73,7 +110,7 @@ local = Forge(
     <p data-reveal><strong>compose.yaml</strong>Local services, including PostgreSQL and Redis.</p>
     <p data-reveal><strong>devcontainer.json</strong>A container workspace with editor extensions.</p>
   </div>
-  <a class="chapter-link" href="/developer-tooling/#mise-docker-compose-and-devcontainers">Build your development environment <span aria-hidden="true">↗</span></a>
+  <a class="chapter-link" href="/integrations/#mise-docker-compose-and-devcontainers">Build your development environment <span aria-hidden="true">↗</span></a>
 </section>
 
 <div class="chapter-divider" aria-hidden="true"></div>

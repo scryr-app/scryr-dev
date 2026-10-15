@@ -1,6 +1,6 @@
 # Scryr documentation
 
-Scryr is open-source software for investigating the systems humans and AI agents build. Define a codebase in typed Python `.scry` files, explore it in an interactive architecture diagram, and generate artifacts with the Rust `scryr` CLI. Scryr is MIT-licensed and its full local workflow does not require a hosted account.
+Scryr is open-source software for investigating the systems humans and AI agents build. Define a codebase in typed Python `.scry` files, explore it in an interactive architecture diagram, query production metrics in context, and generate artifacts with the Rust `scryr` CLI. Scryr is MIT-licensed and its full local workflow does not require a hosted account.
 
 Canonical links:
 - Documentation: https://scryr.dev/docs/
@@ -40,7 +40,7 @@ Manifest rules:
 - `.scry` is Python syntax and may import `.scry` or `.py` modules.
 - Declare public `Manifest` objects and at least one public `Diagram`.
 - Connections reference the exact name of another manifest.
-- Use stable `manifest_id` values to identify components.
+- Use stable `manifest_id` values for components that receive operational history.
 - A `Diagram` uses either explicit manifests or a `ManifestQuery`, never both.
 - Only run trusted manifests because they execute Python code.
 
@@ -53,6 +53,8 @@ CLI commands:
 - `scryr inspect types`: output declared/runtime field metadata.
 - `scryr inspect schema`: output top-level model JSON schema.
 - `scryr export mise|compose|devcontainer`: generate developer-environment artifacts from a `Forge`.
+- `scryr report tests|actions`: attach durable JUnit or GitHub Actions observations.
+- `scryr query`: run declared Prometheus-compatible or PostHog queries through the server.
 
 Editor support:
 Associate `*.scry` with Python. In VS Code use `"files.associations": { "*.scry": "python" }`.

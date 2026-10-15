@@ -30,11 +30,26 @@ cd scryr-quick-start
 Save this small example as `index.scry`:
 
 ```python title="index.scry"
-from scryr import Diagram, Manifest
+from scryr import Diagram, Github, Info, Manifest
+from scryr.types import ProgrammingLanguage, WebFramework
+
+api = Manifest(name="API", connections=[Manifest(name="Database")])
+database = Manifest(name="Database")
+
+api = Manifest(
+    manifest_id="services/api",
+    name="Public API",
+    connections=[Manifest(name="Postgres")],
+    info=Info(
+        description="Business API",
+        language=ProgrammingLanguage.python,
+        frameworks=[WebFramework.fastapi],
+        owner_team="Platform",
+    ),
+    github=Github(repo_url="https://github.com/acme/api"),
+)
 
 database = Manifest(name="Postgres")
-api = Manifest(manifest_id="services/api", name="Public API", connections=[database])
-web = Manifest(name="Web", connections=[api])
 architecture = Diagram(name="System architecture", manifests=[web, api, database])
 ```
 

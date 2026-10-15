@@ -16,7 +16,7 @@ export interface FocusBlock {
 	depth: number;
 }
 
-const FACE_CLEARANCE = 0.08; // Includes the docked block's surface and text.
+const FACE_CLEARANCE = 0.08; // Includes the docked card's surface and text.
 
 function blockBounds(block: FocusBlock, margin = 0) {
 	const center = new Vector3(...block.position);
@@ -36,8 +36,8 @@ function boxCorners(box: Box3) {
 	);
 }
 
-/** The volume between the camera and the entire block, including its lower edge. */
-function faceSightVolume(position: Vector3, face: Vector3[]) {
+/** The volume between the camera and the entire card, including its lower edge. */
+function cardSightVolume(position: Vector3, face: Vector3[]) {
 	const center = face
 		.reduce((sum, point) => sum.add(point), new Vector3())
 		.multiplyScalar(1 / face.length);
@@ -61,7 +61,7 @@ function faceSightVolume(position: Vector3, face: Vector3[]) {
 	return new Frustum(...planes);
 }
 
-/** Fit the block using the real perspective projection, then avoid blockers. */
+/** Fit the block/card using the real perspective projection, then avoid blockers. */
 export function getBlockFocus(
 	block: FocusBlock,
 	camera: PerspectiveCamera,
@@ -124,7 +124,7 @@ export function getBlockFocus(
 					.clone()
 					.sub(center)
 					.applyQuaternion(inverseRotation);
-				// Off-center framing keeps the complete block clear of floating UI.
+				// Off-center framing keeps the complete card clear of floating UI.
 				distance = Math.max(
 					distance,
 					(local.x / tanX + viewport.maxX * local.z) /
@@ -148,7 +148,7 @@ export function getBlockFocus(
 			// Off-center framing can move an angled camera behind the front face.
 			// Such a view would look through the selected block itself.
 			if (position.z <= bounds.max.z + camera.near) continue;
-			const sight = faceSightVolume(position, face);
+			const sight = cardSightVolume(position, face);
 			const obstructionCount = blockers.filter((blocker) =>
 				sight.intersectsBox(blocker),
 			).length;

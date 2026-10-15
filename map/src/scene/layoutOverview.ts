@@ -16,7 +16,8 @@ export interface LayoutView {
 	aspect: number;
 }
 
-// A small visual margin protects block surfaces and top labels.
+// Includes the normal docked card and side-slot tabs, but not transient slide-out
+// animations. A small visual margin also protects the label on the top face.
 const VISUAL_MARGIN = 0.08;
 const FRAME_FILL = 0.86;
 const SPACING_CANDIDATES = [
@@ -215,7 +216,7 @@ export async function layoutBlocksForView(
 	}
 	// Trim the coarse search's excess clearance in two small steps. Each trial
 	// gets fresh ELK routes and must preserve visibility while reducing area.
-	// Try axes separately when reducing both would hide a block behind a neighbor.
+	// Try axes separately when reducing both would hide a card behind a neighbor.
 	for (let round = 0; round < 2 && isCurrent() && blocks.length > 1; round++) {
 		for (const [nodeFactor, layerFactor] of [
 			[0.9, 0.9],

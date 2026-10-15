@@ -111,7 +111,7 @@ pub(crate) async fn publish(project: &Project, checked: Checked) -> Result<Strin
         .graphql_url
         .clone()
         .unwrap_or_else(default_local_graphql_url);
-    let mut url = endpoint(&target)?;
+    let mut url = super::report::endpoint(&target)?;
     let token = upload_bearer_token(&target).await?;
     persist_generated_artifacts(GeneratedArtifactPersistence {
         graphql_url: &target,
@@ -135,20 +135,6 @@ pub(crate) async fn push(common: GenerateCommonArgs) -> Result<(), String> {
     let checked = project.check()?;
     publish(&project, checked).await?;
     Ok(())
-}
-
-/// Restrict credential-bearing requests to TLS or loopback development servers.
-pub(super) fn endpoint(value: &str) -> Result<url::Url, String> {
-    let url = url::Url::parse(value).map_err(|error| error.to_string())?;
-    if !url.username().is_empty()
-        || url.password().is_some()
-        || !(url.scheme() == "https"
-            || (url.scheme() == "http"
-                && matches!(url.host_str(), Some("localhost" | "127.0.0.1" | "[::1]"))))
-    {
-        return Err("endpoint must use HTTPS (HTTP is allowed on loopback only)".into());
-    }
-    Ok(url)
 }
 
 #[cfg(test)]

@@ -8,7 +8,7 @@ import { getFocusViewport } from "./focusViewport";
 const registeredBlocks = new Map<string, FocusBlock>();
 
 /**
- * Module-level singleton so non-diagram components (e.g. MapToolbar)
+ * Module-level singleton so non-diagram components (e.g. MapTray)
  * can trigger camera actions without prop-drilling.
  */
 export const cameraStore = {

@@ -8,6 +8,7 @@ import {
 	within,
 } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { MapTrayProvider } from "@/cards/MapTrayContext";
 import { consoleTextColor } from "@/theme/console";
 import { getTheme, setThemePreset, type Theme } from "@/theme/theme";
 import { PyodideConsole } from "./PyodideConsole";
@@ -48,12 +49,14 @@ afterEach(cleanup);
 
 function consoleView(onPanelWidthChange = vi.fn()) {
 	return render(
-		<PyodideConsole
-			isOpen
-			panelWidth={480}
-			onOpenChange={vi.fn()}
-			onPanelWidthChange={onPanelWidthChange}
-		/>,
+		<MapTrayProvider>
+			<PyodideConsole
+				isOpen
+				panelWidth={480}
+				onOpenChange={vi.fn()}
+				onPanelWidthChange={onPanelWidthChange}
+			/>
+		</MapTrayProvider>,
 	);
 }
 it("labels the action Save and Run and groups source controls with the bottom status", () => {

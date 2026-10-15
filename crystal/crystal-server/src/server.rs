@@ -74,6 +74,7 @@ pub async fn start_with_workspace(
         .data(crate::editor::EditorService { local: workspace })
         .data(app_state.clone())
         .data(app_state.db_pool.clone())
+        .data(crate::runtime_metrics::RuntimeMetrics::from_env()?)
         .finish();
 
     let schema_data = web::Data::new(schema);

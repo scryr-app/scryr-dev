@@ -74,9 +74,8 @@ mise run contribute:generate:samples        # Refresh bundled cloud starter diag
 mise run contribute:build                   # Build all development artifacts
 ```
 
-GraphQL generation exports the schema directly from the server crate. Sample
-upload reuses the local server or starts one temporarily.
-`contribute:build:manifest`, `contribute:build:crystal`, and
+GraphQL generation and sample upload reuse the local server or start one
+temporarily. `contribute:build:manifest`, `contribute:build:crystal`, and
 `contribute:build:map` build individual components after contributor setup.
 Development builds do not prepare the standalone CLI's embedded UI; use
 `release:build` for that.

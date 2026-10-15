@@ -641,6 +641,8 @@ fn workflow_commands_have_help_and_serve_requires_explicit_server_only()
         vec!["push"],
         vec!["export", "json"],
         vec!["inspect", "types"],
+        vec!["query"],
+        vec!["report", "tests"],
         vec!["serve"],
     ] {
         cli_command()?.args(args).arg("--help").assert().success();
@@ -649,8 +651,6 @@ fn workflow_commands_have_help_and_serve_requires_explicit_server_only()
         .args(["serve", "--server-only", "--watch"])
         .assert()
         .failure();
-    for command in ["query", "report", "collect"] {
-        cli_command()?.arg(command).assert().failure();
-    }
+    cli_command()?.args(["query"]).assert().failure();
     Ok(())
 }

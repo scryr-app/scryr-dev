@@ -26,6 +26,9 @@ function block(
 		name,
 		connections,
 		tags,
+		docs: [],
+		frameworks: [],
+		links: [],
 		rawJsonString: "{}",
 	};
 }
@@ -181,7 +184,7 @@ describe("camera-aware ELK layout", () => {
 		20000,
 	);
 
-	it("compacts the previous coarse spacing without hiding blocks", async () => {
+	it("compacts the previous coarse spacing without hiding cards", async () => {
 		const previous = await layoutBlocks(fanout, {
 			nodeSpacing: 120,
 			layerSpacing: 240,

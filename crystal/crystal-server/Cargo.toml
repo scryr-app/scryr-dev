@@ -1,6 +1,5 @@
 [package]
 name = "crystal-server"
-default-run = "crystal-server"
 version = "0.7.1"
 edition = "2024"
 publish = false
@@ -13,11 +12,13 @@ categories = ["web-programming", "development-tools"]
 include = ["Cargo.toml", "README.md", "build.rs", "src/**", "static/**"]
 
 [dependencies]
+reqwest = { workspace = true }
 url = { workspace = true }
 actix-cors = { workspace = true }
 actix-web = { workspace = true }
 async-graphql = { workspace = true }
 async-graphql-actix-web = { workspace = true }
+chrono = { workspace = true }
 clap = { workspace = true }
 clerk-rs = { workspace = true }
 futures-util = { workspace = true }

@@ -6,14 +6,22 @@ The installable Python package lives in `scryr/` and exposes the public API from
 `scryr`:
 
 ```python
-from scryr import Diagram, Manifest
+from scryr import CICD, Github, Info, Manifest, ProgrammingLanguage, WebFramework
 
-database = Manifest(name="Database")
-api = Manifest(name="Public API", connections=[database], tags=["backend"])
-system = Diagram(name="System", manifests=[api, database])
+api = Manifest(
+    name="Public API",
+    info=Info(
+        language=ProgrammingLanguage.python,
+        frameworks=[WebFramework.fastapi],
+    ),
+    github=Github(repo_url="https://github.com/example/api"),
+    cicd=CICD(platform="github_actions"),
+)
 ```
 
-Manifests describe component identity, classification, tags, connections, and Forge references.
+The section models are `Info`, `Github`, `CICD`, `Metrics`, `Tests`,
+`Dependencies`, `Performance`, and `OtherDiagram`. All samples use these short
+names directly.
 
 For local development:
 
@@ -54,3 +62,8 @@ The workspace includes `scryr.toml` to opt local Rust CLI generation into this
 Python workspace and its locked dependencies. Other directories use the CLI's
 embedded SDK unless they also contain `scryr.toml`; `pyproject.toml` alone does
 not enable project mode.
+
+The [GitHub Actions sample](tests/samples/github_actions/index.scry) demonstrates short
+section names (`Info`, `Github`, `CICD`), a stable `manifest_id`, and an attached
+workflow status timeline. See the [SDK guide](scryr/README.md#github-actions-history)
+for durable storage and polling.

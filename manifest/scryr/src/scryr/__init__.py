@@ -1,6 +1,9 @@
 """Public Python API for Scryr manifests."""
 
 from . import manifest as _manifest
+from .action_client import GithubActionsClient, ScryrClient
+from .github import ActionStatusEvent, GithubActionJob, GithubActionRun, GithubActionsLog
+from .metrics_source import CredentialRef, PostHogSource, PrometheusSource
 from .runtime import (
     emit_diagram_values,
     emit_forge_values,
@@ -15,19 +18,32 @@ from .runtime import (
     run_manifest_file,
 )
 from .types import (
+    AuthType,
     CalendarVersion,
+    CICDToolType,
     Classification,
+    DeploymentTarget,
+    IaCToolType,
     Incremental,
     IncrementalVersion,
     InterfaceType,
     Label,
+    LogAggregationType,
     Markdown,
+    MonitoringType,
+    ProgrammingLanguage,
     SemVer,
+    TracingType,
     Url,
     Version,
+    WebFramework,
     parse_version,
 )
 
+ActionsReportSource = _manifest.ActionsReportSource
+TestReportSource = _manifest.TestReportSource
+CICD = _manifest.CICD
+Dependencies = _manifest.Dependencies
 Diagram = _manifest.Diagram
 Forge = _manifest.Forge
 ForgeEnvDirective = _manifest.ForgeEnvDirective
@@ -36,12 +52,27 @@ ForgeTaskBatch = _manifest.ForgeTaskBatch
 ForgeTaskCommand = _manifest.ForgeTaskCommand
 ForgeTaskConfirm = _manifest.ForgeTaskConfirm
 ForgeTool = _manifest.ForgeTool
+Github = _manifest.Github
+Info = _manifest.Info
+Link = _manifest.Link
 Manifest = _manifest.Manifest
 ManifestQuery = _manifest.ManifestQuery
+Metrics = _manifest.Metrics
+OtherDiagram = _manifest.OtherDiagram
+Performance = _manifest.Performance
+Tests = _manifest.Tests
 
 __all__ = [
+    "CICD",
+    "ActionStatusEvent",
+    "ActionsReportSource",
+    "AuthType",
+    "CICDToolType",
     "CalendarVersion",
     "Classification",
+    "CredentialRef",
+    "Dependencies",
+    "DeploymentTarget",
     "Diagram",
     "Forge",
     "ForgeEnvDirective",
@@ -50,16 +81,37 @@ __all__ = [
     "ForgeTaskCommand",
     "ForgeTaskConfirm",
     "ForgeTool",
+    "Github",
+    "GithubActionJob",
+    "GithubActionRun",
+    "GithubActionsClient",
+    "GithubActionsLog",
+    "IaCToolType",
     "Incremental",
     "IncrementalVersion",
+    "Info",
     "InterfaceType",
     "Label",
+    "Link",
+    "LogAggregationType",
     "Manifest",
     "ManifestQuery",
     "Markdown",
+    "Metrics",
+    "MonitoringType",
+    "OtherDiagram",
+    "Performance",
+    "PostHogSource",
+    "ProgrammingLanguage",
+    "PrometheusSource",
+    "ScryrClient",
     "SemVer",
+    "TestReportSource",
+    "Tests",
+    "TracingType",
     "Url",
     "Version",
+    "WebFramework",
     "emit_diagram_values",
     "emit_forge_values",
     "emit_manifest_schema",
