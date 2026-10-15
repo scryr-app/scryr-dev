@@ -30,11 +30,8 @@ cd scryr-quick-start
 Save this small example as `index.scry`:
 
 ```python title="index.scry"
-from scryr import Diagram, Github, Info, Manifest
+from scryr import Diagram, Info, Manifest
 from scryr.types import ProgrammingLanguage, WebFramework
-
-api = Manifest(name="API", connections=[Manifest(name="Database")])
-database = Manifest(name="Database")
 
 api = Manifest(
     manifest_id="services/api",
@@ -46,11 +43,10 @@ api = Manifest(
         frameworks=[WebFramework.fastapi],
         owner_team="Platform",
     ),
-    github=Github(repo_url="https://github.com/acme/api"),
 )
 
 database = Manifest(name="Postgres")
-architecture = Diagram(name="System architecture", manifests=[web, api, database])
+architecture = Diagram(name="System architecture", manifests=[api, database])
 ```
 
 ### 3. Check and open the diagram

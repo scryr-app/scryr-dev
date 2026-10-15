@@ -7,11 +7,10 @@ Architecture reference: https://opentelemetry.io/docs/demo/architecture/
 Source: https://github.com/open-telemetry/opentelemetry-demo
 """
 
-from scryr import CICD, Diagram, Github, Info, Link, Manifest
+from scryr import Diagram, Info, Link, Manifest
 from scryr.saas import Classification
 from scryr.types import (
     AuthType,
-    CICDToolType,
     DeploymentTarget,
     IaCToolType,
     LogAggregationType,
@@ -26,7 +25,6 @@ from scryr.types import (
 _SOURCE = Url("https://github.com/open-telemetry/opentelemetry-demo")
 _DOCS = Url("https://opentelemetry.io/docs/demo/")
 _DEPLOYMENT = DeploymentTarget.k8s_cluster
-_CICD = CICDToolType.github_actions
 _IAC = IaCToolType.helm
 _MONITOR = MonitoringType.prometheus
 _LOGS = LogAggregationType.loki
@@ -52,12 +50,6 @@ kafka_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 valkey_block = Manifest(
     name="Valkey",
@@ -79,12 +71,6 @@ valkey_block = Manifest(
         max_replicas=1,
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
-    ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
     ),
 )
 postgres_block = Manifest(
@@ -108,12 +94,6 @@ postgres_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 flagd_block = Manifest(
     name="Flagd",
@@ -136,12 +116,6 @@ flagd_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 accounting_block = Manifest(
     name="Accounting",
@@ -163,12 +137,6 @@ accounting_block = Manifest(
         max_replicas=2,
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
-    ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
     ),
 )
 ad_block = Manifest(
@@ -193,12 +161,6 @@ ad_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 cart_block = Manifest(
     name="Cart",
@@ -220,12 +182,6 @@ cart_block = Manifest(
         max_replicas=3,
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
-    ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
     ),
 )
 checkout_block = Manifest(
@@ -257,12 +213,6 @@ checkout_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 currency_block = Manifest(
     name="Currency",
@@ -284,12 +234,6 @@ currency_block = Manifest(
         max_replicas=5,
         min_replicas=2,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
-    ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
     ),
 )
 email_block = Manifest(
@@ -314,12 +258,6 @@ email_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 flagd_ui_block = Manifest(
     name="Flagd-UI",
@@ -341,12 +279,6 @@ flagd_ui_block = Manifest(
         max_replicas=1,
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
-    ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
     ),
 )
 fraud_detection_block = Manifest(
@@ -370,12 +302,6 @@ fraud_detection_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 image_provider_block = Manifest(
     name="Image Provider",
@@ -397,12 +323,6 @@ image_provider_block = Manifest(
         max_replicas=2,
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
-    ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
     ),
 )
 payment_block = Manifest(
@@ -427,12 +347,6 @@ payment_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 product_catalog_block = Manifest(
     name="Product Catalog",
@@ -454,12 +368,6 @@ product_catalog_block = Manifest(
         max_replicas=3,
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
-    ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
     ),
 )
 product_reviews_block = Manifest(
@@ -484,12 +392,6 @@ product_reviews_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 quote_block = Manifest(
     name="Quote",
@@ -512,12 +414,6 @@ quote_block = Manifest(
         max_replicas=2,
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
-    ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
     ),
 )
 recommendation_block = Manifest(
@@ -542,12 +438,6 @@ recommendation_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 shipping_block = Manifest(
     name="Shipping",
@@ -569,12 +459,6 @@ shipping_block = Manifest(
         max_replicas=3,
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
-    ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
     ),
 )
 frontend_block = Manifest(
@@ -613,12 +497,6 @@ frontend_block = Manifest(
             )
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 frontend_proxy_block = Manifest(
     name="Frontend Proxy",
@@ -645,12 +523,6 @@ frontend_proxy_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 load_generator_block = Manifest(
     name="Load Generator",
@@ -673,12 +545,6 @@ load_generator_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 react_native_app_block = Manifest(
     name="React Native App",
@@ -700,12 +566,6 @@ react_native_app_block = Manifest(
         max_replicas=1,
         min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
-    ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
     ),
 )
 

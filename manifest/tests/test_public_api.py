@@ -34,18 +34,10 @@ def test_top_level_package_exports_core_manifest_api() -> None:
     assert scryr.Diagram.Query is scryr.ManifestQuery
     assert manifest.to_dict()["forges"] == ["Package Forge"]
     assert scryr.Info is scryr.Manifest.Info
-    assert scryr.Github is scryr.Manifest.Github
-    assert scryr.CICD is scryr.Manifest.CICD
     assert scryr.parse_version("1.2.3") == scryr.SemVer("1.2.3")
     assert callable(scryr.run_manifest_file)
     for name in (
         "Info",
-        "Github",
-        "CICD",
-        "Metrics",
-        "Tests",
-        "Dependencies",
-        "Performance",
         "OtherDiagram",
     ):
         model = getattr(scryr, name)
@@ -72,3 +64,21 @@ def test_run_manifest_file_is_public_library_entrypoint() -> None:
 
     assert isinstance(payload, list)
     assert json.loads(json.dumps(payload)) == payload
+
+
+def test_removed_sections_are_not_public_or_serialized() -> None:
+    """Removed designs are absent from exports, schema, and generated manifests."""
+    import pytest
+    from pydantic import ValidationError
+
+    manifest = scryr.Manifest(name="API")
+    for name in ("Github", "Metrics", "CICD", "Tests", "Dependencies", "Performance"):
+        assert not hasattr(scryr, name)
+        assert not hasattr(scryr.Manifest, name)
+        assert name not in scryr.Manifest.model_json_schema().get("$defs", {})
+        assert name.lower() not in manifest.to_dict()
+        with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
+            scryr.Manifest.model_validate({"name": "API", name.lower(): {}})
+    for name in ("repo_url", "cicd_tool"):
+        with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
+            scryr.Manifest.model_validate({"name": "API", name: "legacy"})

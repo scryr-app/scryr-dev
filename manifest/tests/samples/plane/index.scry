@@ -7,11 +7,10 @@ Architecture reference: https://github.com/makeplane/plane/blob/preview/docker-c
 Source: https://github.com/makeplane/plane
 """
 
-from scryr import CICD, Diagram, Github, Info, Link, Manifest
+from scryr import Diagram, Info, Link, Manifest
 from scryr.saas import Classification
 from scryr.types import (
     AuthType,
-    CICDToolType,
     DeploymentTarget,
     IaCToolType,
     IncrementalVersion,
@@ -27,7 +26,6 @@ from scryr.types import (
 _SOURCE = Url("https://github.com/makeplane/plane")
 _DOCS = Url("https://developers.plane.so/")
 _DEPLOYMENT = DeploymentTarget.docker_swarm
-_CICD = CICDToolType.github_actions
 _IAC = IaCToolType.none
 _MONITOR = MonitoringType.none
 _LOGS = LogAggregationType.none
@@ -53,12 +51,6 @@ postgres_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 valkey_block = Manifest(
     name="Valkey",
@@ -80,12 +72,6 @@ valkey_block = Manifest(
         max_replicas=1,
         min_replicas=1,
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
-    ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
     ),
 )
 rabbitmq_block = Manifest(
@@ -109,12 +95,6 @@ rabbitmq_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 minio_block = Manifest(
     name="MinIO",
@@ -136,12 +116,6 @@ minio_block = Manifest(
         max_replicas=1,
         min_replicas=1,
         links=[Link(site_name="MinIO Docs", http_url=Url("https://min.io/docs/"))],
-    ),
-    github=Github(
-        repo_url=Url("https://github.com/minio/minio"),
-    ),
-    cicd=CICD(
-        platform=_CICD,
     ),
 )
 api_block = Manifest(
@@ -176,12 +150,6 @@ api_block = Manifest(
             )
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 worker_block = Manifest(
     name="Background Worker",
@@ -210,12 +178,6 @@ worker_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 beat_worker_block = Manifest(
     name="Beat Worker",
@@ -239,12 +201,6 @@ beat_worker_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 live_block = Manifest(
     name="Live Server",
@@ -266,12 +222,6 @@ live_block = Manifest(
         max_replicas=2,
         min_replicas=1,
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
-    ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
     ),
 )
 web_block = Manifest(
@@ -298,12 +248,6 @@ web_block = Manifest(
             Link(site_name="Plane", http_url=Url("https://app.plane.so")),
             Link(site_name="Source", http_url=_SOURCE),
         ],
-    ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
     ),
 )
 admin_block = Manifest(
@@ -333,12 +277,6 @@ admin_block = Manifest(
             )
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 space_block = Manifest(
     name="Spaces",
@@ -361,12 +299,6 @@ space_block = Manifest(
         max_replicas=2,
         min_replicas=1,
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
-    ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
     ),
 )
 proxy_block = Manifest(
@@ -395,12 +327,6 @@ proxy_block = Manifest(
         max_replicas=2,
         min_replicas=1,
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
-    ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
     ),
 )
 

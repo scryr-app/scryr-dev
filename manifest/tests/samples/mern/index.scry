@@ -1,19 +1,7 @@
-from scryr import (
-    CICD,
-    Diagram,
-    Forge,
-    ForgeTask,
-    ForgeTool,
-    Github,
-    Info,
-    Link,
-    Manifest,
-    ManifestQuery,
-)
+from scryr import Diagram, Forge, ForgeTask, ForgeTool, Info, Link, Manifest, ManifestQuery
 from scryr.saas import Classification
 from scryr.types import (
     AuthType,
-    CICDToolType,
     DeploymentTarget,
     IaCToolType,
     LogAggregationType,
@@ -79,12 +67,6 @@ react_block = Manifest(
         links=[Link(site_name="Example Site", http_url=Url("https://www.example.com"))],
         docs=["https://www.mongodb.com/docs/", "https://expressjs.com/", "https://reactjs.org/"],
     ),
-    github=Github(
-        repo_url=Url("https://github.com/example/mern-app"),
-    ),
-    cicd=CICD(
-        platform=CICDToolType.github_actions,
-    ),
 )
 redis_pubsub_block = Manifest(
     name="Redis Pub/Sub",
@@ -112,9 +94,6 @@ redis_pubsub_block = Manifest(
             )
         ],
         docs=["https://redis.io/docs/latest/", "https://redis.io/docs/latest/apis/"],
-    ),
-    cicd=CICD(
-        platform=CICDToolType.gitlab_ci,
     ),
 )
 express_block = Manifest(
@@ -150,9 +129,6 @@ mongo_block = Manifest(
         max_replicas=3,
         min_replicas=1,
     ),
-    cicd=CICD(
-        platform=CICDToolType.github_actions,
-    ),
 )
 angularjs_admin_block = Manifest(
     name="AngularJS Admin Console",
@@ -175,9 +151,6 @@ angularjs_admin_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Admin Portal", http_url=Url("https://admin.example.com"))],
         docs=["https://docs.angularjs.org/"],
-    ),
-    github=Github(
-        repo_url=Url("https://github.com/example/angularjs-admin"),
     ),
 )
 

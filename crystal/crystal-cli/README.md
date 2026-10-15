@@ -336,28 +336,26 @@ cargo run -p crystal-cli -- push --path ../manifest/tests/samples/mern/index.scr
 
 ## Report existing results
 
-Declare a stable `manifest_id` and optional typed input settings:
+Declare a stable `manifest_id`:
 
 ```python
-from scryr import ActionsReportSource, CICD, Diagram, Manifest, TestReportSource, Tests
+from scryr import Diagram, Manifest
 
 api = Manifest(
     manifest_id="services/api",
     name="API",
-    tests=Tests(source=TestReportSource(files=["results/junit.xml"], suite="unit")),
-    cicd=CICD(source=ActionsReportSource(workflow_id=42, branch="main", jobs_file="results/jobs.json")),
 )
 diagram = Diagram(name="System", manifests=[api])
 ```
 
 ```bash
-scryr report tests --manifest api --run-id "$GITHUB_RUN_ID" --observed-at "$RESULTS_COMPLETED_AT"
+scryr report tests --manifest api --file results/junit.xml --run-id "$GITHUB_RUN_ID" --observed-at "$RESULTS_COMPLETED_AT"
 scryr report actions --manifest api --event-file workflow-run.json
 ```
 
-Artifact paths in declarations are relative to the entrypoint. Explicit flags
-such as `--file`, `--format`, `--suite`, `--workflow-id`, `--branch`, and `--jobs-file`
-override declared defaults. Multiple manifests require `--manifest` (public variable,
+Supply input settings with flags such as `--file`, `--format`, `--suite`,
+`--workflow-id`, `--branch`, and `--jobs-file`. The former Tests and CICD section
+declarations have been removed from the SDK. Multiple manifests require `--manifest` (public variable,
 name, or stable ID). Reporting executes the manifest to resolve its declarations;
 it does not run tests, regenerate diagrams, or automatically push diagrams.
 
@@ -367,7 +365,7 @@ source completion time (`--observed-at`); `GITHUB_RUN_ID` supplies the former in
 
 Actions reporting reads `workflow_run` events from `GITHUB_EVENT_PATH` or
 `--event-file`. Automatic branch selection uses `GITHUB_TOKEN` to check main,
-master, then the repository default; `--branch` or the declaration avoids that lookup.
+master, then the repository default; `--branch` avoids that lookup.
 The optional jobs file is a complete GitHub jobs API response with `total_count`
 and `jobs`; combine all pages first. Every job must belong to the exact workflow
 run and attempt. Jobs enrich existing run history, and identical retries are idempotent.
@@ -379,19 +377,16 @@ commands remain supported. All reporters support `--dry-run` and `--json`.
 
 ```bash
 scryr query --list
-scryr query request_latency --manifest api
+scryr query page_views --manifest api
 scryr query page_views --json --endpoint https://your-scryr.example/graphql
 ```
 
-Query names come from `metrics.provider.queries` and `analytics.queries` in the
-local manifest. Listing executes the manifest but makes no provider request.
-Duplicate query names require a manifest selector; use `--provider prometheus` or
-`--provider posthog` when both providers on one manifest use the same query name. Queries execute through a
+Query names come from `analytics.queries` in the local manifest. Listing executes the manifest but makes no provider request.
+Duplicate query names require a manifest selector. Queries execute through a
 running Scryr server and its organization-scoped `SCRYR_METRICS_CONNECTIONS_FILE`
 connections; they do not publish the local manifest. Provider failures return a
 nonzero exit status. JSON output includes timestamps, status, values, and units.
-Grafana support uses Prometheus-compatible data sources; PostHog uses declared
-HogQL aggregates. Credentials remain in server connections, outside artifacts.
+PostHog uses declared HogQL aggregates. Credentials remain in server connections, outside artifacts.
 
 ## Export and inspect
 

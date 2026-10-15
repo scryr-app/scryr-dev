@@ -9,11 +9,10 @@ Architecture reference: https://dokku.com/docs/development/architecture/
 Source: https://github.com/dokku/dokku
 """
 
-from scryr import CICD, Diagram, Github, Info, Link, Manifest
+from scryr import Diagram, Info, Link, Manifest
 from scryr.saas import Classification
 from scryr.types import (
     AuthType,
-    CICDToolType,
     DeploymentTarget,
     IaCToolType,
     LogAggregationType,
@@ -28,7 +27,6 @@ from scryr.types import (
 _SOURCE = Url("https://github.com/dokku/dokku")
 _DOCS = Url("https://dokku.com/docs/")
 _DEPLOYMENT = DeploymentTarget.bare_metal
-_CICD = CICDToolType.github_actions
 _IAC = IaCToolType.none
 _MONITOR = MonitoringType.none
 _LOGS = LogAggregationType.none
@@ -63,12 +61,6 @@ dokku_core_block = Manifest(
             Link(site_name="Source", http_url=_SOURCE),
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 ssh_gateway_block = Manifest(
     name="SSH Gateway",
@@ -96,12 +88,6 @@ ssh_gateway_block = Manifest(
             )
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 git_server_block = Manifest(
     name="Git Server",
@@ -128,12 +114,6 @@ git_server_block = Manifest(
                 http_url=Url("https://dokku.com/docs/deployment/methods/git/"),
             )
         ],
-    ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
     ),
 )
 app_builder_block = Manifest(
@@ -163,12 +143,6 @@ app_builder_block = Manifest(
             Link(site_name="Herokuish", http_url=Url("https://github.com/gliderlabs/herokuish")),
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 docker_scheduler_block = Manifest(
     name="Docker Scheduler",
@@ -195,12 +169,6 @@ docker_scheduler_block = Manifest(
                 http_url=Url("https://dokku.com/docs/deployment/schedulers/docker-local/"),
             )
         ],
-    ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
     ),
 )
 cron_scheduler_block = Manifest(
@@ -229,12 +197,6 @@ cron_scheduler_block = Manifest(
             )
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 nginx_proxy_block = Manifest(
     name="Nginx Proxy",
@@ -262,12 +224,6 @@ nginx_proxy_block = Manifest(
             )
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 certs_plugin_block = Manifest(
     name="Certs Plugin",
@@ -291,12 +247,6 @@ certs_plugin_block = Manifest(
         links=[
             Link(site_name="SSL Docs", http_url=Url("https://dokku.com/docs/configuration/ssl/"))
         ],
-    ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
     ),
 )
 plugin_system_block = Manifest(
@@ -328,12 +278,6 @@ plugin_system_block = Manifest(
                 http_url=Url("https://dokku.com/docs/development/plugin-triggers/"),
             ),
         ],
-    ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
     ),
 )
 

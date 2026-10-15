@@ -23,15 +23,37 @@ it.each([
 			<MapTray isPyodideOpen={false} onTogglePyodide={vi.fn()} />
 		</MapTrayProvider>,
 	);
-	const card = screen.getByRole("button", { name: "GitHub" });
+	const card = screen.getByRole("button", { name: "Diagrams" });
 	fireEvent.mouseEnter(card);
-	expect(screen.getByText("GitHub")).toBeDefined();
+	expect(screen.getByText("Diagrams")).toBeDefined();
 	fireEvent.mouseLeave(card);
 	const camera = screen.getByRole("button", { name: label });
 	fireEvent.mouseEnter(camera);
-	expect(screen.queryByText("GitHub")).toBeNull();
+	expect(screen.queryByText("Diagrams")).toBeNull();
 	expect(screen.getByText(label)).toBeDefined();
 	fireEvent.mouseLeave(camera);
 	fireEvent.mouseEnter(screen.getByRole("button", { name: "Select map view" }));
 	expect(screen.queryByText(label)).toBeNull();
+});
+
+it("offers only Info and Diagrams card categories", () => {
+	render(
+		<MapTrayProvider>
+			<MapTray isPyodideOpen={false} onTogglePyodide={vi.fn()} />
+		</MapTrayProvider>,
+	);
+	expect(screen.getByRole("button", { name: "Info" })).toBeDefined();
+	const diagrams = screen.getByRole("button", { name: "Diagrams" });
+	fireEvent.click(diagrams);
+	expect(diagrams.getAttribute("aria-pressed")).toBe("true");
+	for (const name of [
+		"GitHub",
+		"Metrics",
+		"CI/CD",
+		"Tests",
+		"Dependencies",
+		"Performance",
+	]) {
+		expect(screen.queryByRole("button", { name })).toBeNull();
+	}
 });

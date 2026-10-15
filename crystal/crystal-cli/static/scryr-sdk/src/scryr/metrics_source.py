@@ -1,4 +1,4 @@
-"""Declarative, server-resolved runtime metric sources."""
+"""Declarative, server-resolved analytics sources."""
 
 from typing import Literal
 
@@ -12,11 +12,10 @@ class CredentialRef(BaseModel):
     name: str = Field(min_length=1, max_length=128)
 
 
-class PrometheusSource(BaseModel):
-    """Query a Prometheus-compatible backend only when a diagram opens."""
+class _QuerySource(BaseModel):
+    """Shared bounds for server-resolved query sources."""
 
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
-    kind: Literal["prometheus"] = "prometheus"
     query_endpoint: str | None = Field(default=None, alias="queryEndpoint")
     credentials: CredentialRef
     dashboard_url: str | None = Field(default=None, alias="dashboardUrl")
@@ -30,7 +29,7 @@ class PrometheusSource(BaseModel):
     units: dict[str, str] = Field(default_factory=dict)
 
     @model_validator(mode="after")
-    def validate_bounds(self) -> PrometheusSource:
+    def validate_bounds(self) -> _QuerySource:
         """Bound sample volume and require readable query names and expressions."""
         if self.window // self.step > 1440:
             msg = "Metric windows may contain at most 1440 intervals"
@@ -47,7 +46,7 @@ class PrometheusSource(BaseModel):
         return self
 
 
-class PostHogSource(PrometheusSource):
+class PostHogSource(_QuerySource):
     """Bounded HogQL aggregate queries resolved only when opening a diagram.
 
     Queries return one numeric cell. {start} and {end} are Unix seconds;

@@ -1,5 +1,4 @@
 import {
-	Activity,
 	ArrowDown,
 	ArrowLeft,
 	ArrowRight,
@@ -9,18 +8,13 @@ import {
 	ChevronLeft,
 	ChevronRight,
 	ChevronUp,
-	Gauge,
-	GitFork,
 	Info,
 	Layers,
 	Map as MapIcon,
 	Minus,
-	Package,
 	Palette,
 	PencilLine,
 	Plus,
-	Rocket,
-	TestTube,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { cameraStore } from "@/camera";
@@ -32,13 +26,7 @@ import { useMapTray } from "./MapTrayContext";
 
 const CARD_TYPES = [
 	{ index: 0, icon: Info, label: "Info" },
-	{ index: 1, icon: GitFork, label: "GitHub" },
-	{ index: 2, icon: Activity, label: "Metrics" },
-	{ index: 3, icon: Rocket, label: "CI/CD" },
-	{ index: 4, icon: TestTube, label: "Tests" },
-	{ index: 5, icon: Package, label: "Dependencies" },
-	{ index: 6, icon: Gauge, label: "Performance" },
-	{ index: 7, icon: Layers, label: "Diagrams" },
+	{ index: 1, icon: Layers, label: "Diagrams" },
 ] as const;
 
 /**

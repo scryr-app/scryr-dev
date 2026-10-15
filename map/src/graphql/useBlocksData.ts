@@ -5,7 +5,6 @@ import {
 	useGetBlocksQuery,
 } from "@/graphql/generated";
 import { useRuntimePreviewBlocks } from "@/graphql/runtimePreviewStore";
-import { useDiagramMetrics } from "./useDiagramMetrics";
 
 type Block = GetBlocksQuery["blocks"][number];
 type RawRecord = Record<string, unknown>;
@@ -152,13 +151,6 @@ function normalizeBlock(block: Block): Block {
 		deployment:
 			sanitizedBlock.deployment ??
 			firstString(raw, [["info", "deployment"], ["deployment"]]),
-		sourceCodeUrl:
-			sanitizedBlock.sourceCodeUrl ??
-			firstString(raw, [
-				["github", "repoUrl"],
-				["sourceCodeUrl"],
-				["source_code_url"],
-			]),
 		docs:
 			asStringArray(sanitizedBlock.docs).length > 0
 				? asStringArray(sanitizedBlock.docs)
@@ -201,9 +193,6 @@ function normalizeBlock(block: Block): Block {
 				["iacTool"],
 				["iac_tool"],
 			]),
-		cicdTool:
-			sanitizedBlock.cicdTool ??
-			firstString(raw, [["cicd", "platform"], ["cicdTool"], ["cicd_tool"]]),
 		maxReplicas:
 			sanitizedBlock.maxReplicas ??
 			firstNumber(raw, [
@@ -246,57 +235,9 @@ export function useBlocksData(variables?: GetBlocksQueryVariables) {
 		() => normalizeBlocksData(query.data),
 		[query.data],
 	);
-	const configured = normalized.some((block) => {
-		const raw = parseRawJsonString(block.rawJsonString);
-		return Boolean(asRecord(raw?.metrics)?.provider || raw?.analytics);
-	});
-	const runtime = useDiagramMetrics(
-		variables,
-		runtimePreviewBlocks === null && configured,
-	);
-	const blocks = useMemo(
-		() =>
-			normalized.map((block) => {
-				const raw = parseRawJsonString(block.rawJsonString);
-				if (!raw || (!asRecord(raw.metrics)?.provider && !raw.analytics))
-					return block;
-				const id = typeof raw.manifestId === "string" ? raw.manifestId : "";
-				const unavailable = {
-					status: runtime.error
-						? "error"
-						: runtime.isFetching
-							? "loading"
-							: "no_data",
-					error: runtime.error
-						? "Unable to fetch diagram observations"
-						: undefined,
-					values: {},
-				};
-				const snapshot = runtime.data?.diagramMetrics[id];
-				return {
-					...block,
-					rawJsonString: JSON.stringify({
-						...raw,
-						...(asRecord(raw.metrics)?.provider
-							? { runtimeMetrics: snapshot ?? unavailable }
-							: {}),
-						...(raw.analytics
-							? {
-									runtimeAnalytics: {
-										...(snapshot?.analytics ?? unavailable),
-										source: "posthog",
-									},
-								}
-							: {}),
-					}),
-				};
-			}),
-		[normalized, runtime.data, runtime.error, runtime.isFetching],
-	);
-
 	return {
 		...query,
-		blocks: runtimePreviewBlocks ?? blocks,
+		blocks: runtimePreviewBlocks ?? normalized,
 		error: runtimePreviewBlocks ? null : query.error,
 		isLoading: runtimePreviewBlocks ? false : query.isLoading,
 	};

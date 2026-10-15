@@ -11,7 +11,7 @@ Because the file executes as Python, it is useful beyond drawing the diagram. Te
 
 A public `Manifest` variable becomes a block on the diagram. Its core fields are:
 
-- `manifest_id`: stable organization-scoped identity for operational history.
+- `manifest_id`: stable organization-scoped component identity.
 - `name`: the display label and connection target.
 - `icon`: an emoji or short icon string.
 - `classification`: the block's architectural role.
@@ -19,7 +19,7 @@ A public `Manifest` variable becomes a block on the diagram. Its core fields are
 - `connections`: named links to other manifests.
 - `forges`: developer-environment configurations used by the component.
 
-Add detail through typed sections: `Info`, `Github`, `Metrics`, `CICD`, `Tests`, `Dependencies`, `Performance`, and `OtherDiagram`.
+Add detail through typed sections: `Info` and `OtherDiagram`.
 
 `Info` can describe version, language, frameworks, deployment, owning team, authentication, observability, infrastructure as code, scaling, docs, and external links.
 
@@ -54,7 +54,7 @@ A diagram accepts either `manifests=[...]` or `query=...`, never both.
 
 ## Stable identity
 
-Set `manifest_id` on every component that receives durable CI, test, or operational history:
+Set `manifest_id` on components that need a durable identity:
 
 ```python
 catalog = Manifest(manifest_id="services/catalog-api", name="Catalog API")

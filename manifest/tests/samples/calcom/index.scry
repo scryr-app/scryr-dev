@@ -8,11 +8,10 @@ Architecture reference: https://github.com/calcom/cal.com
 Source: https://github.com/calcom/cal.com
 """
 
-from scryr import CICD, Diagram, Github, Info, Link, Manifest
+from scryr import Diagram, Info, Link, Manifest
 from scryr.saas import Classification
 from scryr.types import (
     AuthType,
-    CICDToolType,
     DeploymentTarget,
     IaCToolType,
     LogAggregationType,
@@ -26,7 +25,6 @@ from scryr.types import (
 
 _SOURCE = Url("https://github.com/calcom/cal.com")
 _DOCS = Url("https://cal.com/docs")
-_CICD = CICDToolType.github_actions
 _IAC = IaCToolType.none
 _MONITOR = MonitoringType.none
 _LOGS = LogAggregationType.none
@@ -52,12 +50,6 @@ postgres_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Cal.com Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 redis_block = Manifest(
     name="Redis",
@@ -79,12 +71,6 @@ redis_block = Manifest(
         max_replicas=1,
         min_replicas=1,
         links=[Link(site_name="Cal.com Docs", http_url=_DOCS)],
-    ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
     ),
 )
 web_block = Manifest(
@@ -118,12 +104,6 @@ web_block = Manifest(
             Link(site_name="Source", http_url=_SOURCE),
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 api_v2_block = Manifest(
     name="API v2",
@@ -152,12 +132,6 @@ api_v2_block = Manifest(
             )
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 email_block = Manifest(
     name="Email",
@@ -179,12 +153,6 @@ email_block = Manifest(
         max_replicas=1,
         min_replicas=1,
         links=[Link(site_name="Cal.com Docs", http_url=_DOCS)],
-    ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
     ),
 )
 workflow_cron_block = Manifest(
@@ -208,12 +176,6 @@ workflow_cron_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Cal.com Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 daily_video_block = Manifest(
     name="Daily.co",
@@ -236,12 +198,6 @@ daily_video_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Daily Docs", http_url=Url("https://docs.daily.co/reference"))],
     ),
-    github=Github(
-        repo_url=Url("https://github.com/daily-co/daily-js"),
-    ),
-    cicd=CICD(
-        platform=CICDToolType.none,
-    ),
 )
 app_store_block = Manifest(
     name="App Store",
@@ -263,12 +219,6 @@ app_store_block = Manifest(
         max_replicas=1,
         min_replicas=1,
         links=[Link(site_name="App Store", http_url=Url("https://app.cal.com/apps"))],
-    ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
     ),
 )
 

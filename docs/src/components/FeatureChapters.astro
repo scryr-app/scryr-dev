@@ -36,42 +36,9 @@ local = Forge(
 <section class="story-chapter feature-chapter" id="the-revelation" aria-labelledby="revelation-title">
   <div class="chapter-heading" data-reveal>
     <h2 id="revelation-title">A service is more<br />than <em>its name.</em></h2>
-    <p>Connect test results and runtime evidence to each service.<br />Reuse the same architecture model in your own tools.</p>
+    <p>Describe each service with typed metadata.<br />Reuse the same architecture model in your own tools.</p>
   </div>
   <div class="feature-evidence">
-    <article>
-      <div class="feature-evidence-copy" data-reveal>
-      <h3>Did this service pass?</h3>
-      <p>Publish JUnit results and completed GitHub Actions runs. See pass/fail counts and workflow status in the diagram.</p>
-      <a class="chapter-link" href="/integrations/#github-actions-and-test-reports">Connect CI evidence <span aria-hidden="true">↗</span></a>
-      </div>
-      <div class="feature-example" data-reveal>
-      <div class="terminal-spell">
-        <div class="panel-label"><span>Report completed runs</span><span>terminal</span></div>
-        <pre><code><span>$</span> scryr report tests --manifest api \
-    --run-id "$GITHUB_RUN_ID" \
-    --observed-at "$RESULTS_COMPLETED_AT"
-<span>$</span> scryr report actions --manifest api \
-    --event-file workflow-run.json --branch main</code></pre>
-      </div>
-      </div>
-    </article>
-    <article>
-      <div class="feature-evidence-copy" data-reveal>
-      <h3>What’s happening at runtime?</h3>
-      <p>Open a component’s provider-backed snapshot. Run its named query from the CLI and export JSON for a script or investigation.</p>
-      <a class="chapter-link" href="/integrations/#prometheus-compatible-metrics">Connect runtime metrics <span aria-hidden="true">↗</span></a>
-      </div>
-      <div class="feature-example" data-reveal>
-      <div class="terminal-spell">
-        <div class="panel-label"><span>Query the same source</span><span>terminal</span></div>
-        <pre><code><span>$</span> scryr query --list
-<span>$</span> scryr query requestRate --manifest api
-<span>$</span> scryr query requestRate --manifest api \
-    --json &gt; request-rate.json</code></pre>
-      </div>
-      </div>
-    </article>
     <article>
       <div class="feature-evidence-copy" data-reveal>
         <h3>What can your tools build from it?</h3>

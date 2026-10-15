@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
 import { cameraStore } from "@/camera";
 import { InfoCard, OtherDiagramCard } from "@/cards";
-import { getBlockCardData } from "@/cards/blockCardData";
 import { useMapTray } from "@/cards/MapTrayContext";
 import type { Block as GraphqlBlock } from "@/graphql/generated";
 import { currentTheme } from "@/theme/theme";
 import { CardSlots } from "./CardSlots";
-import { type BlockCardGroup, createBlockDataCards } from "./defaultCards";
 import { BLOCK_DIMENSIONS } from "./dimensions";
 import { TopLabel } from "./TopLabel";
 import { Walls } from "./Walls";
@@ -26,7 +24,6 @@ export interface BlockProps {
 	width?: number;
 	height?: number;
 	depth?: number;
-	cards?: BlockCardGroup;
 	description?: string;
 	classification?: string;
 	version?: string;
@@ -39,7 +36,6 @@ export interface BlockProps {
 	monitoring?: string;
 	tracing?: string;
 	logAggregation?: string;
-	cicdTool?: string;
 	docs?: string[];
 	links?: BlockLink[];
 	diagrams?: string[];
@@ -64,7 +60,6 @@ export function Block({
 	width = BLOCK_DIMENSIONS.width,
 	height = BLOCK_DIMENSIONS.height,
 	depth = BLOCK_DIMENSIONS.depth,
-	cards,
 	description,
 	classification,
 	version,
@@ -87,12 +82,6 @@ export function Block({
 	const hd = depth / 2;
 	const [isHovered, setIsHovered] = useState(false);
 	const blockFocusId = blockData?.name ?? name;
-	const fallbackCards =
-		cards ?? Array.from({ length: 6 }, () => ({ components: [] }));
-	const cardData = blockData ? getBlockCardData(blockData) : null;
-	const derivedCards = cardData
-		? createBlockDataCards(cardData)
-		: fallbackCards;
 
 	/** Individual card choices override the shared toolbar selection. */
 	const { getActiveCardIndex, selectCardForBlock, selectBlock } = useMapTray();
@@ -135,7 +124,6 @@ export function Block({
 
 	const allCards = [
 		{ components: [overviewCard] },
-		...derivedCards,
 		{ components: diagrams.length > 0 ? [otherDiagramCard] : [] },
 	];
 

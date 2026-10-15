@@ -9,12 +9,11 @@ Architecture reference: https://github.com/mattermost/mattermost/blob/master/ser
 Source: https://github.com/mattermost/mattermost
 """
 
-from scryr import CICD, Diagram, Github, Info, Link, Manifest
+from scryr import Diagram, Info, Link, Manifest
 from scryr.saas import Classification
 from scryr.types import (
     AuthType,
     CalendarVersion,
-    CICDToolType,
     DeploymentTarget,
     IaCToolType,
     IncrementalVersion,
@@ -30,7 +29,6 @@ from scryr.types import (
 _SOURCE = Url("https://github.com/mattermost/mattermost")
 _DOCS = Url("https://docs.mattermost.com/")
 _DEPLOYMENT = DeploymentTarget.docker_swarm
-_CICD = CICDToolType.github_actions
 _IAC = IaCToolType.none
 _MONITOR = MonitoringType.prometheus
 _LOGS = LogAggregationType.loki
@@ -56,12 +54,6 @@ postgres_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 redis_block = Manifest(
     name="Redis",
@@ -83,12 +75,6 @@ redis_block = Manifest(
         max_replicas=1,
         min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
-    ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
     ),
 )
 minio_block = Manifest(
@@ -112,12 +98,6 @@ minio_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 elasticsearch_block = Manifest(
     name="Elasticsearch",
@@ -139,12 +119,6 @@ elasticsearch_block = Manifest(
         max_replicas=1,
         min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
-    ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
     ),
 )
 openldap_block = Manifest(
@@ -168,12 +142,6 @@ openldap_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 keycloak_block = Manifest(
     name="Keycloak",
@@ -196,12 +164,6 @@ keycloak_block = Manifest(
         max_replicas=1,
         min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
-    ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
     ),
 )
 server_block = Manifest(
@@ -236,12 +198,6 @@ server_block = Manifest(
             Link(site_name="API Reference", http_url=Url("https://api.mattermost.com/")),
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 webapp_block = Manifest(
     name="Mattermost Webapp",
@@ -270,12 +226,6 @@ webapp_block = Manifest(
             ),
         ],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 nginx_block = Manifest(
     name="Nginx",
@@ -297,12 +247,6 @@ nginx_block = Manifest(
         max_replicas=1,
         min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
-    ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
     ),
 )
 prometheus_block = Manifest(
@@ -326,12 +270,6 @@ prometheus_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 grafana_block = Manifest(
     name="Grafana",
@@ -353,12 +291,6 @@ grafana_block = Manifest(
         max_replicas=1,
         min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
-    ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
     ),
 )
 loki_block = Manifest(
@@ -382,12 +314,6 @@ loki_block = Manifest(
         min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
-    ),
 )
 otel_collector_block = Manifest(
     name="OTel Collector",
@@ -409,12 +335,6 @@ otel_collector_block = Manifest(
         max_replicas=1,
         min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
-    ),
-    github=Github(
-        repo_url=_SOURCE,
-    ),
-    cicd=CICD(
-        platform=_CICD,
     ),
 )
 

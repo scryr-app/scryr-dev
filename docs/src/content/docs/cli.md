@@ -1,6 +1,6 @@
 ---
 title: CLI reference
-description: Check, format, serve, push, inspect, export, report, and query Scryr manifests.
+description: Check, format, serve, push, inspect, and export Scryr manifests.
 ---
 
 Run commands from the repository containing `index.scry`.
@@ -13,10 +13,6 @@ scryr format
 scryr lint --fix
 scryr push
 scryr serve --watch
-scryr report tests --run-id "$GITHUB_RUN_ID" --observed-at "$RESULTS_COMPLETED_AT"
-scryr report actions
-scryr query --list
-scryr query request_latency --json
 ```
 
 ## Check, format, and lint
@@ -57,7 +53,7 @@ scryr serve --server-only --sample mern
 
 ## Shared path options
 
-These apply to check, format, lint, push, serve, export, inspect, and query:
+These apply to check, format, lint, push, serve, export, and inspect:
 
 ```text
 --path <file>          Manifest file. Defaults to index.scry.

@@ -11,13 +11,9 @@ import pytest
 from pydantic import ValidationError
 
 from scryr import (
-    CICD,
     GithubActionRun,
     GithubActionsLog,
-    Manifest,
     ScryrClient,
-    WebFramework,
-    run_manifest_file,
 )
 from scryr.action_client import GithubActionsClient
 from scryr.actions import main
@@ -40,24 +36,6 @@ def payload(**updates: object) -> dict:
         "conclusion": None,
         **updates,
     }
-
-
-def test_roundtrip_history_and_short_schema_titles() -> None:
-    """History survives Manifest JSON serialization with concise schema definitions."""
-    log = GithubActionsLog()
-    log.record(GithubActionRun.from_github(payload()))
-    manifest = Manifest(
-        manifest_id="services/api",
-        frameworks=[WebFramework.fastapi],
-        cicd=CICD(github_actions=log),
-    )
-    serialized = manifest.to_dict()
-    assert serialized["manifestId"] == "services/api"
-    assert serialized["cicd"]["githubActions"]["runs"][0]["runId"] == 12345
-    assert Manifest.model_validate(serialized).to_dict() == serialized
-    schema = Manifest.model_json_schema()
-    assert schema["$defs"]["CICD"]["title"] == "CICD"
-    assert "ManifestSection" not in json.dumps(schema)
 
 
 def test_duplicates_late_deliveries_and_reruns() -> None:
@@ -233,21 +211,6 @@ def test_record_preserves_initial_run_without_explicit_events() -> None:
     log.record(GithubActionRun.from_github(payload()))
     assert log.runs[0].status == "completed"
     assert len(log.runs[0].events) == 2
-
-
-def test_offline_sample_emits_a_status_timeline() -> None:
-    """The shipped sample executes through the real Manifest runtime."""
-    sample = Path(__file__).parent / "samples/github_actions/index.scry"
-    records = run_manifest_file(sample, "--json")
-    assert isinstance(records, list)
-    manifest = Manifest.model_validate(
-        next(record["manifest"] for record in records if record["variable_name"] == "api"),
-    )
-    assert manifest.manifest_id == "services/api"
-    assert manifest.cicd is not None
-    assert manifest.cicd.build_status == "passing"
-    assert manifest.cicd.github_actions is not None
-    assert len(manifest.cicd.github_actions.runs[0].events) == 3
 
 
 def test_browser_history_matches_sdk() -> None:
