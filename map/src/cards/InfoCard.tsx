@@ -30,10 +30,10 @@ const DESCRIPTION_TEXT_WIDTH = CONTENT_WIDTH - SECTION_PADDING * 2;
 const ROW_LABEL_ICON_SIZE = 7;
 const ENUM_ICON_SIZE = 15;
 const ENUM_CHIP_SIZE = 20;
-const META_ICON_SIZE = 11;
+const META_ICON_SIZE = 15;
 const META_PILL_HEIGHT = 20;
-const TYPE_PILL_WIDTH = 76;
-const AUTH_PILL_WIDTH = 66;
+const TYPE_PILL_WIDTH = 84;
+const AUTH_PILL_WIDTH = 74;
 const OWNER_CHIP_WIDTH = 86;
 const DESCRIPTION_LINE_LENGTH = 56;
 const DESCRIPTION_LINE_HEIGHT = 12;
@@ -372,7 +372,7 @@ function EnumMetaPill({
 					transformTranslateZ={2}
 					zIndexOffset={20}
 					depthWrite={false}
-					opacity={muted ? MUTED_ENUM_ICON_OPACITY : ENUM_ICON_OPACITY}
+					opacity={muted ? MUTED_ENUM_ICON_OPACITY : 1}
 				/>
 			) : (
 				<Text fontSize={7} color={currentTheme.cardMutedTextColor}>
