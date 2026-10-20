@@ -8,9 +8,9 @@ Source: https://github.com/makeplane/plane
 """
 
 from scryr import Diagram, Info, Link, Manifest
-from scryr.saas import Classification
 from scryr.types import (
     AuthType,
+    Classification,
     DeploymentTarget,
     IaCToolType,
     IncrementalVersion,

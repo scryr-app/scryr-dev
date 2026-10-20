@@ -3,6 +3,7 @@ import { Activity, Code, Info, Users } from "@react-three/uikit-lucide";
 import type { ReactNode } from "react";
 import type { BlockLink } from "@/block/Block";
 import { currentTheme } from "@/theme/theme";
+import { getClassificationMetadata } from "./ClassificationIcons";
 import { type LogoMetadata, LogosDictionary } from "./LogosDictionary";
 
 // Dimensions match Block defaults: width(3) * 0.8, height(2) * 0.8
@@ -334,15 +335,20 @@ function EnumMetaPill({
 	value,
 	muted = false,
 	width,
+	kind,
 }: {
 	prefix: string;
 	value: string;
 	muted?: boolean;
 	width: number;
+	kind?: "classification";
 }) {
-	const iconContent = getEnumIconContent(value);
-	const label = getMetaLabel(value);
-	const docUrl = getEnumDocUrl(value);
+	const classification =
+		kind === "classification" ? getClassificationMetadata(value) : undefined;
+	const ClassificationIcon = classification?.icon;
+	const iconContent = classification ? null : getEnumIconContent(value);
+	const label = classification?.label ?? getMetaLabel(value);
+	const docUrl = classification ? null : getEnumDocUrl(value);
 
 	return (
 		<Container
@@ -363,7 +369,16 @@ function EnumMetaPill({
 			<Text fontSize={6.5} color={currentTheme.cardMutedTextColor}>
 				{prefix}
 			</Text>
-			{iconContent ? (
+			{ClassificationIcon ? (
+				<ClassificationIcon
+					width={META_ICON_SIZE}
+					height={META_ICON_SIZE}
+					color={currentTheme.cardTextColor}
+					transformTranslateZ={2}
+					zIndexOffset={20}
+					depthWrite={false}
+				/>
+			) : iconContent ? (
 				<Svg
 					content={iconContent}
 					width={META_ICON_SIZE}
@@ -698,6 +713,7 @@ export function InfoCard({
 								{classification && (
 									<EnumMetaPill
 										prefix="TYPE"
+										kind="classification"
 										value={classification}
 										width={TYPE_PILL_WIDTH}
 									/>

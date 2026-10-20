@@ -3,6 +3,7 @@
 from scryr import Diagram, Info, Link, Manifest
 from scryr.types import (
     AuthType,
+    Classification,
     DeploymentTarget,
     IaCToolType,
     LogAggregationType,
@@ -17,6 +18,7 @@ from scryr.types import (
 # Full type hints and autocomplete! IDE knows all parameter types
 react_block = Manifest(
     name="React",
+    classification=Classification.public_ui,
     icon="🌐",
     tags=["user_interface"],
     connections=[Manifest(name="Express")],
@@ -43,6 +45,7 @@ react_block = Manifest(
 )
 redis_pubsub_block = Manifest(
     name="Redis Pub/Sub",
+    classification=Classification.queue,
     icon="📡",
     tags=["user_interface"],
     connections=[Manifest(name="Express"), Manifest(name="React")],
@@ -70,6 +73,7 @@ redis_pubsub_block = Manifest(
 )
 express_block = Manifest(
     name="Express",
+    classification=Classification.internal_api,
     connections=[Manifest(name="MongoDB")],
     info=Info(
         language=ProgrammingLanguage.javascript,
@@ -85,6 +89,7 @@ express_block = Manifest(
 )
 mongo_block = Manifest(
     name="MongoDB",
+    classification=Classification.database,
     connections=[Manifest(name="Express"), Manifest(name="React")],
     info=Info(
         frameworks=[WebFramework.nextjs],
@@ -101,6 +106,7 @@ mongo_block = Manifest(
 # Legacy AngularJS admin console (static site)
 angularjs_admin_block = Manifest(
     name="AngularJS Admin Console",
+    classification=Classification.admin_ui,
     icon="🛠️",
     connections=[Manifest(name="Express")],
     info=Info(

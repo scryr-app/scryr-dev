@@ -1,7 +1,7 @@
 from scryr import Diagram, Forge, ForgeTask, ForgeTool, Info, Link, Manifest, ManifestQuery
-from scryr.saas import Classification
 from scryr.types import (
     AuthType,
+    Classification,
     DeploymentTarget,
     IaCToolType,
     LogAggregationType,

@@ -4,7 +4,7 @@ from enum import StrEnum
 
 
 class Classification(StrEnum):
-    """Block classification used for architecture visualization."""
+    """Architectural roles and interfaces used for architecture visualization."""
 
     # APIs & Gateways
     public_api = "public_api"
@@ -39,3 +39,28 @@ class Classification(StrEnum):
     worker = "worker"
     scheduler = "scheduler"
     job_processor = "job_processor"
+
+    # Interfaces and protocols
+    web_ui = "web_ui"
+    mobile_ui = "mobile_ui"
+    desktop_ui = "desktop_ui"
+    rest = "rest"
+    graphql = "graphql"
+    grpc = "grpc"
+    websocket = "websocket"
+    event = "event"
+    soap = "soap"
+    jsonrpc = "jsonrpc"
+    webhook = "webhook"
+    sql = "sql"
+    nosql = "nosql"
+    graphql_datalayer = "graphql_datalayer"
+    orm = "orm"
+    dataframe = "dataframe"
+    object_store = "object_store"
+    stream = "stream"
+    cache = "cache"
+    search = "search"
+    file_system = "file_system"
+    api_gateway = "api_gateway"
+    unknown = "unknown"

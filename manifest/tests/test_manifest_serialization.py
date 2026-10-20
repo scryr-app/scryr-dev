@@ -260,3 +260,35 @@ def test_diagram_rejects_mixed_manifest_selection_modes() -> None:
 
     with pytest.raises(ValueError, match="either manifests or query"):
         Diagram(name="Mixed", manifests=[api], query=ManifestQuery(language="python"))
+
+
+@pytest.mark.parametrize("classification", list(Classification))
+def test_classification_round_trips_roles_and_interfaces(classification: Classification) -> None:
+    """Every role and interface remains a scalar classification in persisted JSON."""
+    manifest = Manifest(name="Component", classification=classification)
+    data = manifest.to_dict()
+
+    assert data["classification"] == classification.value
+    assert Manifest.model_validate(data).classification is classification
+
+
+def test_interface_type_imports_alias_classification() -> None:
+    """Legacy imports construct members of the unified classification enum."""
+    from scryr import InterfaceType as RootInterfaceType
+    from scryr.saas import InterfaceType as SaasInterfaceType
+    from scryr.types import InterfaceType
+
+    assert RootInterfaceType is SaasInterfaceType is InterfaceType is Classification
+    assert (
+        Manifest(name="API", classification=InterfaceType.rest).to_dict()["classification"]
+        == "rest"
+    )
+
+
+def test_classification_preserves_defaults_and_legacy_identifiers() -> None:
+    """Adding interfaces does not change stored roles or the default classification."""
+    assert Manifest(name="Default").classification is Classification.public_api
+    assert Classification("network_router") is Classification.network_gateway
+    assert Classification.rest.value == "rest"
+    assert Classification.graphql.value == "graphql"
+    assert Classification.sql.value == "sql"

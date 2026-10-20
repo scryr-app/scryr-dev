@@ -9,9 +9,9 @@ Source: https://github.com/wasp-lang/open-saas
 """
 
 from scryr import Diagram, Info, Link, Manifest, ManifestQuery
-from scryr.saas import Classification
 from scryr.types import (
     AuthType,
+    Classification,
     DeploymentTarget,
     IaCToolType,
     IncrementalVersion,

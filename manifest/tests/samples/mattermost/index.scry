@@ -10,10 +10,10 @@ Source: https://github.com/mattermost/mattermost
 """
 
 from scryr import Diagram, Info, Link, Manifest
-from scryr.saas import Classification
 from scryr.types import (
     AuthType,
     CalendarVersion,
+    Classification,
     DeploymentTarget,
     IaCToolType,
     IncrementalVersion,
