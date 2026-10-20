@@ -1,98 +1,87 @@
-import {
-	Archive,
-	ArrowLeftRight,
-	Braces,
-	Cable,
-	CircleHelp,
-	Clock,
-	Cloud,
-	Cog,
-	Columns3,
-	Database,
-	DoorOpen,
-	FileCode,
-	Files,
-	FolderTree,
-	GitBranch,
-	Globe,
-	HardDrive,
-	Layers,
-	ListChecks,
-	ListOrdered,
-	LogIn,
-	LogOut,
-	Monitor,
-	Network,
-	Package,
-	PanelsTopLeft,
-	Radio,
-	Router,
-	Search,
-	Server,
-	Shield,
-	Smartphone,
-	Table,
-	Table2,
-	Terminal,
-	Unplug,
-	Waypoints,
-	Webhook,
-	Zap,
-} from "@react-three/uikit-lucide";
+import { Svg, type SvgProperties } from "@react-three/uikit";
+import { type ComponentType, createElement } from "react";
 
-export const ClassificationIcons: Record<
-	string,
-	{ icon: typeof Database; label: string }
-> = {
-	public_api: { icon: Globe, label: "Public API" },
-	internal_api: { icon: Server, label: "Internal API" },
-	network_router: { icon: Router, label: "Router" },
-	network_gateway: { icon: Router, label: "Router" },
-	public_ui: { icon: PanelsTopLeft, label: "Public UI" },
-	mobile_app: { icon: Smartphone, label: "Mobile app" },
-	admin_ui: { icon: Shield, label: "Admin UI" },
-	cli: { icon: Terminal, label: "CLI" },
-	sdk: { icon: Package, label: "SDK" },
-	datastore: { icon: HardDrive, label: "Datastore" },
-	database: { icon: Database, label: "Database" },
-	object_storage: { icon: Archive, label: "Objects" },
-	document_store: { icon: Files, label: "Documents" },
-	vector_store: { icon: Network, label: "Vectors" },
-	columnar_store: { icon: Columns3, label: "Columns" },
-	cache_store: { icon: Zap, label: "Cache" },
-	search_store: { icon: Search, label: "Search" },
-	queue: { icon: ListOrdered, label: "Queue" },
-	source: { icon: LogOut, label: "Source" },
-	sink: { icon: LogIn, label: "Sink" },
-	worker: { icon: Cog, label: "Worker" },
-	scheduler: { icon: Clock, label: "Scheduler" },
-	job_processor: { icon: ListChecks, label: "Jobs" },
-	web_ui: { icon: PanelsTopLeft, label: "Web UI" },
-	mobile_ui: { icon: Smartphone, label: "Mobile UI" },
-	desktop_ui: { icon: Monitor, label: "Desktop UI" },
-	rest: { icon: ArrowLeftRight, label: "REST" },
-	graphql: { icon: Waypoints, label: "GraphQL" },
-	grpc: { icon: Cable, label: "gRPC" },
-	websocket: { icon: Unplug, label: "WebSocket" },
-	event: { icon: Zap, label: "Event" },
-	soap: { icon: FileCode, label: "SOAP" },
-	jsonrpc: { icon: Braces, label: "JSON-RPC" },
-	webhook: { icon: Webhook, label: "Webhook" },
-	sql: { icon: Table2, label: "SQL" },
-	nosql: { icon: Layers, label: "NoSQL" },
-	graphql_datalayer: { icon: Waypoints, label: "GQL data" },
-	orm: { icon: GitBranch, label: "ORM" },
-	dataframe: { icon: Table, label: "Dataframe" },
-	object_store: { icon: Cloud, label: "Objects" },
-	stream: { icon: Radio, label: "Stream" },
-	cache: { icon: Zap, label: "Cache" },
-	search: { icon: Search, label: "Search" },
-	file_system: { icon: FolderTree, label: "Files" },
-	api_gateway: { icon: DoorOpen, label: "Gateway" },
-	unknown: { icon: CircleHelp, label: "Unknown" },
+type ClassificationMetadata = {
+	icon: ComponentType<SvgProperties>;
+	label: string;
+	iconWidth?: number;
 };
 
-export function getClassificationMetadata(value: string) {
+const assets = import.meta.glob<string>("../icons/classifications/*.svg", {
+	eager: true,
+	import: "default",
+	query: "?raw",
+});
+
+const definitions: Record<
+	string,
+	{ asset: string; label: string; iconWidth?: number }
+> = {
+	public_api: { asset: "public_api", label: "Public API" },
+	internal_api: { asset: "internal_api", label: "Internal API" },
+	network_router: { asset: "network_gateway", label: "Router" },
+	public_ui: { asset: "public_ui", label: "Public UI" },
+	mobile_app: { asset: "mobile_app", label: "Mobile app" },
+	admin_ui: { asset: "admin_ui", label: "Admin UI" },
+	cli: { asset: "cli", label: "CLI" },
+	sdk: { asset: "sdk", label: "SDK" },
+	datastore: { asset: "datastore", label: "Datastore" },
+	database: { asset: "database", label: "Database" },
+	object_storage: { asset: "object_storage", label: "Objects" },
+	document_store: { asset: "document_store", label: "Documents" },
+	vector_store: { asset: "vector_store", label: "Vectors" },
+	columnar_store: { asset: "columnar_store", label: "Columns" },
+	cache_store: { asset: "cache_store", label: "Cache" },
+	search_store: { asset: "search_store", label: "Search" },
+	queue: { asset: "queue", label: "Queue" },
+	source: { asset: "source", label: "Source" },
+	sink: { asset: "sink", label: "Sink" },
+	worker: { asset: "worker", label: "Worker" },
+	scheduler: { asset: "scheduler", label: "Scheduler" },
+	job_processor: { asset: "job_processor", label: "Jobs" },
+	web_ui: { asset: "web_ui", label: "Web UI" },
+	mobile_ui: { asset: "mobile_ui", label: "Mobile UI" },
+	desktop_ui: { asset: "desktop_ui", label: "Desktop UI" },
+	rest: { asset: "rest", label: "REST" },
+	graphql: { asset: "graphql", label: "GraphQL" },
+	grpc: { asset: "grpc", label: "gRPC", iconWidth: 30 },
+	websocket: { asset: "websocket", label: "WebSocket" },
+	event: { asset: "event", label: "Event" },
+	soap: { asset: "soap", label: "SOAP" },
+	jsonrpc: { asset: "jsonrpc", label: "JSON-RPC" },
+	webhook: { asset: "webhook", label: "Webhook" },
+	sql: { asset: "sql", label: "SQL" },
+	nosql: { asset: "nosql", label: "NoSQL" },
+	graphql_datalayer: { asset: "graphql_datalayer", label: "GQL data" },
+	orm: { asset: "orm", label: "ORM" },
+	dataframe: { asset: "dataframe", label: "Dataframe" },
+	object_store: { asset: "object_store", label: "Objects" },
+	stream: { asset: "stream", label: "Stream" },
+	cache: { asset: "cache", label: "Cache" },
+	search: { asset: "search", label: "Search" },
+	file_system: { asset: "file_system", label: "Files" },
+	api_gateway: { asset: "api_gateway", label: "Gateway" },
+	unknown: { asset: "unknown", label: "Unknown" },
+};
+
+export const ClassificationIcons: Record<string, ClassificationMetadata> =
+	Object.fromEntries(
+		Object.entries(definitions).map(([name, { asset, ...metadata }]) => {
+			const content = assets[`../icons/classifications/${asset}.svg`];
+			if (!content) throw new Error(`Missing classification icon: ${asset}`);
+			function ClassificationIcon(props: SvgProperties) {
+				return createElement(Svg, { content, keepAspectRatio: true, ...props });
+			}
+			return [name, { ...metadata, icon: ClassificationIcon }];
+		}),
+	);
+
+// The Python member is network_gateway; its stored identifier is network_router.
+ClassificationIcons.network_gateway = ClassificationIcons.network_router;
+
+export function getClassificationMetadata(
+	value: string,
+): ClassificationMetadata {
 	const name = value.trim().split(".").pop() ?? "";
 	const key = name.toLowerCase().replace(/[\s-]+/g, "_");
 	if (Object.hasOwn(ClassificationIcons, key)) {
@@ -100,7 +89,7 @@ export function getClassificationMetadata(value: string) {
 	}
 	const label = name.replace(/[_-]+/g, " ").replace(/\s+/g, " ");
 	return {
-		icon: CircleHelp,
+		icon: ClassificationIcons.unknown.icon,
 		label: label ? label[0].toUpperCase() + label.slice(1) : "Unknown",
 	};
 }

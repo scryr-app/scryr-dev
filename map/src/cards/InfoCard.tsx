@@ -371,7 +371,7 @@ function EnumMetaPill({
 			</Text>
 			{ClassificationIcon ? (
 				<ClassificationIcon
-					width={META_ICON_SIZE}
+					width={classification?.iconWidth ?? META_ICON_SIZE}
 					height={META_ICON_SIZE}
 					color={currentTheme.cardTextColor}
 					transformTranslateZ={2}
