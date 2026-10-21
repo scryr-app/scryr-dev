@@ -6,13 +6,7 @@ import type { LayoutResult } from "./layout";
 import { getLayoutOverview, type LayoutView } from "./layoutOverview";
 
 /** Fit once per layout, leaving subsequent orbit, zoom and view switches alone. */
-export function MapOverview({
-	layout,
-	view,
-}: {
-	layout: LayoutResult;
-	view: LayoutView;
-}) {
+export function MapOverview({ layout, view }: { layout: LayoutResult; view: LayoutView }) {
 	const camera = useThree((state) => state.camera);
 	const controls = useThree((state) => state.controls) as OrbitControls | null;
 	useEffect(() => {

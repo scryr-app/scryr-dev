@@ -16,20 +16,13 @@ export type ManifestEnvelope = {
 	forges: Record<string, unknown>[];
 	diagrams: Record<string, unknown>[];
 };
-export const documentKey = (identifier: string) =>
-	["ManifestDocument", identifier] as const;
+export const documentKey = (identifier: string) => ["ManifestDocument", identifier] as const;
 export const readDocument = (identifier: string) =>
-	graphqlFetcher<
-		{ manifestDocument: ManifestDocument },
-		{ identifier: string }
-	>(
+	graphqlFetcher<{ manifestDocument: ManifestDocument }, { identifier: string }>(
 		"query EditorSource($identifier: String!) { manifestDocument(identifier: $identifier) }",
 		{ identifier },
 	)();
-export const saveDocument = (
-	document: ManifestDocument,
-	envelope: ManifestEnvelope,
-) =>
+export const saveDocument = (document: ManifestDocument, envelope: ManifestEnvelope) =>
 	graphqlFetcher<
 		{ saveManifestDocument: ManifestDocument },
 		{ identifier: string; revision: string; envelope: ManifestEnvelope }

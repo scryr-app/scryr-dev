@@ -73,10 +73,7 @@ export const sampleStore = {
 
 /** React hook — triggers re-render whenever the selected map changes. */
 export function useSelectedMap(): SelectedMap {
-	return useSyncExternalStore(
-		mapSelectionStore.subscribe,
-		mapSelectionStore.get,
-	);
+	return useSyncExternalStore(mapSelectionStore.subscribe, mapSelectionStore.get);
 }
 
 /** React hook — retained for code paths that still need the artifact key. */

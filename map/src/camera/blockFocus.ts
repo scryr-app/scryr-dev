@@ -1,11 +1,4 @@
-import {
-	Box3,
-	Frustum,
-	MathUtils,
-	type PerspectiveCamera,
-	Plane,
-	Vector3,
-} from "three";
+import { Box3, Frustum, MathUtils, type PerspectiveCamera, Plane, Vector3 } from "three";
 import { DEFAULT_FOCUS_VIEWPORT, type FocusViewport } from "./focusViewport";
 
 export interface FocusBlock {
@@ -30,9 +23,7 @@ function blockBounds(block: FocusBlock, margin = 0) {
 
 function boxCorners(box: Box3) {
 	return [box.min.x, box.max.x].flatMap((x) =>
-		[box.min.y, box.max.y].flatMap((y) =>
-			[box.min.z, box.max.z].map((z) => new Vector3(x, y, z)),
-		),
+		[box.min.y, box.max.y].flatMap((y) => [box.min.z, box.max.z].map((z) => new Vector3(x, y, z))),
 	);
 }
 
@@ -43,20 +34,13 @@ function cardSightVolume(position: Vector3, face: Vector3[]) {
 		.multiplyScalar(1 / face.length);
 	const inside = center.clone().lerp(position, 0.5);
 	const planes = face.map((point, i) => {
-		const plane = new Plane().setFromCoplanarPoints(
-			position,
-			point,
-			face[(i + 1) % face.length],
-		);
+		const plane = new Plane().setFromCoplanarPoints(position, point, face[(i + 1) % face.length]);
 		if (plane.distanceToPoint(inside) < 0) plane.negate();
 		return plane;
 	});
 	planes.push(new Plane(new Vector3(0, 0, 1), -center.z));
 	planes.push(
-		new Plane().setFromNormalAndCoplanarPoint(
-			center.clone().sub(position).normalize(),
-			position,
-		),
+		new Plane().setFromNormalAndCoplanarPoint(center.clone().sub(position).normalize(), position),
 	);
 	return new Frustum(...planes);
 }
@@ -120,21 +104,14 @@ export function getBlockFocus(
 			const inverseRotation = candidateCamera.quaternion.clone().invert();
 			let distance = camera.near + FACE_CLEARANCE;
 			for (const point of points) {
-				const local = point
-					.clone()
-					.sub(center)
-					.applyQuaternion(inverseRotation);
+				const local = point.clone().sub(center).applyQuaternion(inverseRotation);
 				// Off-center framing keeps the complete card clear of floating UI.
 				distance = Math.max(
 					distance,
-					(local.x / tanX + viewport.maxX * local.z) /
-						(viewport.maxX - centerX),
-					(-local.x / tanX - viewport.minX * local.z) /
-						(centerX - viewport.minX),
-					(local.y / tanY + viewport.maxY * local.z) /
-						(viewport.maxY - centerY),
-					(-local.y / tanY - viewport.minY * local.z) /
-						(centerY - viewport.minY),
+					(local.x / tanX + viewport.maxX * local.z) / (viewport.maxX - centerX),
+					(-local.x / tanX - viewport.minX * local.z) / (centerX - viewport.minX),
+					(local.y / tanY + viewport.maxY * local.z) / (viewport.maxY - centerY),
+					(-local.y / tanY - viewport.minY * local.z) / (centerY - viewport.minY),
 					local.z + camera.near + FACE_CLEARANCE,
 				);
 			}
@@ -149,9 +126,7 @@ export function getBlockFocus(
 			// Such a view would look through the selected block itself.
 			if (position.z <= bounds.max.z + camera.near) continue;
 			const sight = cardSightVolume(position, face);
-			const obstructionCount = blockers.filter((blocker) =>
-				sight.intersectsBox(blocker),
-			).length;
+			const obstructionCount = blockers.filter((blocker) => sight.intersectsBox(blocker)).length;
 			candidates.push({
 				position,
 				target,
@@ -160,9 +135,6 @@ export function getBlockFocus(
 			});
 		}
 	}
-	candidates.sort(
-		(a, b) =>
-			a.obstructionCount - b.obstructionCount || a.preference - b.preference,
-	);
+	candidates.sort((a, b) => a.obstructionCount - b.obstructionCount || a.preference - b.preference);
 	return candidates[0];
 }

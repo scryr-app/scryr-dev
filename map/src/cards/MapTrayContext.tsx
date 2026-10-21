@@ -1,10 +1,4 @@
-import {
-	createContext,
-	type ReactNode,
-	useCallback,
-	useContext,
-	useState,
-} from "react";
+import { createContext, type ReactNode, useCallback, useContext, useState } from "react";
 
 interface SelectedBlockState {
 	name: string;
@@ -28,12 +22,8 @@ const MapTrayContext = createContext<MapTrayContextValue | null>(null);
 /** Shares toolbar card selection with per-block choices from direct card clicks. */
 export function MapTrayProvider({ children }: { children: ReactNode }) {
 	const [sharedCardIndex, setSharedCardIndex] = useState<number | null>(0);
-	const [blockCardIndexes, setBlockCardIndexes] = useState(
-		() => new Map<string, number>(),
-	);
-	const [selectedBlock, setSelectedBlock] = useState<SelectedBlockState | null>(
-		null,
-	);
+	const [blockCardIndexes, setBlockCardIndexes] = useState(() => new Map<string, number>());
+	const [selectedBlock, setSelectedBlock] = useState<SelectedBlockState | null>(null);
 
 	const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
 	const [hoveredCard, setHoveredCard] = useState<{
@@ -45,17 +35,14 @@ export function MapTrayProvider({ children }: { children: ReactNode }) {
 	}, []);
 	const clearCardPreview = useCallback((blockId: string, index?: number) => {
 		setHoveredCard((current) =>
-			current?.blockId === blockId &&
-			(index === undefined || current.index === index)
+			current?.blockId === blockId && (index === undefined || current.index === index)
 				? null
 				: current,
 		);
 	}, []);
 	const activeCardIndex =
 		hoveredCard?.index ??
-		(activeBlockId === null
-			? undefined
-			: blockCardIndexes.get(activeBlockId)) ??
+		(activeBlockId === null ? undefined : blockCardIndexes.get(activeBlockId)) ??
 		sharedCardIndex;
 
 	const toggleCard = (index: number) => {
@@ -64,8 +51,7 @@ export function MapTrayProvider({ children }: { children: ReactNode }) {
 		setHoveredCard(null);
 	};
 
-	const getActiveCardIndex = (blockId: string) =>
-		blockCardIndexes.get(blockId) ?? sharedCardIndex;
+	const getActiveCardIndex = (blockId: string) => blockCardIndexes.get(blockId) ?? sharedCardIndex;
 
 	const selectCardForBlock = (blockId: string, index: number) => {
 		setBlockCardIndexes((previous) => new Map(previous).set(blockId, index));

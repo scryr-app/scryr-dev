@@ -18,14 +18,7 @@ export interface SceneLight {
 }
 export interface ThemeAppearance {
 	textures: {
-		wall:
-			| "ribbed"
-			| "crystal"
-			| "leather"
-			| "celestial"
-			| "porcelain"
-			| "sunkenStone"
-			| "velvet";
+		wall: "ribbed" | "crystal" | "leather" | "celestial" | "porcelain" | "sunkenStone" | "velvet";
 		card?: "parchment" | "porcelain" | "seaGlass" | "oracle";
 		paperColor?: string;
 		wallBrightness: number;

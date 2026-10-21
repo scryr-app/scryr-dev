@@ -8,20 +8,14 @@ import {
 	type GetBlocksQueryVariables,
 	useGetBlocksQuery,
 } from "./generated";
-import {
-	documentKey,
-	type ManifestDocument,
-	readDocument,
-	saveDocument,
-} from "./manifestDocument";
+import { documentKey, type ManifestDocument, readDocument, saveDocument } from "./manifestDocument";
 import { mapSelectionStore, useSelectedMap } from "./sampleStore";
 
 export const EditorScope = createContext("local");
 type Draft = { document: ManifestDocument; code: string };
 const entrySource = (doc: ManifestDocument) =>
 	doc.files.find((file) => file.path === doc.entrypoint)?.content ?? "";
-const sourceKey = (doc: ManifestDocument) =>
-	JSON.stringify([doc.folderPath, doc.entrypoint]);
+const sourceKey = (doc: ManifestDocument) => JSON.stringify([doc.folderPath, doc.entrypoint]);
 
 export function useManifestEditor(isOpen: boolean) {
 	const selected = useSelectedMap();
@@ -42,8 +36,7 @@ export function useManifestEditor(isOpen: boolean) {
 		queryFn: () => readDocument(identifier),
 		enabled: isOpen && Boolean(identifier),
 		staleTime: 0,
-		refetchInterval: (query) =>
-			query.state.data?.manifestDocument.local ? 1500 : 15000,
+		refetchInterval: (query) => (query.state.data?.manifestDocument.local ? 1500 : 15000),
 	});
 	const loaded = source.data?.manifestDocument;
 	const savedDraft = loaded ? drafts.current.get(sourceKey(loaded)) : undefined;
@@ -58,9 +51,7 @@ export function useManifestEditor(isOpen: boolean) {
 	const code = savedDraft?.code ?? (loaded ? entrySource(loaded) : "");
 	const dirty = Boolean(doc && code !== entrySource(doc));
 	const hasDrafts = drafts.current.size > 0;
-	const conflict = Boolean(
-		dirty && loaded && doc?.revision !== loaded.revision,
-	);
+	const conflict = Boolean(dirty && loaded && doc?.revision !== loaded.revision);
 	const previousRevision = useRef<string | undefined>(undefined);
 	useEffect(() => {
 		if (
@@ -117,25 +108,15 @@ export function useManifestEditor(isOpen: boolean) {
 			);
 			if (controller.signal.aborted || !mounted.current) return;
 			if (selection.current !== startedIdentifier)
-				throw new Error(
-					"Diagram changed during execution. Return to the draft and run again.",
-				);
+				throw new Error("Diagram changed during execution. Return to the draft and run again.");
 			setOutput((text) => text + result.stdout);
-			setStatus(
-				doc.local
-					? "Saving file and validating…"
-					: "Saving source and diagrams…",
-			);
+			setStatus(doc.local ? "Saving file and validating…" : "Saving source and diagrams…");
 			// Cancellation stops execution; once saving starts its committed result must be reconciled.
 			abort.current = null;
-			const { saveManifestDocument: saved } = await saveDocument(
-				doc,
-				result.envelope,
-			);
+			const { saveManifestDocument: saved } = await saveDocument(doc, result.envelope);
 			committed = true;
 			const latestDraft = drafts.current.get(sourceKey(doc));
-			if (!latestDraft || latestDraft.code === code)
-				drafts.current.delete(sourceKey(doc));
+			if (!latestDraft || latestDraft.code === code) drafts.current.delete(sourceKey(doc));
 			else
 				drafts.current.set(sourceKey(doc), {
 					document: saved,
@@ -167,22 +148,13 @@ export function useManifestEditor(isOpen: boolean) {
 				),
 				staleTime: 0,
 			});
-			setStatus(
-				doc.local
-					? "Saved to disk · Diagram updated"
-					: "Saved to cloud · Diagram updated",
-			);
+			setStatus(doc.local ? "Saved to disk · Diagram updated" : "Saved to cloud · Diagram updated");
 		} catch (error) {
 			if (mounted.current) {
 				setStatus(
-					committed
-						? "Source saved; diagram refresh failed. Reload to retry."
-						: "Run failed",
+					committed ? "Source saved; diagram refresh failed. Reload to retry." : "Run failed",
 				);
-				setOutput(
-					(text) =>
-						`${text}\n${error instanceof Error ? error.message : String(error)}`,
-				);
+				setOutput((text) => `${text}\n${error instanceof Error ? error.message : String(error)}`);
 			}
 		} finally {
 			abort.current = null;

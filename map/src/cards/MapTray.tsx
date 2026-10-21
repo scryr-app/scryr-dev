@@ -71,9 +71,7 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 	const { activeCardIndex, toggleCard } = useMapTray();
 	const [themeOpen, setThemeOpen] = useState(false);
 	const [viewMenuOpen, setViewMenuOpen] = useState(false);
-	const [viewMode, setViewMode] = useState<"top-down" | "isometric" | null>(
-		"isometric",
-	);
+	const [viewMode, setViewMode] = useState<"top-down" | "isometric" | null>("isometric");
 	const cameraAction = (action: () => void) => {
 		setViewMode(null);
 		action();
@@ -128,10 +126,7 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 									cameraStore.setTopDownView();
 									setViewMenuOpen(false);
 								}}
-								className={cn(
-									styles.viewOption,
-									viewMode === "top-down" && styles.selected,
-								)}
+								className={cn(styles.viewOption, viewMode === "top-down" && styles.selected)}
 							>
 								<MapIcon size={14} /> Top Down
 							</button>
@@ -142,10 +137,7 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 									cameraStore.setIsometricView();
 									setViewMenuOpen(false);
 								}}
-								className={cn(
-									styles.viewOption,
-									viewMode === "isometric" && styles.selected,
-								)}
+								className={cn(styles.viewOption, viewMode === "isometric" && styles.selected)}
 							>
 								<Box size={14} /> Isometric
 							</button>
@@ -159,11 +151,7 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 						onClick={() => setViewMenuOpen((open) => !open)}
 						aria-label="Select map view"
 					>
-						{viewMode === "top-down" ? (
-							<MapIcon size={18} />
-						) : (
-							<Box size={18} />
-						)}
+						{viewMode === "top-down" ? <MapIcon size={18} /> : <Box size={18} />}
 					</Button>
 				</div>
 
@@ -253,9 +241,7 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 					{(hoveredIndex === "zoom-in" || hoveredIndex === "zoom-out") && (
 						<div className={styles.tooltip}>
 							{hoveredIndex === "zoom-in" ? "Zoom In" : "Zoom Out"}
-							<span className={styles.shortcut}>
-								{hoveredIndex === "zoom-in" ? "E" : "Q"}
-							</span>
+							<span className={styles.shortcut}>{hoveredIndex === "zoom-in" ? "E" : "Q"}</span>
 						</div>
 					)}
 					<div className={styles.zoomControl}>
@@ -378,17 +364,12 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 					const { icon: Icon, label, index } = CARD_TYPES[0];
 					return (
 						<div className={styles.control}>
-							{hoveredIndex === index && (
-								<div className={styles.tooltip}>{label}</div>
-							)}
+							{hoveredIndex === index && <div className={styles.tooltip}>{label}</div>}
 							<Button
 								type="button"
 								variant="ghost"
 								size="icon"
-								className={cn(
-									styles.trayButton,
-									activeCardIndex === index && styles.selectedCard,
-								)}
+								className={cn(styles.trayButton, activeCardIndex === index && styles.selectedCard)}
 								aria-label={label}
 								aria-pressed={activeCardIndex === index}
 								onClick={() => toggleCard(index)}
@@ -404,17 +385,12 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 				{/* Remaining card type buttons */}
 				{CARD_TYPES.slice(1).map(({ index, icon: Icon, label }) => (
 					<div key={index} className={styles.control}>
-						{hoveredIndex === index && (
-							<div className={styles.tooltip}>{label}</div>
-						)}
+						{hoveredIndex === index && <div className={styles.tooltip}>{label}</div>}
 						<Button
 							type="button"
 							variant="ghost"
 							size="icon"
-							className={cn(
-								styles.trayButton,
-								activeCardIndex === index && styles.selectedCard,
-							)}
+							className={cn(styles.trayButton, activeCardIndex === index && styles.selectedCard)}
 							aria-label={label}
 							aria-pressed={activeCardIndex === index}
 							onClick={() => toggleCard(index)}
@@ -432,9 +408,7 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 				{/* Theme section */}
 				<div className={styles.control}>
 					{hoveredIndex === "editor" && (
-						<div className={styles.tooltip}>
-							{isPyodideOpen ? "Hide Editor" : "Show Editor"}
-						</div>
+						<div className={styles.tooltip}>{isPyodideOpen ? "Hide Editor" : "Show Editor"}</div>
 					)}
 					<Button
 						type="button"
@@ -451,9 +425,7 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 				</div>
 
 				<div className={styles.control}>
-					{hoveredIndex === "theme" && (
-						<div className={styles.tooltip}>Style</div>
-					)}
+					{hoveredIndex === "theme" && <div className={styles.tooltip}>Style</div>}
 					<Button
 						type="button"
 						variant="ghost"

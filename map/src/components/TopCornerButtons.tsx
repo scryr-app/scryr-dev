@@ -7,10 +7,7 @@ interface TopCornerButtonsProps {
 	onTogglePyodide: () => void;
 }
 
-export function TopCornerButtons({
-	isPyodideOpen,
-	onTogglePyodide,
-}: TopCornerButtonsProps) {
+export function TopCornerButtons({ isPyodideOpen, onTogglePyodide }: TopCornerButtonsProps) {
 	return (
 		<>
 			{/* Top-left — Diagram */}
@@ -20,13 +17,9 @@ export function TopCornerButtons({
 					<button
 						type="button"
 						onClick={onTogglePyodide}
-						aria-label={
-							isPyodideOpen ? "Hide diagram editor" : "Show diagram editor"
-						}
+						aria-label={isPyodideOpen ? "Hide diagram editor" : "Show diagram editor"}
 						aria-pressed={isPyodideOpen}
-						title={
-							isPyodideOpen ? "Hide diagram editor" : "Show diagram editor"
-						}
+						title={isPyodideOpen ? "Hide diagram editor" : "Show diagram editor"}
 						className={styles.editorButton}
 					>
 						<PencilLine size={18} aria-hidden="true" />
@@ -35,10 +28,7 @@ export function TopCornerButtons({
 			</div>
 
 			{/* Top-right — Account */}
-			<div
-				className={styles.accountPosition}
-				style={{ pointerEvents: "auto" }}
-			></div>
+			<div className={styles.accountPosition} style={{ pointerEvents: "auto" }}></div>
 		</>
 	);
 }

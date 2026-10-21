@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vite-plus/test";
 import type { GetScryrMapsQuery } from "@/graphql/generated";
 import { mapSelectionStore } from "@/graphql/sampleStore";
 import { DiagramButton } from "./DiagramButton";
@@ -57,9 +57,7 @@ it("opens the cloud customer path and groups samples together without moving use
 	fireEvent.click(screen.getByRole("button", { name: /MERN Customer Path/ }));
 	expect(screen.getAllByText("Samples")).toHaveLength(1);
 	expect(
-		screen
-			.getAllByText("services/api")
-			.find((label) => !label.closest("button")),
+		screen.getAllByText("services/api").find((label) => !label.closest("button")),
 	).toBeTruthy();
 	fireEvent.click(screen.getByRole("button", { name: /My service/ }));
 	expect(mapSelectionStore.get().id).toBe("custom");

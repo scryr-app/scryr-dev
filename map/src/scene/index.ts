@@ -1,13 +1,7 @@
 export { useGroundTexture, useWallTexture } from "@/theme/textures";
 export type { LineProps } from "./Line";
 export { Line } from "./Line";
-export type {
-	LayoutEdge,
-	LayoutGroup,
-	LayoutNode,
-	LayoutOptions,
-	LayoutResult,
-} from "./layout";
+export type { LayoutEdge, LayoutGroup, LayoutNode, LayoutOptions, LayoutResult } from "./layout";
 export { layoutBlocks, toWorldCoordinates } from "./layout";
 export { MapDiagram } from "./MapDiagram";
 export { MapDisplay } from "./MapDisplay";

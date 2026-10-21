@@ -174,7 +174,7 @@ run = "cd manifest && uv run ruff check --fix --unsafe-fixes . tests/samples/*/*
 [tasks."contribute:lint-fix:map"]
 description = "Fix auto-fixable TypeScript lint issues"
 dir = "{{config_root}}"
-run = "cd map && npm exec biome -- check --write --unsafe ."
+run = "npm --prefix map run fix"
 
 [tasks."contribute:format"]
 description = "Format Rust, Python, and TypeScript code"
@@ -198,7 +198,7 @@ run = "cd manifest && uv run ruff format . tests/samples/*/*.scry"
 [tasks."contribute:format:map"]
 description = "Format TypeScript code"
 dir = "{{config_root}}"
-run = "cd map && npm exec biome -- format --write ."
+run = "npm --prefix map run format"
 
 [tasks."contribute:build"]
 description = "Build Rust, Python, and frontend artifacts for local development"
@@ -525,7 +525,7 @@ run = "cd manifest && uv run ruff format --check . tests/samples/*/*.scry"
 [tasks."verify:format:map"]
 description = "Check TypeScript formatting"
 dir = "{{config_root}}"
-run = "cd map && npm exec biome -- format ."
+run = "npm --prefix map run format:check"
 
 [tasks."verify:types"]
 description = "Run Rust, Python, and TypeScript type checks"
@@ -549,7 +549,7 @@ run = "cd manifest && uv run ty check . tests/samples/*/*.scry"
 [tasks."verify:types:map"]
 description = "Run TypeScript type checks"
 dir = "{{config_root}}"
-run = "cd map && npm exec tsc -- --noEmit"
+run = "npm --prefix map run typecheck"
 
 [tasks."verify:test:unit"]
 description = "Run all unit test suites"

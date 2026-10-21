@@ -27,8 +27,7 @@ export function ThemeOptions({ onSelect }: { onSelect?: () => void }) {
 						<span className={styles.content}>
 							<span className={styles.name}>{preset.name}</span>
 							<span className={styles.description}>
-								{preset.mode === "dark" ? "Dark Mode" : "Light Mode"} ·{" "}
-								{preset.description}
+								{preset.mode === "dark" ? "Dark Mode" : "Light Mode"} · {preset.description}
 							</span>
 						</span>
 						{selected && <Check size={14} aria-label="Selected" />}

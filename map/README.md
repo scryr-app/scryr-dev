@@ -2,16 +2,21 @@
 
 Frontend for the Scryr architecture map.
 
+Vite+ runs development, builds, tests, formatting, linting, and type checks.
+Package scripts use `vp exec` for Playwright, GraphQL generation, and build
+preparation. Root mise tasks remain the contributor and CI entrypoints.
+`npm run check` runs formatting, lint, and TypeScript checks together.
+
 ## What It Does
 
 - renders the 3D map UI
 - fetches block data from `crystal` over GraphQL
 - displays regions, lines, labels, and detail cards
 
-
 ## GraphQL Workflow
 
 `Map` uses:
+
 - `graphql-request` for the GraphQL client
 - `@tanstack/react-query` for fetching and caching
 - `graphql-codegen` to generate TypeScript types and query hooks
@@ -32,16 +37,17 @@ Example:
 import { useGetBlocksQuery } from "@/graphql/generated";
 
 export function Example() {
-  const { data, isLoading, error } = useGetBlocksQuery();
+	const { data, isLoading, error } = useGetBlocksQuery();
 
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Failed to load.</div>;
+	if (isLoading) return <div>Loading...</div>;
+	if (error) return <div>Failed to load.</div>;
 
-  return <pre>{JSON.stringify(data?.blocks, null, 2)}</pre>;
+	return <pre>{JSON.stringify(data?.blocks, null, 2)}</pre>;
 }
 ```
 
 Relevant files:
+
 - `src/graphql/queries.graphql`: GraphQL operations
 - `src/graphql/client.ts`: GraphQL client setup
 - `src/graphql/generated.ts`: generated types and hooks
@@ -68,7 +74,7 @@ Vite embeds them in the frontend bundle. The Clerk publishable key must belong
 to the same instance as the server's `CLERK_SECRET_KEY`.
 
 Run the configuration regression checks with
-`node --test scripts/check-hosted-config.test.mjs` from `map/`.
+`npm test -- scripts/check-hosted-config.test.mjs` from `map/`.
 
 ## Source editor
 

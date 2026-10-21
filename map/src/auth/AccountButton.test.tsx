@@ -1,12 +1,6 @@
 // @vitest-environment jsdom
-import {
-	cleanup,
-	fireEvent,
-	render,
-	screen,
-	waitFor,
-} from "@testing-library/react";
-import { afterEach, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, expect, it, vi } from "vite-plus/test";
 import { AccountButton } from "./AccountButton";
 
 const signOut = vi.hoisted(() => vi.fn());
@@ -22,9 +16,7 @@ it("logs out through Clerk and returns to the sign-in screen", async () => {
 	render(<AccountButton />);
 	fireEvent.click(screen.getByRole("button", { name: "Account menu" }));
 	fireEvent.click(screen.getByRole("menuitem", { name: "Log out" }));
-	await waitFor(() =>
-		expect(signOut).toHaveBeenCalledWith({ redirectUrl: "/" }),
-	);
+	await waitFor(() => expect(signOut).toHaveBeenCalledWith({ redirectUrl: "/" }));
 });
 it("allows retry when logout fails", async () => {
 	signOut.mockRejectedValueOnce(new Error("offline"));
@@ -32,7 +24,5 @@ it("allows retry when logout fails", async () => {
 	fireEvent.click(screen.getByRole("button", { name: "Account menu" }));
 	fireEvent.click(screen.getByRole("menuitem", { name: "Log out" }));
 	expect(await screen.findByRole("alert")).toBeTruthy();
-	expect(
-		screen.getByRole("menuitem", { name: "Log out" }).hasAttribute("disabled"),
-	).toBe(false);
+	expect(screen.getByRole("menuitem", { name: "Log out" }).hasAttribute("disabled")).toBe(false);
 });

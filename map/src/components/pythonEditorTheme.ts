@@ -36,8 +36,9 @@ export function createThemeExtensions(theme: Theme) {
 				},
 				".cm-activeLine": { backgroundColor: palette.activeLine },
 				".cm-activeLineGutter": { backgroundColor: "transparent" },
-				".cm-selectionBackground, &.cm-focused .cm-selectionBackground, ::selection":
-					{ backgroundColor: palette.selection },
+				".cm-selectionBackground, &.cm-focused .cm-selectionBackground, ::selection": {
+					backgroundColor: palette.selection,
+				},
 				".cm-cursor, .cm-dropCursor": { borderLeftColor: palette.accent },
 				".cm-tooltip": {
 					border: `1px solid ${palette.muted}`,
@@ -66,10 +67,7 @@ export function createThemeExtensions(theme: Theme) {
 					color: ink(palette.type),
 				},
 				{
-					tag: [
-						tags.function(tags.variableName),
-						tags.function(tags.propertyName),
-					],
+					tag: [tags.function(tags.variableName), tags.function(tags.propertyName)],
 					color: ink(palette.function),
 				},
 				{

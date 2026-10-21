@@ -118,9 +118,7 @@ export function Block({
 		/>
 	);
 
-	const otherDiagramCard = (
-		<OtherDiagramCard key="other-diagram-card" diagrams={diagrams} />
-	);
+	const otherDiagramCard = <OtherDiagramCard key="other-diagram-card" diagrams={diagrams} />;
 
 	const allCards = [
 		{ components: [overviewCard] },
@@ -155,13 +153,7 @@ export function Block({
 			}}
 		>
 			{/* Top label with icon and name */}
-			<TopLabel
-				icon={icon}
-				name={name}
-				fontColor={fontColor}
-				hh={hh}
-				width={width}
-			/>
+			<TopLabel icon={icon} name={name} fontColor={fontColor} hh={hh} width={width} />
 
 			{/* Outer and inner walls */}
 			<Walls color={color} hw={hw} hh={hh} hd={hd} />

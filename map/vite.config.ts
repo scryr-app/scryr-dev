@@ -1,19 +1,38 @@
-import { defineConfig } from "vite";
+import { defineConfig, lazyPlugins } from "vite-plus";
 import { devtools } from "@tanstack/devtools-vite";
 import viteReact from "@vitejs/plugin-react";
 
 import { fileURLToPath, URL } from "node:url";
 // https://vitejs.dev/config/
 export default defineConfig({
+	fmt: {
+		useTabs: true,
+		ignorePatterns: [
+			"src/graphql/generated.ts",
+			"src/pyodide/sdkSources.generated.json",
+			"src/icons/**/*.svg",
+			"package-lock.json",
+		],
+	},
+	lint: {
+		ignorePatterns: [
+			"src/graphql/generated.ts",
+			"src/pyodide/sdkSources.generated.json",
+			"src/icons/**/*.svg",
+		],
+		jsPlugins: [{ name: "vite-plus", specifier: "vite-plus/oxlint-plugin" }],
+		rules: { "vite-plus/prefer-vite-plus-imports": "error" },
+		options: { typeAware: true, typeCheck: true },
+	},
 	worker: { format: "es" },
-	plugins: [
+	plugins: lazyPlugins(() => [
 		devtools({
 			injectSource: {
 				enabled: false,
 			},
 		}),
 		viteReact(),
-	],
+	]),
 	resolve: {
 		alias: [
 			{
@@ -47,6 +66,6 @@ export default defineConfig({
 				},
 			},
 		},
-    	exclude: ['@react-three/uikit', '@pmndrs/uikit'],
+		exclude: ["@react-three/uikit", "@pmndrs/uikit"],
 	},
 });

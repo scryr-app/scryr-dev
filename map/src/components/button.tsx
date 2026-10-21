@@ -24,8 +24,7 @@ const buttonVariants = cva(styles.button, {
 });
 
 export interface ButtonProps
-	extends ButtonHTMLAttributes<HTMLButtonElement>,
-		VariantProps<typeof buttonVariants> {}
+	extends ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {}
 
 /** Button component with variant and size support. */
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
