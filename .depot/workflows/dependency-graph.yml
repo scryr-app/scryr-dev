@@ -1,0 +1,46 @@
+# Depot CI Migration
+# Source: .github/workflows/dependency-graph.yml
+#
+# Changes made:
+# - Rewrote .github/ path references to .depot/
+# - Changed GitHub runs-on labels to their Depot equivalents
+
+name: Python dependency graph
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - manifest/uv.lock
+      - .depot/workflows/dependency-graph.yml
+      - mise.toml
+      - mise.lock
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: python-dependency-graph
+  cancel-in-progress: false
+
+jobs:
+  submit:
+    if: github.ref == 'refs/heads/main'
+    name: Submit locked Python dependencies
+    runs-on: depot-ubuntu-24.04 # was: ubuntu-24.04. Mapped standard GitHub runner to Depot equivalent.
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        with:
+          version: 2026.9.5
+          install_args: python
+      - run: mise run internal:github:submit-dependencies
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}

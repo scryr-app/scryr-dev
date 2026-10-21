@@ -1,0 +1,50 @@
+# Depot CI Migration
+# Source: .github/workflows/distribute.yml
+#
+# Changes made:
+# - Removed unsupported trigger "release"
+# - Changed GitHub runs-on labels to their Depot equivalents
+
+name: Distribute OSS
+
+# Removed unsupported trigger: release. Release events are not supported.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Published release tag (vX.Y.Z)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: distribute-production
+  cancel-in-progress: false
+
+jobs:
+  distribute:
+    if: github.event_name == 'workflow_dispatch' || !github.event.release.prerelease
+    runs-on: depot-ubuntu-24.04 # was: ubuntu-24.04. Mapped standard GitHub runner to Depot equivalent.
+    timeout-minutes: 60
+    environment: publish
+    env:
+      RELEASE_TAG: ${{ inputs.tag || github.event.release.tag_name }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.tag || github.event.release.tag_name }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        with:
+          version: 2026.9.5
+          install_args: python
+      - run: mise run release:validate
+      - run: mise run release:distribute
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          HOMEBREW_TAP: ${{ vars.HOMEBREW_TAP }}
