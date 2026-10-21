@@ -61,6 +61,18 @@ const definitions: Record<
 	search: { asset: "search", label: "Search" },
 	file_system: { asset: "file_system", label: "Files" },
 	api_gateway: { asset: "api_gateway", label: "Gateway" },
+	load_balancer: { asset: "load_balancer", label: "Balancer" },
+	reverse_proxy: { asset: "reverse_proxy", label: "Proxy" },
+	cdn: { asset: "cdn", label: "CDN" },
+	dns: { asset: "dns", label: "DNS" },
+	firewall: { asset: "firewall", label: "Firewall" },
+	identity_provider: { asset: "identity_provider", label: "Identity" },
+	secrets_manager: { asset: "secrets_manager", label: "Secrets" },
+	data_pipeline: { asset: "data_pipeline", label: "Pipeline" },
+	workflow_engine: { asset: "workflow_engine", label: "Workflow" },
+	monitoring: { asset: "monitoring", label: "Monitor" },
+	log_collector: { asset: "log_collector", label: "Logs" },
+	model_service: { asset: "model_service", label: "ML model" },
 	unknown: { asset: "unknown", label: "Unknown" },
 };
 

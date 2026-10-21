@@ -11,6 +11,17 @@ class Classification(StrEnum):
     internal_api = "internal_api"
     network_gateway = "network_router"
 
+    # Traffic & Networking
+    load_balancer = "load_balancer"
+    reverse_proxy = "reverse_proxy"
+    cdn = "cdn"
+    dns = "dns"
+
+    # Security & Identity
+    firewall = "firewall"
+    identity_provider = "identity_provider"
+    secrets_manager = "secrets_manager"
+
     # User Interfaces
     public_ui = "public_ui"
     mobile_app = "mobile_app"
@@ -39,6 +50,15 @@ class Classification(StrEnum):
     worker = "worker"
     scheduler = "scheduler"
     job_processor = "job_processor"
+    data_pipeline = "data_pipeline"
+    workflow_engine = "workflow_engine"
+
+    # Observability
+    monitoring = "monitoring"
+    log_collector = "log_collector"
+
+    # Machine Learning
+    model_service = "model_service"
 
     # Interfaces and protocols
     web_ui = "web_ui"
