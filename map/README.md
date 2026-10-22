@@ -5,7 +5,10 @@ Frontend for the Scryr architecture map.
 Vite+ runs development, builds, tests, formatting, linting, and type checks.
 Package scripts use `vp exec` for Playwright, GraphQL generation, and build
 preparation. Root mise tasks remain the contributor and CI entrypoints.
-`npm run check` runs formatting, lint, and TypeScript checks together.
+Mise pins Vite+ and prefers the project-local `vp` after dependency installation;
+the mise-installed copy bootstraps fresh checkouts. `vp install --frozen-lockfile`
+uses the checked-in npm lockfile.
+`vp run check` runs formatting, lint, and TypeScript checks together.
 
 ## What It Does
 
@@ -74,7 +77,7 @@ Vite embeds them in the frontend bundle. The Clerk publishable key must belong
 to the same instance as the server's `CLERK_SECRET_KEY`.
 
 Run the configuration regression checks with
-`npm test -- scripts/check-hosted-config.test.mjs` from `map/`.
+`vp test run scripts/check-hosted-config.test.mjs` from `map/`.
 
 ## Source editor
 
@@ -102,7 +105,7 @@ Development and builds refresh `src/pyodide/sdkSources.generated.json` from
 `../manifest/scryr` when the full checkout is available. Commit this generated
 file when changing the SDK. Standalone builds (including Vercel) use the checked-in
 bundle; the SDK is never read from disk at runtime.
-Frontend state tests also run in the normal `npm test` suite; Rust source-storage
+Frontend state tests also run in the normal `vp test run` suite; Rust source-storage
 tests exercise both SQLite and libSQL transactions and organization isolation.
 
 ## Diagram themes
