@@ -13,10 +13,7 @@ const assets = import.meta.glob<string>("../icons/classifications/*.svg", {
 	query: "?raw",
 });
 
-const definitions: Record<
-	string,
-	{ asset: string; label: string; iconWidth?: number }
-> = {
+const definitions: Record<string, { asset: string; label: string; iconWidth?: number }> = {
 	public_api: { asset: "public_api", label: "Public API" },
 	internal_api: { asset: "internal_api", label: "Internal API" },
 	network_router: { asset: "network_gateway", label: "Router" },
@@ -76,24 +73,21 @@ const definitions: Record<
 	unknown: { asset: "unknown", label: "Unknown" },
 };
 
-export const ClassificationIcons: Record<string, ClassificationMetadata> =
-	Object.fromEntries(
-		Object.entries(definitions).map(([name, { asset, ...metadata }]) => {
-			const content = assets[`../icons/classifications/${asset}.svg`];
-			if (!content) throw new Error(`Missing classification icon: ${asset}`);
-			function ClassificationIcon(props: SvgProperties) {
-				return createElement(Svg, { content, keepAspectRatio: true, ...props });
-			}
-			return [name, { ...metadata, icon: ClassificationIcon }];
-		}),
-	);
+export const ClassificationIcons: Record<string, ClassificationMetadata> = Object.fromEntries(
+	Object.entries(definitions).map(([name, { asset, ...metadata }]) => {
+		const content = assets[`../icons/classifications/${asset}.svg`];
+		if (!content) throw new Error(`Missing classification icon: ${asset}`);
+		function ClassificationIcon(props: SvgProperties) {
+			return createElement(Svg, { content, keepAspectRatio: true, ...props });
+		}
+		return [name, { ...metadata, icon: ClassificationIcon }];
+	}),
+);
 
 // The Python member is network_gateway; its stored identifier is network_router.
 ClassificationIcons.network_gateway = ClassificationIcons.network_router;
 
-export function getClassificationMetadata(
-	value: string,
-): ClassificationMetadata {
+export function getClassificationMetadata(value: string): ClassificationMetadata {
 	const name = value.trim().split(".").pop() ?? "";
 	const key = name.toLowerCase().replace(/[\s-]+/g, "_");
 	if (Object.hasOwn(ClassificationIcons, key)) {

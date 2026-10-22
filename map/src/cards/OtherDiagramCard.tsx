@@ -22,11 +22,7 @@ function DiagramRow({ name }: { name: string }) {
 			{/* Left column: diagram name */}
 			<Container flexGrow={1} flexDirection="column" gap={2}>
 				<Container flexDirection="row" alignItems="center" gap={4}>
-					<Layers
-						width={9}
-						height={9}
-						color={currentTheme.cardMutedTextColor}
-					/>
+					<Layers width={9} height={9} color={currentTheme.cardMutedTextColor} />
 					<Text fontSize={10} color={currentTheme.cardMutedTextColor}>
 						DIAGRAM
 					</Text>
@@ -76,12 +72,7 @@ export function OtherDiagramCard({ diagrams = [] }: OtherDiagramCardProps) {
 					</Text>
 				</Container>
 			) : (
-				<Container
-					flexDirection="column"
-					gap={5}
-					alignItems="stretch"
-					flexGrow={1}
-				>
+				<Container flexDirection="column" gap={5} alignItems="stretch" flexGrow={1}>
 					{diagrams.map((name) => (
 						<DiagramRow key={name} name={name} />
 					))}

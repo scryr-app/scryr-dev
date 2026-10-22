@@ -60,27 +60,20 @@ export function Card({
 	// Drei's extruded RoundedBox uses world-space UVs. A glow texture needs
 	// normalized face UVs, otherwise it clamps into a dark lower-left square.
 	const surfaceGeometry = useMemo(
-		() =>
-			new RoundedBoxGeometry(width, height, CARD_DEPTH, 3, shapes.cardRadius),
+		() => new RoundedBoxGeometry(width, height, CARD_DEPTH, 3, shapes.cardRadius),
 		[width, height, shapes.cardRadius],
 	);
 	useEffect(() => () => surfaceGeometry.dispose(), [surfaceGeometry]);
-	const {
-		brightness,
-		useBlockColor,
-		overlayOpacity,
-		rimHighlight,
-		...material
-	} = cards;
+	const { brightness, useBlockColor, overlayOpacity, rimHighlight, ...material } = cards;
 	const baseColor = new THREE.Color(
-		currentTheme.appearance.textures.paperColor ??
-			(useBlockColor ? glowColor : color),
+		currentTheme.appearance.textures.paperColor ?? (useBlockColor ? glowColor : color),
 	).multiplyScalar(brightness);
 	const glowTexture = useCrystalGlowTexture();
 	const paperTexture = useCardTexture();
-	const rimColor = (
-		useBlockColor ? new THREE.Color(glowColor) : baseColor.clone()
-	).lerp(new THREE.Color("#ffffff"), rimHighlight);
+	const rimColor = (useBlockColor ? new THREE.Color(glowColor) : baseColor.clone()).lerp(
+		new THREE.Color("#ffffff"),
+		rimHighlight,
+	);
 	const shadowColor = baseColor.clone().multiplyScalar(0.58);
 
 	// Apply anchor offset so `position` refers to desired anchor point
@@ -157,9 +150,7 @@ export function Card({
 			)}
 
 			{/* Content container - rendered on the front face */}
-			{children && (
-				<group position={[0, 0, CARD_DEPTH / 2 + 0.05]}>{children}</group>
-			)}
+			{children && <group position={[0, 0, CARD_DEPTH / 2 + 0.05]}>{children}</group>}
 		</group>
 	);
 }

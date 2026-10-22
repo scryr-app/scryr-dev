@@ -1,8 +1,4 @@
-import type {
-	Completion,
-	CompletionContext,
-	CompletionResult,
-} from "@codemirror/autocomplete";
+import type { Completion, CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import { browserSdkFiles } from "@/pyodide/sdkSources";
 
 type PythonEnumRegistry = Record<string, string[]>;
@@ -89,23 +85,14 @@ function getEnumNameCompletions(prefix: string): Completion[] {
 			];
 
 			for (const memberName of members) {
-				completions.push(
-					asEnumMemberCompletion(
-						enumName,
-						memberName,
-						`${enumName}.${memberName}`,
-					),
-				);
+				completions.push(asEnumMemberCompletion(enumName, memberName, `${enumName}.${memberName}`));
 			}
 
 			return completions;
 		});
 }
 
-function getEnumMemberCompletions(
-	enumName: string,
-	memberPrefix: string,
-): Completion[] {
+function getEnumMemberCompletions(enumName: string, memberPrefix: string): Completion[] {
 	const members = pythonEnumRegistry[enumName];
 	if (!members) {
 		return [];
@@ -116,9 +103,7 @@ function getEnumMemberCompletions(
 		.map((memberName) => asEnumMemberCompletion(enumName, memberName));
 }
 
-export function pythonEnumCompletionSource(
-	context: CompletionContext,
-): CompletionResult | null {
+export function pythonEnumCompletionSource(context: CompletionContext): CompletionResult | null {
 	const before = context.matchBefore(IDENTIFIER);
 
 	if (!before) {

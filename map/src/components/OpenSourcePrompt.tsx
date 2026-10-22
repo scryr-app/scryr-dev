@@ -64,8 +64,7 @@ export function OpenSourcePrompt() {
 			</button>
 			<h2 className={styles.title}>Run Scryr on your machine</h2>
 			<p className={styles.description}>
-				Scryr is open source. Install it locally and explore your own
-				architecture.
+				Scryr is open source. Install it locally and explore your own architecture.
 			</p>
 			<a
 				href="https://scryr.dev/getting-started/#install"

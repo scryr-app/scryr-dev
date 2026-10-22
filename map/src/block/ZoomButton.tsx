@@ -65,10 +65,7 @@ export function ZoomButton({
 				width={overlayWidth}
 				height={overlayHeight}
 			/>
-			<group
-				position={[0, -blockDepth * 0.3, 0]}
-				scale={[glyphScale, glyphScale, 1]}
-			>
+			<group position={[0, -blockDepth * 0.3, 0]} scale={[glyphScale, glyphScale, 1]}>
 				<ZoomGlyph opacity={opacity} color={color} />
 			</group>
 		</group>
@@ -118,13 +115,7 @@ function ZoomGlyph({ opacity, color }: { opacity: number; color: string }) {
 	);
 }
 
-function ZoomGlyphMaterial({
-	opacity,
-	color,
-}: {
-	opacity: number;
-	color: string;
-}) {
+function ZoomGlyphMaterial({ opacity, color }: { opacity: number; color: string }) {
 	return (
 		<meshBasicMaterial
 			color={color}

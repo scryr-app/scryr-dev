@@ -153,8 +153,7 @@ export async function layoutBlocks(
 			...(options.componentSpacing === undefined
 				? {}
 				: {
-						"elk.spacing.componentComponent":
-							options.componentSpacing.toString(),
+						"elk.spacing.componentComponent": options.componentSpacing.toString(),
 					}),
 			"elk.layered.spacing.nodeNodeBetweenLayers": layerSpacing.toString(),
 			"elk.edgeRouting": "ORTHOGONAL",
@@ -250,15 +249,11 @@ export async function layoutBlocks(
 
 		const minX = Math.min(...allNodePositions.map((n) => n.x));
 		const maxX = Math.max(
-			...allNodePositions.map(
-				(n) => n.x + (layouted.children?.[0]?.width ?? nodeWidth),
-			),
+			...allNodePositions.map((n) => n.x + (layouted.children?.[0]?.width ?? nodeWidth)),
 		);
 		const minY = Math.min(...allNodePositions.map((n) => n.y));
 		const maxY = Math.max(
-			...allNodePositions.map(
-				(n) => n.y + (layouted.children?.[0]?.height ?? nodeHeight),
-			),
+			...allNodePositions.map((n) => n.y + (layouted.children?.[0]?.height ?? nodeHeight)),
 		);
 
 		const centerX = (minX + maxX) / 2;
@@ -358,11 +353,7 @@ export function getNodeWorldPosition(
 	if (!node) return null;
 
 	// Use center of node
-	return toWorldCoordinates(
-		node.x + node.width / 2,
-		node.y + node.height / 2,
-		scale,
-	);
+	return toWorldCoordinates(node.x + node.width / 2, node.y + node.height / 2, scale);
 }
 
 /**
@@ -380,9 +371,7 @@ export function getEdgeWorldPath(
 	const points: Array<[number, number, number]> = [];
 
 	// Start point
-	points.push(
-		toWorldCoordinates(section.startPoint.x, section.startPoint.y, scale),
-	);
+	points.push(toWorldCoordinates(section.startPoint.x, section.startPoint.y, scale));
 
 	// Bend points
 	if (section.bendPoints) {
@@ -392,9 +381,7 @@ export function getEdgeWorldPath(
 	}
 
 	// End point
-	points.push(
-		toWorldCoordinates(section.endPoint.x, section.endPoint.y, scale),
-	);
+	points.push(toWorldCoordinates(section.endPoint.x, section.endPoint.y, scale));
 
 	return points;
 }
@@ -448,10 +435,7 @@ function boundsOverlap(
  * Calculate z-offset for a group based on overlaps with larger groups
  * Smaller groups that overlap with larger groups are lifted higher
  */
-export function calculateGroupZOffset(
-	group: LayoutGroup,
-	allGroups: LayoutGroup[],
-): number {
+export function calculateGroupZOffset(group: LayoutGroup, allGroups: LayoutGroup[]): number {
 	const thisArea = calculateGroupArea(group);
 	const thisBounds = calculateGroupBounds(group);
 	let largerOverlapCount = 0;
@@ -476,10 +460,7 @@ export function calculateGroupZOffset(
  * Calculate the maximum z-offset for all groups containing a block
  * This determines how high the block should be positioned
  */
-export function calculateBlockZOffset(
-	blockName: string,
-	layout: LayoutResult,
-): number {
+export function calculateBlockZOffset(blockName: string, layout: LayoutResult): number {
 	let maxZOffset = 0;
 
 	layout.groups.forEach((group) => {
@@ -495,10 +476,7 @@ export function calculateBlockZOffset(
 /**
  * Get the Y-axis height for a block (above its region)
  */
-export function getBlockHeight(
-	blockName: string,
-	layout: LayoutResult,
-): number {
+export function getBlockHeight(blockName: string, layout: LayoutResult): number {
 	const regionZOffset = calculateBlockZOffset(blockName, layout);
 	return regionZOffset + BLOCK_CENTER_HEIGHT; // 1.2 units above the region
 }
@@ -515,10 +493,7 @@ export function getEdgeHeight(blockName: string, layout: LayoutResult): number {
  * Calculate expand factor for a group based on overlaps
  * Larger groups that overlap with smaller groups are expanded
  */
-export function calculateGroupExpandFactor(
-	group: LayoutGroup,
-	allGroups: LayoutGroup[],
-): number {
+export function calculateGroupExpandFactor(group: LayoutGroup, allGroups: LayoutGroup[]): number {
 	const thisArea = calculateGroupArea(group);
 	const thisBounds = calculateGroupBounds(group);
 	let hasOverlap = false;
@@ -575,18 +550,10 @@ export function calculateRegionCorners(
 	const expandedMaxY = centerY + expandedHeight / 2;
 
 	// Convert to world coordinates and apply z-offset
-	const p1: [number, number, number] = [
-		...toWorldCoordinates(expandedMinX, expandedMinY),
-	];
-	const p2: [number, number, number] = [
-		...toWorldCoordinates(expandedMaxX, expandedMinY),
-	];
-	const p3: [number, number, number] = [
-		...toWorldCoordinates(expandedMaxX, expandedMaxY),
-	];
-	const p4: [number, number, number] = [
-		...toWorldCoordinates(expandedMinX, expandedMaxY),
-	];
+	const p1: [number, number, number] = [...toWorldCoordinates(expandedMinX, expandedMinY)];
+	const p2: [number, number, number] = [...toWorldCoordinates(expandedMaxX, expandedMinY)];
+	const p3: [number, number, number] = [...toWorldCoordinates(expandedMaxX, expandedMaxY)];
+	const p4: [number, number, number] = [...toWorldCoordinates(expandedMinX, expandedMaxY)];
 
 	// Lift region based on z-offset
 	p1[1] += zOffset;

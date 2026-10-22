@@ -44,11 +44,7 @@ export const cameraStore = {
 		const ctrl = this.controls;
 		if (!ctrl) return;
 		const distance = ctrl.object.position.distanceTo(ctrl.target);
-		ctrl.object.position.set(
-			ctrl.target.x,
-			ctrl.target.y + distance,
-			ctrl.target.z,
-		);
+		ctrl.object.position.set(ctrl.target.x, ctrl.target.y + distance, ctrl.target.z);
 		ctrl.update();
 	},
 
@@ -56,9 +52,7 @@ export const cameraStore = {
 		const ctrl = this.controls;
 		if (!ctrl) return;
 		const distance = ctrl.object.position.distanceTo(ctrl.target);
-		const direction = new Vector3(
-			...currentTheme.appearance.view.position,
-		).normalize();
+		const direction = new Vector3(...currentTheme.appearance.view.position).normalize();
 		ctrl.object.position.copy(ctrl.target).addScaledVector(direction, distance);
 		ctrl.update();
 	},

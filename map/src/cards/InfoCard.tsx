@@ -86,9 +86,7 @@ const ICON_CONTENT_BY_FILE = Object.fromEntries(
 );
 
 function normalizeEnumValue(value: string): string {
-	const rawValue = value.includes(".")
-		? value.split(".").pop() || value
-		: value;
+	const rawValue = value.includes(".") ? value.split(".").pop() || value : value;
 	return rawValue
 		.trim()
 		.toLowerCase()
@@ -178,9 +176,7 @@ function getDescriptionPreview(description: string): {
 		let remainingWord = word;
 
 		while (remainingWord.length > 0) {
-			const nextLine = currentLine
-				? `${currentLine} ${remainingWord}`
-				: remainingWord;
+			const nextLine = currentLine ? `${currentLine} ${remainingWord}` : remainingWord;
 
 			if (nextLine.length <= DESCRIPTION_LINE_LENGTH) {
 				currentLine = nextLine;
@@ -268,12 +264,7 @@ function DescriptionPreview({ description }: { description: string }) {
 						justifyContent="center"
 						overflow="hidden"
 					>
-						<Text
-							width="100%"
-							fontSize={9.5}
-							textAlign="left"
-							color={currentTheme.cardTextColor}
-						>
+						<Text width="100%" fontSize={9.5} textAlign="left" color={currentTheme.cardTextColor}>
 							{line.text}
 						</Text>
 					</Container>
@@ -283,13 +274,7 @@ function DescriptionPreview({ description }: { description: string }) {
 	);
 }
 
-function EnumChip({
-	value,
-	muted = false,
-}: {
-	value: string;
-	muted?: boolean;
-}) {
+function EnumChip({ value, muted = false }: { value: string; muted?: boolean }) {
 	const iconContent = getEnumIconContent(value);
 	const docUrl = getEnumDocUrl(value);
 
@@ -319,9 +304,7 @@ function EnumChip({
 			) : (
 				<Text
 					fontSize={8}
-					color={
-						muted ? currentTheme.cardMutedTextColor : currentTheme.cardTextColor
-					}
+					color={muted ? currentTheme.cardMutedTextColor : currentTheme.cardTextColor}
 				>
 					{getShortEnumLabel(value)}
 				</Text>
@@ -343,8 +326,7 @@ function EnumMetaPill({
 	width: number;
 	kind?: "classification";
 }) {
-	const classification =
-		kind === "classification" ? getClassificationMetadata(value) : undefined;
+	const classification = kind === "classification" ? getClassificationMetadata(value) : undefined;
 	const ClassificationIcon = classification?.icon;
 	const iconContent = classification ? null : getEnumIconContent(value);
 	const label = classification?.label ?? getMetaLabel(value);
@@ -396,9 +378,7 @@ function EnumMetaPill({
 			)}
 			<Text
 				fontSize={7.5}
-				color={
-					muted ? currentTheme.cardMutedTextColor : currentTheme.cardTextColor
-				}
+				color={muted ? currentTheme.cardMutedTextColor : currentTheme.cardTextColor}
 			>
 				{label}
 			</Text>
@@ -431,12 +411,7 @@ function EnumIconRow({
 
 function RowLabel({ label, icon }: { label: string; icon: ReactNode }) {
 	return (
-		<Container
-			width={ROW_LABEL_WIDTH}
-			flexDirection="row"
-			alignItems="center"
-			gap={3}
-		>
+		<Container width={ROW_LABEL_WIDTH} flexDirection="row" alignItems="center" gap={3}>
 			{icon}
 			<Text fontSize={7} color={currentTheme.cardMutedTextColor}>
 				{label}
@@ -611,33 +586,28 @@ export function InfoCard({
 		deployment,
 		iacTool && iacTool !== "none" ? `iac_${iacTool}` : null,
 	].filter((value): value is string => Boolean(value));
-	const monitoringValues =
-		monitoring && monitoring !== "none" ? [monitoring] : [];
-	const telemetryValues = [tracing, logAggregation].filter(
-		(value): value is string => Boolean(value && value !== "none"),
+	const monitoringValues = monitoring && monitoring !== "none" ? [monitoring] : [];
+	const telemetryValues = [tracing, logAggregation].filter((value): value is string =>
+		Boolean(value && value !== "none"),
 	);
 	const authValue = authType && authType !== "none" ? `auth_${authType}` : null;
-	const opsValues = [...monitoringValues, ...telemetryValues].filter(
-		(value): value is string => Boolean(value),
+	const opsValues = [...monitoringValues, ...telemetryValues].filter((value): value is string =>
+		Boolean(value),
 	);
 	const visibleLinks = links.filter((link) => link.httpUrl).slice(0, 1);
 	const hasInfoLinks = docs.length > 0 || visibleLinks.length > 0;
 	const hasAccessMeta = Boolean(classification || authValue);
 	const hasInfoFooter = Boolean(ownerTeam || hasInfoLinks);
-	const hasInfoPanel = Boolean(
-		normalizedDescription || hasAccessMeta || hasInfoFooter,
-	);
+	const hasInfoPanel = Boolean(normalizedDescription || hasAccessMeta || hasInfoFooter);
 	const descriptionPreview = normalizedDescription
 		? getDescriptionPreview(normalizedDescription)
 		: null;
 	const descriptionPreviewHeight = descriptionPreview
 		? getDescriptionPreviewHeight(descriptionPreview.lines.length)
 		: 0;
-	const infoPanelRowCount = [
-		Boolean(descriptionPreview),
-		hasAccessMeta,
-		hasInfoFooter,
-	].filter(Boolean).length;
+	const infoPanelRowCount = [Boolean(descriptionPreview), hasAccessMeta, hasInfoFooter].filter(
+		Boolean,
+	).length;
 	const infoPanelNaturalHeight =
 		SECTION_PADDING * 2 +
 		descriptionPreviewHeight +
@@ -699,9 +669,7 @@ export function InfoCard({
 						gap={2}
 						overflow="visible"
 					>
-						{normalizedDescription && (
-							<DescriptionPreview description={normalizedDescription} />
-						)}
+						{normalizedDescription && <DescriptionPreview description={normalizedDescription} />}
 						{hasAccessMeta && (
 							<Container
 								flexDirection="row"
@@ -719,11 +687,7 @@ export function InfoCard({
 									/>
 								)}
 								{authValue && (
-									<EnumMetaPill
-										prefix="AUTH"
-										value={authValue}
-										width={AUTH_PILL_WIDTH}
-									/>
+									<EnumMetaPill prefix="AUTH" value={authValue} width={AUTH_PILL_WIDTH} />
 								)}
 							</Container>
 						)}
@@ -742,18 +706,9 @@ export function InfoCard({
 										</Container>
 									)}
 								</Container>
-								<Container
-									flexDirection="row"
-									alignItems="center"
-									gap={5}
-									overflow="visible"
-								>
+								<Container flexDirection="row" alignItems="center" gap={5} overflow="visible">
 									{docs.slice(0, 1).map((docUrl) => (
-										<LinkChip
-											key={`doc-${docUrl.substring(0, 15)}`}
-											label="Docs"
-											url={docUrl}
-										/>
+										<LinkChip key={`doc-${docUrl.substring(0, 15)}`} label="Docs" url={docUrl} />
 									))}
 									{visibleLinks.map((link) => (
 										<LinkChip

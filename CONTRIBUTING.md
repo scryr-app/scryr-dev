@@ -88,7 +88,7 @@ generated catalog in the change. `verify:crystal` checks that it is current.
 ### VS Code debugging
 
 Open the repository folder or either checked-in `.code-workspace` file. Install
-the recommended Rust Analyzer, CodeLLDB, Python, and Biome extensions. Ensure
+the recommended Rust Analyzer, CodeLLDB, Python, and Oxc extensions. Ensure
 `mise` is on the PATH inherited by VS Code.
 
 - **Debug OSS** and **Debug CLOUD** launch Rust under CodeLLDB and a browser

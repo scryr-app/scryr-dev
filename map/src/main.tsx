@@ -97,13 +97,9 @@ type EnvClerkProviderProps = PropsWithChildren<{
 
 // Clerk's current React quickstart relies on Vite env discovery, but the
 // published 6.7.2 types still require publishableKey at compile time.
-const EnvClerkProvider = ClerkProvider as unknown as (
-	props: EnvClerkProviderProps,
-) => JSX.Element;
+const EnvClerkProvider = ClerkProvider as unknown as (props: EnvClerkProviderProps) => JSX.Element;
 
-const LocalClerkProvider = ({ children }: EnvClerkProviderProps) => (
-	<>{children}</>
-);
+const LocalClerkProvider = ({ children }: EnvClerkProviderProps) => <>{children}</>;
 
 const AppClerkProvider = match(isLocalAuthMode ? "local" : "clerk", {
 	local: () => LocalClerkProvider,

@@ -1,23 +1,15 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
-import {
-	ClassificationIcons,
-	getClassificationMetadata,
-} from "./ClassificationIcons";
+import { describe, expect, it } from "vite-plus/test";
+import { ClassificationIcons, getClassificationMetadata } from "./ClassificationIcons";
 import { LogosDictionary } from "./LogosDictionary";
 
 describe("classification icons", () => {
 	it("covers every serialized Python classification with an icon and label", () => {
 		const source = readFileSync(
-			new URL(
-				"../../../manifest/scryr/src/scryr/saas/classification.py",
-				import.meta.url,
-			),
+			new URL("../../../manifest/scryr/src/scryr/saas/classification.py", import.meta.url),
 			"utf8",
 		);
-		const values = [...source.matchAll(/^ {4}\w+ = "([^"]+)"/gm)].map(
-			(match) => match[1],
-		);
+		const values = [...source.matchAll(/^ {4}\w+ = "([^"]+)"/gm)].map((match) => match[1]);
 		expect(values.length).toBeGreaterThan(0);
 		for (const value of values) {
 			expect(ClassificationIcons[value], value).toBeDefined();
@@ -27,12 +19,8 @@ describe("classification icons", () => {
 	});
 
 	it("resolves qualified names and the legacy gateway identifier", () => {
-		expect(getClassificationMetadata("Classification.graphql")).toBe(
-			ClassificationIcons.graphql,
-		);
-		expect(getClassificationMetadata("public-api")).toBe(
-			ClassificationIcons.public_api,
-		);
+		expect(getClassificationMetadata("Classification.graphql")).toBe(ClassificationIcons.graphql);
+		expect(getClassificationMetadata("public-api")).toBe(ClassificationIcons.public_api);
 		expect(getClassificationMetadata("network_gateway")).toEqual(
 			getClassificationMetadata("network_router"),
 		);
@@ -49,8 +37,6 @@ describe("classification icons", () => {
 			icon: ClassificationIcons.unknown.icon,
 			label: "Custom service",
 		});
-		expect(getClassificationMetadata("constructor").icon).toBe(
-			ClassificationIcons.unknown.icon,
-		);
+		expect(getClassificationMetadata("constructor").icon).toBe(ClassificationIcons.unknown.icon);
 	});
 });

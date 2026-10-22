@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { PerspectiveCamera, Vector3 } from "three";
 import { OrbitControls } from "three-stdlib";
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, expect, it, vi } from "vite-plus/test";
 import { cameraStore } from "./cameraStore";
 
 const cleanups: Array<() => void> = [];

@@ -8,12 +8,15 @@ rust = { version = "1.96.0", profile = "minimal", components = [
 python = "3.14.6"
 uv = "0.11.12"
 node = "26.1.0"
+"npm:vite-plus" = "1.3.0"
 watchexec = "2.5.1"
 
 [settings]
 python.uv_venv_auto = "create|source"
 
 [env]
+# Prefer the project toolchain; the mise-installed vp bootstraps dependencies.
+_.path = ["{{config_root}}/map/node_modules/.bin"]
 UV_CACHE_DIR = "{{config_root}}/.cache/uv"
 
 # What to execute (after mise install):
@@ -174,7 +177,7 @@ run = "cd manifest && uv run ruff check --fix --unsafe-fixes . tests/samples/*/*
 [tasks."contribute:lint-fix:map"]
 description = "Fix auto-fixable TypeScript lint issues"
 dir = "{{config_root}}"
-run = "cd map && npm exec biome -- check --write --unsafe ."
+run = "vp -C map run fix"
 
 [tasks."contribute:format"]
 description = "Format Rust, Python, and TypeScript code"
@@ -198,7 +201,7 @@ run = "cd manifest && uv run ruff format . tests/samples/*/*.scry"
 [tasks."contribute:format:map"]
 description = "Format TypeScript code"
 dir = "{{config_root}}"
-run = "cd map && npm exec biome -- format --write ."
+run = "vp -C map run format"
 
 [tasks."contribute:build"]
 description = "Build Rust, Python, and frontend artifacts for local development"
@@ -222,7 +225,7 @@ run = "cd manifest/scryr && uv build --sdist --wheel"
 [tasks."contribute:build:map"]
 description = "Build the frontend for local development"
 dir = "{{config_root}}"
-run = "npm --prefix map run build"
+run = "vp -C map run build"
 
 [tasks."contribute:seed:samples"]
 description = "Upload every sample manifest to the local GraphQL API and SQLite database"
@@ -499,9 +502,9 @@ dir = "{{config_root}}"
 run = "cd manifest && uv run ruff check . tests/samples/*/*.scry"
 
 [tasks."verify:lint:map"]
-description = "Run Biome lint for TypeScript code"
+description = "Run Vite+ lint for TypeScript code"
 dir = "{{config_root}}"
-run = "npm --prefix map run lint"
+run = "vp -C map run lint"
 
 [tasks."verify:format"]
 description = "Check Rust, Python, and TypeScript formatting"
@@ -525,7 +528,7 @@ run = "cd manifest && uv run ruff format --check . tests/samples/*/*.scry"
 [tasks."verify:format:map"]
 description = "Check TypeScript formatting"
 dir = "{{config_root}}"
-run = "cd map && npm exec biome -- format ."
+run = "vp -C map run format:check"
 
 [tasks."verify:types"]
 description = "Run Rust, Python, and TypeScript type checks"
@@ -549,7 +552,7 @@ run = "cd manifest && uv run ty check . tests/samples/*/*.scry"
 [tasks."verify:types:map"]
 description = "Run TypeScript type checks"
 dir = "{{config_root}}"
-run = "cd map && npm exec tsc -- --noEmit"
+run = "vp -C map run typecheck"
 
 [tasks."verify:test:unit"]
 description = "Run all unit test suites"
@@ -573,7 +576,7 @@ run = "cd manifest && uv run --locked python -m pytest tests --ignore=tests/test
 [tasks."verify:test:unit:map"]
 description = "Run frontend unit tests"
 dir = "{{config_root}}"
-run = "npm --prefix map run test"
+run = "vp -C map run test"
 
 [tasks."verify:test:integration"]
 description = "Run integration test suites"
@@ -619,7 +622,7 @@ run = "mise run verify:test:unit:map"
 
 [tasks."verify:editor"]
 description = "Build and test the standalone source editor in Chrome; requires network"
-run = ["mise run release:build", "npm --prefix map run test:editor"]
+run = ["mise run release:build", "vp -C map run test:editor"]
 
 [tasks."verify:release:smoke"]
 description = "Smoke-test the existing release:build binary outside the checkout; requires network on first run"
@@ -887,7 +890,7 @@ run = "cd manifest && uv sync --locked --all-packages"
 description = "Install TypeScript frontend dependencies"
 dir = "{{config_root}}"
 hide = true
-run = "npm --prefix map ci"
+run = "vp -C map install --frozen-lockfile"
 
 [tasks."internal:dependencies:docs"]
 description = "Install documentation site dependencies"
@@ -905,7 +908,7 @@ run = "cargo build --manifest-path crystal/Cargo.toml --locked -p crystal-cli --
 description = "Generate TypeScript GraphQL client code"
 dir = "{{config_root}}"
 hide = true
-run = "npm --prefix map run codegen"
+run = "vp -C map run codegen"
 
 [tasks."internal:embed:manifest"]
 description = "Refresh the crate-local Python SDK copy embedded in crystal-cli packages"
@@ -932,8 +935,8 @@ run = '''
 #!/usr/bin/env bash
 set -eu
 
-npm --prefix map ci
-VITE_DEBUG=false VITE_GRAPHQL_ENDPOINT=/graphql VITE_SCRYR_AUTH_MODE=local npm --prefix map run build
+vp -C map install --frozen-lockfile
+VITE_DEBUG=false VITE_GRAPHQL_ENDPOINT=/graphql VITE_SCRYR_AUTH_MODE=local vp -C map run build
 
 rm -rf crystal/crystal-server/static/map
 mkdir -p crystal/crystal-server/static/map
@@ -1146,12 +1149,11 @@ def main():
             require("CLOUD_GRAPHQL_URL")
             env["VITE_GRAPHQL_ENDPOINT"] = os.environ["CLOUD_GRAPHQL_URL"]
         cmd = [
-            "npm",
-            "--prefix",
+            "vp",
+            "-C",
             "map",
             "run",
             "dev",
-            "--",
             "--host",
             "127.0.0.1",
             "--strictPort",
@@ -1292,8 +1294,8 @@ def main(action):
         env = cloud_ui_env()
         if action == "embed":
             env["VITE_GRAPHQL_ENDPOINT"] = "/graphql"
-        run("npm", "--prefix", "map", "ci")
-        run("npm", "--prefix", "map", "run", "build", env=env)
+        run("vp", "-C", "map", "install", "--frozen-lockfile")
+        run("vp", "-C", "map", "run", "build", env=env)
         if action == "embed":
             destination = ROOT / "crystal/crystal-server/static/map"
             shutil.rmtree(destination)

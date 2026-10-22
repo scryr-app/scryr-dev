@@ -1,7 +1,4 @@
-import type {
-	ManifestDocument,
-	ManifestEnvelope,
-} from "@/graphql/manifestDocument";
+import type { ManifestDocument, ManifestEnvelope } from "@/graphql/manifestDocument";
 
 export type PythonRunResult = { envelope: ManifestEnvelope; stdout: string };
 

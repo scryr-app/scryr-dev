@@ -1,10 +1,7 @@
 import { FileCode2, Folder, Layers } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { isLocalAuthMode } from "@/auth/env";
-import {
-	type GetScryrMapsQuery,
-	useGetScryrMapsQuery,
-} from "@/graphql/generated";
+import { type GetScryrMapsQuery, useGetScryrMapsQuery } from "@/graphql/generated";
 import {
 	getMapLabel,
 	mapSelectionStore,
@@ -24,12 +21,8 @@ type ScryrMapOption = GetScryrMapsQuery["scryrMaps"][number];
 const DIAGRAM_SEARCH_PARAM = "diagram";
 
 function diagramGroup(map: ScryrMapOption): string {
-	const folder = map.folderPath
-		.trim()
-		.replaceAll("\\", "/")
-		.replace(/\/+$/, "");
-	return !isLocalAuthMode &&
-		/^(?:manifest\/)?tests\/samples\/[^/]+$/.test(folder)
+	const folder = map.folderPath.trim().replaceAll("\\", "/").replace(/\/+$/, "");
+	return !isLocalAuthMode && /^(?:manifest\/)?tests\/samples\/[^/]+$/.test(folder)
 		? "Samples"
 		: map.folderPath.trim();
 }
@@ -111,16 +104,12 @@ function fallbackDisplayLabel(key: string): string {
 
 function fallbackTitle(key: string): string {
 	const sourceLabel = fallbackSourceLabel(key);
-	return sourceLabel
-		? `${fallbackDisplayLabel(key)} - ${sourceLabel}`
-		: fallbackDisplayLabel(key);
+	return sourceLabel ? `${fallbackDisplayLabel(key)} - ${sourceLabel}` : fallbackDisplayLabel(key);
 }
 
 function scryrMapTitle(map: ScryrMapOption): string {
 	const sourceLabel = diagramSourceLabel(map);
-	return sourceLabel
-		? `${diagramDisplayName(map)} - ${sourceLabel}`
-		: diagramDisplayName(map);
+	return sourceLabel ? `${diagramDisplayName(map)} - ${sourceLabel}` : diagramDisplayName(map);
 }
 
 function visibleMapLabels(map: ScryrMapOption | { id: null; key: string }): {
@@ -143,10 +132,7 @@ function visibleMapLabels(map: ScryrMapOption | { id: null; key: string }): {
 	};
 }
 
-function selectedMapTitle(
-	map: ScryrMapOption | undefined,
-	fallbackKey: string,
-): string {
+function selectedMapTitle(map: ScryrMapOption | undefined, fallbackKey: string): string {
 	if (map) {
 		return scryrMapTitle(map);
 	}
@@ -174,21 +160,14 @@ export function DiagramButton({ className = "" }: Props) {
 			return;
 		}
 
-		if (
-			current.id &&
-			maps.some((map) => selectedMapFromScryrMap(map).id === current.id)
-		) {
+		if (current.id && maps.some((map) => selectedMapFromScryrMap(map).id === current.id)) {
 			return;
 		}
 
 		const matchingMap =
 			maps.find((map) => map.key === current.key) ??
 			(!isLocalAuthMode
-				? maps.find(
-						(map) =>
-							diagramGroup(map) === "Samples" &&
-							map.name === "MERN Customer Path",
-					)
+				? maps.find((map) => diagramGroup(map) === "Samples" && map.name === "MERN Customer Path")
 				: undefined) ??
 			maps.at(0);
 		if (!matchingMap) {
@@ -230,9 +209,7 @@ export function DiagramButton({ className = "" }: Props) {
 		const selectedScryrMap = maps.find((scryrMap) =>
 			selectedMapEquals(selectedMapFromScryrMap(scryrMap), map),
 		);
-		updateDiagramParam(
-			selectedScryrMap ? diagramUrlValue(selectedScryrMap) : map.key,
-		);
+		updateDiagramParam(selectedScryrMap ? diagramUrlValue(selectedScryrMap) : map.key);
 		setOpen(false);
 	}
 
@@ -247,9 +224,7 @@ export function DiagramButton({ className = "" }: Props) {
 	const orderedGroups = Array.from(mapsByGroup.entries()).sort(
 		([left], [right]) => Number(Boolean(left)) - Number(Boolean(right)),
 	);
-	const currentMap = maps.find((map) =>
-		selectedMapEquals(selectedMapFromScryrMap(map), current),
-	);
+	const currentMap = maps.find((map) => selectedMapEquals(selectedMapFromScryrMap(map), current));
 	const currentLabels = currentMap
 		? visibleMapLabels(currentMap)
 		: visibleMapLabels({ id: null, key: current.key });
@@ -269,19 +244,14 @@ export function DiagramButton({ className = "" }: Props) {
 				<span className={styles.triggerLabels}>
 					<span className={styles.triggerPrimary}>{currentLabels.primary}</span>
 					{currentLabels.secondary && (
-						<span className={styles.triggerSecondary}>
-							{currentLabels.secondary}
-						</span>
+						<span className={styles.triggerSecondary}>{currentLabels.secondary}</span>
 					)}
 				</span>
 			</button>
 
 			{/* Dropdown panel */}
 			{open && (
-				<div
-					className={styles.panel}
-					style={{ background: "rgba(0,0,0,0.88)" }}
-				>
+				<div className={styles.panel} style={{ background: "rgba(0,0,0,0.88)" }}>
 					{mapsQuery.isLoading && (
 						<div className={styles.loading}>
 							<Loading />
@@ -301,8 +271,7 @@ export function DiagramButton({ className = "" }: Props) {
 								)}
 								{groupMaps.map((map) => {
 									const isSelected =
-										(map.id && map.id === current.id) ||
-										(!current.id && map.key === current.key);
+										(map.id && map.id === current.id) || (!current.id && map.key === current.key);
 									const labels = visibleMapLabels(map);
 
 									return (
@@ -317,20 +286,12 @@ export function DiagramButton({ className = "" }: Props) {
 												className={`${styles.optionContent} ${groupName ? styles.groupedOption : ""}`}
 											>
 												<span className={styles.sourceIconContainer}>
-													<FileCode2
-														size={16}
-														className={styles.sourceIcon}
-														aria-hidden="true"
-													/>
+													<FileCode2 size={16} className={styles.sourceIcon} aria-hidden="true" />
 												</span>
 												<span className={styles.optionLabels}>
-													<span className={styles.optionPrimary}>
-														{labels.primary}
-													</span>
+													<span className={styles.optionPrimary}>{labels.primary}</span>
 													{labels.secondary && (
-														<span className={styles.optionSecondary}>
-															{labels.secondary}
-														</span>
+														<span className={styles.optionSecondary}>{labels.secondary}</span>
 													)}
 												</span>
 											</div>

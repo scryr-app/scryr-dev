@@ -288,8 +288,7 @@ export const LogosDictionary: Record<string, LogoMetadata> = {
 	fargate: {
 		iconFile: "aws.svg",
 		label: "AWS Fargate",
-		docUrl:
-			"https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html",
+		docUrl: "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html",
 	},
 	firebase: {
 		iconFile: "firebase.svg",

@@ -14,9 +14,7 @@ export const DEFAULT_FOCUS_VIEWPORT: FocusViewport = {
 };
 
 /** Find free canvas space around floating editor/toolbar panels at focus time. */
-export function getFocusViewport(
-	canvas: HTMLElement | null | undefined,
-): FocusViewport {
+export function getFocusViewport(canvas: HTMLElement | null | undefined): FocusViewport {
 	if (!canvas) return DEFAULT_FOCUS_VIEWPORT;
 	const bounds = canvas.getBoundingClientRect();
 	if (bounds.width <= 0 || bounds.height <= 0) return DEFAULT_FOCUS_VIEWPORT;
@@ -48,9 +46,7 @@ export function getFocusViewport(
 		});
 	}
 	const [region] = regions.sort(
-		(a, b) =>
-			(b.right - b.left) * (b.bottom - b.top) -
-			(a.right - a.left) * (a.bottom - a.top),
+		(a, b) => (b.right - b.left) * (b.bottom - b.top) - (a.right - a.left) * (a.bottom - a.top),
 	);
 	if (!region) return DEFAULT_FOCUS_VIEWPORT;
 	const marginX = (region.right - region.left) * 0.09;

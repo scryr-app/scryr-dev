@@ -9,10 +9,7 @@ export interface MapLayoutState {
 	layoutError: Error | null;
 }
 
-export function useMapLayout(
-	blocks: Block[],
-	view: LayoutView,
-): MapLayoutState {
+export function useMapLayout(blocks: Block[], view: LayoutView): MapLayoutState {
 	const [state, setState] = useState<MapLayoutState>({
 		layout: null,
 		layoutView: null,
@@ -43,8 +40,7 @@ export function useMapLayout(
 		if (requestBlocks.length > 0) {
 			layoutBlocksForView(requestBlocks, requestView, () => isCurrent)
 				.then((layout) => {
-					if (isCurrent)
-						setState({ layout, layoutView: requestView, layoutError: null });
+					if (isCurrent) setState({ layout, layoutView: requestView, layoutError: null });
 				})
 				.catch((err) => {
 					if (isCurrent) {

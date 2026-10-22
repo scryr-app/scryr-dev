@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, expect, it, vi } from "vite-plus/test";
 import { MapTray } from "./MapTray";
 import { MapTrayProvider } from "./MapTrayContext";
 
@@ -46,14 +46,7 @@ it("offers only Info and Diagrams card categories", () => {
 	const diagrams = screen.getByRole("button", { name: "Diagrams" });
 	fireEvent.click(diagrams);
 	expect(diagrams.getAttribute("aria-pressed")).toBe("true");
-	for (const name of [
-		"GitHub",
-		"Metrics",
-		"CI/CD",
-		"Tests",
-		"Dependencies",
-		"Performance",
-	]) {
+	for (const name of ["GitHub", "Metrics", "CI/CD", "Tests", "Dependencies", "Performance"]) {
 		expect(screen.queryByRole("button", { name })).toBeNull();
 	}
 });

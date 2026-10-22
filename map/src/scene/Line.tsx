@@ -45,11 +45,7 @@ export function Line({
 		start[2] ? start[1] : 0,
 		start[2] ? start[2] : start[1],
 	);
-	const endPos = new THREE.Vector3(
-		end[0],
-		end[2] ? end[1] : 0,
-		end[2] ? end[2] : end[1],
-	);
+	const endPos = new THREE.Vector3(end[0], end[2] ? end[1] : 0, end[2] ? end[2] : end[1]);
 
 	// Calculate direction and length
 	const direction = endPos.clone().sub(startPos);
@@ -59,14 +55,8 @@ export function Line({
 	// Calculate rotation to align cylinder (built along +Y) with the direction vector
 	const quaternion = new THREE.Quaternion();
 	if (length > 1e-6) {
-		const lookAtMatrix = new THREE.Matrix4().lookAt(
-			startPos,
-			endPos,
-			new THREE.Vector3(0, 1, 0),
-		);
-		const lookAtQuaternion = new THREE.Quaternion().setFromRotationMatrix(
-			lookAtMatrix,
-		);
+		const lookAtMatrix = new THREE.Matrix4().lookAt(startPos, endPos, new THREE.Vector3(0, 1, 0));
+		const lookAtQuaternion = new THREE.Quaternion().setFromRotationMatrix(lookAtMatrix);
 		const alignYAxis = new THREE.Quaternion().setFromAxisAngle(
 			new THREE.Vector3(1, 0, 0),
 			-Math.PI / 2,
@@ -77,24 +67,11 @@ export function Line({
 	// Rotate only the text: 90° upward in line space, then by the line's conjugate
 	const textQuaternion = quaternion
 		.clone()
-		.multiply(
-			new THREE.Quaternion().setFromAxisAngle(
-				new THREE.Vector3(1, 0, 0),
-				Math.PI / 2,
-			),
-		)
-		.multiply(
-			new THREE.Quaternion().setFromAxisAngle(
-				new THREE.Vector3(0, 1, 0),
-				Math.PI / 2,
-			),
-		);
+		.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 2))
+		.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2));
 
 	return (
-		<group
-			ref={groupRef}
-			position={midpoint.toArray() as [number, number, number]}
-		>
+		<group ref={groupRef} position={midpoint.toArray() as [number, number, number]}>
 			{/* 3D cylinder line */}
 			<mesh quaternion={quaternion}>
 				<cylinderGeometry args={[thickness / 2, thickness / 2, length, 16]} />
@@ -107,9 +84,7 @@ export function Line({
 			{/* A restrained halo follows the actual connection path. */}
 			{connections.haloOpacity > 0 && (
 				<mesh quaternion={quaternion} raycast={() => {}}>
-					<cylinderGeometry
-						args={[thickness * 1.8, thickness * 1.8, length, 12]}
-					/>
+					<cylinderGeometry args={[thickness * 1.8, thickness * 1.8, length, 12]} />
 					<meshBasicMaterial
 						color={color}
 						transparent

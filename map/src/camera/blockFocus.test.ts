@@ -1,5 +1,5 @@
 import { Box3, PerspectiveCamera, Ray, Vector3 } from "three";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import * as appearances from "@/theme/appearance";
 import { type FocusBlock, getBlockFocus } from "./blockFocus";
 import { DEFAULT_FOCUS_VIEWPORT, type FocusViewport } from "./focusViewport";
@@ -30,11 +30,7 @@ function expectFullCard(camera: PerspectiveCamera, viewport: FocusViewport) {
 	const [x, y, z] = block.position;
 	for (const dx of [-block.width / 2, block.width / 2]) {
 		for (const dy of [-block.height / 2, block.height / 2]) {
-			const point = new Vector3(
-				x + dx,
-				y + dy,
-				z + block.depth / 2 + 0.076,
-			).project(camera);
+			const point = new Vector3(x + dx, y + dy, z + block.depth / 2 + 0.076).project(camera);
 			expect(point.x).toBeGreaterThanOrEqual(viewport.minX);
 			expect(point.x).toBeLessThanOrEqual(viewport.maxX);
 			expect(point.y).toBeGreaterThanOrEqual(viewport.minY);
@@ -50,22 +46,11 @@ function expectUnobstructed(camera: PerspectiveCamera, blockers: FocusBlock[]) {
 	// Independent dense segment sampling across the actual card surface.
 	for (let ix = 0; ix <= 10; ix++) {
 		for (let iy = 0; iy <= 10; iy++) {
-			const target = new Vector3(
-				x + (ix / 10 - 0.5) * 2.8,
-				y + (iy / 10 - 0.5) * 1.8,
-				z + 0.576,
-			);
-			const ray = new Ray(
-				camera.position,
-				target.clone().sub(camera.position).normalize(),
-			);
+			const target = new Vector3(x + (ix / 10 - 0.5) * 2.8, y + (iy / 10 - 0.5) * 1.8, z + 0.576);
+			const ray = new Ray(camera.position, target.clone().sub(camera.position).normalize());
 			for (const blocker of blockers) {
 				const center = new Vector3(...blocker.position);
-				const half = new Vector3(
-					blocker.width / 2,
-					blocker.height / 2,
-					blocker.depth / 2,
-				);
+				const half = new Vector3(blocker.width / 2, blocker.height / 2, blocker.depth / 2);
 				const hit = ray.intersectBox(
 					new Box3(center.clone().sub(half), center.clone().add(half)),
 					new Vector3(),
@@ -80,30 +65,22 @@ function expectUnobstructed(camera: PerspectiveCamera, blockers: FocusBlock[]) {
 }
 
 describe("individual block focus", () => {
-	it.each(Object.entries(appearances))(
-		"frames the full card for %s",
-		(_name, appearance) => {
-			for (const aspect of [16 / 9, 9 / 16, 0.35]) {
-				for (const zoom of [1, 2]) {
-					const camera = new PerspectiveCamera(
-						appearance.view.fov,
-						aspect,
-						0.1,
-						1000,
-					);
-					camera.zoom = zoom;
-					camera.updateProjectionMatrix();
-					const focus = focusedCamera(camera);
-					expect(focus.obstructionCount).toBe(0);
-					expectFullCard(camera, DEFAULT_FOCUS_VIEWPORT);
-					const offset = camera.position.clone().sub(focus.target);
-					expect(Math.acos(offset.y / offset.length())).toBeLessThanOrEqual(
-						Math.PI / 2 - Math.PI / 18,
-					);
-				}
+	it.each(Object.entries(appearances))("frames the full card for %s", (_name, appearance) => {
+		for (const aspect of [16 / 9, 9 / 16, 0.35]) {
+			for (const zoom of [1, 2]) {
+				const camera = new PerspectiveCamera(appearance.view.fov, aspect, 0.1, 1000);
+				camera.zoom = zoom;
+				camera.updateProjectionMatrix();
+				const focus = focusedCamera(camera);
+				expect(focus.obstructionCount).toBe(0);
+				expectFullCard(camera, DEFAULT_FOCUS_VIEWPORT);
+				const offset = camera.position.clone().sub(focus.target);
+				expect(Math.acos(offset.y / offset.length())).toBeLessThanOrEqual(
+					Math.PI / 2 - Math.PI / 18,
+				);
 			}
-		},
-	);
+		}
+	});
 
 	it.each([
 		{ id: "front", position: [4, 1.2, 0], width: 3, height: 2, depth: 1 },
@@ -158,9 +135,7 @@ describe("individual block focus", () => {
 			depth: 1,
 		};
 		const focus = focusedCamera(camera, [blocker], viewport);
-		expect(camera.position.z).toBeGreaterThan(
-			block.position[2] + block.depth / 2 + 0.1,
-		);
+		expect(camera.position.z).toBeGreaterThan(block.position[2] + block.depth / 2 + 0.1);
 		expect(focus.obstructionCount).toBe(0);
 		expectFullCard(camera, viewport);
 		expectUnobstructed(camera, [blocker]);

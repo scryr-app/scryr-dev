@@ -57,10 +57,7 @@ export function AuthenticatedSession({ children }: AuthenticatedSessionProps) {
 
 	if (!isLoaded) {
 		return (
-			<div
-				className={styles.loadingScreen}
-				style={{ background: theme.background }}
-			>
+			<div className={styles.loadingScreen} style={{ background: theme.background }}>
 				<div className={styles.spinner} />
 			</div>
 		);
@@ -68,10 +65,7 @@ export function AuthenticatedSession({ children }: AuthenticatedSessionProps) {
 
 	if (!orgId) {
 		return (
-			<div
-				className={styles.organizationScreen}
-				style={{ background: theme.background }}
-			>
+			<div className={styles.organizationScreen} style={{ background: theme.background }}>
 				<div className={styles.accountPosition}>
 					<AccountButton />
 				</div>

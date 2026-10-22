@@ -2,7 +2,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vite-plus/test";
 import type { ManifestDocument } from "./manifestDocument";
 
 const mocks = vi.hoisted(() => ({
@@ -22,11 +22,7 @@ vi.mock("./client", () => ({ graphqlFetcher: () => mocks.blocks }));
 import { mapSelectionStore } from "./sampleStore";
 import { useManifestEditor } from "./useManifestEditor";
 
-const document = (
-	revision = "one",
-	code = "original",
-	writable = true,
-): ManifestDocument => ({
+const document = (revision = "one", code = "original", writable = true): ManifestDocument => ({
 	identifier: "main",
 	key: "main",
 	folderPath: "project",
@@ -116,9 +112,7 @@ it("retains separate drafts when switching source documents", async () => {
 	await waitFor(() => expect(hook.result.current.code).toBe("original"));
 	act(() => hook.result.current.setCode("main draft"));
 	act(() => mapSelectionStore.set({ id: "other", key: "other" }));
-	await waitFor(() =>
-		expect(hook.result.current.doc?.identifier).toBe("other"),
-	);
+	await waitFor(() => expect(hook.result.current.doc?.identifier).toBe("other"));
 	expect(hook.result.current.code).toBe("original");
 	act(() => hook.result.current.setCode("other draft"));
 	act(() => mapSelectionStore.set({ id: "main", key: "main" }));

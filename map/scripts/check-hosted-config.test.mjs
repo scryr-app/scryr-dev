@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import test from "node:test";
+import { test } from "vite-plus/test";
 import { checkHostedConfig } from "./check-hosted-config.mjs";
 
 const hosted = {
@@ -19,12 +19,18 @@ test("properly configured hosted builds pass", () => {
 
 test("hosted builds reject missing or local authentication", () => {
 	for (const mode of [undefined, "local", ""]) {
-		assert.throws(() => checkHostedConfig({ ...hosted, VITE_SCRYR_AUTH_MODE: mode }), /AUTH_MODE=clerk/);
+		assert.throws(
+			() => checkHostedConfig({ ...hosted, VITE_SCRYR_AUTH_MODE: mode }),
+			/AUTH_MODE=clerk/,
+		);
 	}
 });
 
 test("hosted builds require a publishable key and HTTPS API", () => {
-	assert.throws(() => checkHostedConfig({ ...hosted, VITE_CLERK_PUBLISHABLE_KEY: "" }), /PUBLISHABLE_KEY/);
+	assert.throws(
+		() => checkHostedConfig({ ...hosted, VITE_CLERK_PUBLISHABLE_KEY: "" }),
+		/PUBLISHABLE_KEY/,
+	);
 	for (const endpoint of [undefined, "/graphql", "http://localhost:8000/graphql"]) {
 		assert.throws(() => checkHostedConfig({ ...hosted, VITE_GRAPHQL_ENDPOINT: endpoint }), /HTTPS/);
 	}
