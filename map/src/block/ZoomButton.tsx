@@ -1,6 +1,7 @@
 import { RoundedBox } from "@react-three/drei/core/RoundedBox";
 import { useState } from "react";
-import { cameraStore } from "@/camera";
+import { getFocusCardId, useCardFocus } from "@/cards/CardFocusContext";
+import { useMapTray } from "@/cards/MapTrayContext";
 import { currentTheme } from "@/theme/theme";
 
 interface ZoomButtonProps {
@@ -16,12 +17,13 @@ interface ZoomButtonProps {
 export function ZoomButton({
 	blockId,
 	isVisible,
-	blockPosition,
 	blockWidth,
 	blockHeight,
 	blockDepth,
 	onSelectBlock,
 }: ZoomButtonProps) {
+	const { cards, focusCard } = useCardFocus();
+	const { getActiveCardIndex } = useMapTray();
 	const [isHovered, setIsHovered] = useState(false);
 	const color = currentTheme.isDarkDiagram ? "#ffffff" : "#0f172a";
 	const opacity = isVisible ? (isHovered ? 1 : 0.8) : 0;
@@ -32,13 +34,15 @@ export function ZoomButton({
 
 	const focusBlock = () => {
 		onSelectBlock();
-		cameraStore.focusBlock({
-			id: blockId,
-			position: blockPosition,
-			width: blockWidth,
-			height: blockHeight,
-			depth: blockDepth,
-		});
+		if (!blockId) return;
+		const requestedId = getFocusCardId(
+			blockId,
+			getActiveCardIndex(blockId) ?? 0,
+		);
+		const target =
+			cards.find((card) => card.id === requestedId) ??
+			cards.find((card) => card.blockId === blockId);
+		if (target) focusCard(target.id);
 	};
 
 	return (

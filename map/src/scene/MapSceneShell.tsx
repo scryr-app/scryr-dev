@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { useState } from "react";
+import { CardFocusView } from "@/cards/CardFocusView";
 import { MapTray } from "@/cards/MapTray";
 import { MapTrayProvider } from "@/cards/MapTrayContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -61,6 +62,7 @@ export function MapSceneShell({ header }: MapSceneShellProps) {
 					</ErrorBoundary>
 				</div>
 			</div>
+			<CardFocusView />
 		</MapTrayProvider>
 	);
 }

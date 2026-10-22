@@ -124,6 +124,19 @@ The Pyodide console follows each theme with coordinated syntax colors and surfac
 
 Drag the console’s top bar to reposition it. Its controls remain clickable, and dragging and resizing keep the panel within the viewport.
 
+## Card focus
+
+Click a block's top focus control, or select its card and use **Focus selected
+card** in the bottom toolbar. Focus mode opens that card alone with full,
+selectable text. The diagram and editor stay mounted behind the reading view.
+
+Use **Add card** to search block names and card types and build a comparison.
+Cards form a responsive grid with scrollable content instead of shrinking text.
+Each card can be removed or temporarily expanded; **Back to group** restores the
+comparison. Escape closes the picker first, then an expanded card, then Focus
+mode. **Back to diagram** closes Focus mode immediately. Opening focus again
+starts with one card. Changing diagrams clears the comparison.
+
 ## UI styles
 
 DOM components use colocated `*.module.css` files imported as `styles`. Keep

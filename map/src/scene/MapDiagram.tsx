@@ -10,6 +10,7 @@ import type {
 } from "three";
 import type { OrbitControls as OrbitControlsType } from "three-stdlib";
 import { cameraStore } from "@/camera";
+import { useCardFocus } from "@/cards/CardFocusContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { currentTheme } from "@/theme/theme";
 import styles from "./MapDiagram.module.css";
@@ -42,6 +43,8 @@ function MovingThemeLight() {
 }
 
 export function MapDiagram() {
+	const { focusedIds } = useCardFocus();
+	const isFocused = focusedIds.length > 0;
 	const { lighting, view } = currentTheme.appearance;
 	const cameraRef = useRef<PerspectiveCameraType>(null);
 
@@ -56,6 +59,7 @@ export function MapDiagram() {
 		>
 			<DiagramSurface
 				shadows="percentage"
+				frameloop={isFocused ? "never" : "always"}
 				gl={{
 					preserveDrawingBuffer: true,
 					localClippingEnabled: true,
@@ -108,6 +112,7 @@ export function MapDiagram() {
 				<MovingThemeLight />
 				<MapDisplay />
 				<OrbitControls
+					enabled={!isFocused}
 					makeDefault
 					ref={handleControlsMount}
 					target={[0, 0, 0]}

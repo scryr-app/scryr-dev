@@ -5,6 +5,7 @@ import {
 	useContext,
 	useState,
 } from "react";
+import { CardFocusProvider } from "./CardFocusContext";
 
 interface SelectedBlockState {
 	name: string;
@@ -82,20 +83,22 @@ export function MapTrayProvider({ children }: { children: ReactNode }) {
 	};
 
 	return (
-		<MapTrayContext.Provider
-			value={{
-				activeCardIndex,
-				toggleCard,
-				getActiveCardIndex,
-				selectCardForBlock,
-				previewCardForBlock,
-				clearCardPreview,
-				selectedBlock,
-				selectBlock,
-			}}
-		>
-			{children}
-		</MapTrayContext.Provider>
+		<CardFocusProvider>
+			<MapTrayContext.Provider
+				value={{
+					activeCardIndex,
+					toggleCard,
+					getActiveCardIndex,
+					selectCardForBlock,
+					previewCardForBlock,
+					clearCardPreview,
+					selectedBlock,
+					selectBlock,
+				}}
+			>
+				{children}
+			</MapTrayContext.Provider>
+		</CardFocusProvider>
 	);
 }
 

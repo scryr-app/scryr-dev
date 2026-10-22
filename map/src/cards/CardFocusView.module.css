@@ -1,0 +1,207 @@
+.dialog {
+	position: fixed;
+	inset: 0;
+	width: 100vw;
+	height: 100dvh;
+	max-width: none;
+	max-height: none;
+	margin: 0;
+	padding: 0;
+	background: var(--background);
+	color: var(--foreground);
+	overflow: hidden;
+}
+.dialog[open] {
+	display: flex;
+	flex-direction: column;
+}
+.dialog::backdrop {
+	background: var(--background);
+}
+.dialog button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	padding: 0.6rem 0.8rem;
+	border-radius: var(--radius);
+	cursor: pointer;
+}
+.dialog button:hover {
+	background: var(--accent);
+}
+.dialog button:focus-visible,
+.dialog input:focus-visible {
+	outline: 2px solid var(--foreground);
+	outline-offset: 2px;
+}
+.toolbar {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	padding: 0.75rem 1.25rem;
+	border-bottom: 1px solid var(--border);
+}
+.title {
+	display: flex;
+	align-items: baseline;
+	flex: 1;
+	gap: 0.75rem;
+	padding-inline: 0.5rem;
+}
+.title h2 {
+	font-weight: 650;
+}
+.title span,
+.hint {
+	color: var(--muted-foreground);
+	font-size: 0.85rem;
+}
+.stage {
+	position: relative;
+	flex: 1;
+	min-height: 0;
+	overflow: hidden;
+}
+.canvas {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+}
+.grid {
+	position: absolute;
+	inset: 0;
+	overflow: auto;
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 28rem), 1fr));
+	grid-auto-rows: minmax(28rem, 1fr);
+	align-content: stretch;
+	gap: 1.5rem;
+	padding: 2rem;
+}
+.grid[data-single="true"] {
+	grid-template-columns: minmax(0, 72rem);
+	justify-content: center;
+	padding-inline: max(1.5rem, 8vw);
+}
+.card {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	min-height: 0;
+	background: var(--card);
+	color: var(--card-foreground);
+	border: 1px solid var(--border);
+	border-top: 4px solid transparent;
+	border-radius: var(--radius);
+	box-shadow: 0 12px 30px rgb(0 0 0 / 12%);
+	background-clip: padding-box;
+}
+.cardHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+	padding: 1rem 1.25rem;
+	border-bottom: 1px solid var(--border);
+}
+.cardHeader h3 {
+	font-size: 1.2rem;
+	font-weight: 650;
+	overflow-wrap: anywhere;
+}
+.cardType {
+	display: block;
+	margin-top: 0.15rem;
+	font-size: 0.85rem;
+	font-weight: 400;
+	color: var(--muted-foreground);
+}
+.cardActions {
+	display: flex;
+	flex-shrink: 0;
+}
+.reading {
+	flex: 1;
+	min-height: 0;
+	overflow: auto;
+	padding: clamp(1rem, 2.5vw, 2rem);
+	font-size: 1.1rem;
+	line-height: 1.65;
+	overflow-wrap: anywhere;
+}
+.hint {
+	text-align: center;
+	padding: 0.65rem 1rem;
+}
+.picker {
+	display: flex;
+	flex-direction: column;
+	max-height: calc(100dvh - 6rem);
+	min-height: 0;
+	overflow: auto;
+	position: absolute;
+	z-index: 2;
+	top: 5rem;
+	right: 1.25rem;
+	width: min(26rem, calc(100vw - 2.5rem));
+	padding: 1rem;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--popover);
+	color: var(--popover-foreground);
+	box-shadow: 0 12px 40px rgb(0 0 0 / 20%);
+}
+.searchRow {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+.searchRow label {
+	font-weight: 600;
+}
+.picker input {
+	flex-shrink: 0;
+	width: 100%;
+	padding: 0.65rem 0.75rem;
+	border: 1px solid var(--input);
+	border-radius: var(--radius);
+	margin-block: 0.5rem;
+}
+.picker ul {
+	min-height: 0;
+	flex: 1 1 auto;
+	max-height: min(50dvh, 24rem);
+	overflow: auto;
+}
+.picker li button {
+	width: 100%;
+	justify-content: flex-start;
+	text-align: left;
+}
+.picker p {
+	padding: 0.75rem;
+	color: var(--muted-foreground);
+}
+@media (max-width: 600px) {
+	.toolbar {
+		padding: 0.5rem;
+		font-size: 0.85rem;
+	}
+	.title {
+		display: none;
+	}
+	.grid,
+	.grid[data-single="true"] {
+		padding: 1rem;
+		gap: 1rem;
+	}
+	.cardHeader {
+		padding: 0.75rem;
+	}
+	.hint {
+		font-size: 0.75rem;
+	}
+}

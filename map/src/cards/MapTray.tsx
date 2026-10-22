@@ -11,6 +11,7 @@ import {
 	Info,
 	Layers,
 	Map as MapIcon,
+	Maximize2,
 	Minus,
 	Palette,
 	PencilLine,
@@ -21,6 +22,7 @@ import { cameraStore } from "@/camera";
 import { Button } from "@/components/button";
 import { ThemeOptions } from "@/theme/ThemeSwitcher";
 import { cn } from "@/utils";
+import { getFocusCardId, useCardFocus } from "./CardFocusContext";
 import styles from "./MapTray.module.css";
 import { useMapTray } from "./MapTrayContext";
 
@@ -68,7 +70,18 @@ interface MapTrayProps {
 }
 
 export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
-	const { activeCardIndex, toggleCard } = useMapTray();
+	const { activeCardIndex, toggleCard, selectedBlock, getActiveCardIndex } =
+		useMapTray();
+	const { cards, focusCard } = useCardFocus();
+	const selectedCardId = selectedBlock
+		? getFocusCardId(
+				selectedBlock.name,
+				getActiveCardIndex(selectedBlock.name) ?? 0,
+			)
+		: null;
+	const focusTarget =
+		cards.find((card) => card.id === selectedCardId) ??
+		cards.find((card) => card.blockId === selectedBlock?.name);
 	const [themeOpen, setThemeOpen] = useState(false);
 	const [viewMenuOpen, setViewMenuOpen] = useState(false);
 	const [viewMode, setViewMode] = useState<"top-down" | "isometric" | null>(
@@ -426,6 +439,24 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 					</div>
 				))}
 
+				<Button
+					type="button"
+					variant="ghost"
+					size="icon"
+					className={styles.trayButton}
+					aria-label="Focus selected card"
+					title={
+						focusTarget
+							? "Focus selected card"
+							: "Select a block to focus its card"
+					}
+					disabled={!focusTarget}
+					onClick={() => {
+						if (focusTarget) focusCard(focusTarget.id);
+					}}
+				>
+					<Maximize2 size={18} />
+				</Button>
 				{/* Divider between card diagrams and the editor */}
 				<div className={styles.divider} />
 
