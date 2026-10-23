@@ -1,9 +1,10 @@
 import { Text } from "@react-three/drei/core/Text";
 import { Html } from "@react-three/drei/web/Html";
 import { useThree } from "@react-three/fiber";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Block } from "@/block";
 import { CameraController } from "@/camera";
+import { getFocusCardId, useCardFocus } from "@/cards/CardFocusContext";
 import { Loading } from "@/components/Loading";
 import type { GetBlocksQuery } from "@/graphql/generated";
 import { useSelectedMap } from "@/graphql/sampleStore";
@@ -152,6 +153,37 @@ function MapBlocks({ blocks, layout }: MapBlocksProps) {
 		return tagsByBlockName;
 	}, [layout.groups]);
 
+	const { registerCards } = useCardFocus();
+	const focusCards = useMemo(
+		() =>
+			blocks.flatMap((block, index) => {
+				const blockId = block.name ?? "";
+				if (!nodeById.has(blockId)) return [];
+				const diagrams = diagramTagsByBlockName.get(blockId) ?? [];
+				const color = currentTheme.getColorByIndex(index);
+				return [
+					{
+						id: getFocusCardId(blockId, 0),
+						blockId,
+						label: "Info",
+						color,
+					},
+					...(diagrams.length
+						? [
+								{
+									id: getFocusCardId(blockId, 1),
+									blockId,
+									label: "Diagrams",
+									color,
+								},
+							]
+						: []),
+				];
+			}),
+		[blocks, nodeById, diagramTagsByBlockName],
+	);
+	useEffect(() => registerCards(focusCards), [focusCards, registerCards]);
+
 	return (
 		<>
 			{blocks.map((block, index) => {
@@ -207,6 +239,10 @@ export function MapDisplay() {
 	const aspect = size.width / Math.max(1, size.height);
 	const view = useMemo(() => ({ ...currentTheme.appearance.view, aspect }), [aspect]);
 	const { layout, layoutError, layoutView } = useMapLayout(blocks, view);
+	const { registerCards } = useCardFocus();
+	useEffect(() => {
+		if (error || layoutError || (!isLoading && blocks.length === 0)) registerCards([]);
+	}, [error, layoutError, isLoading, blocks.length, registerCards]);
 
 	if (error) {
 		console.error("Error fetching blocks:", error);

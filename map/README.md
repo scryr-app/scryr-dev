@@ -133,6 +133,22 @@ The Pyodide console follows each theme with coordinated syntax colors and surfac
 
 Drag the console’s top bar to reposition it. Its controls remain clickable, and dragging and resizing keep the panel within the viewport.
 
+## Card focus
+
+Click a block's top focus control, or click **Enlarge Card** and then choose a
+subtly highlighted card or slot tab. Escape or clicking **Enlarge Card** again
+cancels selection. The actual 3D card moves toward the camera, turns
+face-on, and enlarges to fit most of the canvas while preserving its proportions.
+The surrounding diagram stays visible behind it around the edges. Camera
+navigation is paused while reading; the camera itself does not move.
+
+Use **Add card** to search block names and card types and arrange more cards in
+the foreground. Remove a card to return it to its block, or temporarily expand
+one and use **Back to group** to restore the comparison. Escape closes the picker
+first, then an expanded card, then Focus mode. **Back to diagram** returns all
+cards to their original slots. The editor and normal toolbar reappear with their
+previous state. Opening focus again starts with one card.
+
 ## UI styles
 
 DOM components use colocated `*.module.css` files imported as `styles`. Keep

@@ -1,4 +1,5 @@
 import { isValidElement, type ReactNode, useEffect, useState } from "react";
+import { getFocusCardId, useCardFocus } from "@/cards/CardFocusContext";
 import type { CardSlotConfig } from "@/cards";
 import { CardSlot, getCardLayout } from "@/cards";
 import { useMapTray } from "@/cards/MapTrayContext";
@@ -39,6 +40,7 @@ export function CardSlots({
 	activeCardIndex,
 	onCardSelect,
 }: CardSlotsProps) {
+	const { isSelecting, focusCard } = useCardFocus();
 	const { previewCardForBlock, clearCardPreview } = useMapTray();
 	const cardLayout = getCardLayout(cards);
 	const [hoveredSlotIndex, setHoveredSlotIndex] = useState<number | null>(null);
@@ -112,13 +114,20 @@ export function CardSlots({
 							position={[blockHalfWidth + 0.035, 0, cardConfig.zOffset]}
 							onClick={(event) => {
 								event.stopPropagation();
-								onCardSelect(index);
+								if (isSelecting) focusCard(getFocusCardId(blockId, index));
+								else onCardSelect(index);
 							}}
 						>
 							<boxGeometry args={[0.07, cardHeight, 0.075]} />
-							<meshBasicMaterial transparent opacity={0} depthWrite={false} />
+							<meshBasicMaterial
+								color="#93c5fd"
+								transparent
+								opacity={isSelecting ? 0.28 : 0}
+								depthWrite={false}
+							/>
 						</mesh>
 						<CardSlot
+							focusId={getFocusCardId(blockId, index)}
 							config={cardConfig}
 							cardWidth={cardWidth}
 							cardHeight={cardHeight}

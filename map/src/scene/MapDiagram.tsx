@@ -3,13 +3,15 @@ import { Lightformer } from "@react-three/drei/core/Lightformer";
 import { OrbitControls } from "@react-three/drei/core/OrbitControls";
 import { PerspectiveCamera } from "@react-three/drei/core/PerspectiveCamera";
 import { Canvas as DiagramSurface, useFrame } from "@react-three/fiber";
-import { useRef } from "react";
+import { useCallback, useRef } from "react";
 import type {
 	DirectionalLight as DirectionalLightType,
 	PerspectiveCamera as PerspectiveCameraType,
 } from "three";
 import type { OrbitControls as OrbitControlsType } from "three-stdlib";
 import { cameraStore } from "@/camera";
+import { CardFocusScene } from "@/cards/CardFocusScene";
+import { useCardFocus } from "@/cards/CardFocusContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { currentTheme } from "@/theme/theme";
 import styles from "./MapDiagram.module.css";
@@ -41,12 +43,14 @@ function MovingThemeLight() {
 }
 
 export function MapDiagram() {
+	const { focusedIds } = useCardFocus();
+	const isFocused = focusedIds.length > 0;
 	const { lighting, view } = currentTheme.appearance;
 	const cameraRef = useRef<PerspectiveCameraType>(null);
 
-	const handleControlsMount = (controls: OrbitControlsType | null) => {
+	const handleControlsMount = useCallback((controls: OrbitControlsType | null) => {
 		cameraStore.controls = controls;
-	};
+	}, []);
 
 	return (
 		<ErrorBoundary name="Diagram" fallback={<div className={styles.error}>Map render failed.</div>}>
@@ -98,8 +102,11 @@ export function MapDiagram() {
 					shadow-camera-bottom={-30}
 				/>
 				<MovingThemeLight />
-				<MapDisplay />
+				<CardFocusScene>
+					<MapDisplay />
+				</CardFocusScene>
 				<OrbitControls
+					enabled={!isFocused}
 					makeDefault
 					ref={handleControlsMount}
 					target={[0, 0, 0]}

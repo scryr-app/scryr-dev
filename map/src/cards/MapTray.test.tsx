@@ -50,3 +50,22 @@ it("offers only Info and Diagrams card categories", () => {
 		expect(screen.queryByRole("button", { name })).toBeNull();
 	}
 });
+
+it("offers an enlarge tooltip and lets users enter and cancel card selection", () => {
+	render(
+		<MapTrayProvider>
+			<MapTray isPyodideOpen={false} onTogglePyodide={vi.fn()} />
+		</MapTrayProvider>,
+	);
+	const button = screen.getByRole("button", { name: "Enlarge Card" });
+	fireEvent.focus(button);
+	expect(screen.getByRole("tooltip").textContent).toBe("Enlarge Card");
+	fireEvent.click(button);
+	expect(button.getAttribute("aria-pressed")).toBe("true");
+	expect(screen.getByRole("status").textContent).toContain("Select a card");
+	fireEvent.keyDown(window, { key: "Escape" });
+	expect(button.getAttribute("aria-pressed")).toBe("false");
+	fireEvent.click(button);
+	fireEvent.click(button);
+	expect(button.getAttribute("aria-pressed")).toBe("false");
+});

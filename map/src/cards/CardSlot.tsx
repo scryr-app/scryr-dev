@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import * as THREE from "three";
 import { currentTheme } from "@/theme/theme";
 import { Card } from "../components/Card";
+import { useCardFocusAnimation } from "./useCardFocusAnimation";
+import { useCardFocus } from "./CardFocusContext";
 import { useCardSlideAnimation } from "./useCardSlideAnimation";
 
 export interface CardSlotConfig {
@@ -10,6 +12,7 @@ export interface CardSlotConfig {
 }
 
 export interface CardSlotProps {
+	focusId: string;
 	config: CardSlotConfig;
 	cardWidth: number;
 	cardHeight: number;
@@ -26,6 +29,7 @@ export interface CardSlotProps {
 }
 
 export function CardSlot({
+	focusId,
 	config,
 	cardWidth,
 	cardHeight,
@@ -45,6 +49,8 @@ export function CardSlot({
 		isSlotHovered,
 	});
 
+	const focusRef = useCardFocusAnimation(focusId, cardWidth, cardHeight, config.zOffset);
+	const { focusedIds, isSelecting, focusCard } = useCardFocus();
 	const primaryComponent = config.components[0] ?? null;
 	const cardColor = new THREE.Color(blockColor)
 		.lerp(new THREE.Color(currentTheme.cardHighlightColor), isActive ? 0.42 : 0.24)
@@ -57,22 +63,51 @@ export function CardSlot({
 			position={initialPosition}
 			onClick={(e) => {
 				e.stopPropagation();
-				onSelect?.();
+				if (isSelecting) focusCard(focusId);
+				else if (!focusedIds.length) onSelect?.();
 			}}
 		>
-			<Card
+			<group
+				ref={focusRef}
 				position={[0, 0, config.zOffset]}
-				anchor="center"
-				width={cardWidth}
-				height={cardHeight}
-				label={undefined}
-				color={cardColor}
-				glowColor={blockColor}
-				textColor={currentTheme.cardTextColor}
-				fontSize={0.12}
+				name={`focus-card:${focusId}`}
+				onPointerOver={(event) => {
+					if (focusedIds.length) event.stopPropagation();
+				}}
 			>
-				<group position={[0, 0, 0.001]}>{primaryComponent}</group>
-			</Card>
+				{isSelecting && (
+					<mesh
+						position={[0, 0, 0.12]}
+						name={`select-card:${focusId}`}
+						onClick={(event) => {
+							event.stopPropagation();
+							focusCard(focusId);
+						}}
+					>
+						<planeGeometry args={[cardWidth, cardHeight]} />
+						<meshBasicMaterial
+							color="#93c5fd"
+							transparent
+							opacity={isSlotHovered ? 0.2 : 0.09}
+							depthWrite={false}
+							side={THREE.DoubleSide}
+						/>
+					</mesh>
+				)}
+				<Card
+					position={[0, 0, 0]}
+					anchor="center"
+					width={cardWidth}
+					height={cardHeight}
+					label={undefined}
+					color={cardColor}
+					glowColor={blockColor}
+					textColor={currentTheme.cardTextColor}
+					fontSize={0.12}
+				>
+					<group position={[0, 0, 0.001]}>{primaryComponent}</group>
+				</Card>
+			</group>
 		</group>
 	);
 }
