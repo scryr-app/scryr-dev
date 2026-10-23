@@ -6,7 +6,6 @@ export interface FocusCard {
 	blockId: string;
 	label: string;
 	color: string;
-	readingContent: ReactNode;
 }
 
 export function getFocusCardId(blockId: string, index: number) {

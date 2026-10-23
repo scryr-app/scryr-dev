@@ -5,7 +5,6 @@ import { useEffect, useMemo } from "react";
 import { Block } from "@/block";
 import { CameraController } from "@/camera";
 import { getFocusCardId, useCardFocus } from "@/cards/CardFocusContext";
-import { DiagramCardReadingContent, InfoCardReadingContent } from "@/cards/CardReadingContent";
 import { Loading } from "@/components/Loading";
 import type { GetBlocksQuery } from "@/graphql/generated";
 import { useSelectedMap } from "@/graphql/sampleStore";
@@ -168,7 +167,6 @@ function MapBlocks({ blocks, layout }: MapBlocksProps) {
 						blockId,
 						label: "Info",
 						color,
-						readingContent: <InfoCardReadingContent block={block} />,
 					},
 					...(diagrams.length
 						? [
@@ -177,7 +175,6 @@ function MapBlocks({ blocks, layout }: MapBlocksProps) {
 									blockId,
 									label: "Diagrams",
 									color,
-									readingContent: <DiagramCardReadingContent diagrams={diagrams} />,
 								},
 							]
 						: []),

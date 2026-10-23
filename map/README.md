@@ -136,15 +136,17 @@ Drag the console’s top bar to reposition it. Its controls remain clickable, an
 ## Card focus
 
 Click a block's top focus control, or select its card and use **Focus selected
-card** in the bottom toolbar. Focus mode opens that card alone with full,
-selectable text. The diagram and editor stay mounted behind the reading view.
+card** in the bottom toolbar. The actual 3D card moves toward the camera, turns
+face-on, and enlarges to fit most of the canvas while preserving its proportions.
+The surrounding diagram stays visible behind it around the edges. Camera
+navigation is paused while reading; the camera itself does not move.
 
-Use **Add card** to search block names and card types and build a comparison.
-Cards form a responsive grid with scrollable content instead of shrinking text.
-Each card can be removed or temporarily expanded; **Back to group** restores the
-comparison. Escape closes the picker first, then an expanded card, then Focus
-mode. **Back to diagram** closes Focus mode immediately. Opening focus again
-starts with one card. Changing diagrams clears the comparison.
+Use **Add card** to search block names and card types and arrange more cards in
+the foreground. Remove a card to return it to its block, or temporarily expand
+one and use **Back to group** to restore the comparison. Escape closes the picker
+first, then an expanded card, then Focus mode. **Back to diagram** returns all
+cards to their original slots. The editor and normal toolbar reappear with their
+previous state. Opening focus again starts with one card.
 
 ## UI styles
 

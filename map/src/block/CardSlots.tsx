@@ -1,4 +1,5 @@
 import { isValidElement, type ReactNode, useEffect, useState } from "react";
+import { getFocusCardId } from "@/cards/CardFocusContext";
 import type { CardSlotConfig } from "@/cards";
 import { CardSlot, getCardLayout } from "@/cards";
 import { useMapTray } from "@/cards/MapTrayContext";
@@ -119,6 +120,7 @@ export function CardSlots({
 							<meshBasicMaterial transparent opacity={0} depthWrite={false} />
 						</mesh>
 						<CardSlot
+							focusId={getFocusCardId(blockId, index)}
 							config={cardConfig}
 							cardWidth={cardWidth}
 							cardHeight={cardHeight}

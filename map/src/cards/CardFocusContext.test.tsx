@@ -14,8 +14,6 @@ const cards: FocusCard[] = ["API", "Database", "Worker"].map((blockId) => ({
 	blockId,
 	label: "Info",
 	color: "#ffffff",
-	content: null,
-	readingContent: blockId,
 }));
 afterEach(cleanup);
 function setup() {
@@ -54,17 +52,17 @@ it("expands temporarily without losing the comparison group, and closes when the
 	expect(result.current.focusedIds).toEqual([]);
 	expect(result.current.expandedId).toBeNull();
 });
-it("refreshes content and removes unavailable cards after an edit", () => {
+it("refreshes metadata and removes unavailable cards after an edit", () => {
 	const { result } = setup();
 	act(() => {
 		result.current.focusCard(cards[0].id);
 		result.current.addCard(cards[1].id);
 		result.current.expandCard(cards[1].id);
 	});
-	act(() => result.current.registerCards([{ ...cards[0], readingContent: "updated" }]));
+	act(() => result.current.registerCards([{ ...cards[0], label: "updated" }]));
 	expect(result.current.focusedIds).toEqual([cards[0].id]);
 	expect(result.current.expandedId).toBeNull();
-	expect(result.current.cards[0].readingContent).toBe("updated");
+	expect(result.current.cards[0].label).toBe("updated");
 });
 it("clears focus and its catalog when changing diagrams", () => {
 	const { result } = setup();

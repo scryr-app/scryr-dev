@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { useState } from "react";
+import { useCardFocus } from "@/cards/CardFocusContext";
 import { CardFocusView } from "@/cards/CardFocusView";
 import { MapTray } from "@/cards/MapTray";
 import { MapTrayProvider } from "@/cards/MapTrayContext";
@@ -14,7 +15,18 @@ interface MapSceneShellProps {
 	header?: ReactNode;
 }
 
-export function MapSceneShell({ header }: MapSceneShellProps) {
+export function MapSceneShell(props: MapSceneShellProps) {
+	return (
+		<MapTrayProvider>
+			<MapSceneContent {...props} />
+		</MapTrayProvider>
+	);
+}
+
+function MapSceneContent({ header }: MapSceneShellProps) {
+	const { focusedIds } = useCardFocus();
+	const isFocused = focusedIds.length > 0;
+	const chromeStyle = { display: isFocused ? "none" : "contents" };
 	const theme = useTheme();
 	const [isPyodideOpen, setIsPyodideOpen] = useState(true);
 	const [pyodidePanelWidth, setPyodidePanelWidth] = useState(() => {
@@ -29,7 +41,7 @@ export function MapSceneShell({ header }: MapSceneShellProps) {
 	};
 
 	return (
-		<MapTrayProvider>
+		<>
 			<div
 				style={{
 					width: "100vw",
@@ -37,26 +49,30 @@ export function MapSceneShell({ header }: MapSceneShellProps) {
 					background: theme.background,
 				}}
 			>
-				<ErrorBoundary name="PyodideConsole" fallback={null}>
-					<PyodideConsole
-						isOpen={isPyodideOpen}
-						panelWidth={pyodidePanelWidth}
-						onOpenChange={setIsPyodideOpen}
-						onPanelWidthChange={setPyodidePanelWidth}
-					/>
-				</ErrorBoundary>
+				<div style={chromeStyle}>
+					<ErrorBoundary name="PyodideConsole" fallback={null}>
+						<PyodideConsole
+							isOpen={isPyodideOpen}
+							panelWidth={pyodidePanelWidth}
+							onOpenChange={setIsPyodideOpen}
+							onPanelWidthChange={setPyodidePanelWidth}
+						/>
+					</ErrorBoundary>
+				</div>
 				<div className={styles.scene}>
-					{header}
+					<div style={chromeStyle}>{header}</div>
 					<MapDiagram key={theme.id} />
-					<ErrorBoundary name="MapTray" fallback={null}>
-						<MapTray isPyodideOpen={isPyodideOpen} onTogglePyodide={togglePyodide} />
-					</ErrorBoundary>
-					<ErrorBoundary name="TopCornerButtons" fallback={null}>
-						<TopCornerButtons isPyodideOpen={isPyodideOpen} onTogglePyodide={togglePyodide} />
-					</ErrorBoundary>
+					<div style={chromeStyle}>
+						<ErrorBoundary name="MapTray" fallback={null}>
+							<MapTray isPyodideOpen={isPyodideOpen} onTogglePyodide={togglePyodide} />
+						</ErrorBoundary>
+						<ErrorBoundary name="TopCornerButtons" fallback={null}>
+							<TopCornerButtons isPyodideOpen={isPyodideOpen} onTogglePyodide={togglePyodide} />
+						</ErrorBoundary>
+					</div>
 				</div>
 			</div>
 			<CardFocusView />
-		</MapTrayProvider>
+		</>
 	);
 }
