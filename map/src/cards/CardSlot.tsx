@@ -50,7 +50,7 @@ export function CardSlot({
 	});
 
 	const focusRef = useCardFocusAnimation(focusId, cardWidth, cardHeight, config.zOffset);
-	const { focusedIds } = useCardFocus();
+	const { focusedIds, isSelecting, focusCard } = useCardFocus();
 	const primaryComponent = config.components[0] ?? null;
 	const cardColor = new THREE.Color(blockColor)
 		.lerp(new THREE.Color(currentTheme.cardHighlightColor), isActive ? 0.42 : 0.24)
@@ -63,7 +63,8 @@ export function CardSlot({
 			position={initialPosition}
 			onClick={(e) => {
 				e.stopPropagation();
-				if (!focusedIds.length) onSelect?.();
+				if (isSelecting) focusCard(focusId);
+				else if (!focusedIds.length) onSelect?.();
 			}}
 		>
 			<group
@@ -74,6 +75,25 @@ export function CardSlot({
 					if (focusedIds.length) event.stopPropagation();
 				}}
 			>
+				{isSelecting && (
+					<mesh
+						position={[0, 0, 0.12]}
+						name={`select-card:${focusId}`}
+						onClick={(event) => {
+							event.stopPropagation();
+							focusCard(focusId);
+						}}
+					>
+						<planeGeometry args={[cardWidth, cardHeight]} />
+						<meshBasicMaterial
+							color="#93c5fd"
+							transparent
+							opacity={isSlotHovered ? 0.2 : 0.09}
+							depthWrite={false}
+							side={THREE.DoubleSide}
+						/>
+					</mesh>
+				)}
 				<Card
 					position={[0, 0, 0]}
 					anchor="center"

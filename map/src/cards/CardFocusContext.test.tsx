@@ -82,3 +82,15 @@ it("closes without discarding the catalog, and never expands a card outside the 
 	expect(result.current.focusedIds).toEqual([]);
 	expect(result.current.cards).toHaveLength(3);
 });
+
+it("waits for a valid card before ending selection and opening single-card focus", () => {
+	const { result } = setup();
+	act(() => result.current.toggleSelection());
+	expect(result.current.isSelecting).toBe(true);
+	expect(result.current.focusedIds).toEqual([]);
+	act(() => result.current.focusCard("missing"));
+	expect(result.current.isSelecting).toBe(true);
+	act(() => result.current.focusCard(cards[1].id));
+	expect(result.current.isSelecting).toBe(false);
+	expect(result.current.focusedIds).toEqual([cards[1].id]);
+});

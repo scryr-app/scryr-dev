@@ -22,7 +22,7 @@ import { cameraStore } from "@/camera";
 import { Button } from "@/components/button";
 import { ThemeOptions } from "@/theme/ThemeSwitcher";
 import { cn } from "@/utils";
-import { getFocusCardId, useCardFocus } from "./CardFocusContext";
+import { useCardFocus } from "./CardFocusContext";
 import styles from "./MapTray.module.css";
 import { useMapTray } from "./MapTrayContext";
 
@@ -70,14 +70,8 @@ interface MapTrayProps {
 }
 
 export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
-	const { activeCardIndex, toggleCard, selectedBlock, getActiveCardIndex } = useMapTray();
-	const { cards, focusCard } = useCardFocus();
-	const selectedCardId = selectedBlock
-		? getFocusCardId(selectedBlock.name, getActiveCardIndex(selectedBlock.name) ?? 0)
-		: null;
-	const focusTarget =
-		cards.find((card) => card.id === selectedCardId) ??
-		cards.find((card) => card.blockId === selectedBlock?.name);
+	const { activeCardIndex, toggleCard } = useMapTray();
+	const { isSelecting, toggleSelection } = useCardFocus();
 	const [themeOpen, setThemeOpen] = useState(false);
 	const [viewMenuOpen, setViewMenuOpen] = useState(false);
 	const [viewMode, setViewMode] = useState<"top-down" | "isometric" | null>("isometric");
@@ -87,6 +81,7 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 	};
 	const [hoveredIndex, setHoveredIndex] = useState<
 		| number
+		| "enlarge"
 		| "editor"
 		| "theme"
 		| "zoom-in"
@@ -411,20 +406,28 @@ export function MapTray({ isPyodideOpen, onTogglePyodide }: MapTrayProps) {
 					</div>
 				))}
 
-				<Button
-					type="button"
-					variant="ghost"
-					size="icon"
-					className={styles.trayButton}
-					aria-label="Focus selected card"
-					title={focusTarget ? "Focus selected card" : "Select a block to focus its card"}
-					disabled={!focusTarget}
-					onClick={() => {
-						if (focusTarget) focusCard(focusTarget.id);
-					}}
-				>
-					<Maximize2 size={18} />
-				</Button>
+				<div className={styles.control}>
+					{(hoveredIndex === "enlarge" || isSelecting) && (
+						<div className={styles.tooltip} role={isSelecting ? "status" : "tooltip"}>
+							{isSelecting ? "Select a card to enlarge · Esc to cancel" : "Enlarge Card"}
+						</div>
+					)}
+					<Button
+						type="button"
+						variant="ghost"
+						size="icon"
+						className={cn(styles.trayButton, isSelecting && styles.selected)}
+						aria-label="Enlarge Card"
+						aria-pressed={isSelecting}
+						onClick={toggleSelection}
+						onMouseEnter={() => setHoveredIndex("enlarge")}
+						onMouseLeave={() => setHoveredIndex(null)}
+						onFocus={() => setHoveredIndex("enlarge")}
+						onBlur={() => setHoveredIndex(null)}
+					>
+						<Maximize2 size={18} />
+					</Button>
+				</div>
 				{/* Divider between card diagrams and the editor */}
 				<div className={styles.divider} />
 

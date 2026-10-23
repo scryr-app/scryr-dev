@@ -135,8 +135,9 @@ Drag the console’s top bar to reposition it. Its controls remain clickable, an
 
 ## Card focus
 
-Click a block's top focus control, or select its card and use **Focus selected
-card** in the bottom toolbar. The actual 3D card moves toward the camera, turns
+Click a block's top focus control, or click **Enlarge Card** and then choose a
+subtly highlighted card or slot tab. Escape or clicking **Enlarge Card** again
+cancels selection. The actual 3D card moves toward the camera, turns
 face-on, and enlarges to fit most of the canvas while preserving its proportions.
 The surrounding diagram stays visible behind it around the edges. Camera
 navigation is paused while reading; the camera itself does not move.

@@ -1,4 +1,4 @@
-import { createContext, type ReactNode, useCallback, useContext, useState } from "react";
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from "react";
 import { useSelectedMap } from "@/graphql/sampleStore";
 
 export interface FocusCard {
@@ -13,12 +13,14 @@ export function getFocusCardId(blockId: string, index: number) {
 }
 
 interface FocusState {
+	isSelecting: boolean;
 	cards: FocusCard[];
 	focusedIds: string[];
 	expandedId: string | null;
 }
-const emptyState: FocusState = { cards: [], focusedIds: [], expandedId: null };
+const emptyState: FocusState = { cards: [], focusedIds: [], expandedId: null, isSelecting: false };
 interface CardFocusContextValue extends FocusState {
+	toggleSelection: () => void;
 	registerCards: (cards: FocusCard[]) => void;
 	focusCard: (id: string) => void;
 	addCard: (id: string) => void;
@@ -42,7 +44,9 @@ export function CardFocusProvider({ children }: { children: ReactNode }) {
 		setState((current) => {
 			const available = new Set(cards.map((card) => card.id));
 			return {
+				...current,
 				cards,
+				isSelecting: current.isSelecting && cards.length > 0,
 				focusedIds: current.focusedIds.filter((id) => available.has(id)),
 				expandedId:
 					current.expandedId && available.has(current.expandedId) ? current.expandedId : null,
@@ -52,7 +56,7 @@ export function CardFocusProvider({ children }: { children: ReactNode }) {
 	const focusCard = useCallback((id: string) => {
 		setState((current) =>
 			current.cards.some((card) => card.id === id)
-				? { ...current, focusedIds: [id], expandedId: null }
+				? { ...current, focusedIds: [id], expandedId: null, isSelecting: false }
 				: current,
 		);
 	}, []);
@@ -80,12 +84,27 @@ export function CardFocusProvider({ children }: { children: ReactNode }) {
 		);
 	}, []);
 	const closeFocus = useCallback(() => {
-		setState((current) => ({ ...current, focusedIds: [], expandedId: null }));
+		setState((current) => ({ ...current, focusedIds: [], expandedId: null, isSelecting: false }));
 	}, []);
+	const toggleSelection = useCallback(() => {
+		setState((current) => ({ ...current, isSelecting: !current.isSelecting }));
+	}, []);
+	useEffect(() => {
+		if (!state.isSelecting) return;
+		const cancel = (event: KeyboardEvent) => {
+			if (event.key === "Escape") {
+				event.preventDefault();
+				setState((current) => ({ ...current, isSelecting: false }));
+			}
+		};
+		window.addEventListener("keydown", cancel);
+		return () => window.removeEventListener("keydown", cancel);
+	}, [state.isSelecting]);
 	return (
 		<CardFocusContext.Provider
 			value={{
 				...state,
+				toggleSelection,
 				registerCards,
 				focusCard,
 				addCard,
