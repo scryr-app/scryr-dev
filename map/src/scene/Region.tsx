@@ -3,11 +3,7 @@ import { useEffect, useMemo, useRef } from "react";
 import type { Group } from "three";
 import * as THREE from "three";
 import { GlowFrame } from "@/components/GlowFrame";
-import {
-	useCrystalGlowTexture,
-	useGroundTexture,
-	useWallTexture,
-} from "@/theme/textures";
+import { useCrystalGlowTexture, useGroundTexture, useWallTexture } from "@/theme/textures";
 import { currentTheme } from "@/theme/theme";
 
 export interface RegionProps {
@@ -128,12 +124,7 @@ export function Region({
 	const pos4 = normalizePos(p4);
 
 	// Calculate plane center and normal
-	const center = pos1
-		.clone()
-		.add(pos2)
-		.add(pos3)
-		.add(pos4)
-		.multiplyScalar(0.25);
+	const center = pos1.clone().add(pos2).add(pos3).add(pos4).multiplyScalar(0.25);
 
 	// Calculate edges to determine plane orientation
 	const edge1 = pos2.clone().sub(pos1);
@@ -203,20 +194,10 @@ export function Region({
 
 	// Build a basis where +Z faces outward, +Y is planeUp, so the text
 	// stands upright and faces away from the region (like a block face).
-	const labelRight = new THREE.Vector3()
-		.crossVectors(planeUp, outward)
-		.normalize();
-	const labelUp = new THREE.Vector3()
-		.crossVectors(outward, labelRight)
-		.normalize();
-	const blockFaceMatrix = new THREE.Matrix4().makeBasis(
-		labelRight,
-		labelUp,
-		outward,
-	);
-	const blockFaceQuaternion = new THREE.Quaternion().setFromRotationMatrix(
-		blockFaceMatrix,
-	);
+	const labelRight = new THREE.Vector3().crossVectors(planeUp, outward).normalize();
+	const labelUp = new THREE.Vector3().crossVectors(outward, labelRight).normalize();
+	const blockFaceMatrix = new THREE.Matrix4().makeBasis(labelRight, labelUp, outward);
+	const blockFaceQuaternion = new THREE.Quaternion().setFromRotationMatrix(blockFaceMatrix);
 
 	// Position at the front edge, elevated above the surface.
 	const labelLocalPos = outward
@@ -225,18 +206,10 @@ export function Region({
 		.add(planeUp.clone().multiplyScalar(labelSize * 1.4));
 
 	return (
-		<group
-			ref={groupRef}
-			position={center.toArray() as [number, number, number]}
-		>
+		<group ref={groupRef} position={center.toArray() as [number, number, number]}>
 			{/* 3D plane with optional subtle shading */}
 			{/* Use white when vertex colors or texture carry the color, to avoid double-multiply */}
-			<mesh
-				quaternion={quaternion}
-				geometry={planeGeometry}
-				receiveShadow
-				renderOrder={zIndex}
-			>
+			<mesh quaternion={quaternion} geometry={planeGeometry} receiveShadow renderOrder={zIndex}>
 				<meshPhysicalMaterial
 					color={groundTexture ? "#ffffff" : regionColor}
 					map={groundTexture ?? undefined}
@@ -275,12 +248,7 @@ export function Region({
 					quaternion={blockFaceQuaternion}
 					position={labelLocalPos.toArray() as [number, number, number]}
 				>
-					<Sign
-						label={label}
-						color={color}
-						labelColor={labelColor}
-						fontSize={labelSize}
-					/>
+					<Sign label={label} color={color} labelColor={labelColor} fontSize={labelSize} />
 				</group>
 			)}
 		</group>

@@ -11,9 +11,7 @@ export function useWallTexture(color: string): THREE.CanvasTexture | null {
 		surface.width = surface.height = size;
 		const ctx = surface.getContext("2d");
 		if (!ctx) return null;
-		ctx.fillStyle = new THREE.Color(color)
-			.multiplyScalar(wallBrightness)
-			.getStyle();
+		ctx.fillStyle = new THREE.Color(color).multiplyScalar(wallBrightness).getStyle();
 		ctx.fillRect(0, 0, size, size);
 		if (wall === "ribbed") {
 			// Fine grain and vertical ribs from the original industrial blocks.
@@ -34,8 +32,7 @@ export function useWallTexture(color: string): THREE.CanvasTexture | null {
 			for (let i = 0; i < 7000; i++) {
 				const x = (i * 67.13) % size,
 					y = (i * 31.79) % size;
-				ctx.fillStyle =
-					i % 3 === 0 ? "rgba(240,215,164,0.09)" : "rgba(10,6,3,0.1)";
+				ctx.fillStyle = i % 3 === 0 ? "rgba(240,215,164,0.09)" : "rgba(10,6,3,0.1)";
 				ctx.fillRect(x, y, 1.5, 0.7);
 			}
 			ctx.strokeStyle = "rgba(210,169,91,0.48)";
@@ -68,8 +65,7 @@ export function useWallTexture(color: string): THREE.CanvasTexture | null {
 				const radius = 12 + ((i * 47) % 112);
 				const x = 128 + Math.cos(angle) * radius;
 				const y = 128 + Math.sin(angle) * radius * 0.72;
-				ctx.fillStyle =
-					i % 9 === 0 ? "rgba(255,239,184,0.9)" : "rgba(210,224,244,0.55)";
+				ctx.fillStyle = i % 9 === 0 ? "rgba(255,239,184,0.9)" : "rgba(210,224,244,0.55)";
 				ctx.beginPath();
 				ctx.arc(x, y, i % 9 === 0 ? 1.25 : 0.55, 0, Math.PI * 2);
 				ctx.fill();
@@ -138,8 +134,7 @@ export function useWallTexture(color: string): THREE.CanvasTexture | null {
 			for (let i = 0; i < 5200; i++) {
 				const x = (i * 73.17) % size;
 				const y = (i * 41.39) % size;
-				ctx.fillStyle =
-					i % 3 ? "rgba(239,222,255,0.065)" : "rgba(50,24,63,0.055)";
+				ctx.fillStyle = i % 3 ? "rgba(239,222,255,0.065)" : "rgba(50,24,63,0.055)";
 				ctx.fillRect(x, y, 0.6, 1.8);
 			}
 		} else {
@@ -156,8 +151,7 @@ export function useWallTexture(color: string): THREE.CanvasTexture | null {
 			] as const) {
 				ctx.beginPath();
 				ctx.moveTo(points[0], points[1]);
-				for (let i = 2; i < points.length; i += 2)
-					ctx.lineTo(points[i], points[i + 1]);
+				for (let i = 2; i < points.length; i += 2) ctx.lineTo(points[i], points[i + 1]);
 				ctx.closePath();
 				ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
 				ctx.fill();
@@ -188,9 +182,7 @@ export function useCrystalGlowTexture(): THREE.CanvasTexture | null {
 				const edge = Math.min(u, v, 1 - u, 1 - v);
 				const core = Math.exp(-((u - 0.5) ** 2 + (v - 0.42) ** 2) * 7);
 				const rim = Math.exp(-edge * 14);
-				const value = Math.round(
-					255 * Math.min(1, core * glowCore + rim * glowRim),
-				);
+				const value = Math.round(255 * Math.min(1, core * glowCore + rim * glowRim));
 				const i = (y * size + x) * 4;
 				pixels.data[i] = pixels.data[i + 1] = pixels.data[i + 2] = value;
 				pixels.data[i + 3] = 255;
@@ -290,14 +282,8 @@ export function useGroundTexture(
 				ctx.stroke();
 			}
 			for (let i = 0; i < 76; i++) {
-				ctx.fillStyle =
-					i % 9 ? "rgba(220,231,246,0.42)" : "rgba(250,222,151,0.72)";
-				ctx.fillRect(
-					(i * 157) % 503,
-					(i * 89) % 499,
-					i % 9 ? 1 : 2,
-					i % 9 ? 1 : 2,
-				);
+				ctx.fillStyle = i % 9 ? "rgba(220,231,246,0.42)" : "rgba(250,222,151,0.72)";
+				ctx.fillRect((i * 157) % 503, (i * 89) % 499, i % 9 ? 1 : 2, i % 9 ? 1 : 2);
 			}
 		} else if (wallStyle === "porcelain") {
 			ctx.strokeStyle = "rgba(30,77,139,0.24)";
@@ -325,8 +311,7 @@ export function useGroundTexture(
 			for (let i = 0; i < 4400; i++) {
 				const x = (i * 73.17) % size;
 				const y = (i * 41.39) % size;
-				ctx.fillStyle =
-					i % 3 ? "rgba(239,222,255,0.04)" : "rgba(50,24,63,0.035)";
+				ctx.fillStyle = i % 3 ? "rgba(239,222,255,0.04)" : "rgba(50,24,63,0.035)";
 				ctx.fillRect(x, y, 0.7, 2);
 			}
 		}
@@ -368,12 +353,10 @@ export function useCardTexture(): THREE.CanvasTexture | null {
 			ctx.fillRect(x, y, 1 + (i % 4), 0.6);
 		}
 		if (style === "parchment" || style === "porcelain") {
-			ctx.strokeStyle =
-				style === "porcelain" ? "rgba(24,71,140,0.68)" : "rgba(86,59,28,0.4)";
+			ctx.strokeStyle = style === "porcelain" ? "rgba(24,71,140,0.68)" : "rgba(86,59,28,0.4)";
 			ctx.lineWidth = 1;
 			ctx.strokeRect(10, 10, size - 20, size - 20);
-			ctx.strokeStyle =
-				style === "porcelain" ? "rgba(190,145,55,0.52)" : "rgba(86,59,28,0.16)";
+			ctx.strokeStyle = style === "porcelain" ? "rgba(190,145,55,0.52)" : "rgba(86,59,28,0.16)";
 			ctx.strokeRect(14, 14, size - 28, size - 28);
 			// Small corner ornaments remain outside the reading area.
 			for (const x of [18, size - 18])
@@ -389,26 +372,11 @@ export function useCardTexture(): THREE.CanvasTexture | null {
 			for (const side of [-1, 1]) {
 				ctx.beginPath();
 				ctx.moveTo(256 + side * 210, 390);
-				ctx.bezierCurveTo(
-					256 + side * 160,
-					350,
-					256 + side * 190,
-					280,
-					256 + side * 135,
-					245,
-				);
+				ctx.bezierCurveTo(256 + side * 160, 350, 256 + side * 190, 280, 256 + side * 135, 245);
 				ctx.stroke();
 				for (let i = 0; i < 4; i++) {
 					ctx.beginPath();
-					ctx.ellipse(
-						256 + side * (180 - i * 12),
-						350 - i * 30,
-						12,
-						5,
-						side * 0.6,
-						0,
-						Math.PI * 2,
-					);
+					ctx.ellipse(256 + side * (180 - i * 12), 350 - i * 30, 12, 5, side * 0.6, 0, Math.PI * 2);
 					ctx.stroke();
 				}
 			}

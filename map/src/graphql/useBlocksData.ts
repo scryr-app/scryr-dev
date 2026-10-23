@@ -15,9 +15,7 @@ function asRecord(value: unknown): RawRecord | undefined {
 		: undefined;
 }
 
-function parseRawJsonString(
-	rawJsonString?: string | null,
-): RawRecord | undefined {
+function parseRawJsonString(rawJsonString?: string | null): RawRecord | undefined {
 	if (!rawJsonString) {
 		return undefined;
 	}
@@ -43,10 +41,7 @@ function getValue(source: RawRecord | undefined, path: string[]): unknown {
 	return current;
 }
 
-function firstString(
-	source: RawRecord | undefined,
-	paths: string[][],
-): string | null {
+function firstString(source: RawRecord | undefined, paths: string[][]): string | null {
 	for (const path of paths) {
 		const value = getValue(source, path);
 		if (typeof value === "string" && value.length > 0) {
@@ -61,10 +56,7 @@ function nonEmptyString(value: unknown): string | null {
 	return typeof value === "string" && value.trim().length > 0 ? value : null;
 }
 
-function firstNumber(
-	source: RawRecord | undefined,
-	paths: string[][],
-): number | null {
+function firstNumber(source: RawRecord | undefined, paths: string[][]): number | null {
 	for (const path of paths) {
 		const value = getValue(source, path);
 		if (typeof value === "number" && Number.isFinite(value)) {
@@ -75,10 +67,7 @@ function firstNumber(
 	return null;
 }
 
-function firstStringArray(
-	source: RawRecord | undefined,
-	paths: string[][],
-): string[] {
+function firstStringArray(source: RawRecord | undefined, paths: string[][]): string[] {
 	for (const path of paths) {
 		const value = getValue(source, path);
 		const strings = asStringArray(value);
@@ -128,9 +117,7 @@ function normalizeBlock(block: Block): Block {
 		JSON.stringify(block).replaceAll("…", "...").replaceAll("—", "-"),
 	) as Block;
 	const raw = parseRawJsonString(sanitizedBlock.rawJsonString);
-	const rawLinks = normalizeLinks(
-		getValue(raw, ["info", "links"]) ?? getValue(raw, ["links"]),
-	);
+	const rawLinks = normalizeLinks(getValue(raw, ["info", "links"]) ?? getValue(raw, ["links"]));
 
 	return {
 		...sanitizedBlock,
@@ -138,19 +125,14 @@ function normalizeBlock(block: Block): Block {
 		description:
 			nonEmptyString(sanitizedBlock.description) ??
 			firstString(raw, [["info", "description"], ["description"]]),
-		version:
-			sanitizedBlock.version ??
-			firstString(raw, [["info", "version"], ["version"]]),
-		language:
-			sanitizedBlock.language ??
-			firstString(raw, [["info", "language"], ["language"]]),
+		version: sanitizedBlock.version ?? firstString(raw, [["info", "version"], ["version"]]),
+		language: sanitizedBlock.language ?? firstString(raw, [["info", "language"], ["language"]]),
 		frameworks:
 			asStringArray(sanitizedBlock.frameworks).length > 0
 				? asStringArray(sanitizedBlock.frameworks)
 				: firstStringArray(raw, [["info", "frameworks"], ["frameworks"]]),
 		deployment:
-			sanitizedBlock.deployment ??
-			firstString(raw, [["info", "deployment"], ["deployment"]]),
+			sanitizedBlock.deployment ?? firstString(raw, [["info", "deployment"], ["deployment"]]),
 		docs:
 			asStringArray(sanitizedBlock.docs).length > 0
 				? asStringArray(sanitizedBlock.docs)
@@ -165,15 +147,9 @@ function normalizeBlock(block: Block): Block {
 			]),
 		authType:
 			sanitizedBlock.authType ??
-			firstString(raw, [
-				["info", "authType"],
-				["info", "auth_type"],
-				["authType"],
-				["auth_type"],
-			]),
+			firstString(raw, [["info", "authType"], ["info", "auth_type"], ["authType"], ["auth_type"]]),
 		monitoring:
-			sanitizedBlock.monitoring ??
-			firstString(raw, [["info", "monitoring"], ["monitoring"]]),
+			sanitizedBlock.monitoring ?? firstString(raw, [["info", "monitoring"], ["monitoring"]]),
 		logAggregation:
 			sanitizedBlock.logAggregation ??
 			firstString(raw, [
@@ -182,17 +158,10 @@ function normalizeBlock(block: Block): Block {
 				["logAggregation"],
 				["log_aggregation"],
 			]),
-		tracing:
-			sanitizedBlock.tracing ??
-			firstString(raw, [["info", "tracing"], ["tracing"]]),
+		tracing: sanitizedBlock.tracing ?? firstString(raw, [["info", "tracing"], ["tracing"]]),
 		iacTool:
 			sanitizedBlock.iacTool ??
-			firstString(raw, [
-				["info", "iacTool"],
-				["info", "iac_tool"],
-				["iacTool"],
-				["iac_tool"],
-			]),
+			firstString(raw, [["info", "iacTool"], ["info", "iac_tool"], ["iacTool"], ["iac_tool"]]),
 		maxReplicas:
 			sanitizedBlock.maxReplicas ??
 			firstNumber(raw, [
@@ -209,10 +178,7 @@ function normalizeBlock(block: Block): Block {
 				["minReplicas"],
 				["min_replicas"],
 			]),
-		links:
-			sanitizedBlock.links.length > 0
-				? normalizeLinks(sanitizedBlock.links)
-				: rawLinks,
+		links: sanitizedBlock.links.length > 0 ? normalizeLinks(sanitizedBlock.links) : rawLinks,
 		tags: asStringArray(sanitizedBlock.tags),
 	};
 }
@@ -231,10 +197,7 @@ export function useBlocksData(variables?: GetBlocksQueryVariables) {
 		enabled: runtimePreviewBlocks === null,
 		refetchInterval: 30_000,
 	});
-	const normalized = useMemo(
-		() => normalizeBlocksData(query.data),
-		[query.data],
-	);
+	const normalized = useMemo(() => normalizeBlocksData(query.data), [query.data]);
 	return {
 		...query,
 		blocks: runtimePreviewBlocks ?? normalized,

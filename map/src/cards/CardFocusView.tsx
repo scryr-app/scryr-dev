@@ -19,15 +19,8 @@ export function CardFocusView() {
 }
 
 function OpenCardFocusView() {
-	const {
-		cards,
-		focusedIds,
-		expandedId,
-		addCard,
-		removeCard,
-		expandCard,
-		closeFocus,
-	} = useCardFocus();
+	const { cards, focusedIds, expandedId, addCard, removeCard, expandCard, closeFocus } =
+		useCardFocus();
 	const dialog = useRef<HTMLDialogElement>(null);
 	const stage = useRef<HTMLDivElement>(null);
 	const addButton = useRef<HTMLButtonElement>(null);
@@ -45,9 +38,7 @@ function OpenCardFocusView() {
 	const available = cards.filter(
 		(card) =>
 			!focusedIds.includes(card.id) &&
-			`${card.label} ${card.blockId}`
-				.toLowerCase()
-				.includes(query.toLowerCase()),
+			`${card.label} ${card.blockId}`.toLowerCase().includes(query.toLowerCase()),
 	);
 
 	useEffect(() => {
@@ -57,8 +48,7 @@ function OpenCardFocusView() {
 		element.showModal();
 		return () => {
 			element.close();
-			if (previousFocus instanceof HTMLElement && previousFocus.isConnected)
-				previousFocus.focus();
+			if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
 		};
 	}, [isOpen]);
 
@@ -76,9 +66,7 @@ function OpenCardFocusView() {
 			backToGroupButton.current?.focus();
 		} else {
 			const expandButton = Array.from(
-				dialog.current?.querySelectorAll<HTMLButtonElement>(
-					"[data-expand-card]",
-				) ?? [],
+				dialog.current?.querySelectorAll<HTMLButtonElement>("[data-expand-card]") ?? [],
 			).find((button) => button.dataset.expandCard === previous);
 			(expandButton ?? addButton.current)?.focus();
 		}
@@ -89,9 +77,7 @@ function OpenCardFocusView() {
 		if (!element) return;
 		const bounds = element.getBoundingClientRect();
 		setSurfaces(
-			Array.from(
-				element.querySelectorAll<HTMLElement>("[data-focus-card]"),
-			).map((article) => {
+			Array.from(element.querySelectorAll<HTMLElement>("[data-focus-card]")).map((article) => {
 				const rect = article.getBoundingClientRect();
 				return {
 					id: article.dataset.focusCard ?? "",
@@ -112,8 +98,7 @@ function OpenCardFocusView() {
 		if (!element) return;
 		const observer = new ResizeObserver(measure);
 		observer.observe(element);
-		for (const article of element.querySelectorAll("[data-focus-card]"))
-			observer.observe(article);
+		for (const article of element.querySelectorAll("[data-focus-card]")) observer.observe(article);
 		measure();
 		return () => observer.disconnect();
 	}, [isOpen, focusedIds, expandedId, measure]);
@@ -150,11 +135,7 @@ function OpenCardFocusView() {
 					</span>
 				</div>
 				{expandedId && (
-					<button
-						ref={backToGroupButton}
-						type="button"
-						onClick={() => expandCard(null)}
-					>
+					<button ref={backToGroupButton} type="button" onClick={() => expandCard(null)}>
 						Back to group
 					</button>
 				)}
@@ -170,18 +151,10 @@ function OpenCardFocusView() {
 				</button>
 			</header>
 			{pickerOpen && (
-				<section
-					id="focus-card-picker"
-					className={styles.picker}
-					aria-label="Add cards to focus"
-				>
+				<section id="focus-card-picker" className={styles.picker} aria-label="Add cards to focus">
 					<div className={styles.searchRow}>
 						<label htmlFor="focus-card-search">Find a card</label>
-						<button
-							type="button"
-							aria-label="Close card picker"
-							onClick={dismissPicker}
-						>
+						<button type="button" aria-label="Close card picker" onClick={dismissPicker}>
 							<X size={18} />
 						</button>
 					</div>
@@ -227,19 +200,13 @@ function OpenCardFocusView() {
 					>
 						{surfaces.map((surface) => (
 							<mesh key={surface.id} position={[surface.x, surface.y, 0]}>
-								<boxGeometry
-									args={[surface.width + 6, surface.height + 6, 8]}
-								/>
+								<boxGeometry args={[surface.width + 6, surface.height + 6, 8]} />
 								<meshBasicMaterial color={surface.color} />
 							</mesh>
 						))}
 					</Canvas>
 				</div>
-				<div
-					className={styles.grid}
-					data-single={selected.length === 1}
-					onScroll={measure}
-				>
+				<div className={styles.grid} data-single={selected.length === 1} onScroll={measure}>
 					{selected.map((card) => (
 						<article
 							key={card.id}

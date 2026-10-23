@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, renderHook } from "@testing-library/react";
-import { afterEach, expect, it } from "vitest";
+import { afterEach, expect, it } from "vite-plus/test";
 import { mapSelectionStore } from "@/graphql/sampleStore";
 import {
 	CardFocusProvider,
@@ -61,9 +61,7 @@ it("refreshes content and removes unavailable cards after an edit", () => {
 		result.current.addCard(cards[1].id);
 		result.current.expandCard(cards[1].id);
 	});
-	act(() =>
-		result.current.registerCards([{ ...cards[0], readingContent: "updated" }]),
-	);
+	act(() => result.current.registerCards([{ ...cards[0], readingContent: "updated" }]));
 	expect(result.current.focusedIds).toEqual([cards[0].id]);
 	expect(result.current.expandedId).toBeNull();
 	expect(result.current.cards[0].readingContent).toBe("updated");

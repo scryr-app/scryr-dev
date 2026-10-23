@@ -1,10 +1,4 @@
-import {
-	createContext,
-	type ReactNode,
-	useCallback,
-	useContext,
-	useState,
-} from "react";
+import { createContext, type ReactNode, useCallback, useContext, useState } from "react";
 import { useSelectedMap } from "@/graphql/sampleStore";
 
 export interface FocusCard {
@@ -52,9 +46,7 @@ export function CardFocusProvider({ children }: { children: ReactNode }) {
 				cards,
 				focusedIds: current.focusedIds.filter((id) => available.has(id)),
 				expandedId:
-					current.expandedId && available.has(current.expandedId)
-						? current.expandedId
-						: null,
+					current.expandedId && available.has(current.expandedId) ? current.expandedId : null,
 			};
 		});
 	}, []);
@@ -67,8 +59,7 @@ export function CardFocusProvider({ children }: { children: ReactNode }) {
 	}, []);
 	const addCard = useCallback((id: string) => {
 		setState((current) =>
-			current.cards.some((card) => card.id === id) &&
-			!current.focusedIds.includes(id)
+			current.cards.some((card) => card.id === id) && !current.focusedIds.includes(id)
 				? {
 						...current,
 						focusedIds: [...current.focusedIds, id],
@@ -86,9 +77,7 @@ export function CardFocusProvider({ children }: { children: ReactNode }) {
 	}, []);
 	const expandCard = useCallback((id: string | null) => {
 		setState((current) =>
-			id === null || current.focusedIds.includes(id)
-				? { ...current, expandedId: id }
-				: current,
+			id === null || current.focusedIds.includes(id) ? { ...current, expandedId: id } : current,
 		);
 	}, []);
 	const closeFocus = useCallback(() => {
@@ -113,7 +102,6 @@ export function CardFocusProvider({ children }: { children: ReactNode }) {
 
 export function useCardFocus() {
 	const context = useContext(CardFocusContext);
-	if (!context)
-		throw new Error("useCardFocus must be used within CardFocusProvider");
+	if (!context) throw new Error("useCardFocus must be used within CardFocusProvider");
 	return context;
 }

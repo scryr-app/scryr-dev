@@ -1,13 +1,6 @@
 // @vitest-environment jsdom
-import {
-	act,
-	cleanup,
-	fireEvent,
-	render,
-	screen,
-	within,
-} from "@testing-library/react";
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, beforeEach, expect, it, vi } from "vite-plus/test";
 import { MapTrayProvider } from "@/cards/MapTrayContext";
 import { consoleTextColor } from "@/theme/console";
 import { getTheme, setThemePreset, type Theme } from "@/theme/theme";
@@ -67,15 +60,9 @@ it("labels the action Save and Run and groups source controls with the bottom st
 	const footer = panel.querySelector("footer");
 	expect(footer).not.toBeNull();
 	if (!footer) throw new Error("Missing bottom toolbar");
-	expect(
-		within(footer).getByRole("button", { name: "Save and Run" }),
-	).toBeDefined();
-	expect(
-		within(footer).queryByRole("checkbox", { name: "Follow selected block" }),
-	).toBeNull();
-	fireEvent.click(
-		within(footer).getByRole("button", { name: "Reload source" }),
-	);
+	expect(within(footer).getByRole("button", { name: "Save and Run" })).toBeDefined();
+	expect(within(footer).queryByRole("checkbox", { name: "Follow selected block" })).toBeNull();
+	fireEvent.click(within(footer).getByRole("button", { name: "Reload source" }));
 	expect(editor.reload).toHaveBeenCalledOnce();
 	expect(within(footer).getByRole("status").textContent).toBe("Ready");
 	expect(screen.queryByText(/Run saves/)).toBeNull();
@@ -101,20 +88,13 @@ it("updates the console palette with each theme without remounting the editor", 
 		expect(panel.style.color).toBe(consoleTextColor(palette.text));
 		const expected = document.createElement("div");
 		expected.style.backgroundColor = palette.background;
-		expect(code.parentElement?.style.backgroundColor).toBe(
-			expected.style.backgroundColor,
-		);
+		expect(code.parentElement?.style.backgroundColor).toBe(expected.style.backgroundColor);
 		expect(panel.classList.contains(styles.panel)).toBe(true);
 	}
 });
 
 // jsdom does not implement pointer capture or pointer event coordinates.
-function pointer(
-	target: HTMLElement | Window,
-	type: string,
-	x: number,
-	y: number,
-) {
+function pointer(target: HTMLElement | Window, type: string, x: number, y: number) {
 	fireEvent(
 		target,
 		Object.assign(

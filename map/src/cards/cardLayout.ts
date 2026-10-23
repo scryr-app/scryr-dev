@@ -6,14 +6,9 @@ import type { CardSlotConfig } from "./CardSlot";
  * Distributes cards evenly around the center (z=0)
  * Supports 0-5 total components
  */
-export function getCardLayout(
-	cardConfigs: Array<{ components: ReactNode[] }>,
-): CardSlotConfig[] {
+export function getCardLayout(cardConfigs: Array<{ components: ReactNode[] }>): CardSlotConfig[] {
 	// Calculate total component count
-	const totalComponents = cardConfigs.reduce(
-		(sum, config) => sum + config.components.length,
-		0,
-	);
+	const totalComponents = cardConfigs.reduce((sum, config) => sum + config.components.length, 0);
 
 	// Clamp between 0-7
 	const count = Math.max(0, Math.min(7, totalComponents));

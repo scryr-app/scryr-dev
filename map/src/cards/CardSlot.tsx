@@ -47,10 +47,7 @@ export function CardSlot({
 
 	const primaryComponent = config.components[0] ?? null;
 	const cardColor = new THREE.Color(blockColor)
-		.lerp(
-			new THREE.Color(currentTheme.cardHighlightColor),
-			isActive ? 0.42 : 0.24,
-		)
+		.lerp(new THREE.Color(currentTheme.cardHighlightColor), isActive ? 0.42 : 0.24)
 		.getStyle();
 
 	return (

@@ -5,10 +5,7 @@ import { useEffect, useMemo } from "react";
 import { Block } from "@/block";
 import { CameraController } from "@/camera";
 import { getFocusCardId, useCardFocus } from "@/cards/CardFocusContext";
-import {
-	DiagramCardReadingContent,
-	InfoCardReadingContent,
-} from "@/cards/CardReadingContent";
+import { DiagramCardReadingContent, InfoCardReadingContent } from "@/cards/CardReadingContent";
 import { Loading } from "@/components/Loading";
 import type { GetBlocksQuery } from "@/graphql/generated";
 import { useSelectedMap } from "@/graphql/sampleStore";
@@ -78,10 +75,7 @@ function MapRegionSigns({ layout }: { layout: LayoutResult }) {
 				const signColor = getRegionColor(group.tag);
 
 				return (
-					<group
-						key={`sign-${group.id}`}
-						position={[(p3[0] + p4[0]) / 2, p3[1] + 0.42, p3[2]]}
-					>
+					<group key={`sign-${group.id}`} position={[(p3[0] + p4[0]) / 2, p3[1] + 0.42, p3[2]]}>
 						<Sign
 							label={group.tag}
 							color={signColor}
@@ -105,12 +99,8 @@ function MapEdges({ layout }: { layout: LayoutResult }) {
 					return null;
 				}
 
-				const sourceHeight = edge.source
-					? getEdgeHeight(edge.source, layout)
-					: 0.1;
-				const targetHeight = edge.target
-					? getEdgeHeight(edge.target, layout)
-					: 0.1;
+				const sourceHeight = edge.source ? getEdgeHeight(edge.source, layout) : 0.1;
+				const targetHeight = edge.target ? getEdgeHeight(edge.target, layout) : 0.1;
 
 				return pathPoints.slice(0, -1).map((start, index) => {
 					const end = pathPoints[index + 1];
@@ -123,11 +113,7 @@ function MapEdges({ layout }: { layout: LayoutResult }) {
 						start[1] + sourceHeight,
 						start[2],
 					];
-					const endLifted: [number, number, number] = [
-						end[0],
-						end[1] + targetHeight,
-						end[2],
-					];
+					const endLifted: [number, number, number] = [end[0], end[1] + targetHeight, end[2]];
 
 					return (
 						<Line
@@ -191,9 +177,7 @@ function MapBlocks({ blocks, layout }: MapBlocksProps) {
 									blockId,
 									label: "Diagrams",
 									color,
-									readingContent: (
-										<DiagramCardReadingContent diagrams={diagrams} />
-									),
+									readingContent: <DiagramCardReadingContent diagrams={diagrams} />,
 								},
 							]
 						: []),
@@ -252,44 +236,30 @@ function MapBlocks({ blocks, layout }: MapBlocksProps) {
 export function MapDisplay() {
 	const selectedMap = useSelectedMap();
 	const { blocks, error, isLoading } = useBlocksData(
-		selectedMap.id
-			? { scryIdentifier: selectedMap.id }
-			: { sample: selectedMap.key || undefined },
+		selectedMap.id ? { scryIdentifier: selectedMap.id } : { sample: selectedMap.key || undefined },
 	);
 	const size = useThree((state) => state.size);
 	const aspect = size.width / Math.max(1, size.height);
-	const view = useMemo(
-		() => ({ ...currentTheme.appearance.view, aspect }),
-		[aspect],
-	);
+	const view = useMemo(() => ({ ...currentTheme.appearance.view, aspect }), [aspect]);
 	const { layout, layoutError, layoutView } = useMapLayout(blocks, view);
 	const { registerCards } = useCardFocus();
 	useEffect(() => {
-		if (error || layoutError || (!isLoading && blocks.length === 0))
-			registerCards([]);
+		if (error || layoutError || (!isLoading && blocks.length === 0)) registerCards([]);
 	}, [error, layoutError, isLoading, blocks.length, registerCards]);
 
 	if (error) {
 		console.error("Error fetching blocks:", error);
-		const message =
-			error instanceof Error ? error.message : "Failed to load map data.";
+		const message = error instanceof Error ? error.message : "Failed to load map data.";
 		return <MapStatusText>{message}</MapStatusText>;
 	}
 
 	if (layoutError) {
-		return (
-			<MapStatusText fontSize={0.5}>
-				{`Layout Error: ${layoutError.message}`}
-			</MapStatusText>
-		);
+		return <MapStatusText fontSize={0.5}>{`Layout Error: ${layoutError.message}`}</MapStatusText>;
 	}
 
 	if (isLoading || !layout || !layoutView) {
 		return (
-			<Html
-				center
-				style={{ color: currentTheme.fontColor, whiteSpace: "nowrap" }}
-			>
+			<Html center style={{ color: currentTheme.fontColor, whiteSpace: "nowrap" }}>
 				<Loading />
 			</Html>
 		);

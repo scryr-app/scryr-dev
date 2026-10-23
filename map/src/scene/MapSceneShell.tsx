@@ -49,16 +49,10 @@ export function MapSceneShell({ header }: MapSceneShellProps) {
 					{header}
 					<MapDiagram key={theme.id} />
 					<ErrorBoundary name="MapTray" fallback={null}>
-						<MapTray
-							isPyodideOpen={isPyodideOpen}
-							onTogglePyodide={togglePyodide}
-						/>
+						<MapTray isPyodideOpen={isPyodideOpen} onTogglePyodide={togglePyodide} />
 					</ErrorBoundary>
 					<ErrorBoundary name="TopCornerButtons" fallback={null}>
-						<TopCornerButtons
-							isPyodideOpen={isPyodideOpen}
-							onTogglePyodide={togglePyodide}
-						/>
+						<TopCornerButtons isPyodideOpen={isPyodideOpen} onTogglePyodide={togglePyodide} />
 					</ErrorBoundary>
 				</div>
 			</div>

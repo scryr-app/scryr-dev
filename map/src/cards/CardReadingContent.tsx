@@ -32,11 +32,7 @@ function EnumValue({ value, prefix = "" }: { value: string; prefix?: string }) {
 			.split("_")
 			.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
 			.join(" ");
-	return metadata?.docUrl ? (
-		<WebLink url={metadata.docUrl}>{label}</WebLink>
-	) : (
-		label
-	);
+	return metadata?.docUrl ? <WebLink url={metadata.docUrl}>{label}</WebLink> : label;
 }
 
 type Field = { label: string; value: ReactNode };
@@ -69,17 +65,13 @@ function enumField(label: string, value?: string | null, prefix = ""): Field {
 export function InfoCardReadingContent({ block }: { block: GraphqlBlock }) {
 	return (
 		<div className={styles.content}>
-			{block.description && (
-				<p className={styles.description}>{block.description}</p>
-			)}
+			{block.description && <p className={styles.description}>{block.description}</p>}
 			<Fields
 				title="Overview"
 				fields={[
 					{
 						label: "Type",
-						value: block.consumerType
-							? getClassificationMetadata(block.consumerType).label
-							: null,
+						value: block.consumerType ? getClassificationMetadata(block.consumerType).label : null,
 					},
 					{ label: "Version", value: block.version },
 					{ label: "Owner team", value: block.ownerTeam },
@@ -118,13 +110,8 @@ export function InfoCardReadingContent({ block }: { block: GraphqlBlock }) {
 					{ label: "Maximum replicas", value: block.maxReplicas },
 				]}
 			/>
-			{(block.docs.length > 0 ||
-				block.links.length > 0 ||
-				block.sourceCodeUrl) && (
-				<section
-					className={styles.section}
-					aria-label="Links and documentation"
-				>
+			{(block.docs.length > 0 || block.links.length > 0 || block.sourceCodeUrl) && (
+				<section className={styles.section} aria-label="Links and documentation">
 					<h3>Links and documentation</h3>
 					<ul className={styles.links}>
 						{[...new Set(block.docs)].map((url) => (
@@ -135,9 +122,7 @@ export function InfoCardReadingContent({ block }: { block: GraphqlBlock }) {
 						{block.links.map((link) => (
 							<li key={`${link.siteName}-${link.httpUrl}`}>
 								{link.httpUrl ? (
-									<WebLink url={link.httpUrl}>
-										{link.siteName || link.httpUrl}
-									</WebLink>
+									<WebLink url={link.httpUrl}>{link.siteName || link.httpUrl}</WebLink>
 								) : (
 									link.siteName
 								)}
@@ -155,11 +140,7 @@ export function InfoCardReadingContent({ block }: { block: GraphqlBlock }) {
 	);
 }
 
-export function DiagramCardReadingContent({
-	diagrams,
-}: {
-	diagrams: string[];
-}) {
+export function DiagramCardReadingContent({ diagrams }: { diagrams: string[] }) {
 	return (
 		<div className={styles.content}>
 			{diagrams.length ? (

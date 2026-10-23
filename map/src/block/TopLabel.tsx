@@ -38,8 +38,7 @@ export function TopLabel({ icon, name, fontColor, hh, width }: TopLabelProps) {
 			onSync={(text) => {
 				const [left, , right] = text.textRenderInfo.blockBounds;
 				const renderedWidth = right - left;
-				const scale =
-					renderedWidth > 0 ? Math.min(1, maxLabelWidth / renderedWidth) : 1;
+				const scale = renderedWidth > 0 ? Math.min(1, maxLabelWidth / renderedWidth) : 1;
 				text.scale.setScalar(scale);
 			}}
 		>

@@ -1,24 +1,16 @@
 // @vitest-environment jsdom
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, expect, it, vi } from "vite-plus/test";
 import { DEFAULT_FOCUS_VIEWPORT, getFocusViewport } from "./focusViewport";
 
 afterEach(() => {
 	document.body.replaceChildren();
 });
 
-function element(
-	left: number,
-	top: number,
-	width: number,
-	height: number,
-	overlay = false,
-) {
+function element(left: number, top: number, width: number, height: number, overlay = false) {
 	const node = document.createElement(overlay ? "div" : "canvas");
 	if (overlay) node.dataset.cameraOccluder = "";
 	document.body.append(node);
-	vi.spyOn(node, "getBoundingClientRect").mockReturnValue(
-		new DOMRect(left, top, width, height),
-	);
+	vi.spyOn(node, "getBoundingClientRect").mockReturnValue(new DOMRect(left, top, width, height));
 	return node;
 }
 

@@ -27,10 +27,8 @@ export function AccountButton({ variant = "standalone" }: AccountButtonProps) {
 	const [signOutError, setSignOutError] = useState(false);
 	const menuId = useId();
 	const containerRef = useRef<HTMLDivElement>(null);
-	const buttonClassName =
-		variant === "embedded" ? styles.embeddedButton : styles.standaloneButton;
-	const avatarClassName =
-		variant === "embedded" ? styles.embeddedAvatar : styles.standaloneAvatar;
+	const buttonClassName = variant === "embedded" ? styles.embeddedButton : styles.standaloneButton;
+	const avatarClassName = variant === "embedded" ? styles.embeddedAvatar : styles.standaloneAvatar;
 
 	useEffect(() => {
 		if (!isOpen) {

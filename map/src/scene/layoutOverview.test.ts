@@ -1,5 +1,5 @@
 import { PerspectiveCamera, Vector3 } from "three";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { BLOCK_DIMENSIONS } from "@/block/dimensions";
 import type { Block } from "@/graphql/generated";
 import * as appearances from "@/theme/appearance";
@@ -17,11 +17,7 @@ import {
 	measureLayoutOverlap,
 } from "./layoutOverview";
 
-function block(
-	name: string,
-	connections: string[] = [],
-	tags: string[] = [],
-): Block {
+function block(name: string, connections: string[] = [], tags: string[] = []): Block {
 	return {
 		name,
 		connections,
@@ -42,9 +38,7 @@ const fanout = [
 	...["a", "b", "c", "d", "e"].map((name) => block(name)),
 ];
 const fixtures = {
-	chain: Array.from({ length: 6 }, (_, i) =>
-		block(`chain-${i}`, i < 5 ? [`chain-${i + 1}`] : []),
-	),
+	chain: Array.from({ length: 6 }, (_, i) => block(`chain-${i}`, i < 5 ? [`chain-${i + 1}`] : [])),
 	fanout,
 	dense: [
 		block("a", ["d", "e", "f"]),
@@ -89,11 +83,7 @@ function expectAttachedRoutes(layout: LayoutResult) {
 					),
 				).toBeLessThan(1e-6);
 			}
-			const points = [
-				section.startPoint,
-				...(section.bendPoints ?? []),
-				section.endPoint,
-			];
+			const points = [section.startPoint, ...(section.bendPoints ?? []), section.endPoint];
 			for (let i = 1; i < points.length; i++) {
 				expect(
 					Math.min(
@@ -109,12 +99,7 @@ function expectAttachedRoutes(layout: LayoutResult) {
 function expectVisibleInFrame(layout: LayoutResult, view: LayoutView) {
 	const overview = getLayoutOverview(layout, view);
 	// Reconstruct independently, as the rendered camera does.
-	const camera = new PerspectiveCamera(
-		view.fov,
-		view.aspect,
-		0.1,
-		overview.camera.far,
-	);
+	const camera = new PerspectiveCamera(view.fov, view.aspect, 0.1, overview.camera.far);
 	camera.position.copy(overview.camera.position);
 	camera.lookAt(overview.target);
 	camera.updateMatrixWorld(true);
@@ -126,11 +111,7 @@ function expectVisibleInFrame(layout: LayoutResult, view: LayoutView) {
 					height - BLOCK_DIMENSIONS.height / 2,
 					height + BLOCK_DIMENSIONS.height / 2 + 0.01,
 				]) {
-					const point = new Vector3(
-						x * LAYOUT_SCALE,
-						y,
-						z * LAYOUT_SCALE,
-					).project(camera);
+					const point = new Vector3(x * LAYOUT_SCALE, y, z * LAYOUT_SCALE).project(camera);
 					expect(Math.abs(point.x)).toBeLessThan(0.87);
 					expect(Math.abs(point.y)).toBeLessThan(0.87);
 					expect(point.z).toBeGreaterThan(-1);
@@ -154,9 +135,7 @@ describe("camera-aware ELK layout", () => {
 			expectAttachedRoutes(selected);
 			expectVisibleInFrame(selected, view);
 			for (const group of selected.groups) {
-				const members = selected.nodes.filter((node) =>
-					group.nodeIds.includes(node.id),
-				);
+				const members = selected.nodes.filter((node) => group.nodeIds.includes(node.id));
 				expect(group.boundingBox).toEqual({
 					minX: Math.min(...members.map((node) => node.x)),
 					maxX: Math.max(...members.map((node) => node.x + node.width)),
@@ -191,9 +170,7 @@ describe("camera-aware ELK layout", () => {
 			componentSpacing: 120,
 		});
 		const compact = await layoutBlocksForView(fanout, view);
-		expect(compact.width * compact.height).toBeLessThan(
-			previous.width * previous.height * 0.95,
-		);
+		expect(compact.width * compact.height).toBeLessThan(previous.width * previous.height * 0.95);
 		expect(measureLayoutOverlap(compact, view)).toBeLessThanOrEqual(
 			measureLayoutOverlap(previous, view) + 1e-6,
 		);
@@ -204,17 +181,13 @@ describe("camera-aware ELK layout", () => {
 		const first = await layoutBlocksForView(fanout, view);
 		expect(await layoutBlocksForView(fanout, view)).toEqual(first);
 		for (const blocks of [[], [block("alone")]]) {
-			expect(await layoutBlocksForView(blocks, view)).toEqual(
-				await layoutBlocks(blocks),
-			);
+			expect(await layoutBlocksForView(blocks, view)).toEqual(await layoutBlocks(blocks));
 		}
 	});
 
 	it("stops searching when the request becomes stale", async () => {
 		const baseline = await layoutBlocks(fanout);
-		expect(await layoutBlocksForView(fanout, view, () => false)).toEqual(
-			baseline,
-		);
+		expect(await layoutBlocksForView(fanout, view, () => false)).toEqual(baseline);
 	});
 });
 

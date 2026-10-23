@@ -33,9 +33,7 @@ function safePath(path: string) {
 scope.onmessage = async ({ data }) => {
 	try {
 		scope.postMessage({ output: "Loading Python and the Scryr SDK…" });
-		const { loadPyodide } = await import(
-			/* @vite-ignore */ `${PYODIDE_CDN}pyodide.mjs`
-		);
+		const { loadPyodide } = await import(/* @vite-ignore */ `${PYODIDE_CDN}pyodide.mjs`);
 		const output = (message: string) => scope.postMessage({ output: message });
 		const python: PythonRuntime = await loadPyodide({
 			indexURL: PYODIDE_CDN,

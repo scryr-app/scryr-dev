@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vite-plus/test";
 import { CardFocusView } from "./CardFocusView";
 
 const focus = vi.hoisted(() => ({
@@ -76,25 +76,15 @@ it("expands one comparison card and Escape returns to the group before leaving",
 	expect(focus.expandCard).toHaveBeenCalledWith("beta");
 	focus.expandedId = "beta";
 	rerender(<CardFocusView />);
-	expect(document.activeElement).toBe(
-		screen.getByRole("button", { name: "Back to group" }),
-	);
+	expect(document.activeElement).toBe(screen.getByRole("button", { name: "Back to group" }));
 	expect(screen.getAllByRole("article")).toHaveLength(1);
-	fireEvent(
-		screen.getByRole("dialog"),
-		new Event("cancel", { bubbles: false, cancelable: true }),
-	);
+	fireEvent(screen.getByRole("dialog"), new Event("cancel", { bubbles: false, cancelable: true }));
 	expect(focus.expandCard).toHaveBeenLastCalledWith(null);
 	expect(focus.closeFocus).not.toHaveBeenCalled();
 	focus.expandedId = null;
 	rerender(<CardFocusView />);
-	expect(document.activeElement).toBe(
-		screen.getByRole("button", { name: "Expand Beta — Info" }),
-	);
-	fireEvent(
-		screen.getByRole("dialog"),
-		new Event("cancel", { bubbles: false, cancelable: true }),
-	);
+	expect(document.activeElement).toBe(screen.getByRole("button", { name: "Expand Beta — Info" }));
+	fireEvent(screen.getByRole("dialog"), new Event("cancel", { bubbles: false, cancelable: true }));
 	expect(focus.closeFocus).toHaveBeenCalledOnce();
 });
 
@@ -103,9 +93,7 @@ it("removes cards and restores the previous keyboard focus on exit", () => {
 	document.body.append(trigger);
 	trigger.focus();
 	const { unmount } = render(<CardFocusView />);
-	fireEvent.click(
-		screen.getByRole("button", { name: "Remove Alpha — Info from focus" }),
-	);
+	fireEvent.click(screen.getByRole("button", { name: "Remove Alpha — Info from focus" }));
 	expect(focus.removeCard).toHaveBeenCalledWith("alpha");
 	unmount();
 	expect(document.activeElement).toBe(trigger);

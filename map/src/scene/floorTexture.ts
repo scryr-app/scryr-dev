@@ -1,10 +1,4 @@
-import {
-	CanvasTexture,
-	LinearFilter,
-	NearestFilter,
-	RepeatWrapping,
-	SRGBColorSpace,
-} from "three";
+import { CanvasTexture, LinearFilter, NearestFilter, RepeatWrapping, SRGBColorSpace } from "three";
 
 const TEXTURE_SIZE = 256;
 const TILE_COUNT = 8;
@@ -31,12 +25,7 @@ export function createFloorTexture(
 	for (let row = 0; row < TILE_COUNT; row += 1) {
 		for (let column = 0; column < TILE_COUNT; column += 1) {
 			context.fillStyle = (row + column) % 2 === 0 ? evenColor : oddColor;
-			context.fillRect(
-				column * TILE_SIZE,
-				row * TILE_SIZE,
-				TILE_SIZE,
-				TILE_SIZE,
-			);
+			context.fillRect(column * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 		}
 	}
 
@@ -47,8 +36,7 @@ export function createFloorTexture(
 			context.fillRect(plank * 64, 0, 64, TEXTURE_SIZE);
 			for (let grain = 0; grain < 28; grain++) {
 				const x = plank * 64 + grain * 2.3;
-				context.strokeStyle =
-					grain % 2 ? "rgba(187,142,79,0.045)" : "rgba(0,0,0,0.12)";
+				context.strokeStyle = grain % 2 ? "rgba(187,142,79,0.045)" : "rgba(0,0,0,0.12)";
 				context.beginPath();
 				context.moveTo(x, 0);
 				context.bezierCurveTo(x + 3, 80, x - 2, 170, x + 1, 256);
@@ -67,14 +55,8 @@ export function createFloorTexture(
 			context.stroke();
 		}
 		for (let i = 0; i < 90; i++) {
-			context.fillStyle =
-				i % 11 ? "rgba(220,231,246,0.5)" : "rgba(250,222,151,0.85)";
-			context.fillRect(
-				(i * 79) % 251,
-				(i * 43) % 247,
-				i % 11 ? 1 : 2,
-				i % 11 ? 1 : 2,
-			);
+			context.fillStyle = i % 11 ? "rgba(220,231,246,0.5)" : "rgba(250,222,151,0.85)";
+			context.fillRect((i * 79) % 251, (i * 43) % 247, i % 11 ? 1 : 2, i % 11 ? 1 : 2);
 		}
 	} else if (pattern === "porcelain") {
 		context.strokeStyle = "rgba(37,82,145,0.2)";
@@ -119,8 +101,7 @@ export function createFloorTexture(
 		for (let i = 0; i < 2200; i++) {
 			const x = (i * 73.17) % TEXTURE_SIZE;
 			const y = (i * 41.39) % TEXTURE_SIZE;
-			context.fillStyle =
-				i % 3 ? "rgba(239,222,255,0.04)" : "rgba(50,24,63,0.035)";
+			context.fillStyle = i % 3 ? "rgba(239,222,255,0.04)" : "rgba(50,24,63,0.035)";
 			context.fillRect(x, y, 0.7, 2);
 		}
 	}
@@ -128,10 +109,7 @@ export function createFloorTexture(
 	const texture = new CanvasTexture(surface);
 	texture.wrapS = RepeatWrapping;
 	texture.wrapT = RepeatWrapping;
-	texture.repeat.set(
-		pattern === "seabed" ? 3 : 10,
-		pattern === "seabed" ? 3 : 10,
-	);
+	texture.repeat.set(pattern === "seabed" ? 3 : 10, pattern === "seabed" ? 3 : 10);
 	texture.magFilter = pattern === "seabed" ? LinearFilter : NearestFilter;
 	texture.minFilter = pattern === "seabed" ? LinearFilter : NearestFilter;
 	texture.colorSpace = SRGBColorSpace;

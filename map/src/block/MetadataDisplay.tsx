@@ -32,14 +32,7 @@ interface LabelProps {
 	children: React.ReactNode;
 }
 
-function Label({
-	position,
-	color,
-	fontSize,
-	anchorX,
-	maxWidth,
-	children,
-}: LabelProps) {
+function Label({ position, color, fontSize, anchorX, maxWidth, children }: LabelProps) {
 	return (
 		<Text
 			position={position}
@@ -63,12 +56,7 @@ interface VersionLabelProps {
 
 function VersionLabel({ version, x, y, textColor }: VersionLabelProps) {
 	return (
-		<Label
-			position={[x, y, 0]}
-			color={textColor}
-			fontSize={0.06}
-			anchorX="left"
-		>
+		<Label position={[x, y, 0]} color={textColor} fontSize={0.06} anchorX="left">
 			v{version}
 		</Label>
 	);
@@ -82,13 +70,7 @@ interface OwnerTeamLabelProps {
 	maxWidth: number;
 }
 
-function OwnerTeamLabel({
-	ownerTeam,
-	x,
-	y,
-	textColor,
-	maxWidth,
-}: OwnerTeamLabelProps) {
+function OwnerTeamLabel({ ownerTeam, x, y, textColor, maxWidth }: OwnerTeamLabelProps) {
 	return (
 		<Label
 			position={[x, y, 0]}
@@ -110,13 +92,7 @@ interface AuthTypeLabelProps {
 	maxWidth: number;
 }
 
-function AuthTypeLabel({
-	authType,
-	x,
-	y,
-	textColor,
-	maxWidth,
-}: AuthTypeLabelProps) {
+function AuthTypeLabel({ authType, x, y, textColor, maxWidth }: AuthTypeLabelProps) {
 	return (
 		<Label
 			position={[x, y, 0]}
@@ -139,12 +115,7 @@ interface LanguageLabelProps {
 
 function LanguageLabel({ language, x, y, textColor }: LanguageLabelProps) {
 	return (
-		<Label
-			position={[x, y, 0]}
-			color={textColor}
-			fontSize={0.09}
-			anchorX="center"
-		>
+		<Label position={[x, y, 0]} color={textColor} fontSize={0.09} anchorX="center">
 			{language}
 		</Label>
 	);
@@ -158,13 +129,7 @@ interface FrameworksLabelProps {
 	maxWidth: number;
 }
 
-function FrameworksLabel({
-	frameworks,
-	x,
-	y,
-	textColor,
-	maxWidth,
-}: FrameworksLabelProps) {
+function FrameworksLabel({ frameworks, x, y, textColor, maxWidth }: FrameworksLabelProps) {
 	return (
 		<Label
 			position={[x, y, 0]}
@@ -185,19 +150,9 @@ interface DeploymentLabelProps {
 	textColor: string;
 }
 
-function DeploymentLabel({
-	deployment,
-	x,
-	y,
-	textColor,
-}: DeploymentLabelProps) {
+function DeploymentLabel({ deployment, x, y, textColor }: DeploymentLabelProps) {
 	return (
-		<Label
-			position={[x, y, 0]}
-			color={textColor}
-			fontSize={0.065}
-			anchorX="center"
-		>
+		<Label position={[x, y, 0]} color={textColor} fontSize={0.065} anchorX="center">
 			{deployment}
 		</Label>
 	);
@@ -211,13 +166,7 @@ interface MonitoringLabelProps {
 	maxWidth: number;
 }
 
-function MonitoringLabel({
-	monitoring,
-	x,
-	y,
-	textColor,
-	maxWidth,
-}: MonitoringLabelProps) {
+function MonitoringLabel({ monitoring, x, y, textColor, maxWidth }: MonitoringLabelProps) {
 	return (
 		<Label
 			position={[x, y, 0]}
@@ -239,13 +188,7 @@ interface TracingLabelProps {
 	maxWidth: number;
 }
 
-function TracingLabel({
-	tracing,
-	x,
-	y,
-	textColor,
-	maxWidth,
-}: TracingLabelProps) {
+function TracingLabel({ tracing, x, y, textColor, maxWidth }: TracingLabelProps) {
 	return (
 		<Label
 			position={[x, y, 0]}

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import {
 	resolveGraphqlEndpoint,
 	resolveSameOriginGraphqlEndpoint,
@@ -13,12 +13,9 @@ describe("GraphQL client endpoint resolution", () => {
 	});
 
 	it("keeps absolute development endpoints unchanged", () => {
-		expect(
-			resolveGraphqlEndpoint(
-				"http://localhost:8000/graphql",
-				"http://127.0.0.1:3000",
-			),
-		).toBe("http://localhost:8000/graphql");
+		expect(resolveGraphqlEndpoint("http://localhost:8000/graphql", "http://127.0.0.1:3000")).toBe(
+			"http://localhost:8000/graphql",
+		);
 	});
 
 	it("can retry local-auth endpoints against the current UI origin", () => {
@@ -44,12 +41,8 @@ describe("GraphQL client endpoint resolution", () => {
 	it("does not retry when the endpoint already matches same-origin GraphQL", () => {
 		const endpoint = resolveSameOriginGraphqlEndpoint("http://127.0.0.1:8000");
 
-		expect(
-			shouldRetrySameOriginGraphqlEndpoint(
-				endpoint,
-				"local",
-				"http://127.0.0.1:8000",
-			),
-		).toBe(false);
+		expect(shouldRetrySameOriginGraphqlEndpoint(endpoint, "local", "http://127.0.0.1:8000")).toBe(
+			false,
+		);
 	});
 });

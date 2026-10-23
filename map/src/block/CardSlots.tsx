@@ -104,9 +104,7 @@ export function CardSlots({
 						}}
 						onPointerOut={() => {
 							clearCardPreview(blockId, index);
-							setHoveredSlotIndex((current) =>
-								current === index ? null : current,
-							);
+							setHoveredSlotIndex((current) => (current === index ? null : current));
 						}}
 					>
 						{/* biome-ignore lint/a11y/noStaticElementInteractions: THREE.Mesh uses R3F pointer events. */}

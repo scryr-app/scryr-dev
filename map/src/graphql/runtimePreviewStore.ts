@@ -35,8 +35,5 @@ export function clearRuntimePreviewBlocks() {
 }
 
 export function useRuntimePreviewBlocks() {
-	return useSyncExternalStore(
-		runtimePreviewStore.subscribe,
-		runtimePreviewStore.get,
-	);
+	return useSyncExternalStore(runtimePreviewStore.subscribe, runtimePreviewStore.get);
 }

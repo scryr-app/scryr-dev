@@ -518,21 +518,14 @@ export const ThemePresets = {
 	},
 } satisfies Record<string, ThemeAttributes>;
 export type ThemeId = keyof typeof ThemePresets;
-const defaultThemeId: ThemeId = isLocalAuthMode
-	? "IndustrialForest"
-	: "LightningNeon";
+const defaultThemeId: ThemeId = isLocalAuthMode ? "IndustrialForest" : "LightningNeon";
 
 /** Old palettes and brightness settings migrate into one complete theme. */
-export function resolveThemeId(
-	selected: string | null,
-	legacyMode: string | null,
-): ThemeId {
-	if (selected && Object.hasOwn(ThemePresets, selected))
-		return selected as ThemeId;
+export function resolveThemeId(selected: string | null, legacyMode: string | null): ThemeId {
+	if (selected && Object.hasOwn(ThemePresets, selected)) return selected as ThemeId;
 	if (legacyMode === "dark") return "LightningNeon";
 	if (legacyMode === "light") return "IndustrialForest";
-	return selected &&
-		["SteelBlue", "IndustryOcean", "VibrantRainbow"].includes(selected)
+	return selected && ["SteelBlue", "IndustryOcean", "VibrantRainbow"].includes(selected)
 		? "LightningNeon"
 		: defaultThemeId;
 }

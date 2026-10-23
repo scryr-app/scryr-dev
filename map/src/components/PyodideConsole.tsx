@@ -30,10 +30,7 @@ function constrainPosition(position: PanelPosition, panel: HTMLElement) {
 	const bounds = panel.getBoundingClientRect();
 	return {
 		x: Math.max(8, Math.min(position.x, window.innerWidth - bounds.width - 8)),
-		y: Math.max(
-			8,
-			Math.min(position.y, window.innerHeight - bounds.height - 8),
-		),
+		y: Math.max(8, Math.min(position.y, window.innerHeight - bounds.height - 8)),
 	};
 }
 
@@ -49,10 +46,7 @@ export function PyodideConsole({
 	const [position, setPosition] = useState<PanelPosition>({ x: 16, y: 72 });
 	const panelRef = useRef<HTMLElement | null>(null);
 	const gesture = useRef<PanelGesture | null>(null);
-	const startGesture = (
-		event: React.PointerEvent<HTMLElement>,
-		kind: PanelGesture["kind"],
-	) => {
+	const startGesture = (event: React.PointerEvent<HTMLElement>, kind: PanelGesture["kind"]) => {
 		if (event.button !== 0 || gesture.current) return;
 		event.preventDefault();
 		event.currentTarget.setPointerCapture(event.pointerId);
@@ -74,8 +68,7 @@ export function PyodideConsole({
 		if (!isOpen) return;
 		const move = (event: PointerEvent) => {
 			const active = gesture.current;
-			if (!active || event.pointerId !== active.pointerId || !panelRef.current)
-				return;
+			if (!active || event.pointerId !== active.pointerId || !panelRef.current) return;
 			if (active.kind === "drag") {
 				setPosition(
 					constrainPosition(
@@ -147,26 +140,20 @@ export function PyodideConsole({
 						startGesture(event, "drag");
 					}}
 				>
-					<button
-						type="button"
-						aria-label="Hide terminal file"
-						onClick={() => onOpenChange(false)}
-					>
+					<button type="button" aria-label="Hide terminal file" onClick={() => onOpenChange(false)}>
 						<X size={16} />
 					</button>
 					<span className={styles.filename} title={editor.doc?.folderPath}>
 						{editor.doc
-							? [editor.doc.folderPath, editor.doc.entrypoint]
-									.filter(Boolean)
-									.join("/")
+							? [editor.doc.folderPath, editor.doc.entrypoint].filter(Boolean).join("/")
 							: "index.scry"}
 						{editor.dirty ? " *" : ""}
 					</span>
 				</header>
 				{editor.conflict && (
 					<div role="alert" className={styles.conflict}>
-						Source changed elsewhere. Your draft is retained; copy it before
-						reloading the current source.
+						Source changed elsewhere. Your draft is retained; copy it before reloading the current
+						source.
 					</div>
 				)}
 				{editor.doc && !editor.doc.writable && (
@@ -174,24 +161,13 @@ export function PyodideConsole({
 						This source is read-only in the current session.
 					</div>
 				)}
-				<div
-					className={styles.editor}
-					style={{ backgroundColor: palette.background }}
-				>
-					<PythonCodeEditor
-						value={editor.code}
-						onChange={editor.setCode}
-						theme={theme}
-					/>
+				<div className={styles.editor} style={{ backgroundColor: palette.background }}>
+					<PythonCodeEditor value={editor.code} onChange={editor.setCode} theme={theme} />
 				</div>
 				<footer className={styles.footer}>
 					<div className={styles.actions}>
 						{editor.canCancel && (
-							<button
-								type="button"
-								onClick={editor.cancel}
-								className={styles.cancelButton}
-							>
+							<button type="button" onClick={editor.cancel} className={styles.cancelButton}>
 								Cancel run
 							</button>
 						)}
@@ -202,9 +178,7 @@ export function PyodideConsole({
 								onClick={() => {
 									if (
 										!editor.dirty ||
-										window.confirm(
-											"Discard this unsaved draft and reload the saved source?",
-										)
+										window.confirm("Discard this unsaved draft and reload the saved source?")
 									)
 										void editor.reload();
 								}}
@@ -216,9 +190,7 @@ export function PyodideConsole({
 							<button
 								type="button"
 								onClick={() => void editor.run()}
-								disabled={
-									!editor.doc?.writable || editor.running || editor.conflict
-								}
+								disabled={!editor.doc?.writable || editor.running || editor.conflict}
 								className={styles.runButton}
 								style={{
 									backgroundColor: palette.accent,
@@ -238,11 +210,7 @@ export function PyodideConsole({
 						{editor.status}
 					</div>
 					{editor.output && (
-						<pre
-							role="log"
-							aria-label="Python output"
-							className={styles.output}
-						>
+						<pre role="log" aria-label="Python output" className={styles.output}>
 							{editor.output}
 						</pre>
 					)}

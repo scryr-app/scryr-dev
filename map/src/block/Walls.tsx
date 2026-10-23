@@ -50,10 +50,7 @@ export function Walls({ color, hw, hh, hd }: WallsProps) {
 			{/* Inner walls - lighter color for depth */}
 			<mesh geometry={innerWallsGeometry} castShadow receiveShadow>
 				<meshPhysicalMaterial
-					color={new THREE.Color(color).lerp(
-						new THREE.Color(currentTheme.innerWallColor),
-						0.1,
-					)}
+					color={new THREE.Color(color).lerp(new THREE.Color(currentTheme.innerWallColor), 0.1)}
 					side={THREE.FrontSide}
 					{...innerWalls}
 					emissive={glowColor}
@@ -62,22 +59,12 @@ export function Walls({ color, hw, hh, hd }: WallsProps) {
 			{/* Two lit bevels reveal the depth of the dark glass casing. */}
 			{shapes.frameFront > 0 && (
 				<group position={[0, 0, hd + 0.012]}>
-					<GlowFrame
-						width={hw * 2}
-						height={hh * 2}
-						color={color}
-						strength={shapes.frameFront}
-					/>
+					<GlowFrame width={hw * 2} height={hh * 2} color={color} strength={shapes.frameFront} />
 				</group>
 			)}
 			{shapes.frameBack > 0 && (
 				<group position={[0, 0, -hd - 0.012]}>
-					<GlowFrame
-						width={hw * 2}
-						height={hh * 2}
-						color={color}
-						strength={shapes.frameBack}
-					/>
+					<GlowFrame width={hw * 2} height={hh * 2} color={color} strength={shapes.frameBack} />
 				</group>
 			)}
 		</>

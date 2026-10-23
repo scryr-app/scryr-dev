@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, renderHook } from "@testing-library/react";
-import { expect, it } from "vitest";
+import { expect, it } from "vite-plus/test";
 import { MapTrayProvider, useMapTray } from "./MapTrayContext";
 
 it("docks a clicked card only on its own block and lets the toolbar reset all blocks", () => {

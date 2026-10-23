@@ -29,8 +29,7 @@ function MovingThemeLight() {
 			motion === "orbit" ? 12 : 15 + Math.sin(elapsed * 0.31) * 2,
 			Math.sin(elapsed * speed) * radius,
 		);
-		light.current.intensity =
-			motion === "caustic" ? 0.45 + Math.sin(elapsed * 0.7) * 0.12 : 0.25;
+		light.current.intensity = motion === "caustic" ? 0.45 + Math.sin(elapsed * 0.7) * 0.12 : 0.25;
 	});
 	if (!motion) return null;
 	return (
@@ -53,10 +52,7 @@ export function MapDiagram() {
 	};
 
 	return (
-		<ErrorBoundary
-			name="Diagram"
-			fallback={<div className={styles.error}>Map render failed.</div>}
-		>
+		<ErrorBoundary name="Diagram" fallback={<div className={styles.error}>Map render failed.</div>}>
 			<DiagramSurface
 				shadows="percentage"
 				frameloop={isFocused ? "never" : "always"}
@@ -87,11 +83,7 @@ export function MapDiagram() {
 				{lighting.reflections.length > 0 && (
 					<Environment resolution={128} frames={1}>
 						{lighting.reflections.map((light) => (
-							<Lightformer
-								key={light.position.join(",")}
-								{...light}
-								target={[0, 0, 0]}
-							/>
+							<Lightformer key={light.position.join(",")} {...light} target={[0, 0, 0]} />
 						))}
 					</Environment>
 				)}

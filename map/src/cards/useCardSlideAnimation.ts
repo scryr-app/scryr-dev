@@ -77,20 +77,12 @@ export function useCardSlideAnimation({
 		if (isActive) {
 			// Start docking unless already headed that way
 			setPhase((p) =>
-				p === "docked" ||
-				p === "dock-in" ||
-				p === "dock-fwd" ||
-				p === "dock-out"
-					? p
-					: "dock-out",
+				p === "docked" || p === "dock-in" || p === "dock-fwd" || p === "dock-out" ? p : "dock-out",
 			);
 		} else {
 			// Start undocking unless already headed that way
 			setPhase((p) =>
-				p === "slot" ||
-				p === "undock-slot" ||
-				p === "undock-back" ||
-				p === "undock-right"
+				p === "slot" || p === "undock-slot" || p === "undock-back" || p === "undock-right"
 					? p
 					: "undock-right",
 			);

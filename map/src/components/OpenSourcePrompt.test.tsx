@@ -1,12 +1,6 @@
 // @vitest-environment jsdom
-import {
-	act,
-	cleanup,
-	fireEvent,
-	render,
-	screen,
-} from "@testing-library/react";
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, expect, it, vi } from "vite-plus/test";
 import { OpenSourcePrompt } from "./OpenSourcePrompt";
 
 beforeEach(() => {
@@ -27,9 +21,7 @@ it("appears after 20 seconds and keeps dismissal across remounts", () => {
 	expect(screen.getByRole("link").getAttribute("href")).toBe(
 		"https://scryr.dev/getting-started/#install",
 	);
-	fireEvent.click(
-		screen.getByRole("button", { name: "Dismiss install prompt" }),
-	);
+	fireEvent.click(screen.getByRole("button", { name: "Dismiss install prompt" }));
 	view.unmount();
 	render(<OpenSourcePrompt />);
 	advance(20_000);

@@ -71,28 +71,16 @@ export function getLayoutOverview(layout: LayoutResult, view: LayoutView) {
 	}
 	for (const edge of layout.edges) {
 		for (const section of edge.sections ?? []) {
-			for (const point of [
-				section.startPoint,
-				...(section.bendPoints ?? []),
-				section.endPoint,
-			]) {
-				bounds.expandByPoint(
-					new Vector3(point.x * LAYOUT_SCALE, 0, point.y * LAYOUT_SCALE),
-				);
+			for (const point of [section.startPoint, ...(section.bendPoints ?? []), section.endPoint]) {
+				bounds.expandByPoint(new Vector3(point.x * LAYOUT_SCALE, 0, point.y * LAYOUT_SCALE));
 			}
 		}
 	}
-	if (bounds.isEmpty())
-		bounds.set(new Vector3(-1, 0, -1), new Vector3(1, 2, 1));
+	if (bounds.isEmpty()) bounds.set(new Vector3(-1, 0, -1), new Vector3(1, 2, 1));
 
 	const target = bounds.getCenter(new Vector3());
 	const direction = new Vector3(...view.position).normalize();
-	const camera = new PerspectiveCamera(
-		view.fov,
-		Math.max(0.1, view.aspect),
-		0.1,
-		1000,
-	);
+	const camera = new PerspectiveCamera(view.fov, Math.max(0.1, view.aspect), 0.1, 1000);
 	camera.position.copy(target).add(direction);
 	camera.lookAt(target);
 	const inverseRotation = camera.quaternion.clone().invert();
@@ -108,10 +96,7 @@ export function getLayoutOverview(layout: LayoutResult, view: LayoutView) {
 		);
 	}
 	camera.position.copy(target).addScaledVector(direction, distance);
-	camera.far = Math.max(
-		1000,
-		distance + bounds.getSize(new Vector3()).length() * 2,
-	);
+	camera.far = Math.max(1000, distance + bounds.getSize(new Vector3()).length() * 2);
 	camera.updateProjectionMatrix();
 	camera.updateMatrixWorld(true);
 	return { camera, target, blockBounds };
@@ -124,10 +109,7 @@ interface ScreenBounds {
 	maxY: number;
 }
 
-function projectBounds(
-	points: Vector3[],
-	camera: PerspectiveCamera,
-): ScreenBounds {
+function projectBounds(points: Vector3[], camera: PerspectiveCamera): ScreenBounds {
 	const projected = points.map((point) => point.clone().project(camera));
 	return {
 		minX: Math.min(...projected.map((point) => point.x)),
@@ -149,10 +131,7 @@ function overlap(a: ScreenBounds, b: ScreenBounds) {
 }
 
 /** Normalized overlap cannot improve merely by zooming out to shrink the map. */
-export function measureLayoutOverlap(
-	layout: LayoutResult,
-	view: LayoutView,
-): number {
+export function measureLayoutOverlap(layout: LayoutResult, view: LayoutView): number {
 	const { camera, blockBounds } = getLayoutOverview(layout, view);
 	const projected = blockBounds.map((bounds) => {
 		const points = corners(bounds);
@@ -162,9 +141,7 @@ export function measureLayoutOverlap(
 				points.filter((point) => point.y === bounds.max.y),
 				camera,
 			),
-			depth: bounds
-				.getCenter(new Vector3())
-				.applyMatrix4(camera.matrixWorldInverse).z,
+			depth: bounds.getCenter(new Vector3()).applyMatrix4(camera.matrixWorldInverse).z,
 		};
 	});
 	let score = 0;
@@ -173,14 +150,10 @@ export function measureLayoutOverlap(
 			const a = projected[i];
 			const b = projected[j];
 			const [front, back] = a.depth > b.depth ? [a, b] : [b, a];
-			score +=
-				overlap(a.body, b.body) /
-				Math.max(1e-12, Math.min(area(a.body), area(b.body)));
+			score += overlap(a.body, b.body) / Math.max(1e-12, Math.min(area(a.body), area(b.body)));
 			// Hiding a name is especially costly. Screen rectangles deliberately
 			// overestimate silhouettes to leave comfortable visual clearance.
-			score +=
-				(2 * overlap(front.body, back.label)) /
-				Math.max(1e-12, area(back.label));
+			score += (2 * overlap(front.body, back.label)) / Math.max(1e-12, area(back.label));
 		}
 	}
 	return score;

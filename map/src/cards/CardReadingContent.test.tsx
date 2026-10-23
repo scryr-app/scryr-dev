@@ -1,11 +1,8 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, expect, it } from "vitest";
+import { afterEach, expect, it } from "vite-plus/test";
 import type { Block } from "@/graphql/generated";
-import {
-	DiagramCardReadingContent,
-	InfoCardReadingContent,
-} from "./CardReadingContent";
+import { DiagramCardReadingContent, InfoCardReadingContent } from "./CardReadingContent";
 
 afterEach(cleanup);
 
@@ -21,16 +18,12 @@ const block: Block = {
 it("shows complete descriptions, every framework and documentation link", () => {
 	const description = `${"A long service description. ".repeat(30)}Final sentence.`;
 	render(
-		<InfoCardReadingContent
-			block={{ ...block, description, minReplicas: 0, maxReplicas: 12 }}
-		/>,
+		<InfoCardReadingContent block={{ ...block, description, minReplicas: 0, maxReplicas: 12 }} />,
 	);
 	expect(screen.getByText(description)).toBeDefined();
 	expect(screen.getByRole("link", { name: "FastAPI" })).toBeDefined();
 	for (const url of block.docs) {
-		expect(screen.getByRole("link", { name: url }).getAttribute("href")).toBe(
-			url,
-		);
+		expect(screen.getByRole("link", { name: url }).getAttribute("href")).toBe(url);
 	}
 	expect(screen.getByText("0")).toBeDefined();
 	expect(screen.getByText("12")).toBeDefined();
@@ -59,9 +52,7 @@ it("keeps non-web URLs as text while preserving safe external links", () => {
 
 it("shows all diagram names and handles an empty list", () => {
 	const { rerender } = render(
-		<DiagramCardReadingContent
-			diagrams={["Payments", "Platform", "Analytics"]}
-		/>,
+		<DiagramCardReadingContent diagrams={["Payments", "Platform", "Analytics"]} />,
 	);
 	expect(screen.getAllByRole("listitem")).toHaveLength(3);
 	rerender(<DiagramCardReadingContent diagrams={[]} />);
