@@ -156,3 +156,27 @@ layout, interaction states, and animations in those modules. `src/styles.css`
 contains only shared browser defaults and theme variables; dynamic theme values
 and panel geometry can still use inline styles. Vite handles CSS Modules without
 an additional styling plugin.
+
+## HTML-in-Canvas card prototype
+
+Append `?htmlCards=native` to the map URL to replace the first registered overview
+card with an interactive React DOM/SVG graph using simulated data. Its card frame,
+slide animation, focus animation, and foreground render pass remain in Three.js.
+Use the existing **Enlarge Card** control to focus this card before interacting
+with its graph controls. The demo includes live/pause updates, a traffic slider,
+sample selection, editable notes, and a scrollable table. Notes are session-only.
+
+The native path uses the installed Three.js `HTMLTexture` and `InteractionManager`.
+Enable `chrome://flags/#canvas-draw-element` and relaunch a compatible Chromium
+browser. Support is checked for the `texElementImage2D` and `requestPaint` APIs
+used by Three r185; newer experimental API revisions may require a Three update.
+If these APIs are missing or no initial paint arrives, the card uses Drei's
+transformed DOM overlay. `?htmlCards=dom` forces that fallback for comparison.
+The card labels its active renderer. Remove the query parameter and reload to
+restore the normal overview content. No dependency changes or polyfill are used.
+
+Only this one card is replaced. Controls are enabled in focus mode so an occluded
+DOM surface cannot intercept normal map navigation. The DOM fallback uses
+whole-element occlusion outside focus mode; it does not reproduce native mesh
+depth clipping. This is an experiment, not a conversion of the other cards or a
+validated integration with a third-party chart library.

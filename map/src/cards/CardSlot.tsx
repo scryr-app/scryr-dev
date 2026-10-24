@@ -4,6 +4,7 @@ import { currentTheme } from "@/theme/theme";
 import { Card } from "../components/Card";
 import { useCardFocusAnimation } from "./useCardFocusAnimation";
 import { useCardFocus } from "./CardFocusContext";
+import { HtmlGraphCard, htmlCardPrototypeMode } from "./HtmlGraphCard";
 import { useCardSlideAnimation } from "./useCardSlideAnimation";
 
 export interface CardSlotConfig {
@@ -50,7 +51,7 @@ export function CardSlot({
 	});
 
 	const focusRef = useCardFocusAnimation(focusId, cardWidth, cardHeight, config.zOffset);
-	const { focusedIds, isSelecting, focusCard } = useCardFocus();
+	const { cards, focusedIds, isSelecting, focusCard } = useCardFocus();
 	const primaryComponent = config.components[0] ?? null;
 	const cardColor = new THREE.Color(blockColor)
 		.lerp(new THREE.Color(currentTheme.cardHighlightColor), isActive ? 0.42 : 0.24)
@@ -105,7 +106,17 @@ export function CardSlot({
 					textColor={currentTheme.cardTextColor}
 					fontSize={0.12}
 				>
-					<group position={[0, 0, 0.001]}>{primaryComponent}</group>
+					<group position={[0, 0, 0.001]}>
+						{htmlCardPrototypeMode() && cards[0]?.id === focusId ? (
+							<HtmlGraphCard
+								width={cardWidth - 0.12}
+								height={cardHeight - 0.12}
+								focusId={focusId}
+							/>
+						) : (
+							primaryComponent
+						)}
+					</group>
 				</Card>
 			</group>
 		</group>
