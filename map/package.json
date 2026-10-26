@@ -10,7 +10,8 @@
 	},
 	"type": "module",
 	"scripts": {
-		"test:editor": "vp exec playwright test",
+		"test:editor": "vp exec playwright test editor.e2e.ts",
+		"test:cards": "vp exec playwright test cards.e2e.ts",
 		"codegen": "vp exec graphql-codegen --config codegen.yml",
 		"codegen:watch": "vp exec graphql-codegen --config codegen.yml --watch",
 		"predev": "vp exec node scripts/sync-browser-sdk.mjs",
@@ -38,8 +39,6 @@
 		"@lezer/highlight": "^1.2.3",
 		"@react-three/drei": "^10.7.7",
 		"@react-three/fiber": "^9.6.1",
-		"@react-three/uikit": "^1.0.76",
-		"@react-three/uikit-lucide": "^1.0.76",
 		"@tanstack/react-devtools": "^0.10.5",
 		"@tanstack/react-query": "^5.102.8",
 		"@tanstack/react-query-devtools": "^5.102.8",

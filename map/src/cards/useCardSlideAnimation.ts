@@ -98,6 +98,7 @@ export function useCardSlideAnimation({
 	const posX = useRef(slotX);
 	const posZ = useRef(0);
 
+	// Update motion after OrbitControls (-1), before Drei Html projects the DOM (0).
 	useFrame((_state, delta) => {
 		if (!cardRef.current) return;
 
@@ -169,7 +170,7 @@ export function useCardSlideAnimation({
 
 		cardRef.current.position.x = posX.current;
 		cardRef.current.position.z = posZ.current;
-	});
+	}, -0.5);
 
 	return {
 		cardRef,

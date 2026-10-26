@@ -157,26 +157,35 @@ contains only shared browser defaults and theme variables; dynamic theme values
 and panel geometry can still use inline styles. Vite handles CSS Modules without
 an additional styling plugin.
 
-## HTML-in-Canvas card prototype
+## Card content and layout
 
-Append `?htmlCards=native` to the map URL to replace the first registered overview
-card with an interactive React DOM/SVG graph using simulated data. Its card frame,
-slide animation, focus animation, and foreground render pass remain in Three.js.
-Use the existing **Enlarge Card** control to focus this card before interacting
-with its graph controls. The demo includes live/pause updates, a traffic slider,
-sample selection, editable notes, and a scrollable table. Notes are session-only.
+All card interiors are ordinary React DOM rendered by `CardSurface` through
+Drei's `<Html transform>`. There is one rendering path, with no browser flags,
+query switches, HTML textures, UIKit components, or DOM rasterization. Three.js
+renders the physical frames and scene and owns the existing slide/focus motion.
 
-The native path uses the installed Three.js `HTMLTexture` and `InteractionManager`.
-Enable `chrome://flags/#canvas-draw-element` and relaunch a compatible Chromium
-browser. Support is checked for the `texElementImage2D` and `requestPaint` APIs
-used by Three r185; newer experimental API revisions may require a Three update.
-If these APIs are missing or no initial paint arrives, the card uses Drei's
-transformed DOM overlay. `?htmlCards=dom` forces that fallback for comparison.
-The card labels its active renderer. Remove the query parameter and reload to
-restore the normal overview content. No dependency changes or polyfill are used.
+`CardSurface` supplies a scrollable CSS container and theme variables:
+`--card-text`, `--card-muted`, `--card-link`, and `--card-inset`. New cards should
+return normal React elements, CSS Modules, SVG, tables, or chart components.
+The shared React Query context is bridged into the DOM root for card data hooks.
+Chart libraries should measure their container (for example with ResizeObserver)
+and keep tooltips/popovers inside the card rather than portaling to document.body.
+Do not add another canvas or renderer for card placement.
 
-Only this one card is replaced. Controls are enabled in focus mode so an occluded
-DOM surface cannot intercept normal map navigation. The DOM fallback uses
-whole-element occlusion outside focus mode; it does not reproduce native mesh
-depth clipping. This is an experiment, not a conversion of the other cards or a
-validated integration with a third-party chart library.
+Docked cards lay out at 420 CSS pixels wide. Focus, comparison, expansion, and
+viewport resizing change the actual CSS width/height to match the available
+screen area; container queries reflow content instead of merely magnifying it.
+The same mounted content stays with its frame during all transitions, preserving
+component state and browser scroll positions where the new dimensions allow.
+Descriptions, resource links, and technology lists are no longer truncated.
+
+Every card uses blending occlusion: a depth-tested mask reveals the transformed
+DOM below the transparent scene canvas. This clips cards as they slide out from
+behind blocks, while the foreground pass keeps focused cards above the diagram.
+All masks share a stacking range within an isolated scene stacking context.
+Only focused card content accepts DOM input; unfocused/hidden card content is
+inert so it cannot steal map navigation or slot selection. Use **Enlarge Card**
+or the block's focus control to read, select text, scroll, and follow card links.
+
+Run `mise run verify:cards` for browser checks of card focus, layout reflow,
+comparison, scrolling, and return to the diagram using isolated fixture data.

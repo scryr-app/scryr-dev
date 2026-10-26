@@ -1,8 +1,13 @@
-import { Svg, type SvgProperties } from "@react-three/uikit";
-import { type ComponentType, createElement } from "react";
+import { type ComponentType, type HTMLAttributes, createElement } from "react";
+import styles from "./CardContent.module.css";
+
+type ClassificationIconProps = HTMLAttributes<HTMLSpanElement> & {
+	width?: number;
+	height?: number;
+};
 
 type ClassificationMetadata = {
-	icon: ComponentType<SvgProperties>;
+	icon: ComponentType<ClassificationIconProps>;
 	label: string;
 	iconWidth?: number;
 };
@@ -77,8 +82,20 @@ export const ClassificationIcons: Record<string, ClassificationMetadata> = Objec
 	Object.entries(definitions).map(([name, { asset, ...metadata }]) => {
 		const content = assets[`../icons/classifications/${asset}.svg`];
 		if (!content) throw new Error(`Missing classification icon: ${asset}`);
-		function ClassificationIcon(props: SvgProperties) {
-			return createElement(Svg, { content, keepAspectRatio: true, ...props });
+		function ClassificationIcon({
+			width = 24,
+			height = 24,
+			style,
+			...props
+		}: ClassificationIconProps) {
+			// These SVGs are trusted, bundled assets; inline markup preserves currentColor.
+			return createElement("span", {
+				...props,
+				className: styles.classificationIcon,
+				style: { width, height, ...style },
+				"aria-hidden": true,
+				dangerouslySetInnerHTML: { __html: content },
+			});
 		}
 		return [name, { ...metadata, icon: ClassificationIcon }];
 	}),

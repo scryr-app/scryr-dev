@@ -1,5 +1,4 @@
-export type { CardProps } from "../components/Card";
-export { Card } from "../components/Card";
+export { CardSurface } from "./CardSurface";
 export type { CardSlotConfig, CardSlotProps } from "./CardSlot";
 export { CardSlot } from "./CardSlot";
 export { getCardLayout } from "./cardLayout";

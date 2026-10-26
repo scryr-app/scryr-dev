@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 import * as THREE from "three";
 import { currentTheme } from "@/theme/theme";
-import { Card } from "../components/Card";
+import { CardFrame } from "../components/CardFrame";
 import { useCardFocusAnimation } from "./useCardFocusAnimation";
 import { useCardFocus } from "./CardFocusContext";
-import { HtmlGraphCard, htmlCardPrototypeMode } from "./HtmlGraphCard";
+import { CardSurface } from "./CardSurface";
 import { useCardSlideAnimation } from "./useCardSlideAnimation";
 
 export interface CardSlotConfig {
@@ -51,10 +51,17 @@ export function CardSlot({
 	});
 
 	const focusRef = useCardFocusAnimation(focusId, cardWidth, cardHeight, config.zOffset);
-	const { cards, focusedIds, isSelecting, focusCard } = useCardFocus();
+	const { focusedIds, isSelecting, focusCard } = useCardFocus();
 	const primaryComponent = config.components[0] ?? null;
 	const cardColor = new THREE.Color(blockColor)
 		.lerp(new THREE.Color(currentTheme.cardHighlightColor), isActive ? 0.42 : 0.24)
+		.getStyle();
+
+	const { cards: appearance, textures } = currentTheme.appearance;
+	const surfaceColor = new THREE.Color(
+		textures.paperColor ?? (appearance.useBlockColor ? blockColor : cardColor),
+	)
+		.multiplyScalar(appearance.brightness)
 		.getStyle();
 
 	return (
@@ -95,29 +102,18 @@ export function CardSlot({
 						/>
 					</mesh>
 				)}
-				<Card
+				<CardFrame
 					position={[0, 0, 0]}
 					anchor="center"
 					width={cardWidth}
 					height={cardHeight}
-					label={undefined}
 					color={cardColor}
 					glowColor={blockColor}
-					textColor={currentTheme.cardTextColor}
-					fontSize={0.12}
 				>
-					<group position={[0, 0, 0.001]}>
-						{htmlCardPrototypeMode() && cards[0]?.id === focusId ? (
-							<HtmlGraphCard
-								width={cardWidth - 0.12}
-								height={cardHeight - 0.12}
-								focusId={focusId}
-							/>
-						) : (
-							primaryComponent
-						)}
-					</group>
-				</Card>
+					<CardSurface width={cardWidth} height={cardHeight} focusId={focusId} color={surfaceColor}>
+						{primaryComponent}
+					</CardSurface>
+				</CardFrame>
 			</group>
 		</group>
 	);

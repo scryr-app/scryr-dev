@@ -6,3 +6,9 @@
 	justify-content: center;
 	color: oklch(96.8% 0.007 247.896);
 }
+
+/* Keep the canvas and HTML masks in one stacking context below application controls. */
+.canvas {
+	isolation: isolate;
+	z-index: 0;
+}
