@@ -620,6 +620,11 @@ description = "Run all frontend tests"
 dir = "{{config_root}}"
 run = "mise run verify:test:unit:map"
 
+[tasks."verify:cards"]
+description = "Build and test DOM card layout and 3D interaction in Chrome with isolated fixtures"
+dir = "{{config_root}}"
+run = ["mise run contribute:build:map", "vp -C map run test:cards"]
+
 [tasks."verify:editor"]
 description = "Build and test the standalone source editor in Chrome; requires network"
 run = ["mise run release:build", "vp -C map run test:editor"]

@@ -5,6 +5,7 @@ import type { OrbitControls } from "three-stdlib";
 import { useCardFocus } from "./CardFocusContext";
 
 const FOREGROUND_LAYER = 31;
+export const CARD_HTML_Z_RANGE: [number, number] = [2000000, 0];
 
 /** The actual card objects change render layers; no clones or extra canvas. */
 export function createCardForeground() {
@@ -85,6 +86,11 @@ export function CardFocusScene({ children }: { children: ReactNode }) {
 	}, [focusedIds.length > 0, get]);
 
 	useFrame(({ gl, scene, camera, controls }) => {
+		// Html's blending masks reveal DOM below this transparent canvas. Keep the
+		// shared surface stable even when a loading/error Html mounts or unmounts.
+		gl.domElement.style.zIndex = String(CARD_HTML_Z_RANGE[0] / 2);
+		gl.domElement.style.position = "absolute";
+		gl.domElement.style.pointerEvents = "none";
 		if (controls)
 			(controls as OrbitControls).enabled = !focusedIds.length && !foreground.cards.size;
 		const autoClear = gl.autoClear;

@@ -49,10 +49,6 @@ export default defineConfig({
 		},
 	},
 	build: {
-		// @react-three/uikit derives R3F element registration from runtime
-		// component names. Keeping the production bundle unminified avoids
-		// name mangling that can break UIKit rendering in `vite preview`.
-		minify: false,
 		chunkSizeWarningLimit: 20000,
 	},
 	define: {
@@ -66,6 +62,5 @@ export default defineConfig({
 				},
 			},
 		},
-		exclude: ["@react-three/uikit", "@pmndrs/uikit"],
 	},
 });

@@ -55,8 +55,23 @@ export function MapDiagram() {
 	return (
 		<ErrorBoundary name="Diagram" fallback={<div className={styles.error}>Map render failed.</div>}>
 			<DiagramSurface
+				className={styles.canvas}
+				onCreated={({ setEvents }) =>
+					setEvents({
+						compute: (event, state) => {
+							// Events originate on the shared canvas/DOM parent, not always the canvas.
+							const bounds = state.gl.domElement.getBoundingClientRect();
+							state.pointer.set(
+								((event.clientX - bounds.left) / bounds.width) * 2 - 1,
+								-((event.clientY - bounds.top) / bounds.height) * 2 + 1,
+							);
+							state.raycaster.setFromCamera(state.pointer, state.camera);
+						},
+					})
+				}
 				shadows="percentage"
 				gl={{
+					alpha: true,
 					preserveDrawingBuffer: true,
 					localClippingEnabled: true,
 				}}

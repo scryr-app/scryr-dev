@@ -37,6 +37,7 @@ export function useCardFocusAnimation(id: string, width: number, height: number,
 		};
 	}, [foreground]);
 
+	// Update motion after OrbitControls (-1), before Drei Html projects the DOM (0).
 	useFrame(({ camera }, delta) => {
 		const group = ref.current;
 		if (!group?.parent || !(camera instanceof PerspectiveCamera)) return;
@@ -92,6 +93,6 @@ export function useCardFocusAnimation(id: string, width: number, height: number,
 			moving.current = false;
 			foreground.release(group);
 		}
-	});
+	}, -0.5);
 	return ref;
 }

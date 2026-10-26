@@ -1,5 +1,4 @@
 import { RoundedBox } from "@react-three/drei/core/RoundedBox";
-import { Text } from "@react-three/drei/core/Text";
 import { useEffect, useMemo, useRef } from "react";
 import type { Group } from "three";
 import * as THREE from "three";
@@ -11,7 +10,7 @@ import { currentTheme } from "@/theme/theme";
 
 const CARD_DEPTH = 0.025;
 
-export interface CardProps {
+export interface CardFrameProps {
 	/** Position in 3D space [x, y, z]. Interpreted per `anchor`. */
 	position: [number, number, number];
 	/** Where the `position` is anchored relative to the card */
@@ -24,26 +23,14 @@ export interface CardProps {
 	width?: number;
 	/** Card height */
 	height?: number;
-	/** Card depth (thickness) */
-	depth?: number;
-	/** Border radius */
-	borderRadius?: number;
 	/** Content to render on the card face (can be text, components, etc.) */
 	children?: React.ReactNode;
-	/** Optional label at the top of the card */
-	label?: string;
-	/** Text color for label */
-	textColor?: string;
-	/** Font size for label */
-	fontSize?: number;
 }
 
 /**
- * 3D Card Component for React Three Fiber
- * Renders a thin card with rounded edges, slight depth, and customizable content
- * Perfect for displaying information in 3D scenes
+ * Physical frame only. All card content is rendered by the shared DOM CardSurface.
  */
-export function Card({
+export function CardFrame({
 	position,
 	anchor = "bottom",
 	color = "#f5f3f0",
@@ -51,10 +38,7 @@ export function Card({
 	width = 40,
 	height = 3,
 	children,
-	label,
-	textColor = "#2d2421",
-	fontSize = 0.3,
-}: CardProps) {
+}: CardFrameProps) {
 	const groupRef = useRef<Group>(null);
 	const { cards, shapes } = currentTheme.appearance;
 	// Drei's extruded RoundedBox uses world-space UVs. A glow texture needs
@@ -133,20 +117,6 @@ export function Card({
 						strength={shapes.frameCard}
 					/>
 				</group>
-			)}
-
-			{/* Optional label on top */}
-			{label && (
-				<Text
-					position={[0, height / 2, CARD_DEPTH / 2 + 0.05]}
-					fontSize={fontSize}
-					color={textColor}
-					anchorX="center"
-					anchorY="top"
-					maxWidth={width - 0.2}
-				>
-					{label}
-				</Text>
 			)}
 
 			{/* Content container - rendered on the front face */}
