@@ -1,12 +1,12 @@
 # Shared toolchain and task entrypoints for contributors and GitHub Actions.
 # Put cloud credentials in ignored mise.local.toml (see mise.local.toml.example).
 [tools]
-rust = { version = "1.96.0", profile = "minimal", components = [
+rust = { version = "1.99.1", profile = "minimal", components = [
     "rustfmt",
     "clippy",
 ] }
 python = "3.14.6"
-uv = "0.11.12"
+uv = "0.13.5"
 node = "26.1.0"
 "npm:vite-plus" = "1.4.0"
 watchexec = "2.5.1"
@@ -172,7 +172,7 @@ run = [
 [tasks."contribute:lint-fix:manifest"]
 description = "Fix auto-fixable Ruff issues"
 dir = "{{config_root}}"
-run = "cd manifest && uv run ruff check --fix --unsafe-fixes . tests/samples/*/*.scry"
+run = "cd manifest && uv run --locked ruff check --fix --unsafe-fixes . tests/samples/*/*.scry"
 
 [tasks."contribute:lint-fix:map"]
 description = "Fix auto-fixable TypeScript lint issues"
@@ -196,7 +196,7 @@ run = "cargo fmt --manifest-path crystal/Cargo.toml --all"
 [tasks."contribute:format:manifest"]
 description = "Format Python code and sample manifests"
 dir = "{{config_root}}"
-run = "cd manifest && uv run ruff format . tests/samples/*/*.scry"
+run = "cd manifest && uv run --locked ruff format . tests/samples/*/*.scry"
 
 [tasks."contribute:format:map"]
 description = "Format TypeScript code"
@@ -494,12 +494,13 @@ run = [
 [tasks."verify:lint:crystal"]
 description = "Run Rust clippy across the workspace"
 dir = "{{config_root}}"
-run = "cargo clippy --manifest-path crystal/Cargo.toml --locked --workspace --all-targets -- -D warnings"
+env = { CARGO_BUILD_WARNINGS = "deny" }
+run = "cargo clippy --manifest-path crystal/Cargo.toml --locked --workspace --all-targets --keep-going"
 
 [tasks."verify:lint:manifest"]
 description = "Run Ruff against the Python SDK and sample manifests"
 dir = "{{config_root}}"
-run = "cd manifest && uv run ruff check . tests/samples/*/*.scry"
+run = "cd manifest && uv run --locked ruff check . tests/samples/*/*.scry"
 
 [tasks."verify:lint:map"]
 description = "Run Vite+ lint for TypeScript code"
@@ -523,7 +524,7 @@ run = "cargo fmt --manifest-path crystal/Cargo.toml --all -- --check"
 [tasks."verify:format:manifest"]
 description = "Check Python formatting"
 dir = "{{config_root}}"
-run = "cd manifest && uv run ruff format --check . tests/samples/*/*.scry"
+run = "cd manifest && uv run --locked ruff format --check . tests/samples/*/*.scry"
 
 [tasks."verify:format:map"]
 description = "Check TypeScript formatting"
@@ -542,12 +543,17 @@ run = [
 [tasks."verify:types:crystal"]
 description = "Run Rust compile checks"
 dir = "{{config_root}}"
-run = "cargo check --locked --manifest-path crystal/Cargo.toml --workspace"
+env = { CARGO_BUILD_WARNINGS = "deny" }
+run = "cargo check --locked --manifest-path crystal/Cargo.toml --workspace --all-targets --keep-going --future-incompat-report"
 
 [tasks."verify:types:manifest"]
 description = "Run Python static type checks"
 dir = "{{config_root}}"
-run = "cd manifest && uv run ty check . tests/samples/*/*.scry"
+run = [
+    "uv check --project manifest --all-packages --locked",
+    # uv check only discovers Python extensions; explicitly retain .scry coverage.
+    "cd manifest && uv run --locked ty check tests/samples/*/*.scry",
+]
 
 [tasks."verify:types:map"]
 description = "Run TypeScript type checks"

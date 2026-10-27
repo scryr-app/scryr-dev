@@ -372,7 +372,7 @@ mod tests {
             "connections": [{ "name": "" }, {}, null, 42]
         });
 
-        assert!(block_connections(&block).is_empty());
+        assert_eq!(block_connections(&block), Vec::<String>::new());
     }
 
     #[test]

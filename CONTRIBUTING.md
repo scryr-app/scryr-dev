@@ -121,6 +121,14 @@ verification does not apply source fixes or publish anything. Builds can refresh
 generated assets. The automation suite checks workflow policy, runs automation
 regressions, validates workflow syntax, and scans Git history for secrets.
 
+Manifest uses
+`uv check --all-packages --locked` for workspace types, with a separate explicit
+check for `.scry` files because uv's discovery currently only includes Python
+extensions. Both use the ty version in `manifest/uv.lock`; Ruff and pytest also
+run through locked uv environments. Rust verification uses Cargo's warning-denial
+policy and checks every target with `--keep-going`; compile checks also report
+future incompatibilities.
+
 For faster feedback after `contribute:setup`:
 
 | Command                                             | Scope                                                |

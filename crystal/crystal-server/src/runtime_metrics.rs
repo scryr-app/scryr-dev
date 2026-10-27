@@ -630,12 +630,12 @@ mod tests {
     #[test]
     fn rejects_ambiguous_series_and_ignores_nonfinite_samples() -> Result<(), &'static str> {
         let body = json!({"status":"success","data":{"resultType":"matrix","result":[{"values":[[100,"NaN"],[160,"+Inf"]]}]}});
-        assert!(parse_series(&body, 100, 160, 60)?.is_empty());
+        assert_eq!(parse_series(&body, 100, 160, 60)?, Vec::<(f64, f64)>::new());
         let mut multiple = body;
         multiple["data"]["result"] = json!([{"values":[]},{"values":[]}]);
         assert!(parse_series(&multiple, 100, 160, 60).is_err());
         let old = json!({"status":"success","data":{"resultType":"matrix","result":[{"values":[[100,"2"]]}]}});
-        assert!(parse_series(&old, 100, 300, 60)?.is_empty());
+        assert_eq!(parse_series(&old, 100, 300, 60)?, Vec::<(f64, f64)>::new());
         Ok(())
     }
 }

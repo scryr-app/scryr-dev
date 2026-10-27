@@ -69,7 +69,7 @@ pub(crate) async fn graphql_handler(
 /// Permit local source access only from this UI or explicitly trusted loopback development UIs.
 fn local_editor_origin_allowed(origin: Option<&str>, expected: &str, trusted: &[String]) -> bool {
     let loopback = |value: &str| {
-        url::Url::parse(value).ok().is_some_and(|url| {
+        url::Url::parse(value).is_ok_and(|url| {
             matches!(url.scheme(), "http" | "https")
                 && matches!(url.host_str(), Some("localhost" | "127.0.0.1" | "[::1]"))
         })

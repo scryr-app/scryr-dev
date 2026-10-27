@@ -109,7 +109,10 @@ async fn action_history_graphql_contract() -> Result<(), Box<dyn std::error::Err
         "manifestId": "services/api", "run": run, "eventId": "delivery", "source": "webhook"
     })))
     };
-    assert!(!schema.execute(request()).await.errors.is_empty());
+    assert_ne!(
+        schema.execute(request()).await.errors,
+        Vec::<async_graphql::ServerError>::new()
+    );
     let mut principal = ManifestRequestContext {
         clerk_user_id: "user".into(),
         clerk_org_id: "org".into(),
@@ -117,12 +120,12 @@ async fn action_history_graphql_contract() -> Result<(), Box<dyn std::error::Err
         clerk_org_role: None,
         clerk_org_permissions: vec![],
     };
-    assert!(
-        !schema
+    assert_ne!(
+        schema
             .execute(request().data(principal.clone()))
             .await
-            .errors
-            .is_empty()
+            .errors,
+        Vec::<async_graphql::ServerError>::new()
     );
     principal.clerk_org_role = Some("org:admin".into());
     let recorded = schema.execute(request().data(principal.clone())).await;
@@ -134,7 +137,10 @@ async fn action_history_graphql_contract() -> Result<(), Box<dyn std::error::Err
         Request::new("query History($manifestId: String!, $limit: Int!, $offset: Int!) { actionHistory(manifestId: $manifestId, limit: $limit, offset: $offset) }")
         .variables(Variables::from_json(serde_json::json!({"manifestId": "services/api", "limit": 100, "offset": 0})))
     };
-    assert!(!schema.execute(history()).await.errors.is_empty());
+    assert_ne!(
+        schema.execute(history()).await.errors,
+        Vec::<async_graphql::ServerError>::new()
+    );
     let result = schema.execute(history().data(principal.clone())).await;
     assert!(result.errors.is_empty(), "{:?}", result.errors);
     let json = result.data.into_json()?;
@@ -169,7 +175,10 @@ async fn operational_report_graphql_contract() -> Result<(), Box<dyn std::error:
     let request = || {
         Request::new("mutation Report($report: JSON!) { recordReport(manifestId: \"services/api\", report:$report) }").variables(Variables::from_json(serde_json::json!({"report":report})))
     };
-    assert!(!schema.execute(request()).await.errors.is_empty());
+    assert_ne!(
+        schema.execute(request()).await.errors,
+        Vec::<async_graphql::ServerError>::new()
+    );
     let mut principal = ManifestRequestContext {
         clerk_user_id: "u".into(),
         clerk_org_id: "org".into(),
