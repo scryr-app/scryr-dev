@@ -25,8 +25,6 @@ dir = "{{config_root}}"
 # Prefer the project toolchain; the mise-installed vp bootstraps dependencies.
 _.path = ["{{config_root}}/map/node_modules/.bin"]
 UV_CACHE_DIR = "{{config_root}}/.cache/uv"
-# Keep uv on the same interpreter as the rest of the mise toolchain.
-UV_PYTHON = { value = "{{ tools.python.path }}", tools = true }
 
 # What to execute (after mise install):
 #   Contribute: mise run contribute:setup, then mise run contribute:oss
