@@ -1,5 +1,10 @@
 //! Shared manifest input and request-context models for generated manifest persistence.
 
+#![allow(
+    clippy::unused_async_trait_impl,
+    reason = "async-graphql derives generate async trait implementations"
+)]
+
 use async_graphql::{Enum, InputObject, SimpleObject};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;

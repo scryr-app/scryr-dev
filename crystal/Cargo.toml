@@ -18,7 +18,7 @@ crystal-server = { version = "0.7.1", path = "crystal-server" }
 futures-util = "0.3"
 # Local SQLite is provided by sqlx. Enabling libsql's default embedded engine
 # links a second SQLite implementation and causes duplicate symbols on Linux.
-libsql = { version = "0.10.0-pre.4", default-features = false, features = ["remote", "tls"] }
+libsql = { version = "0.10.0", default-features = false, features = ["remote", "tls"] }
 predicates = "3.1"
 rand = "0.10.2"
 reqwest = { version = "0.13.4", default-features = false, features = ["blocking", "json", "rustls", "query", "form"] }

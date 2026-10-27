@@ -51,7 +51,7 @@ async fn hosted_listing_seeds_editable_sources_and_local_listing_stays_empty()
         .ok_or("missing maps")?
         .clone();
     assert_eq!(maps.len(), catalog()?.len());
-    assert!(!maps.is_empty());
+    assert_ne!(maps, Vec::<serde_json::Value>::new());
     let mut identifiers = HashSet::new();
     let mut entrypoints = HashSet::new();
     for map in maps {
@@ -81,7 +81,7 @@ async fn hosted_listing_seeds_editable_sources_and_local_listing_stays_empty()
     assert_bundled_source_editable(&state, &context).await?;
 
     let anonymous = schema.execute("{ scryrMaps { id } }").await;
-    assert!(!anonymous.errors.is_empty());
+    assert_ne!(anonymous.errors, Vec::<async_graphql::ServerError>::new());
     Ok(())
 }
 

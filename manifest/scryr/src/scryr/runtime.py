@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Any, Union, cast, get_args, get_origin
 from scryr.manifest import Diagram, Forge, Manifest
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator, Sequence
+    from collections.abc import Generator, Iterator, Sequence
     from types import ModuleType
 
 ManifestJsonObject = dict[str, object]
@@ -154,7 +154,7 @@ class ScryPathFinder(importlib.abc.MetaPathFinder):
 
 
 @contextlib.contextmanager
-def manifest_import_context(entry_file: Path) -> Iterator[None]:
+def manifest_import_context(entry_file: Path) -> Generator[None]:
     """Temporarily enable manifest-local Python and `.scry` imports."""
     source_roots = tuple(
         dict.fromkeys(root.resolve() for root in (entry_file.parent, Path.cwd()) if root.exists())

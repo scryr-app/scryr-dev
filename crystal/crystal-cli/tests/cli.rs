@@ -174,7 +174,7 @@ set -eu
 printf '%s|%s|%s|%s\n' "$PWD" "$*" "${{UV_PROJECT_ENVIRONMENT:-}}" "${{UV_CACHE_DIR:-}}" >> "{}"
 case "$1" in
   --version)
-    printf 'uv 0.12.7\n'
+    printf 'uv 0.13.5\n'
     ;;
   python)
     exit 0

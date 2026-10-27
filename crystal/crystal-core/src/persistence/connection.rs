@@ -38,10 +38,7 @@ fn default_sqlite_path() -> PathBuf {
 /// Return the configured local `SQLite` database path when storage uses a file.
 #[must_use]
 pub fn sqlite_path_from_env() -> Option<PathBuf> {
-    if env::var(TURSO_DATABASE_URL_ENV)
-        .ok()
-        .is_some_and(|value| !value.trim().is_empty())
-    {
+    if env::var(TURSO_DATABASE_URL_ENV).is_ok_and(|value| !value.trim().is_empty()) {
         return None;
     }
 
