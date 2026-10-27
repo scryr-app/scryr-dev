@@ -13,7 +13,7 @@ lists public commands; `internal:*` helpers are hidden from that list.
 
 ### Local setup
 
-Install [mise](https://mise.jdx.dev/getting-started.html), then:
+Install [mise](https://mise.jdx.dev/getting-started.html) 2026.9.5 or newer, then:
 
 ```bash
 mise install
@@ -34,8 +34,11 @@ lint fixes to source files, then runs the full CI checks. Review the resulting
 diff before committing. This is a command to run, not an automatically installed
 Git hook. Run `mise run contribute` to show this workflow in the terminal.
 
-The checked-in lockfiles select tool and dependency versions. Deployment and
-publishing tools are installed on demand by their tasks. Put personal cloud
+The checked-in lockfiles select tool and dependency versions. Use
+`mise install --locked` to require the recorded tool artifacts. After intentionally
+changing tool pins, run `mise lock` and review the generated `mise.lock` diff.
+The shared `task_config.dir` keeps tasks rooted in the checkout, and `UV_PYTHON`
+points uv at mise's selected Python interpreter. Deployment and publishing tools are installed on demand by their tasks. Put personal cloud
 configuration in ignored `mise.local.toml`; copy
 [mise.local.toml.example](mise.local.toml.example) as a starting point.
 
@@ -118,8 +121,9 @@ mise run pre-commit   # Apply fixes, then run the same complete verification
 `verify:crystal`, `verify:map`, and `verify:release`. GitHub Actions calls those
 same tasks in separate jobs. Component suites prepare their dependencies;
 verification does not apply source fixes or publish anything. Builds can refresh
-generated assets. The automation suite checks workflow policy, runs automation
-regressions, validates workflow syntax, and scans Git history for secrets.
+generated assets. The automation suite validates mise task definitions, checks
+workflow policy, runs automation regressions, validates workflow syntax, and scans
+Git history for secrets.
 
 Manifest uses
 `uv check --all-packages --locked` for workspace types, with a separate explicit
