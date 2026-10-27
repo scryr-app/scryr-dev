@@ -38,7 +38,8 @@ The checked-in lockfiles select tool and dependency versions. Use
 `mise install --locked` to require the recorded tool artifacts. After intentionally
 changing tool pins, run `mise lock` and review the generated `mise.lock` diff.
 The shared `task_config.dir` keeps tasks rooted in the checkout, and `UV_PYTHON`
-points uv at mise's selected Python interpreter. Deployment and publishing tools are installed on demand by their tasks. Put personal cloud
+points uv at mise's selected Python interpreter. Deployment and publishing tools
+are installed on demand by their tasks. Put personal cloud
 configuration in ignored `mise.local.toml`; copy
 [mise.local.toml.example](mise.local.toml.example) as a starting point.
 
