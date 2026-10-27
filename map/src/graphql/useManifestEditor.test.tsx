@@ -79,7 +79,7 @@ it("preserves a dirty draft and blocks saving when the server revision changes",
 	const hook = setup();
 	await waitFor(() => expect(hook.result.current.code).toBe("original"));
 	act(() => hook.result.current.setCode("my draft"));
-	act(() =>
+	await act(() =>
 		hook.client.setQueryData(["ManifestDocument", "main", "local"], {
 			manifestDocument: document("external", "external"),
 		}),

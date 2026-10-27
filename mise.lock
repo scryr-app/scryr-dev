@@ -221,9 +221,9 @@ specifiers = [
 ]
 
 [[tools."npm:vite-plus"]]
-version = "1.3.0"
+version = "1.4.0"
 backend = "npm:vite-plus"
-specifiers = ["1.3.0"]
+specifiers = ["1.4.0"]
 
 [[tools.python]]
 version = "3.14.6"
