@@ -62,8 +62,6 @@ react_block = Manifest(
         log_aggregation=LogAggregationType.cloudwatch,
         tracing=TracingType.datadog,
         iac_tool=IaCToolType.terraform,
-        max_replicas=5,
-        min_replicas=2,
         links=[Link(site_name="Example Site", http_url=Url("https://www.example.com"))],
         docs=["https://www.mongodb.com/docs/", "https://expressjs.com/", "https://reactjs.org/"],
     ),
@@ -85,8 +83,6 @@ redis_pubsub_block = Manifest(
         log_aggregation=LogAggregationType.elk_stack,
         tracing=TracingType.jaeger,
         iac_tool=IaCToolType.terraform,
-        max_replicas=4,
-        min_replicas=2,
         links=[
             Link(
                 site_name="Redis Pub/Sub Documentation",
@@ -109,8 +105,6 @@ express_block = Manifest(
         log_aggregation=LogAggregationType.elk_stack,
         tracing=TracingType.jaeger,
         iac_tool=IaCToolType.cloudformation,
-        max_replicas=3,
-        min_replicas=1,
     ),
 )
 mongo_block = Manifest(
@@ -126,8 +120,6 @@ mongo_block = Manifest(
         log_aggregation=LogAggregationType.cloudwatch,
         tracing=TracingType.aws_xray,
         iac_tool=IaCToolType.terraform,
-        max_replicas=3,
-        min_replicas=1,
     ),
 )
 angularjs_admin_block = Manifest(
@@ -147,8 +139,6 @@ angularjs_admin_block = Manifest(
         log_aggregation=LogAggregationType.elk_stack,
         tracing=TracingType.none,
         iac_tool=IaCToolType.cloudformation,
-        max_replicas=2,
-        min_replicas=1,
         links=[Link(site_name="Admin Portal", http_url=Url("https://admin.example.com"))],
         docs=["https://docs.angularjs.org/"],
     ),

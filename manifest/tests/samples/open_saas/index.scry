@@ -48,8 +48,6 @@ postgres_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[Link(site_name="Open SaaS Docs", http_url=_DOCS)],
     ),
 )
@@ -76,8 +74,6 @@ server_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=2,
-        min_replicas=1,
         links=[
             Link(site_name="Wasp Docs", http_url=Url("https://wasp.sh/docs")),
             Link(site_name="Open SaaS Docs", http_url=_DOCS),
@@ -101,8 +97,6 @@ client_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=2,
-        min_replicas=1,
         links=[Link(site_name="Open SaaS Live Demo", http_url=Url("https://opensaas.sh"))],
     ),
 )
@@ -124,8 +118,6 @@ blog_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[Link(site_name="Open SaaS Docs", http_url=_DOCS)],
     ),
 )
@@ -146,8 +138,6 @@ stripe_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[
             Link(site_name="Stripe Docs", http_url=Url("https://stripe.com/docs")),
             Link(
@@ -174,8 +164,6 @@ email_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[
             Link(
                 site_name="Email Guide",
@@ -201,8 +189,6 @@ s3_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[
             Link(
                 site_name="File Upload Guide",
@@ -228,8 +214,6 @@ analytics_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[
             Link(
                 site_name="Analytics Guide",

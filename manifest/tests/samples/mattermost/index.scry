@@ -50,8 +50,6 @@ postgres_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
 )
@@ -72,8 +70,6 @@ redis_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
 )
@@ -94,8 +90,6 @@ minio_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
 )
@@ -116,8 +110,6 @@ elasticsearch_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
 )
@@ -138,8 +130,6 @@ openldap_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
 )
@@ -161,8 +151,6 @@ keycloak_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
 )
@@ -191,8 +179,6 @@ server_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=3,
-        min_replicas=1,
         links=[
             Link(site_name="Mattermost Docs", http_url=_DOCS),
             Link(site_name="API Reference", http_url=Url("https://api.mattermost.com/")),
@@ -216,8 +202,6 @@ webapp_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[
             Link(site_name="Mattermost Docs", http_url=_DOCS),
             Link(
@@ -244,8 +228,6 @@ nginx_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
 )
@@ -266,8 +248,6 @@ prometheus_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
 )
@@ -288,8 +268,6 @@ grafana_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
 )
@@ -310,8 +288,6 @@ loki_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
 )
@@ -332,8 +308,6 @@ otel_collector_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
 )

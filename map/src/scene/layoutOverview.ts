@@ -187,11 +187,14 @@ export async function layoutBlocksForView(
 			spacing = candidateSpacing;
 		}
 	}
-	// Trim the coarse search's excess clearance in two small steps. Each trial
+	// Trim the coarse search's excess clearance in four steps. Each trial
 	// gets fresh ELK routes and must preserve visibility while reducing area.
 	// Try axes separately when reducing both would hide a card behind a neighbor.
-	for (let round = 0; round < 2 && isCurrent() && blocks.length > 1; round++) {
+	for (let round = 0; round < 4 && isCurrent() && blocks.length > 1; round++) {
 		for (const [nodeFactor, layerFactor] of [
+			[0.8, 0.8],
+			[0.8, 1],
+			[1, 0.8],
 			[0.9, 0.9],
 			[0.9, 1],
 			[1, 0.9],

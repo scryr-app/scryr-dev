@@ -47,8 +47,6 @@ postgres_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
 )
@@ -69,8 +67,6 @@ valkey_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
 )
@@ -91,8 +87,6 @@ rabbitmq_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
 )
@@ -113,8 +107,6 @@ minio_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[Link(site_name="MinIO Docs", http_url=Url("https://min.io/docs/"))],
     ),
 )
@@ -141,8 +133,6 @@ api_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=4,
-        min_replicas=1,
         links=[
             Link(
                 site_name="API Reference",
@@ -174,8 +164,6 @@ worker_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=3,
-        min_replicas=1,
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
 )
@@ -197,8 +185,6 @@ beat_worker_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
 )
@@ -219,8 +205,6 @@ live_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=2,
-        min_replicas=1,
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
 )
@@ -242,8 +226,6 @@ web_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=3,
-        min_replicas=1,
         links=[
             Link(site_name="Plane", http_url=Url("https://app.plane.so")),
             Link(site_name="Source", http_url=_SOURCE),
@@ -268,8 +250,6 @@ admin_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[
             Link(
                 site_name="God Mode Docs",
@@ -296,8 +276,6 @@ space_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=2,
-        min_replicas=1,
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
 )
@@ -324,8 +302,6 @@ proxy_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=2,
-        min_replicas=1,
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
 )

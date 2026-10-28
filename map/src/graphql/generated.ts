@@ -73,10 +73,6 @@ export type Block = {
   logAggregation?: Maybe<Scalars['String']['output']>;
   /** Stable Manifest identity used to attach operational history. */
   manifestId?: Maybe<Scalars['String']['output']>;
-  /** Maximum number of service replicas. */
-  maxReplicas?: Maybe<Scalars['Int']['output']>;
-  /** Minimum number of service replicas. */
-  minReplicas?: Maybe<Scalars['Int']['output']>;
   /** Monitoring and metrics platform. */
   monitoring?: Maybe<Scalars['String']['output']>;
   /** Display name for the component (used as the block label). */
@@ -280,7 +276,7 @@ export type GetBlocksQueryVariables = Exact<{
 }>;
 
 
-export type GetBlocksQuery = { blocks: Array<{ name: string | null, description: string | null, version: string | null, lineNumber: number | null, consumerType: string | null, icon: string | null, language: string | null, frameworks: Array<string>, deployment: string | null, deploymentProvider: string | null, sourceCodeUrl: string | null, connections: Array<string>, docs: Array<string>, ownerTeam: string | null, tags: Array<string>, authType: string | null, monitoring: string | null, logAggregation: string | null, tracing: string | null, iacTool: string | null, cicdTool: string | null, maxReplicas: number | null, minReplicas: number | null, rawJsonString: string, links: Array<{ siteName: string | null, httpUrl: string | null }> }> };
+export type GetBlocksQuery = { blocks: Array<{ name: string | null, description: string | null, version: string | null, lineNumber: number | null, consumerType: string | null, icon: string | null, language: string | null, frameworks: Array<string>, deployment: string | null, deploymentProvider: string | null, sourceCodeUrl: string | null, connections: Array<string>, docs: Array<string>, ownerTeam: string | null, tags: Array<string>, authType: string | null, monitoring: string | null, logAggregation: string | null, tracing: string | null, iacTool: string | null, cicdTool: string | null, rawJsonString: string, links: Array<{ siteName: string | null, httpUrl: string | null }> }> };
 
 
 export class TypedDocumentString<TResult, TVariables>
@@ -393,8 +389,6 @@ export const GetBlocksDocument = new TypedDocumentString(`
     tracing
     iacTool
     cicdTool
-    maxReplicas
-    minReplicas
     links {
       siteName
       httpUrl

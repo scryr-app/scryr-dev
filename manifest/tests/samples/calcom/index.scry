@@ -46,8 +46,6 @@ postgres_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=2,
-        min_replicas=1,
         links=[Link(site_name="Cal.com Docs", http_url=_DOCS)],
     ),
 )
@@ -68,8 +66,6 @@ redis_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[Link(site_name="Cal.com Docs", http_url=_DOCS)],
     ),
 )
@@ -97,8 +93,6 @@ web_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=10,
-        min_replicas=2,
         links=[
             Link(site_name="Cal.com", http_url=Url("https://cal.com")),
             Link(site_name="Source", http_url=_SOURCE),
@@ -123,8 +117,6 @@ api_v2_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=5,
-        min_replicas=1,
         links=[
             Link(
                 site_name="API v2 Reference",
@@ -150,8 +142,6 @@ email_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[Link(site_name="Cal.com Docs", http_url=_DOCS)],
     ),
 )
@@ -172,8 +162,6 @@ workflow_cron_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[Link(site_name="Cal.com Docs", http_url=_DOCS)],
     ),
 )
@@ -194,8 +182,6 @@ daily_video_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[Link(site_name="Daily Docs", http_url=Url("https://docs.daily.co/reference"))],
     ),
 )
@@ -216,8 +202,6 @@ app_store_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[Link(site_name="App Store", http_url=Url("https://app.cal.com/apps"))],
     ),
 )

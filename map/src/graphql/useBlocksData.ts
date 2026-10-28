@@ -56,17 +56,6 @@ function nonEmptyString(value: unknown): string | null {
 	return typeof value === "string" && value.trim().length > 0 ? value : null;
 }
 
-function firstNumber(source: RawRecord | undefined, paths: string[][]): number | null {
-	for (const path of paths) {
-		const value = getValue(source, path);
-		if (typeof value === "number" && Number.isFinite(value)) {
-			return value;
-		}
-	}
-
-	return null;
-}
-
 function firstStringArray(source: RawRecord | undefined, paths: string[][]): string[] {
 	for (const path of paths) {
 		const value = getValue(source, path);
@@ -162,22 +151,6 @@ function normalizeBlock(block: Block): Block {
 		iacTool:
 			sanitizedBlock.iacTool ??
 			firstString(raw, [["info", "iacTool"], ["info", "iac_tool"], ["iacTool"], ["iac_tool"]]),
-		maxReplicas:
-			sanitizedBlock.maxReplicas ??
-			firstNumber(raw, [
-				["info", "maxReplicas"],
-				["info", "max_replicas"],
-				["maxReplicas"],
-				["max_replicas"],
-			]),
-		minReplicas:
-			sanitizedBlock.minReplicas ??
-			firstNumber(raw, [
-				["info", "minReplicas"],
-				["info", "min_replicas"],
-				["minReplicas"],
-				["min_replicas"],
-			]),
 		links: sanitizedBlock.links.length > 0 ? normalizeLinks(sanitizedBlock.links) : rawLinks,
 		tags: asStringArray(sanitizedBlock.tags),
 	};

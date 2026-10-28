@@ -272,30 +272,6 @@ impl Block {
     pub async fn iac_tool(&self) -> Option<String> {
         section_string_or_top(&self.raw_json, "info", "iacTool", &["iac_tool", "iacTool"])
     }
-
-    /// Maximum number of service replicas.
-    pub async fn max_replicas(&self) -> Option<i32> {
-        section_value_or_top(
-            &self.raw_json,
-            "info",
-            "maxReplicas",
-            &["max_replicas", "maxReplicas"],
-        )
-        .and_then(Value::as_i64)
-        .and_then(|n| i32::try_from(n).ok())
-    }
-
-    /// Minimum number of service replicas.
-    pub async fn min_replicas(&self) -> Option<i32> {
-        section_value_or_top(
-            &self.raw_json,
-            "info",
-            "minReplicas",
-            &["min_replicas", "minReplicas"],
-        )
-        .and_then(Value::as_i64)
-        .and_then(|n| i32::try_from(n).ok())
-    }
 }
 
 fn block_icon(raw_json: &Value) -> Option<String> {

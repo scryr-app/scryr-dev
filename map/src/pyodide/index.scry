@@ -7,6 +7,7 @@ from scryr.types import (
     DeploymentTarget,
     IaCToolType,
     LogAggregationType,
+    Markdown,
     MonitoringType,
     ProgrammingLanguage,
     SemVer,
@@ -37,8 +38,6 @@ react_block = Manifest(
         log_aggregation=LogAggregationType.cloudwatch,
         tracing=TracingType.datadog,
         iac_tool=IaCToolType.terraform,
-        max_replicas=5,
-        min_replicas=2,
         links=[Link(site_name="Example Site", http_url=Url("https://www.example.com"))],
         docs=["https://www.mongodb.com/docs/", "https://expressjs.com/", "https://reactjs.org/"],
     ),
@@ -60,8 +59,6 @@ redis_pubsub_block = Manifest(
         log_aggregation=LogAggregationType.elk_stack,
         tracing=TracingType.jaeger,
         iac_tool=IaCToolType.terraform,
-        max_replicas=4,
-        min_replicas=2,
         links=[
             Link(
                 site_name="Redis Pub/Sub Documentation",
@@ -76,15 +73,34 @@ express_block = Manifest(
     classification=Classification.internal_api,
     connections=[Manifest(name="MongoDB")],
     info=Info(
+        description=Markdown(
+            "**Backend API** for customer accounts and application data.\n\n"
+            "- Validates requests and persists records in MongoDB\n"
+            "- Publishes live updates through Redis\n\n"
+            "| Endpoint | Purpose |\n"
+            "| --- | --- |\n"
+            "| `GET /health` | Readiness check |\n"
+            "| `GET /customers` | Customer records |\n\n"
+            "- [x] Request validation\n"
+            "- [ ] Rate-limit rollout\n\n"
+            "> Coordinate schema changes with the frontend team.\n\n"
+            "See the [API guide](https://api.example.com/docs)."
+        ),
+        version=SemVer("1.4.2"),
         language=ProgrammingLanguage.javascript,
+        frameworks=[WebFramework.express],
         deployment=DeploymentTarget.amplify,
         owner_team="Backend Team",
         auth_type=AuthType.jwt,
+        monitoring=MonitoringType.prometheus,
         log_aggregation=LogAggregationType.elk_stack,
         tracing=TracingType.jaeger,
         iac_tool=IaCToolType.cloudformation,
-        max_replicas=3,
-        min_replicas=1,
+        links=[
+            Link(site_name="API Explorer", http_url=Url("https://api.example.com/docs")),
+            Link(site_name="API Health", http_url=Url("https://api.example.com/health")),
+        ],
+        docs=["https://expressjs.com/", "https://docs.example.com/runbooks/backend"],
     ),
 )
 mongo_block = Manifest(
@@ -92,6 +108,13 @@ mongo_block = Manifest(
     classification=Classification.database,
     connections=[Manifest(name="Express"), Manifest(name="React")],
     info=Info(
+        description=(
+            "Primary document store for customer profiles and application records. "
+            "The sample deployment uses a replica set with scheduled backups."
+        ),
+        version=SemVer("7.0.12"),
+        language=ProgrammingLanguage.cpp,
+        deployment=DeploymentTarget.ec2,
         frameworks=[WebFramework.nextjs],
         owner_team="Data Team",
         auth_type=AuthType.basic,
@@ -99,8 +122,17 @@ mongo_block = Manifest(
         log_aggregation=LogAggregationType.cloudwatch,
         tracing=TracingType.aws_xray,
         iac_tool=IaCToolType.terraform,
-        max_replicas=3,
-        min_replicas=1,
+        links=[
+            Link(
+                site_name="Database Dashboard",
+                http_url=Url("https://monitoring.example.com/mongodb"),
+            ),
+            Link(
+                site_name="Backup Runbook",
+                http_url=Url("https://docs.example.com/runbooks/database-backups"),
+            ),
+        ],
+        docs=["https://www.mongodb.com/docs/"],
     ),
 )
 # Legacy AngularJS admin console (static site)
@@ -120,8 +152,6 @@ angularjs_admin_block = Manifest(
         log_aggregation=LogAggregationType.elk_stack,
         tracing=TracingType.none,
         iac_tool=IaCToolType.cloudformation,
-        max_replicas=2,
-        min_replicas=1,
         links=[Link(site_name="Admin Portal", http_url=Url("https://admin.example.com"))],
         docs=["https://docs.angularjs.org/"],
     ),

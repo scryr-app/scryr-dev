@@ -1,0 +1,104 @@
+.description {
+	min-width: 0;
+	margin: 0 0 12px;
+	line-height: 1.5;
+}
+.preview {
+	max-height: 12em;
+	overflow: hidden;
+}
+.preview[data-expanded="true"] {
+	max-height: none;
+}
+.markdown {
+	display: flow-root;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+.markdown > :first-child {
+	margin-top: 0;
+}
+.markdown > :last-child {
+	margin-bottom: 0;
+}
+.markdown p,
+.markdown ul,
+.markdown ol,
+.markdown pre,
+.markdown blockquote,
+.markdown table {
+	margin: 0.65em 0;
+}
+.markdown :is(h1, h2, h3, h4, h5, h6) {
+	display: block;
+	margin: 0.8em 0 0.4em;
+	font-size: 1.1em;
+	line-height: 1.4;
+	text-transform: none;
+	letter-spacing: normal;
+	color: inherit;
+}
+.markdown h1 {
+	font-size: 1.35em;
+}
+.markdown h2 {
+	font-size: 1.2em;
+}
+.markdown :is(ul, ol) {
+	padding-left: 1.5em;
+}
+.markdown blockquote {
+	padding-left: 0.8em;
+	border-left: 3px solid var(--card-muted);
+	color: var(--card-muted);
+}
+.markdown :is(code, pre) {
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	font-size: 0.9em;
+	background: color-mix(in srgb, var(--card-text) 7%, transparent);
+	border-radius: 4px;
+}
+.markdown pre {
+	padding: 8px;
+}
+.markdown pre code {
+	background: none;
+	font-size: inherit;
+}
+.markdown table {
+	width: 100%;
+	table-layout: fixed;
+	border-collapse: collapse;
+}
+.markdown :is(th, td) {
+	padding: 5px;
+	border: 1px solid var(--card-muted);
+}
+.markdown img {
+	max-width: 100%;
+	height: auto;
+}
+.markdown a,
+.controls button {
+	color: var(--card-link);
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+.controls {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	margin-top: 4px;
+}
+.controls button {
+	border: 0;
+	padding: 4px 0;
+	background: none;
+	font: inherit;
+	cursor: pointer;
+}
+.controls button:focus-visible {
+	outline: 2px solid var(--card-link);
+	outline-offset: 3px;
+}

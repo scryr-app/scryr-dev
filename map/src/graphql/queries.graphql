@@ -44,8 +44,6 @@ query GetBlocks($scryIdentifier: String, $sample: String) {
 		tracing
 		iacTool
 		cicdTool
-		maxReplicas
-		minReplicas
 		links {
 			siteName
 			httpUrl

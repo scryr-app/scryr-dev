@@ -113,14 +113,6 @@ type Block {
 	Infrastructure as Code tooling (terraform, pulumi, cdk, etc.).
 	"""
 	iacTool: String
-	"""
-	Maximum number of service replicas.
-	"""
-	maxReplicas: Int
-	"""
-	Minimum number of service replicas.
-	"""
-	minReplicas: Int
 }
 
 type GeneratedManifestMutationRoot {

@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import type { BlockLink } from "@/block/Block";
 import { getClassificationMetadata } from "./ClassificationIcons";
 import { LogosDictionary } from "./LogosDictionary";
+import { MarkdownDescription } from "./MarkdownDescription";
 import styles from "./CardContent.module.css";
 
 // Let the browser render complete SVG files, including gradients, masks and filters.
@@ -90,7 +91,7 @@ function Panel({ title, icon, children }: { title: string; icon: ReactNode; chil
 export interface InfoCardProps {
 	/** Block classification used for architecture visualization */
 	classification?: string;
-	/** Short description of the service */
+	/** GitHub-flavored Markdown description, serialized as text by the SDK. */
 	description?: string;
 	/** Semver string e.g. "1.2.3" */
 	version?: string;
@@ -176,7 +177,9 @@ export function InfoCard({
 			>
 				{hasDetails && (
 					<section className={styles.panel} aria-label="Service details">
-						{description?.trim() && <p className={styles.description}>{description.trim()}</p>}
+						{description?.trim() && (
+							<MarkdownDescription key={description} source={description.trim()} />
+						)}
 						{(info || auth) && (
 							<div className={styles.metadata}>
 								{info && ClassificationIcon && (

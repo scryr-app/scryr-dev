@@ -100,7 +100,9 @@ class Link(BaseModel):
 class Info(_Section):
     """Manifest section for Info data."""
 
-    description: Markdown | str = Field(default=Markdown(""), description="Short description")
+    description: Markdown = Field(
+        default=Markdown(""), description="Service description in GitHub-flavored Markdown"
+    )
     version: Version = Field(
         default_factory=lambda: SemVer.parse("0.1.0"),
         description=(
@@ -145,22 +147,16 @@ class Info(_Section):
         validation_alias=AliasChoices("iac_tool", "iacTool"),
         description="Infrastructure as Code tooling",
     )
-    max_replicas: int = Field(
-        default=1,
-        ge=1,
-        serialization_alias="maxReplicas",
-        validation_alias=AliasChoices("max_replicas", "maxReplicas"),
-        description="Maximum number of service replicas",
-    )
-    min_replicas: int = Field(
-        default=1,
-        ge=1,
-        serialization_alias="minReplicas",
-        validation_alias=AliasChoices("min_replicas", "minReplicas"),
-        description="Minimum number of service replicas",
-    )
     docs: list[Url | str] = Field(default_factory=list, description="Documentation URLs")
     links: list[Link] = Field(default_factory=list, description="External links")
+
+    @field_validator("description", mode="before")
+    @classmethod
+    def _parse_description(cls, value: object) -> Markdown:
+        if not isinstance(value, str):
+            msg = "description must be Markdown text"
+            raise ValueError(msg)  # noqa: TRY004 - Pydantic wraps ValueError as validation errors.
+        return Markdown(value)
 
     @field_validator("version", mode="before")
     @classmethod
@@ -208,14 +204,6 @@ class Info(_Section):
     )
     def _serialize_value_enum(self, value: object) -> object:
         return getattr(value, "value", value)
-
-    @model_validator(mode="after")
-    def _validate_replica_bounds(self) -> Info:
-        """Ensure replica bounds remain internally consistent."""
-        if self.min_replicas > self.max_replicas:
-            msg = "min_replicas must be less than or equal to max_replicas"
-            raise ValueError(msg)
-        return self
 
 
 class OtherDiagram(_Section):
@@ -489,8 +477,6 @@ class Manifest(BaseModel):
         tracing: TracingType | None = None,
         log_aggregation: LogAggregationType | None = None,
         iac_tool: IaCToolType | None = None,
-        max_replicas: int | None = None,
-        min_replicas: int | None = None,
         docs: list[Url | str] | None = None,
         links: list[Link] | None = None,
         **extra: Never,
@@ -530,8 +516,6 @@ class Manifest(BaseModel):
             "tracing": tracing,
             "log_aggregation": log_aggregation,
             "iac_tool": iac_tool,
-            "max_replicas": max_replicas,
-            "min_replicas": min_replicas,
             "docs": docs,
             "links": links,
         }
@@ -623,10 +607,6 @@ _MANIFEST_QUERY_FIELD_ALIASES: dict[str, str] = {
     "logAggregation": "info.log_aggregation",
     "iac_tool": "info.iac_tool",
     "iacTool": "info.iac_tool",
-    "max_replicas": "info.max_replicas",
-    "maxReplicas": "info.max_replicas",
-    "min_replicas": "info.min_replicas",
-    "minReplicas": "info.min_replicas",
     "docs": "info.docs",
     "links": "info.links",
     "otherDiagram": "other_diagram",

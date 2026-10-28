@@ -46,8 +46,6 @@ kafka_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=3,
-        min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -68,8 +66,6 @@ valkey_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -90,8 +86,6 @@ postgres_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -112,8 +106,6 @@ flagd_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -134,8 +126,6 @@ accounting_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=2,
-        min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -157,8 +147,6 @@ ad_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=3,
-        min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -179,8 +167,6 @@ cart_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=3,
-        min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -209,8 +195,6 @@ checkout_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=3,
-        min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -231,8 +215,6 @@ currency_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=5,
-        min_replicas=2,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -254,8 +236,6 @@ email_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=2,
-        min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -276,8 +256,6 @@ flagd_ui_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -298,8 +276,6 @@ fraud_detection_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=2,
-        min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -320,8 +296,6 @@ image_provider_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=2,
-        min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -343,8 +317,6 @@ payment_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=3,
-        min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -365,8 +337,6 @@ product_catalog_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=3,
-        min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -388,8 +358,6 @@ product_reviews_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=2,
-        min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -411,8 +379,6 @@ quote_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=2,
-        min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -434,8 +400,6 @@ recommendation_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=3,
-        min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -456,8 +420,6 @@ shipping_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=3,
-        min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -488,8 +450,6 @@ frontend_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=5,
-        min_replicas=2,
         links=[
             Link(
                 site_name="Demo Screenshots",
@@ -519,8 +479,6 @@ frontend_proxy_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=2,
-        min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -541,8 +499,6 @@ load_generator_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -563,8 +519,6 @@ react_native_app_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )

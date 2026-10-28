@@ -54,8 +54,6 @@ dokku_core_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[
             Link(site_name="Dokku Docs", http_url=_DOCS),
             Link(site_name="Source", http_url=_SOURCE),
@@ -79,8 +77,6 @@ ssh_gateway_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[
             Link(
                 site_name="User Mgmt Docs",
@@ -106,8 +102,6 @@ git_server_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[
             Link(
                 site_name="Git Deploy Docs",
@@ -133,8 +127,6 @@ app_builder_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[
             Link(
                 site_name="Builders Docs",
@@ -161,8 +153,6 @@ docker_scheduler_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[
             Link(
                 site_name="Scheduler Docs",
@@ -188,8 +178,6 @@ cron_scheduler_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[
             Link(
                 site_name="Cron Docs",
@@ -215,8 +203,6 @@ nginx_proxy_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[
             Link(
                 site_name="Proxy Docs",
@@ -242,8 +228,6 @@ certs_plugin_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[
             Link(site_name="SSL Docs", http_url=Url("https://dokku.com/docs/configuration/ssl/"))
         ],
@@ -266,8 +250,6 @@ plugin_system_block = Manifest(
         log_aggregation=_LOGS,
         tracing=_TRACING,
         iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
         links=[
             Link(
                 site_name="Plugin Docs",
