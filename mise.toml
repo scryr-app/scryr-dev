@@ -1,5 +1,8 @@
+#:schema https://mise.jdx.dev/schema/mise.json
 # Shared toolchain and task entrypoints for contributors and GitHub Actions.
 # Put cloud credentials in ignored mise.local.toml (see mise.local.toml.example).
+min_version = "2026.9.5"
+
 [tools]
 rust = { version = "1.99.1", profile = "minimal", components = [
     "rustfmt",
@@ -13,6 +16,10 @@ watchexec = "2.5.1"
 
 [settings]
 python.uv_venv_auto = "create|source"
+
+[task_config]
+# All task paths are relative to the checkout, including calls from subdirectories.
+dir = "{{config_root}}"
 
 [env]
 # Prefer the project toolchain; the mise-installed vp bootstraps dependencies.
@@ -33,7 +40,6 @@ UV_CACHE_DIR = "{{config_root}}/.cache/uv"
 
 [tasks."contribute"]
 description = "Show the contribute workflow and required commands"
-dir = "{{config_root}}"
 run = """
 cat <<'GUIDE'
 Start contributing (run mise install first):
@@ -48,7 +54,6 @@ GUIDE
 
 [tasks."contribute:setup"]
 description = "Install locked dependencies for crystal, manifest, map, and docs"
-dir = "{{config_root}}"
 run = [
     "mise run internal:dependencies:crystal",
     "mise run internal:dependencies:manifest",
@@ -58,7 +63,6 @@ run = [
 
 [tasks."contribute:agent"]
 description = "Launch interactive Codex only from a linked Git worktree"
-dir = "{{config_root}}"
 run = """
 set -e
 mise run verify:worktree
@@ -67,7 +71,6 @@ exec codex -C "$PWD"
 
 [tasks."verify:worktree"]
 description = "Reject the primary checkout before an agent editing session"
-dir = "{{config_root}}"
 run = '''
 python - <<'PYTHON'
 import subprocess
@@ -104,66 +107,53 @@ PYTHON
 [tasks."contribute:oss"]
 description = "Contribute with Rust restart, Vite HMR, local SQLite and local auth"
 depends = ["contribute:oss:server", "contribute:oss:map"]
-dir = "{{config_root}}"
 
 [tasks."contribute:cloud"]
 description = "Contribute with Rust restart, Vite HMR, Turso and Clerk"
 depends = ["contribute:cloud:server", "contribute:cloud:map"]
-dir = "{{config_root}}"
 
 [tasks."contribute:docs"]
 description = "Run the Astro documentation development server"
 run = "npm --prefix docs run dev"
-dir = "{{config_root}}"
 
 [tasks."pre-commit"]
 description = "Apply formatting and lint fixes, then run all verification checks"
-dir = "{{config_root}}"
 run = ["mise run contribute:fix", "mise run verify"]
 
 [tasks."contribute:fix"]
 description = "Apply formatting and auto-fixable lint fixes"
-dir = "{{config_root}}"
 run = ["mise run contribute:format", "mise run contribute:lint-fix"]
 
 [tasks."contribute:oss:server"]
 description = "Watch and restart the oss Rust server"
 run = "mise run internal:contribute:process oss watch"
-dir = "{{config_root}}"
 
 [tasks."contribute:oss:map"]
 description = "Run Vite HMR with oss configuration"
 run = "mise run internal:contribute:process oss ui"
-dir = "{{config_root}}"
 
 [tasks."contribute:oss:debug"]
 description = "Build Rust with symbols and prepare the VS Code environment"
 run = "mise run internal:contribute:process oss debug"
-dir = "{{config_root}}"
 
 [tasks."contribute:cloud:server"]
 description = "Watch and restart the cloud Rust server"
 run = "mise run internal:contribute:process cloud watch"
-dir = "{{config_root}}"
 
 [tasks."contribute:cloud:map"]
 description = "Run Vite HMR with cloud configuration"
 run = "mise run internal:contribute:process cloud ui"
-dir = "{{config_root}}"
 
 [tasks."contribute:cloud:debug"]
 description = "Build Rust with symbols and prepare the VS Code environment"
 run = "mise run internal:contribute:process cloud debug"
-dir = "{{config_root}}"
 
 [tasks."contribute:cloud:remote-map"]
 description = "Run Vite HMR against the deployed Fly API"
 run = "mise run internal:contribute:process cloud remote"
-dir = "{{config_root}}"
 
 [tasks."contribute:lint-fix"]
 description = "Fix auto-fixable Python and TypeScript lint issues"
-dir = "{{config_root}}"
 run = [
     "mise run contribute:lint-fix:manifest",
     "mise run contribute:lint-fix:map",
@@ -171,17 +161,14 @@ run = [
 
 [tasks."contribute:lint-fix:manifest"]
 description = "Fix auto-fixable Ruff issues"
-dir = "{{config_root}}"
 run = "cd manifest && uv run --locked ruff check --fix --unsafe-fixes . tests/samples/*/*.scry"
 
 [tasks."contribute:lint-fix:map"]
 description = "Fix auto-fixable TypeScript lint issues"
-dir = "{{config_root}}"
 run = "vp -C map run fix"
 
 [tasks."contribute:format"]
 description = "Format Rust, Python, and TypeScript code"
-dir = "{{config_root}}"
 run = [
     "mise run contribute:format:crystal",
     "mise run contribute:format:manifest",
@@ -190,22 +177,18 @@ run = [
 
 [tasks."contribute:format:crystal"]
 description = "Format Rust code"
-dir = "{{config_root}}"
 run = "cargo fmt --manifest-path crystal/Cargo.toml --all"
 
 [tasks."contribute:format:manifest"]
 description = "Format Python code and sample manifests"
-dir = "{{config_root}}"
 run = "cd manifest && uv run --locked ruff format . tests/samples/*/*.scry"
 
 [tasks."contribute:format:map"]
 description = "Format TypeScript code"
-dir = "{{config_root}}"
 run = "vp -C map run format"
 
 [tasks."contribute:build"]
 description = "Build Rust, Python, and frontend artifacts for local development"
-dir = "{{config_root}}"
 run = [
     "mise run contribute:build:map",
     "mise run contribute:build:manifest",
@@ -214,22 +197,18 @@ run = [
 
 [tasks."contribute:build:crystal"]
 description = "Build the Rust workspace"
-dir = "{{config_root}}"
 run = "cargo build --locked --manifest-path crystal/Cargo.toml --workspace"
 
 [tasks."contribute:build:manifest"]
 description = "Build the Python SDK distribution"
-dir = "{{config_root}}"
 run = "cd manifest/scryr && uv build --sdist --wheel"
 
 [tasks."contribute:build:map"]
 description = "Build the frontend for local development"
-dir = "{{config_root}}"
 run = "vp -C map run build"
 
 [tasks."contribute:seed:samples"]
 description = "Upload every sample manifest to the local GraphQL API and SQLite database"
-dir = "{{config_root}}"
 run = '''
 #!/usr/bin/env bash
 set -eu
@@ -268,7 +247,6 @@ done
 
 [tasks."contribute:generate:samples"]
 description = "Generate the server's bundled editable organization samples"
-dir = "{{config_root}}"
 usage = 'flag "--check" help="Check that the committed sample catalog is current"'
 run = '''
 python - <<'PYTHON'
@@ -305,7 +283,6 @@ PYTHON
 
 [tasks."contribute:generate:graphql"]
 description = "Generate frontend GraphQL types from the local server"
-dir = "{{config_root}}"
 run = '''
 #!/usr/bin/env bash
 set -eu
@@ -338,12 +315,10 @@ mise run internal:generate:map
 
 [tasks."contribute:generate:manifest-types"]
 description = "Generate manifest field type metadata via the Scryr CLI"
-dir = "{{config_root}}"
 run = "cargo run --locked --manifest-path crystal/Cargo.toml -p crystal-cli -- inspect types --path tests/samples/open_saas/index.scry --manifest-dir manifest --scryr-dir .cache/scryr"
 
 [tasks."contribute:oss:install"]
 description = "Build and install the self-contained scryr CLI on PATH"
-dir = "{{config_root}}"
 run = '''
 #!/usr/bin/env bash
 set -eu
@@ -407,7 +382,6 @@ echo "Restart your shell or run: export PATH=\"$install_dir:\$PATH\""
 
 [tasks."verify"]
 description = "Run the full CI checks: automation, manifest, crystal, map, and standalone CLI"
-dir = "{{config_root}}"
 run = [
     "mise run verify:automation",
     "mise run verify:manifest",
@@ -417,15 +391,15 @@ run = [
 ]
 
 [tasks."verify:automation"]
-description = "Validate workflow structure and scan Git history"
+description = "Validate mise tasks, workflow structure, and scan Git history"
 run = [
+    "mise tasks validate",
     "mise run verify:workflows",
     "mise run internal:verify:regressions",
     "actionlint",
     "gitleaks git --redact --no-banner --log-opts=--all .",
 ]
 tools = { "actionlint" = "1.7.12", "gitleaks" = "8.30.1" }
-dir = "{{config_root}}"
 
 [tasks."verify:manifest"]
 description = "Install dependencies and verify manifest: Python SDK formatting, lint, types, and tests"
@@ -436,7 +410,6 @@ run = [
     "mise run verify:types:manifest",
     "mise run verify:test:manifest",
 ]
-dir = "{{config_root}}"
 
 [tasks."verify:crystal"]
 description = "Install dependencies, embed manifest, and verify crystal: Rust formatting, lint, types, and tests"
@@ -449,7 +422,6 @@ run = [
   "mise run verify:test:crystal",
   "mise run contribute:generate:samples --check",
 ]
-dir = "{{config_root}}"
 
 [tasks."verify:map"]
 description = "Install dependencies and verify map: Vite UI formatting, lint, types, tests, and build"
@@ -461,16 +433,13 @@ run = [
     "mise run verify:test:map",
     "mise run contribute:build:map",
 ]
-dir = "{{config_root}}"
 
 [tasks."verify:release"]
 description = "Build and smoke-test the standalone CLI"
 run = ["mise run release:build", "mise run verify:release:smoke"]
-dir = "{{config_root}}"
 
 [tasks."verify:static"]
 description = "Run formatting checks, linters, and type checks"
-dir = "{{config_root}}"
 run = [
     "mise run verify:format",
     "mise run verify:lint",
@@ -479,12 +448,10 @@ run = [
 
 [tasks."verify:test"]
 description = "Run unit tests first, then integration tests"
-dir = "{{config_root}}"
 run = ["mise run verify:test:unit", "mise run verify:test:integration"]
 
 [tasks."verify:lint"]
 description = "Run all linters"
-dir = "{{config_root}}"
 run = [
     "mise run verify:lint:crystal",
     "mise run verify:lint:manifest",
@@ -493,23 +460,19 @@ run = [
 
 [tasks."verify:lint:crystal"]
 description = "Run Rust clippy across the workspace"
-dir = "{{config_root}}"
 env = { CARGO_BUILD_WARNINGS = "deny" }
 run = "cargo clippy --manifest-path crystal/Cargo.toml --locked --workspace --all-targets --keep-going"
 
 [tasks."verify:lint:manifest"]
 description = "Run Ruff against the Python SDK and sample manifests"
-dir = "{{config_root}}"
 run = "cd manifest && uv run --locked ruff check . tests/samples/*/*.scry"
 
 [tasks."verify:lint:map"]
 description = "Run Vite+ lint for TypeScript code"
-dir = "{{config_root}}"
 run = "vp -C map run lint"
 
 [tasks."verify:format"]
 description = "Check Rust, Python, and TypeScript formatting"
-dir = "{{config_root}}"
 run = [
     "mise run verify:format:crystal",
     "mise run verify:format:manifest",
@@ -518,22 +481,18 @@ run = [
 
 [tasks."verify:format:crystal"]
 description = "Check Rust formatting"
-dir = "{{config_root}}"
 run = "cargo fmt --manifest-path crystal/Cargo.toml --all -- --check"
 
 [tasks."verify:format:manifest"]
 description = "Check Python formatting"
-dir = "{{config_root}}"
 run = "cd manifest && uv run --locked ruff format --check . tests/samples/*/*.scry"
 
 [tasks."verify:format:map"]
 description = "Check TypeScript formatting"
-dir = "{{config_root}}"
 run = "vp -C map run format:check"
 
 [tasks."verify:types"]
 description = "Run Rust, Python, and TypeScript type checks"
-dir = "{{config_root}}"
 run = [
     "mise run verify:types:crystal",
     "mise run verify:types:manifest",
@@ -542,13 +501,11 @@ run = [
 
 [tasks."verify:types:crystal"]
 description = "Run Rust compile checks"
-dir = "{{config_root}}"
 env = { CARGO_BUILD_WARNINGS = "deny" }
 run = "cargo check --locked --manifest-path crystal/Cargo.toml --workspace --all-targets --keep-going --future-incompat-report"
 
 [tasks."verify:types:manifest"]
 description = "Run Python static type checks"
-dir = "{{config_root}}"
 run = [
     "uv check --project manifest --all-packages --locked",
     # uv check only discovers Python extensions; explicitly retain .scry coverage.
@@ -557,12 +514,10 @@ run = [
 
 [tasks."verify:types:map"]
 description = "Run TypeScript type checks"
-dir = "{{config_root}}"
 run = "vp -C map run typecheck"
 
 [tasks."verify:test:unit"]
 description = "Run all unit test suites"
-dir = "{{config_root}}"
 run = [
     "mise run verify:test:unit:crystal",
     "mise run verify:test:unit:manifest",
@@ -571,22 +526,18 @@ run = [
 
 [tasks."verify:test:unit:crystal"]
 description = "Run Rust unit tests"
-dir = "{{config_root}}"
 run = "cargo test --locked --manifest-path crystal/Cargo.toml --workspace --lib --bins"
 
 [tasks."verify:test:unit:manifest"]
 description = "Run Python unit tests"
-dir = "{{config_root}}"
 run = "cd manifest && uv run --locked python -m pytest tests --ignore=tests/test_sample_mern_integration.py"
 
 [tasks."verify:test:unit:map"]
 description = "Run frontend unit tests"
-dir = "{{config_root}}"
 run = "vp -C map run test"
 
 [tasks."verify:test:integration"]
 description = "Run integration test suites"
-dir = "{{config_root}}"
 run = [
     "mise run verify:test:integration:crystal",
     "mise run verify:test:integration:manifest",
@@ -594,7 +545,6 @@ run = [
 
 [tasks."verify:test:integration:crystal"]
 description = "Run Rust integration tests"
-dir = "{{config_root}}"
 run = [
     "cargo test --locked --manifest-path crystal/Cargo.toml -p crystal-core --tests",
     "cargo test --locked --manifest-path crystal/Cargo.toml -p crystal-cli --test cli",
@@ -602,12 +552,10 @@ run = [
 
 [tasks."verify:test:integration:manifest"]
 description = "Run Python sample integration tests"
-dir = "{{config_root}}"
 run = "cd manifest && uv run --locked python -m pytest tests/test_sample_mern_integration.py"
 
 [tasks."verify:test:crystal"]
 description = "Run all Rust tests"
-dir = "{{config_root}}"
 run = [
     "mise run verify:test:unit:crystal",
     "mise run verify:test:integration:crystal",
@@ -615,7 +563,6 @@ run = [
 
 [tasks."verify:test:manifest"]
 description = "Run all Python tests"
-dir = "{{config_root}}"
 run = [
     "mise run verify:test:unit:manifest",
     "mise run verify:test:integration:manifest",
@@ -623,12 +570,10 @@ run = [
 
 [tasks."verify:test:map"]
 description = "Run all frontend tests"
-dir = "{{config_root}}"
 run = "mise run verify:test:unit:map"
 
 [tasks."verify:cards"]
 description = "Build and test DOM card layout and 3D interaction in Chrome with isolated fixtures"
-dir = "{{config_root}}"
 run = ["mise run contribute:build:map", "vp -C map run test:cards"]
 
 [tasks."verify:editor"]
@@ -705,18 +650,15 @@ assert not response.get("errors"), response
 assert any(item["key"] == "mern" for item in response["data"]["scryrMaps"]), response
 PYTHON
 '''
-dir = "{{config_root}}"
 
 [tasks."verify:workflows"]
 description = "Validate mise-only commands in GitHub workflows and local composite actions"
-dir = "{{config_root}}"
 run = "mise run internal:verify:workflows"
 
 # Release: build, validate, package, draft, then distribute
 
 [tasks."release"]
 description = "Show the release workflow and required commands"
-dir = "{{config_root}}"
 run = """
 cat <<'GUIDE'
 Release the standalone CLI:
@@ -741,25 +683,21 @@ description = "Validate main, create a version tag, and push it to start the rel
 usage = 'arg "<tag>"'
 run = 'RELEASE_TAG="$usage_tag" mise run internal:release:process start'
 tools = { "gh" = "2.92.0" }
-dir = "{{config_root}}"
 
 [tasks."release:brew"]
 description = "Wait for a tagged build, safely publish its verified draft, and wait for Homebrew"
 usage = 'arg "<tag>"'
 run = 'RELEASE_TAG="$usage_tag" mise run internal:release:process brew'
 tools = { "gh" = "2.92.0" }
-dir = "{{config_root}}"
 
 [tasks."release:status"]
 description = "Show release and distribution status for a version tag"
 usage = 'arg "<tag>"'
 run = 'RELEASE_TAG="$usage_tag" mise run internal:release:process status'
 tools = { "gh" = "2.92.0" }
-dir = "{{config_root}}"
 
 [tasks."release:build"]
 description = "Build the self-contained open-source scryr CLI with embedded SDK and UI"
-dir = "{{config_root}}"
 run = [
     "mise run internal:dependencies:manifest",
     "mise run internal:embed:manifest",
@@ -770,18 +708,15 @@ run = [
 [tasks."release:validate"]
 description = "Validate the release tag, main ancestry and versions"
 run = "mise run internal:release:process validate"
-dir = "{{config_root}}"
 
 [tasks."release:package"]
 description = "Archive the native binary and notices into dist/release; run verify:release first"
 run = "mise run internal:release:process package"
-dir = "{{config_root}}"
 
 [tasks."release:draft"]
 description = "Verify all four platform archives and create a GitHub draft; requires RELEASE_TAG and GH_TOKEN"
 run = "mise run internal:release:process draft"
 tools = { "gh" = "2.92.0" }
-dir = "{{config_root}}"
 
 [tasks."release:distribute"]
 description = "Distribute the published standalone release through Homebrew"
@@ -790,31 +725,26 @@ run = [
     "mise run release:distribution:prepare",
     "mise run release:distribute:homebrew",
 ]
-dir = "{{config_root}}"
 
 [tasks."release:build:docker"]
 description = "Build the standalone CLI and local server image; requires Docker"
 run = ["mise run release:build", "mise run internal:deploy:process docker"]
 tools = { "docker-cli" = "29.4.3" }
-dir = "{{config_root}}"
 
 [tasks."release:distribution:prepare"]
 description = "Verify published release artifacts and prepare the Homebrew formula"
 run = "mise run internal:release:process prepare"
 tools = { "gh" = "2.92.0" }
-dir = "{{config_root}}"
 
 [tasks."release:distribute:homebrew"]
 description = "Publish the prepared homebrew distribution"
 run = "mise run internal:release:process homebrew"
 tools = { "gh" = "2.92.0" }
-dir = "{{config_root}}"
 
 # Deployment: build, migrate, and update configured cloud resources
 
 [tasks."deploy"]
 description = "Show the deploy workflow and required commands"
-dir = "{{config_root}}"
 run = """
 cat <<'GUIDE'
 Deploy configured cloud resources:
@@ -830,7 +760,6 @@ GUIDE
 description = "Build, migrate Turso, deploy Fly, then Vercel production; requires configured cloud credentials"
 run = "mise run internal:deploy:process deploy"
 tools = { "flyctl" = "0.4.95", "npm:vercel" = "59.11.7" }
-dir = "{{config_root}}"
 
 [tasks."deploy:build"]
 description = "Build Clerk-enabled map assets and the crystal CLI for Fly; requires cloud UI configuration"
@@ -841,35 +770,29 @@ run = [
     "mise run internal:release:build:crystal",
     "mise run deploy:build:map",
 ]
-dir = "{{config_root}}"
 
 [tasks."deploy:build:map"]
 description = "Build Vite for the deployed Fly API"
 run = "mise run internal:deploy:process ui"
-dir = "{{config_root}}"
 
 [tasks."deploy:database:migrate"]
 description = "Apply the Rust schema migrations to the configured Turso database"
 run = "mise run internal:deploy:process turso"
-dir = "{{config_root}}"
 
 [tasks."deploy:fly"]
 description = "Stage secrets and deploy Fly; requires deploy:build output and Fly credentials"
 run = "mise run internal:deploy:process fly"
 tools = { "flyctl" = "0.4.95" }
-dir = "{{config_root}}"
 
 [tasks."deploy:vercel"]
 description = "Deploy the frontend to Vercel production"
 run = "mise run internal:deploy:process vercel"
 tools = { "npm:vercel" = "59.11.7" }
-dir = "{{config_root}}"
 
 [tasks."deploy:secrets"]
 description = "Stage Clerk and Turso secrets for the next Fly deployment"
 run = "mise run internal:deploy:process secrets"
 tools = { "flyctl" = "0.4.95" }
-dir = "{{config_root}}"
 
 # Internal implementation: dependency and build helpers, runtime, and regression tests
 
@@ -877,53 +800,44 @@ dir = "{{config_root}}"
 hide = true
 description = "Run the oss Rust server once"
 run = "mise run internal:contribute:process oss server"
-dir = "{{config_root}}"
 
 [tasks."internal:contribute:cloud:serve"]
 hide = true
 description = "Run the cloud Rust server once"
 run = "mise run internal:contribute:process cloud server"
-dir = "{{config_root}}"
 
 [tasks."internal:dependencies:crystal"]
 description = "Fetch Rust dependencies"
-dir = "{{config_root}}"
 hide = true
 run = "cargo fetch --locked --manifest-path crystal/Cargo.toml"
 
 [tasks."internal:dependencies:manifest"]
 description = "Install Python workspace dependencies"
-dir = "{{config_root}}"
 hide = true
 run = "cd manifest && uv sync --locked --all-packages"
 
 [tasks."internal:dependencies:map"]
 description = "Install TypeScript frontend dependencies"
-dir = "{{config_root}}"
 hide = true
 run = "vp -C map install --frozen-lockfile"
 
 [tasks."internal:dependencies:docs"]
 description = "Install documentation site dependencies"
-dir = "{{config_root}}"
 hide = true
 run = "npm --prefix docs ci"
 
 [tasks."internal:release:build:crystal"]
 description = "Build the release scryr binary"
-dir = "{{config_root}}"
 hide = true
 run = "cargo build --manifest-path crystal/Cargo.toml --locked -p crystal-cli --release"
 
 [tasks."internal:generate:map"]
 description = "Generate TypeScript GraphQL client code"
-dir = "{{config_root}}"
 hide = true
 run = "vp -C map run codegen"
 
 [tasks."internal:embed:manifest"]
 description = "Refresh the crate-local Python SDK copy embedded in crystal-cli packages"
-dir = "{{config_root}}"
 hide = true
 run = '''
 #!/usr/bin/env bash
@@ -940,7 +854,6 @@ find crystal/crystal-cli/static/scryr-sdk -type f -name '*.pyc' -delete
 
 [tasks."internal:embed:map:oss"]
 description = "Build and copy the local-auth UI into Rust embedded assets"
-dir = "{{config_root}}"
 hide = true
 run = '''
 #!/usr/bin/env bash
@@ -1017,24 +930,20 @@ subprocess.run(
 PYTHON
 '''
 tools = { "gh" = "2.92.0" }
-dir = "{{config_root}}"
 
 [tasks."internal:embed:map:cloud"]
 description = "Embed a Clerk-enabled UI for the Fly server"
 hide = true
-dir = "{{config_root}}"
 run = "mise run internal:deploy:process embed"
 
 [tasks."internal:release:preflight"]
 description = "Validate all distribution settings before publishing"
 hide = true
-dir = "{{config_root}}"
 run = "mise run internal:release:process preflight"
 
 [tasks."internal:contribute:process"]
 description = "Shared contributor runtime and debugger configuration"
 hide = true
-dir = "{{config_root}}"
 usage = '''
 arg "<mode>" { choices "oss" "cloud" }
 arg "<action>" { choices "watch" "server" "ui" "remote" "debug" }
@@ -1210,7 +1119,6 @@ PYTHON
 [tasks."internal:deploy:process"]
 description = "Shared provider operations and deployment preflight"
 hide = true
-dir = "{{config_root}}"
 usage = "arg \"<action>\" { choices \"docker\" \"ui\" \"embed\" \"secrets\" \"turso\" \"fly\" \"vercel\" \"deploy\" }"
 run = '''
 python - "$usage_action" <<'PYTHON'
@@ -1399,7 +1307,6 @@ PYTHON
 [tasks."internal:release:process"]
 description = "Shared release validation, packaging and publisher operations"
 hide = true
-dir = "{{config_root}}"
 usage = "arg \"<action>\" { choices \"start\" \"brew\" \"status\" \"validate\" \"package\" \"draft\" \"prepare\" \"homebrew\" \"preflight\" }"
 run = '''
 python - "$usage_action" <<'PYTHON'
@@ -1800,7 +1707,6 @@ PYTHON
 [tasks."internal:verify:workflows"]
 hide = true
 description = "Validate mise-only commands in GitHub workflows and local composite actions"
-dir = "{{config_root}}"
 run = '''
 uv run --no-project --with PyYAML==6.0.3 python - <<'PYTHON'
 """Require literal mise task calls in workflows and local composite actions."""
@@ -1966,7 +1872,6 @@ PYTHON
 [tasks."internal:verify:regressions"]
 description = "Test runtime isolation, migration order and release packaging"
 hide = true
-dir = "{{config_root}}"
 run = '''
 uv run --no-project --with PyYAML==6.0.3 python - <<'PYTHON'
 """Regression checks for credential isolation and release/deployment boundaries."""
