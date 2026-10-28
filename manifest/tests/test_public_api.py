@@ -19,13 +19,13 @@ def test_top_level_package_exports_core_manifest_api() -> None:
     manifest = scryr.Manifest(
         name="PackageAPI",
         info=scryr.Info(
-            language=scryr.ProgrammingLanguage.python,
+            languages=[scryr.ProgrammingLanguage.python],
             frameworks=[scryr.WebFramework.fastapi],
         ),
         forges=[forge.name],
     )
     diagram = scryr.Diagram(name="Package Diagram", manifests=[manifest])
-    query = scryr.ManifestQuery(language=scryr.ProgrammingLanguage.python)
+    query = scryr.ManifestQuery(languages=[scryr.ProgrammingLanguage.python])
 
     assert forge.to_mise_dict()["tools"]["python"]["version"] == "3.14"
     assert manifest.to_dict()["name"] == "PackageAPI"

@@ -10,14 +10,9 @@ Source: https://github.com/calcom/cal.com
 
 from scryr import Diagram, Info, Link, Manifest
 from scryr.types import (
-    AuthType,
     Classification,
     DeploymentTarget,
-    IaCToolType,
-    LogAggregationType,
-    MonitoringType,
     ProgrammingLanguage,
-    TracingType,
     Url,
     WebFramework,
     parse_version,
@@ -25,10 +20,6 @@ from scryr.types import (
 
 _SOURCE = Url("https://github.com/calcom/cal.com")
 _DOCS = Url("https://cal.com/docs")
-_IAC = IaCToolType.none
-_MONITOR = MonitoringType.none
-_LOGS = LogAggregationType.none
-_TRACING = TracingType.none
 postgres_block = Manifest(
     name="PostgreSQL",
     icon="🐘",
@@ -38,14 +29,10 @@ postgres_block = Manifest(
     info=Info(
         description="Primary relational database storing all cal.com data: users, bookings, event types, availability rules, and workflows. Accessed exclusively via Prisma ORM.",
         version=parse_version("15.0.0"),
-        language=ProgrammingLanguage.sql,
-        deployment=DeploymentTarget.render,
-        owner_team="Platform",
-        auth_type=AuthType.basic,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
+        languages=[ProgrammingLanguage.sql],
+        deployments=[DeploymentTarget.render],
+        owners="Platform",
+        metric_tools=[],
         links=[Link(site_name="Cal.com Docs", http_url=_DOCS)],
     ),
 )
@@ -58,14 +45,10 @@ redis_block = Manifest(
     info=Info(
         description="In-memory cache and rate-limit store (Upstash or self-hosted). Used for caching availability calculations and API rate limiting.",
         version=parse_version("7.0.0"),
-        language=ProgrammingLanguage.c,
-        deployment=DeploymentTarget.render,
-        owner_team="Platform",
-        auth_type=AuthType.api_key,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
+        languages=[ProgrammingLanguage.c],
+        deployments=[DeploymentTarget.render],
+        owners="Platform",
+        metric_tools=[],
         links=[Link(site_name="Cal.com Docs", http_url=_DOCS)],
     ),
 )
@@ -84,15 +67,11 @@ web_block = Manifest(
     info=Info(
         description="Main Next.js application serving the cal.com scheduling UI and tRPC backend. Handles booking flows, event types, availability, user auth (NextAuth.js), calendar integrations, Prisma data access, and outbound webhooks.",
         version=parse_version("6.2.0"),
-        language=ProgrammingLanguage.typescript,
+        languages=[ProgrammingLanguage.typescript],
         frameworks=[WebFramework.nextjs],
-        deployment=DeploymentTarget.vercel,
-        owner_team="Product",
-        auth_type=AuthType.oauth2,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
+        deployments=[DeploymentTarget.vercel],
+        owners="Product",
+        metric_tools=[],
         links=[
             Link(site_name="Cal.com", http_url=Url("https://cal.com")),
             Link(site_name="Source", http_url=_SOURCE),
@@ -108,15 +87,11 @@ api_v2_block = Manifest(
     info=Info(
         description="NestJS REST API for the Cal.com Platform offering (Cal Atoms). Provides headless scheduling endpoints so third-party developers can embed cal.com booking experiences into their own products.",
         version=parse_version("2.0.0"),
-        language=ProgrammingLanguage.typescript,
+        languages=[ProgrammingLanguage.typescript],
         frameworks=[WebFramework.nestjs],
-        deployment=DeploymentTarget.vercel,
-        owner_team="Platform",
-        auth_type=AuthType.api_key,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
+        deployments=[DeploymentTarget.vercel],
+        owners="Platform",
+        metric_tools=[],
         links=[
             Link(
                 site_name="API v2 Reference",
@@ -134,14 +109,10 @@ email_block = Manifest(
     info=Info(
         description="Transactional email service (SendGrid) that delivers booking confirmations, cancellations, reschedule requests, team invitations, and workflow-triggered reminders to attendees and organizers.",
         version=parse_version("1.0.0"),
-        language=ProgrammingLanguage.typescript,
-        deployment=DeploymentTarget.vercel,
-        owner_team="Product",
-        auth_type=AuthType.api_key,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
+        languages=[ProgrammingLanguage.typescript],
+        deployments=[DeploymentTarget.vercel],
+        owners="Product",
+        metric_tools=[],
         links=[Link(site_name="Cal.com Docs", http_url=_DOCS)],
     ),
 )
@@ -154,14 +125,10 @@ workflow_cron_block = Manifest(
     info=Info(
         description="Vercel cron-based job runner that processes automated cal.com workflows: scheduled email and SMS reminders (via Twilio), booking follow-ups, expired booking cleanup, and daily digest jobs.",
         version=parse_version("1.0.0"),
-        language=ProgrammingLanguage.typescript,
-        deployment=DeploymentTarget.vercel,
-        owner_team="Product",
-        auth_type=AuthType.api_key,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
+        languages=[ProgrammingLanguage.typescript],
+        deployments=[DeploymentTarget.vercel],
+        owners="Product",
+        metric_tools=[],
         links=[Link(site_name="Cal.com Docs", http_url=_DOCS)],
     ),
 )
@@ -174,14 +141,10 @@ daily_video_block = Manifest(
     info=Info(
         description="Embedded video conferencing provider powering Cal Video — the built-in video call option for bookings. Rooms are created and managed via the Daily REST API.",
         version=parse_version("1.0.0"),
-        language=ProgrammingLanguage.javascript,
-        deployment=DeploymentTarget.unknown,
-        owner_team="Product",
-        auth_type=AuthType.api_key,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
+        languages=[ProgrammingLanguage.javascript],
+        deployments=[DeploymentTarget.unknown],
+        owners="Product",
+        metric_tools=[],
         links=[Link(site_name="Daily Docs", http_url=Url("https://docs.daily.co/reference"))],
     ),
 )
@@ -194,14 +157,10 @@ app_store_block = Manifest(
     info=Info(
         description="Cal.com App Store — a collection of OAuth2 and API-key integrations: Google Calendar, Outlook, Zoom, Stripe, HubSpot, Salesforce, Zapier, and 100+ more. Each app is a self-contained package in packages/app-store.",
         version=parse_version("1.0.0"),
-        language=ProgrammingLanguage.typescript,
-        deployment=DeploymentTarget.vercel,
-        owner_team="Product",
-        auth_type=AuthType.oauth2,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
+        languages=[ProgrammingLanguage.typescript],
+        deployments=[DeploymentTarget.vercel],
+        owners="Product",
+        metric_tools=[],
         links=[Link(site_name="App Store", http_url=Url("https://app.cal.com/apps"))],
     ),
 )

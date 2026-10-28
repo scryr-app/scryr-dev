@@ -18,19 +18,15 @@ from pydantic import (
 
 from .metrics_source import PostHogSource  # noqa: TC001
 from .types import (
-    AuthType,
     CalendarVersion,
     Classification,
     DeploymentTarget,
-    IaCToolType,
     IncrementalVersion,
     Label,
-    LogAggregationType,
     Markdown,
-    MonitoringType,
+    MetricTool,
     ProgrammingLanguage,
     SemVer,
-    TracingType,
     Url,
     Version,
     WebFramework,
@@ -110,42 +106,21 @@ class Info(_Section):
             "Calendar (YEAR.MONTH), or Incremental (Numbering)"
         ),
     )
-    language: ProgrammingLanguage = Field(
-        default=ProgrammingLanguage.python, description="Primary programming language"
+    languages: list[ProgrammingLanguage] = Field(
+        default_factory=list, description="Programming languages in use"
     )
     frameworks: list[WebFramework] = Field(
         default_factory=list, description="Web frameworks in use"
     )
-    deployment: DeploymentTarget = Field(
-        default=DeploymentTarget.ec2, description="Deployment target"
+    deployments: list[DeploymentTarget] = Field(
+        default_factory=list, description="Deployment targets and infrastructure as code tools"
     )
-    owner_team: Label | str = Field(
-        default=Label(""),
-        serialization_alias="ownerTeam",
-        validation_alias=AliasChoices("owner_team", "ownerTeam"),
-        description="Team responsible for this service",
-    )
-    auth_type: AuthType = Field(
-        default=AuthType.api_key,
-        serialization_alias="authType",
-        validation_alias=AliasChoices("auth_type", "authType"),
-        description="Authentication mechanism",
-    )
-    monitoring: MonitoringType = Field(
-        default=MonitoringType.none, description="Monitoring platform"
-    )
-    tracing: TracingType = Field(default=TracingType.none, description="Distributed tracing tool")
-    log_aggregation: LogAggregationType = Field(
-        default=LogAggregationType.none,
-        serialization_alias="logAggregation",
-        validation_alias=AliasChoices("log_aggregation", "logAggregation"),
-        description="Log aggregation tool",
-    )
-    iac_tool: IaCToolType = Field(
-        default=IaCToolType.none,
-        serialization_alias="iacTool",
-        validation_alias=AliasChoices("iac_tool", "iacTool"),
-        description="Infrastructure as Code tooling",
+    owners: str = Field(default="", description="Owners responsible for this service")
+    metric_tools: list[MetricTool] = Field(
+        default_factory=list,
+        serialization_alias="metricTools",
+        validation_alias=AliasChoices("metric_tools", "metricTools"),
+        description="Monitoring, tracing, and log aggregation tools",
     )
     docs: list[Url | str] = Field(default_factory=list, description="Documentation URLs")
     links: list[Link] = Field(default_factory=list, description="External links")
@@ -167,11 +142,16 @@ class Info(_Section):
     def _serialize_version(self, value: Version) -> str:
         return str(value)
 
-    @field_validator("deployment", mode="before")
+    @field_validator("deployments", mode="before")
     @classmethod
-    def _parse_deployment(cls, value: object) -> object:
-        if isinstance(value, str):
-            return next((target for target in DeploymentTarget if target.id == value), value)
+    def _parse_deployments(cls, value: object) -> object:
+        if isinstance(value, list):
+            return [
+                next((target for target in DeploymentTarget if target.id == item), item)
+                if isinstance(item, str)
+                else item
+                for item in value
+            ]
         return value
 
     @field_validator("frameworks", mode="before")
@@ -190,20 +170,20 @@ class Info(_Section):
     def _serialize_frameworks(self, value: list[WebFramework]) -> list[str]:
         return [framework.framework for framework in value]
 
-    @field_serializer("deployment")
-    def _serialize_deployment(self, value: DeploymentTarget) -> str:
-        return value.id
+    @field_validator("metric_tools")
+    @classmethod
+    def _deduplicate_metric_tools(cls, value: list[MetricTool]) -> list[MetricTool]:
+        return list(dict.fromkeys(value))
 
-    @field_serializer(
-        "language",
-        "auth_type",
-        "monitoring",
-        "tracing",
-        "log_aggregation",
-        "iac_tool",
-    )
-    def _serialize_value_enum(self, value: object) -> object:
-        return getattr(value, "value", value)
+    @field_serializer("deployments")
+    def _serialize_deployments(self, value: list[DeploymentTarget]) -> list[str]:
+        return [target.id for target in value]
+
+    @field_serializer("languages", "metric_tools")
+    def _serialize_value_enums(
+        self, value: list[ProgrammingLanguage] | list[MetricTool]
+    ) -> list[str]:
+        return [item.value for item in value]
 
 
 class OtherDiagram(_Section):
@@ -468,15 +448,11 @@ class Manifest(BaseModel):
         other_diagram: OtherDiagram | None = None,
         description: Markdown | str | None = None,
         version: Version | str | None = None,
-        language: ProgrammingLanguage | None = None,
+        languages: list[ProgrammingLanguage] | None = None,
         frameworks: list[WebFramework] | None = None,
-        deployment: DeploymentTarget | None = None,
-        owner_team: Label | str | None = None,
-        auth_type: AuthType | None = None,
-        monitoring: MonitoringType | None = None,
-        tracing: TracingType | None = None,
-        log_aggregation: LogAggregationType | None = None,
-        iac_tool: IaCToolType | None = None,
+        deployments: list[DeploymentTarget] | None = None,
+        owners: str | None = None,
+        metric_tools: list[MetricTool] | None = None,
         docs: list[Url | str] | None = None,
         links: list[Link] | None = None,
         **extra: Never,
@@ -507,15 +483,11 @@ class Manifest(BaseModel):
         info_updates = {
             "description": description,
             "version": version,
-            "language": language,
+            "languages": languages,
             "frameworks": frameworks,
-            "deployment": deployment,
-            "owner_team": owner_team,
-            "auth_type": auth_type,
-            "monitoring": monitoring,
-            "tracing": tracing,
-            "log_aggregation": log_aggregation,
-            "iac_tool": iac_tool,
+            "deployments": deployments,
+            "owners": owners,
+            "metric_tools": metric_tools,
             "docs": docs,
             "links": links,
         }
@@ -583,7 +555,9 @@ class Manifest(BaseModel):
 
     def __str__(self) -> str:
         """Return a string representation of the manifest."""
-        return f"<{self.name} ({self.info.language.value}) -> {self.info.deployment.id}>"
+        languages = ", ".join(item.value for item in self.info.languages)
+        deployments = ", ".join(item.id for item in self.info.deployments)
+        return f"<{self.name} ({languages}) -> {deployments}>"
 
 
 _MANIFEST_QUERY_SECTION_MODELS: dict[str, type[BaseModel]] = {
@@ -594,19 +568,12 @@ _MANIFEST_QUERY_SECTION_MODELS: dict[str, type[BaseModel]] = {
 _MANIFEST_QUERY_FIELD_ALIASES: dict[str, str] = {
     "description": "info.description",
     "version": "info.version",
-    "language": "info.language",
+    "languages": "info.languages",
     "frameworks": "info.frameworks",
-    "deployment": "info.deployment",
-    "owner_team": "info.owner_team",
-    "ownerTeam": "info.owner_team",
-    "auth_type": "info.auth_type",
-    "authType": "info.auth_type",
-    "monitoring": "info.monitoring",
-    "tracing": "info.tracing",
-    "log_aggregation": "info.log_aggregation",
-    "logAggregation": "info.log_aggregation",
-    "iac_tool": "info.iac_tool",
-    "iacTool": "info.iac_tool",
+    "deployments": "info.deployments",
+    "owners": "info.owners",
+    "metric_tools": "info.metric_tools",
+    "metricTools": "info.metric_tools",
     "docs": "info.docs",
     "links": "info.links",
     "otherDiagram": "other_diagram",
@@ -755,9 +722,9 @@ class ManifestQuery(BaseModel):
     where: dict[str, object] = Field(
         default_factory=dict,
         description=(
-            "Manifest field filters. Keys may be dot paths such as `info.language`, "
-            "Python-safe paths such as `info__language`, or common field shorthands "
-            "such as `language` and `owner_team`."
+            "Manifest field filters. Keys may be dot paths such as `info.languages`, "
+            "Python-safe paths such as `info__languages`, or common field shorthands "
+            "such as `languages` and `owners`."
         ),
     )
 

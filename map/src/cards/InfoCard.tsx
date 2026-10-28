@@ -34,6 +34,7 @@ function enumLabel(value: string) {
 	const key = normalize(value);
 	return (
 		LogosDictionary[key]?.label ??
+		LogosDictionary[`iac_${key}`]?.label ??
 		key
 			.replace(/^(auth|iac)_/, "")
 			.split("_")
@@ -44,7 +45,8 @@ function enumLabel(value: string) {
 }
 
 function Technology({ value }: { value: string }) {
-	const metadata = LogosDictionary[normalize(value)];
+	const key = normalize(value);
+	const metadata = LogosDictionary[key] ?? LogosDictionary[`iac_${key}`];
 	const source = metadata?.iconFile ? assets[`../icons/${metadata.iconFile}`] : undefined;
 	const label = enumLabel(value);
 	const url = safeUrl(metadata?.docUrl);
@@ -95,24 +97,16 @@ export interface InfoCardProps {
 	description?: string;
 	/** Semver string e.g. "1.2.3" */
 	version?: string;
-	/** Primary programming language */
-	language?: string;
+	/** Programming languages in use */
+	languages?: string[];
 	/** Web frameworks in use */
 	frameworks?: string[];
-	/** Deployment target */
-	deployment?: string;
-	/** Team responsible for this service */
-	ownerTeam?: string;
-	/** Authentication mechanism */
-	authType?: string;
-	/** Infrastructure as Code tooling */
-	iacTool?: string;
-	/** Monitoring platform */
-	monitoring?: string;
-	/** Distributed tracing tool */
-	tracing?: string;
-	/** Log aggregation tool */
-	logAggregation?: string;
+	/** Deployment targets and infrastructure tooling */
+	deployments?: string[];
+	/** Owners responsible for this service */
+	owners?: string;
+	/** Monitoring, tracing, and log aggregation tools */
+	metricTools?: string[];
 	/** Documentation URLs */
 	docs?: string[];
 	/** External links */
@@ -124,30 +118,18 @@ export function InfoCard({
 	classification,
 	description,
 	version,
-	language,
+	languages = [],
 	frameworks = [],
-	deployment,
-	ownerTeam,
-	authType,
-	iacTool,
-	monitoring,
-	tracing,
-	logAggregation,
+	deployments = [],
+	owners,
+	metricTools = [],
 	docs = [],
 	links = [],
 }: InfoCardProps) {
 	const info = classification ? getClassificationMetadata(classification) : undefined;
 	const ClassificationIcon = info?.icon;
-	const stack = [
-		language,
-		...frameworks,
-		deployment,
-		iacTool && iacTool !== "none" ? `iac_${iacTool}` : null,
-	].filter((value): value is string => Boolean(value));
-	const operations = [monitoring, tracing, logAggregation].filter((value): value is string =>
-		Boolean(value && value !== "none"),
-	);
-	const auth = authType && authType !== "none" ? `auth_${authType}` : null;
+	const stack = [...languages, ...frameworks, ...deployments];
+	const operations = metricTools;
 	const externalLinks = [
 		...docs.map((url, index) => ({
 			label: docs.length > 1 ? `Docs ${index + 1}` : "Docs",
@@ -158,9 +140,7 @@ export function InfoCard({
 			url: safeUrl(link.httpUrl),
 		})),
 	].filter((link): link is { label: string; url: string } => Boolean(link.url));
-	const hasDetails = Boolean(
-		description?.trim() || info || auth || ownerTeam || externalLinks.length,
-	);
+	const hasDetails = Boolean(description?.trim() || info || owners || externalLinks.length);
 
 	return (
 		<article className={styles.card} aria-label="Service information">
@@ -180,7 +160,7 @@ export function InfoCard({
 						{description?.trim() && (
 							<MarkdownDescription key={description} source={description.trim()} />
 						)}
-						{(info || auth) && (
+						{info && (
 							<div className={styles.metadata}>
 								{info && ClassificationIcon && (
 									<span className={styles.chip}>
@@ -189,18 +169,12 @@ export function InfoCard({
 										<span>{info.label}</span>
 									</span>
 								)}
-								{auth && (
-									<span className={styles.metaGroup}>
-										<span className={styles.caption}>Auth</span>
-										<Technology value={auth} />
-									</span>
-								)}
 							</div>
 						)}
-						{ownerTeam && (
+						{owners && (
 							<p className={styles.owner}>
 								<Users aria-hidden="true" />
-								<span>{ownerTeam}</span>
+								<span>{owners}</span>
 							</p>
 						)}
 						{externalLinks.length > 0 && (
@@ -223,7 +197,7 @@ export function InfoCard({
 							</Panel>
 						)}
 						{operations.length > 0 && (
-							<Panel title="Run" icon={<Activity aria-hidden="true" />}>
+							<Panel title="Metric tools" icon={<Activity aria-hidden="true" />}>
 								<TechnologyList values={operations} />
 							</Panel>
 						)}

@@ -9,15 +9,10 @@ Source: https://github.com/makeplane/plane
 
 from scryr import Diagram, Info, Link, Manifest
 from scryr.types import (
-    AuthType,
     Classification,
     DeploymentTarget,
-    IaCToolType,
     IncrementalVersion,
-    LogAggregationType,
-    MonitoringType,
     ProgrammingLanguage,
-    TracingType,
     Url,
     WebFramework,
     parse_version,
@@ -25,11 +20,6 @@ from scryr.types import (
 
 _SOURCE = Url("https://github.com/makeplane/plane")
 _DOCS = Url("https://developers.plane.so/")
-_DEPLOYMENT = DeploymentTarget.docker_swarm
-_IAC = IaCToolType.none
-_MONITOR = MonitoringType.none
-_LOGS = LogAggregationType.none
-_TRACING = TracingType.none
 postgres_block = Manifest(
     name="PostgreSQL",
     icon="🐘",
@@ -39,14 +29,10 @@ postgres_block = Manifest(
     info=Info(
         description="Primary relational database (postgres:15-alpine) storing all Plane data: workspaces, projects, issues, cycles, modules, pages, and members.",
         version=parse_version("15.7.0"),
-        language=ProgrammingLanguage.sql,
-        deployment=_DEPLOYMENT,
-        owner_team="Platform",
-        auth_type=AuthType.basic,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
+        languages=[ProgrammingLanguage.sql],
+        deployments=[DeploymentTarget.docker_swarm],
+        owners="Platform",
+        metric_tools=[],
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
 )
@@ -59,14 +45,10 @@ valkey_block = Manifest(
     info=Info(
         description="Valkey 7 (Redis-compatible) used as both a cache layer and the Celery task broker for background workers and beat scheduler.",
         version=parse_version("7.2.11"),
-        language=ProgrammingLanguage.c,
-        deployment=_DEPLOYMENT,
-        owner_team="Platform",
-        auth_type=AuthType.none,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
+        languages=[ProgrammingLanguage.c],
+        deployments=[DeploymentTarget.docker_swarm],
+        owners="Platform",
+        metric_tools=[],
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
 )
@@ -79,14 +61,10 @@ rabbitmq_block = Manifest(
     info=Info(
         description="RabbitMQ 3.13 AMQP message broker used to fan-out async tasks from the API to Celery workers, including webhook dispatch and notification delivery.",
         version=parse_version("3.13.6"),
-        language=ProgrammingLanguage.erlang,
-        deployment=_DEPLOYMENT,
-        owner_team="Platform",
-        auth_type=AuthType.basic,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
+        languages=[ProgrammingLanguage.erlang],
+        deployments=[DeploymentTarget.docker_swarm],
+        owners="Platform",
+        metric_tools=[],
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
 )
@@ -99,14 +77,10 @@ minio_block = Manifest(
     info=Info(
         description="S3-compatible object storage (MinIO) used for file and image attachments uploaded to issues, pages, and workspace assets.",
         version=IncrementalVersion.parse("1"),
-        language=ProgrammingLanguage.go,
-        deployment=_DEPLOYMENT,
-        owner_team="Platform",
-        auth_type=AuthType.api_key,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
+        languages=[ProgrammingLanguage.go],
+        deployments=[DeploymentTarget.docker_swarm],
+        owners="Platform",
+        metric_tools=[],
         links=[Link(site_name="MinIO Docs", http_url=Url("https://min.io/docs/"))],
     ),
 )
@@ -124,15 +98,11 @@ api_block = Manifest(
     info=Info(
         description="Django REST Framework API server — the core backend of Plane. Handles authentication (magic-link, OAuth2, SAML), workspace and project management, issues, cycles, modules, views, analytics, webhooks, and Prisma-free direct PostgreSQL access via Django ORM.",
         version=parse_version("1.2.3"),
-        language=ProgrammingLanguage.python,
+        languages=[ProgrammingLanguage.python],
         frameworks=[WebFramework.django],
-        deployment=_DEPLOYMENT,
-        owner_team="Backend",
-        auth_type=AuthType.jwt,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
+        deployments=[DeploymentTarget.docker_swarm],
+        owners="Backend",
+        metric_tools=[],
         links=[
             Link(
                 site_name="API Reference",
@@ -155,15 +125,11 @@ worker_block = Manifest(
     info=Info(
         description="Celery worker process (same image as API Server) that consumes tasks from RabbitMQ/Valkey. Handles async webhook dispatch, email notifications, export jobs, and bulk issue operations.",
         version=parse_version("1.2.3"),
-        language=ProgrammingLanguage.python,
+        languages=[ProgrammingLanguage.python],
         frameworks=[WebFramework.django],
-        deployment=_DEPLOYMENT,
-        owner_team="Backend",
-        auth_type=AuthType.none,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
+        deployments=[DeploymentTarget.docker_swarm],
+        owners="Backend",
+        metric_tools=[],
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
 )
@@ -176,15 +142,11 @@ beat_worker_block = Manifest(
     info=Info(
         description="Celery Beat scheduler process that triggers periodic tasks on a cron-like schedule: digest emails, stale issue cleanup, cycle auto-close, and analytics aggregation jobs.",
         version=parse_version("1.2.3"),
-        language=ProgrammingLanguage.python,
+        languages=[ProgrammingLanguage.python],
         frameworks=[WebFramework.django],
-        deployment=_DEPLOYMENT,
-        owner_team="Backend",
-        auth_type=AuthType.none,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
+        deployments=[DeploymentTarget.docker_swarm],
+        owners="Backend",
+        metric_tools=[],
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
 )
@@ -197,14 +159,10 @@ live_block = Manifest(
     info=Info(
         description="Node.js real-time collaboration server powering Plane Pages co-editing. Uses Hocuspocus (a Yjs CRDT server) over WebSocket so multiple users can edit the same document simultaneously without conflicts.",
         version=parse_version("1.2.3"),
-        language=ProgrammingLanguage.typescript,
-        deployment=_DEPLOYMENT,
-        owner_team="Product",
-        auth_type=AuthType.jwt,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
+        languages=[ProgrammingLanguage.typescript],
+        deployments=[DeploymentTarget.docker_swarm],
+        owners="Product",
+        metric_tools=[],
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
 )
@@ -217,15 +175,11 @@ web_block = Manifest(
     info=Info(
         description="Main Plane web application built with React Router v7 (SSR) and TypeScript. Provides the full project management UI: issue tracker, Kanban/list/timeline views, cycles, modules, pages, analytics, and workspace settings.",
         version=parse_version("1.2.3"),
-        language=ProgrammingLanguage.typescript,
+        languages=[ProgrammingLanguage.typescript],
         frameworks=[WebFramework.remix],
-        deployment=_DEPLOYMENT,
-        owner_team="Frontend",
-        auth_type=AuthType.jwt,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
+        deployments=[DeploymentTarget.docker_swarm],
+        owners="Frontend",
+        metric_tools=[],
         links=[
             Link(site_name="Plane", http_url=Url("https://app.plane.so")),
             Link(site_name="Source", http_url=_SOURCE),
@@ -241,15 +195,11 @@ admin_block = Manifest(
     info=Info(
         description="God Mode admin panel (React Router v7 / TypeScript) for instance administrators. Manages global instance configuration, SSO/SAML setup, email settings, feature flags, and workspace-level oversight.",
         version=parse_version("1.2.3"),
-        language=ProgrammingLanguage.typescript,
+        languages=[ProgrammingLanguage.typescript],
         frameworks=[WebFramework.remix],
-        deployment=_DEPLOYMENT,
-        owner_team="Platform",
-        auth_type=AuthType.jwt,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
+        deployments=[DeploymentTarget.docker_swarm],
+        owners="Platform",
+        metric_tools=[],
         links=[
             Link(
                 site_name="God Mode Docs",
@@ -267,15 +217,11 @@ space_block = Manifest(
     info=Info(
         description="Public-facing React Router v7 app that renders Plane issue boards as embeddable or publicly shareable 'spaces'. Allows external stakeholders to view and vote on issues without a Plane account.",
         version=parse_version("1.2.3"),
-        language=ProgrammingLanguage.typescript,
+        languages=[ProgrammingLanguage.typescript],
         frameworks=[WebFramework.remix],
-        deployment=_DEPLOYMENT,
-        owner_team="Product",
-        auth_type=AuthType.none,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
+        deployments=[DeploymentTarget.docker_swarm],
+        owners="Product",
+        metric_tools=[],
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
 )
@@ -294,14 +240,10 @@ proxy_block = Manifest(
     info=Info(
         description="Nginx reverse proxy that acts as the single ingress point for all Plane traffic. Routes requests to Web, Admin, Space, API, and Live services. Also handles file upload size limits and serves MinIO uploads.",
         version=parse_version("1.25.0"),
-        language=ProgrammingLanguage.c,
-        deployment=_DEPLOYMENT,
-        owner_team="Platform",
-        auth_type=AuthType.none,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
+        languages=[ProgrammingLanguage.c],
+        deployments=[DeploymentTarget.docker_swarm],
+        owners="Platform",
+        metric_tools=[],
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
 )

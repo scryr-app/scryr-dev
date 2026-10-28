@@ -26,15 +26,11 @@ export interface BlockProps {
 	description?: string;
 	classification?: string;
 	version?: string;
-	language?: string;
+	languages?: string[];
 	frameworks?: string[];
-	deployment?: string;
-	ownerTeam?: string;
-	authType?: string;
-	iacTool?: string;
-	monitoring?: string;
-	tracing?: string;
-	logAggregation?: string;
+	deployments?: string[];
+	owners?: string;
+	metricTools?: string[];
 	docs?: string[];
 	links?: BlockLink[];
 	diagrams?: string[];
@@ -62,15 +58,11 @@ export function Block({
 	description,
 	classification,
 	version,
-	language,
+	languages = [],
 	frameworks = [],
-	deployment,
-	ownerTeam,
-	authType,
-	iacTool,
-	monitoring,
-	tracing,
-	logAggregation,
+	deployments = [],
+	owners,
+	metricTools = [],
 	docs = [],
 	links = [],
 	diagrams = [],
@@ -102,15 +94,11 @@ export function Block({
 			classification={classification ?? blockData?.consumerType ?? undefined}
 			description={description}
 			version={version}
-			language={language}
+			languages={languages}
 			frameworks={frameworks}
-			deployment={deployment}
-			ownerTeam={ownerTeam}
-			authType={authType}
-			iacTool={iacTool ?? blockData?.iacTool ?? undefined}
-			monitoring={monitoring}
-			tracing={tracing}
-			logAggregation={logAggregation}
+			deployments={deployments}
+			owners={owners}
+			metricTools={metricTools}
 			docs={docs}
 			links={links}
 		/>

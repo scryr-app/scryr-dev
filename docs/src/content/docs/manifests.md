@@ -21,7 +21,7 @@ A public `Manifest` variable becomes a block on the diagram. Its core fields are
 
 Add detail through typed sections: `Info` and `OtherDiagram`.
 
-`Info` can describe version, language, frameworks, deployment, owning team, authentication, observability, infrastructure as code, scaling, docs, and external links.
+`Info` describes version, programming languages, frameworks, deployment targets and IaC tools, owners, metric tools, docs, and external links. Every enum field is a list: `languages`, `frameworks`, `deployments`, and `metric_tools`. Unspecified lists are empty; authentication is not part of `Info`. `owners` is a single string for now.
 
 ## Diagram: one useful point of view
 
@@ -46,7 +46,7 @@ from scryr.types import ProgrammingLanguage
 
 python_services = Diagram(
     name="Python services",
-    query=ManifestQuery(language=ProgrammingLanguage.python),
+    query=ManifestQuery(languages=ProgrammingLanguage.python),
 )
 ```
 

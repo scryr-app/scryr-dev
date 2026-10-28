@@ -1,14 +1,11 @@
 from scryr import Diagram, Forge, ForgeTask, ForgeTool, Info, Link, Manifest, ManifestQuery
 from scryr.types import (
-    AuthType,
     Classification,
     DeploymentTarget,
-    IaCToolType,
-    LogAggregationType,
-    MonitoringType,
+    Markdown,
+    MetricTool,
     ProgrammingLanguage,
     SemVer,
-    TracingType,
     Url,
     WebFramework,
 )
@@ -51,19 +48,41 @@ react_block = Manifest(
     forges=[mern_forge.name],
     connections=[Manifest(name="Express")],
     info=Info(
-        description="This be a Billy Goat! A sample MERN-style application: MongoDB datastore, Express backend, React frontend. Boy Howdy",
+        description=Markdown(
+            "This be a Billy Goat! A sample MERN-style application: MongoDB datastore, "
+            "Express backend, React frontend. Boy Howdy\n\n"
+            "### Customer experience\n"
+            "**React storefront** for browsing products, managing accounts, and tracking orders.\n\n"
+            "- Server-rendered pages use Next.js.\n"
+            "- Live order updates arrive from the Express API.\n"
+            "- Shared components support keyboard navigation and responsive layouts.\n\n"
+            "| Route | Purpose |\n| --- | --- |\n"
+            "| `/catalog` | Product discovery |\n| `/orders` | Order history and live status |\n\n"
+            "- [x] Accessible navigation\n- [x] Error reporting\n- [ ] Offline order history\n\n"
+            "> Example architecture: links on example.com are placeholders."
+        ),
         version=SemVer("0.1.0-alpha.1"),
-        language=ProgrammingLanguage.javascript,
+        languages=[
+            ProgrammingLanguage.typescript,
+            ProgrammingLanguage.javascript,
+            ProgrammingLanguage.html,
+        ],
         frameworks=[WebFramework.express, WebFramework.nextjs],
-        deployment=DeploymentTarget.ec2,
-        owner_team="Frontend Team",
-        auth_type=AuthType.oauth2,
-        monitoring=MonitoringType.datadog,
-        log_aggregation=LogAggregationType.cloudwatch,
-        tracing=TracingType.datadog,
-        iac_tool=IaCToolType.terraform,
-        links=[Link(site_name="Example Site", http_url=Url("https://www.example.com"))],
-        docs=["https://www.mongodb.com/docs/", "https://expressjs.com/", "https://reactjs.org/"],
+        deployments=[DeploymentTarget.ec2, DeploymentTarget.cloudfront, DeploymentTarget.terraform],
+        owners="Frontend Team",
+        metric_tools=[MetricTool.datadog, MetricTool.cloudwatch, MetricTool.grafana],
+        links=[
+            Link(site_name="Storefront", http_url=Url("https://www.example.com")),
+            Link(site_name="Component Library", http_url=Url("https://ui.example.com")),
+            Link(
+                site_name="Frontend Dashboard", http_url=Url("https://metrics.example.com/frontend")
+            ),
+        ],
+        docs=[
+            Url("https://react.dev/"),
+            Url("https://nextjs.org/docs"),
+            Url("https://docs.example.com/mern/frontend"),
+        ],
     ),
 )
 redis_pubsub_block = Manifest(
@@ -73,21 +92,33 @@ redis_pubsub_block = Manifest(
     forges=[mern_forge.name],
     connections=[Manifest(name="Express"), Manifest(name="React")],
     info=Info(
-        description="Redis configured for real-time messaging and event streaming",
+        description=Markdown(
+            "### Live event distribution\n"
+            "Redis Pub/Sub distributes **ephemeral notifications** between API instances.\n\n"
+            "- `orders.updated` refreshes customer order status.\n"
+            "- `inventory.changed` invalidates cached stock views.\n"
+            "- `admin.activity` updates the operations console.\n\n"
+            "> Pub/Sub is not durable: disconnected subscribers miss messages. "
+            "MongoDB remains the source of truth; clients resynchronize through the API.\n\n"
+            "```text\nExpress publisher -> Redis channel -> Express subscriber -> browser\n```"
+        ),
         version=SemVer("7.2.0"),
-        language=ProgrammingLanguage.c,
-        deployment=DeploymentTarget.ec2,
-        owner_team="Events Team",
-        auth_type=AuthType.api_key,
-        monitoring=MonitoringType.prometheus,
-        log_aggregation=LogAggregationType.elk_stack,
-        tracing=TracingType.jaeger,
-        iac_tool=IaCToolType.terraform,
+        languages=[ProgrammingLanguage.c],
+        deployments=[DeploymentTarget.ec2, DeploymentTarget.terraform],
+        owners="Events Team",
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.elk_stack,
+            MetricTool.jaeger,
+            MetricTool.grafana,
+        ],
         links=[
             Link(
                 site_name="Redis Pub/Sub Documentation",
                 http_url=Url("https://redis.io/docs/manual/pubsub/"),
-            )
+            ),
+            Link(site_name="Event Dashboard", http_url=Url("https://metrics.example.com/redis")),
+            Link(site_name="Channel Catalog", http_url=Url("https://docs.example.com/mern/events")),
         ],
         docs=["https://redis.io/docs/latest/", "https://redis.io/docs/latest/apis/"],
     ),
@@ -98,13 +129,40 @@ express_block = Manifest(
     connections=[Manifest(name="MongoDB")],
     forges=[mern_forge.name],
     info=Info(
-        language=ProgrammingLanguage.javascript,
-        deployment=DeploymentTarget.amplify,
-        owner_team="Backend Team",
-        auth_type=AuthType.jwt,
-        log_aggregation=LogAggregationType.elk_stack,
-        tracing=TracingType.jaeger,
-        iac_tool=IaCToolType.cloudformation,
+        description=Markdown(
+            "### Application API\n"
+            "Express coordinates **customer, catalog, and order workflows**. "
+            "It validates inputs, persists records in MongoDB, and publishes Redis notifications.\n\n"
+            "| Endpoint | Responsibility |\n| --- | --- |\n"
+            "| `GET /catalog` | Search products |\n"
+            "| `POST /orders` | Create an order |\n"
+            "| `GET /health` | Report readiness |\n\n"
+            "- [x] Request validation\n- [x] Structured request logs\n"
+            "- [ ] Idempotency coverage for every write endpoint\n\n"
+            "Deploy API changes before frontend features that depend on them. "
+            "Keep the previous response shape available during the rollout."
+        ),
+        version=SemVer("1.4.2"),
+        languages=[ProgrammingLanguage.typescript, ProgrammingLanguage.javascript],
+        frameworks=[WebFramework.express],
+        deployments=[DeploymentTarget.amplify, DeploymentTarget.cloudformation],
+        owners="Backend Team",
+        metric_tools=[
+            MetricTool.elk_stack,
+            MetricTool.jaeger,
+            MetricTool.prometheus,
+            MetricTool.grafana,
+        ],
+        docs=[
+            Url("https://expressjs.com/"),
+            Url("https://docs.example.com/mern/api"),
+            Url("https://docs.example.com/runbooks/api-rollout"),
+        ],
+        links=[
+            Link(site_name="API Explorer", http_url=Url("https://api.example.com/docs")),
+            Link(site_name="API Dashboard", http_url=Url("https://metrics.example.com/api")),
+            Link(site_name="Request Traces", http_url=Url("https://traces.example.com/api")),
+        ],
     ),
 )
 mongo_block = Manifest(
@@ -113,13 +171,39 @@ mongo_block = Manifest(
     connections=[Manifest(name="Express"), Manifest(name="React")],
     forges=[mern_forge.name],
     info=Info(
-        frameworks=[WebFramework.nextjs],
-        owner_team="Data Team",
-        auth_type=AuthType.basic,
-        monitoring=MonitoringType.cloudwatch,
-        log_aggregation=LogAggregationType.cloudwatch,
-        tracing=TracingType.aws_xray,
-        iac_tool=IaCToolType.terraform,
+        description=Markdown(
+            "### Primary application datastore\n"
+            "MongoDB stores customer profiles, product documents, and order records.\n\n"
+            "| Collection | Access pattern |\n| --- | --- |\n"
+            "| `customers` | Lookup by customer ID |\n"
+            "| `products` | Browse by category and availability |\n"
+            "| `orders` | Lookup by customer and creation date |\n\n"
+            "A replica set supports failover. Review index changes with the Data Team "
+            "and rehearse restores before relying on backups.\n\n"
+            "> Sample configuration only; production retention and recovery policies "
+            "belong in the database runbook."
+        ),
+        version=SemVer("8.0.0"),
+        languages=[ProgrammingLanguage.cpp],
+        owners="Data Team",
+        metric_tools=[
+            MetricTool.cloudwatch,
+            MetricTool.aws_xray,
+            MetricTool.prometheus,
+            MetricTool.grafana,
+        ],
+        deployments=[DeploymentTarget.ec2, DeploymentTarget.terraform],
+        docs=[
+            Url("https://www.mongodb.com/docs/"),
+            Url("https://docs.example.com/mern/data-model"),
+            Url("https://docs.example.com/runbooks/mongodb-restore"),
+        ],
+        links=[
+            Link(
+                site_name="Database Dashboard", http_url=Url("https://metrics.example.com/mongodb")
+            ),
+            Link(site_name="Backup Reports", http_url=Url("https://ops.example.com/backups")),
+        ],
     ),
 )
 angularjs_admin_block = Manifest(
@@ -129,18 +213,33 @@ angularjs_admin_block = Manifest(
     forges=[mern_forge.name],
     connections=[Manifest(name="Express")],
     info=Info(
-        description="Legacy AngularJS-based admin console for operational management",
+        description=Markdown(
+            "### Operations console\n"
+            "Legacy AngularJS interface for support staff and operational management.\n\n"
+            "- Review customer accounts and investigate order status.\n"
+            "- Inspect recent events and retry supported operational workflows.\n"
+            "- Link investigations to the API and database dashboards.\n\n"
+            "~~Add new customer-facing features here~~ — new product features belong "
+            "in the React storefront.\n\n"
+            "- [x] Document existing workflows\n- [ ] Migrate remaining screens to React"
+        ),
         version=SemVer("1.7.9"),
-        language=ProgrammingLanguage.javascript,
-        deployment=DeploymentTarget.cloudfront,
-        owner_team="Ops Team",
-        auth_type=AuthType.basic,
-        monitoring=MonitoringType.cloudwatch,
-        log_aggregation=LogAggregationType.elk_stack,
-        tracing=TracingType.none,
-        iac_tool=IaCToolType.cloudformation,
-        links=[Link(site_name="Admin Portal", http_url=Url("https://admin.example.com"))],
-        docs=["https://docs.angularjs.org/"],
+        languages=[
+            ProgrammingLanguage.javascript,
+            ProgrammingLanguage.html,
+        ],
+        deployments=[DeploymentTarget.cloudfront, DeploymentTarget.cloudformation],
+        owners="Ops Team",
+        metric_tools=[MetricTool.cloudwatch, MetricTool.elk_stack],
+        links=[
+            Link(site_name="Admin Portal", http_url=Url("https://admin.example.com")),
+            Link(site_name="Support Playbook", http_url=Url("https://docs.example.com/support")),
+            Link(
+                site_name="Migration Plan",
+                http_url=Url("https://docs.example.com/mern/admin-migration"),
+            ),
+        ],
+        docs=[Url("https://docs.angularjs.org/"), Url("https://docs.example.com/mern/admin")],
     ),
 )
 
@@ -166,10 +265,10 @@ mern_customer_path_diagram = Diagram(
 
 mern_terraform_managed_diagram = Diagram(
     name="MERN Terraform Managed",
-    query=ManifestQuery(iac_tool=IaCToolType.terraform),
+    query=ManifestQuery(deployments=DeploymentTarget.terraform),
 )
 
 mern_operability_diagram = Diagram(
     name="MERN Operability",
-    query=ManifestQuery(where={"info": {"logAggregation": LogAggregationType.elk_stack}}),
+    query=ManifestQuery(where={"info": {"metricTools": MetricTool.elk_stack}}),
 )

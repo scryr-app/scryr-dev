@@ -192,3 +192,8 @@ to read, select text, scroll, and follow card links.
 
 Run `mise run verify:cards` for browser checks of card focus, layout reflow,
 comparison, scrolling, and return to the diagram using isolated fixture data.
+
+Info cards consume `languages`, `frameworks`, `deployments`, and `metricTools`
+arrays. Deployment chips include IaC tools; metric chips combine monitoring,
+tracing, and logging tools. Ownership uses the single `owners` string.
+Authentication is not an Info card field.
