@@ -12,6 +12,8 @@ from scryr import Diagram, Info, Link, Manifest
 from scryr.types import (
     Classification,
     DeploymentTarget,
+    Markdown,
+    MetricTool,
     ProgrammingLanguage,
     Url,
     WebFramework,
@@ -27,12 +29,74 @@ postgres_block = Manifest(
     tags=["database", "sql", "infra"],
     connections=[],
     info=Info(
-        description="Primary relational database storing all cal.com data: users, bookings, event types, availability rules, and workflows. Accessed exclusively via Prisma ORM.",
+        description=Markdown(
+            "## Bookings and availability\n"
+            "\n"
+            "Primary relational database storing all cal.com data: users, bookings, event types, availability rules, and workflows. Accessed exclusively via Prisma ORM.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Booking records | Check organizer, attendee, and event-type relationships |\n"
+            "| Availability rules | Keep timezone and date exceptions explicit |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Create a booking and confirm its persisted time window.\n"
+            "2. Reschedule across a daylight-saving boundary and inspect the stored timestamps.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** A migration or slow query can delay the entire booking flow.\n"
+            "\n"
+            "Suggested diagnostic signals: *connection saturation, lock waits, and booking query latency*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - SQL clients for read-only inspection\n"
+            "  - Query plans for index review\n"
+            "  - Migration tooling for schema changes\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `grafana`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("15.0.0"),
         languages=[ProgrammingLanguage.sql],
         deployments=[DeploymentTarget.render],
         owners="Platform",
-        metric_tools=[],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.grafana,
+            MetricTool.loki,
+            MetricTool.jaeger,
+        ],
         links=[Link(site_name="Cal.com Docs", http_url=_DOCS)],
     ),
 )
@@ -43,12 +107,74 @@ redis_block = Manifest(
     tags=["cache", "rate-limiting", "infra"],
     connections=[],
     info=Info(
-        description="In-memory cache and rate-limit store (Upstash or self-hosted). Used for caching availability calculations and API rate limiting.",
+        description=Markdown(
+            "## Availability cache\n"
+            "\n"
+            "In-memory cache and rate-limit store (Upstash or self-hosted). Used for caching availability calculations and API rate limiting.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Cached slots | Treat cached results as a performance aid |\n"
+            "| Rate limits | Keep caller identity and expiry visible when debugging |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Warm an availability query and compare the next response.\n"
+            "2. Change an availability rule and check that stale slots disappear.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** A cache miss should not silently become an available appointment.\n"
+            "\n"
+            "Suggested diagnostic signals: *hit ratio, evictions, memory pressure, and rejected requests*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Container logs for process diagnostics\n"
+            "  - Resource metrics for capacity review\n"
+            "  - Versioned configuration for repeatable environments\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `grafana`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("7.0.0"),
         languages=[ProgrammingLanguage.c],
         deployments=[DeploymentTarget.render],
         owners="Platform",
-        metric_tools=[],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.grafana,
+            MetricTool.loki,
+            MetricTool.jaeger,
+        ],
         links=[Link(site_name="Cal.com Docs", http_url=_DOCS)],
     ),
 )
@@ -65,13 +191,75 @@ web_block = Manifest(
         Manifest(name="Workflow Cron"),
     ],
     info=Info(
-        description="Main Next.js application serving the cal.com scheduling UI and tRPC backend. Handles booking flows, event types, availability, user auth (NextAuth.js), calendar integrations, Prisma data access, and outbound webhooks.",
+        description=Markdown(
+            "## Booking experience\n"
+            "\n"
+            "Main Next.js application serving the cal.com scheduling UI and tRPC backend. Handles booking flows, event types, availability, user auth (NextAuth.js), calendar integrations, Prisma data access, and outbound webhooks.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Organizer | Configure event types and availability |\n"
+            "| Attendee | Choose a slot and receive confirmation |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Open a public booking page in an anonymous browser.\n"
+            "2. Complete a booking, then cancel it and inspect the displayed state.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** Calendar, email, and video providers can fail independently of page rendering.\n"
+            "\n"
+            "Suggested diagnostic signals: *booking completion rate, client errors, and provider latency*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - `nextjs`\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - TypeScript for static checks\n"
+            "  - ESLint for source checks\n"
+            "  - Playwright for browser workflows\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `grafana`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("6.2.0"),
         languages=[ProgrammingLanguage.typescript],
         frameworks=[WebFramework.nextjs],
         deployments=[DeploymentTarget.vercel],
         owners="Product",
-        metric_tools=[],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.grafana,
+            MetricTool.loki,
+            MetricTool.jaeger,
+        ],
         links=[
             Link(site_name="Cal.com", http_url=Url("https://cal.com")),
             Link(site_name="Source", http_url=_SOURCE),
@@ -85,13 +273,76 @@ api_v2_block = Manifest(
     tags=["api", "platform", "headless"],
     connections=[Manifest(name="PostgreSQL"), Manifest(name="Redis")],
     info=Info(
-        description="NestJS REST API for the Cal.com Platform offering (Cal Atoms). Provides headless scheduling endpoints so third-party developers can embed cal.com booking experiences into their own products.",
+        description=Markdown(
+            "## Embedded scheduling contract\n"
+            "\n"
+            "NestJS REST API for the Cal.com Platform offering (Cal Atoms). Provides headless scheduling endpoints so third-party developers can embed cal.com booking experiences into their own products.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Consumers | Embedded clients and partner applications |\n"
+            "| Boundary | Validate credentials and booking inputs before persistence |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Exercise an authorized scheduling request with a test account.\n"
+            "2. Repeat with expired credentials and a conflicting time slot.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** Retries must not create duplicate bookings after an ambiguous response.\n"
+            "\n"
+            "Suggested diagnostic signals: *request latency, authorization failures, and rate-limit responses*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - `nestjs`\n"
+            "  - `express`\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - TypeScript for static checks\n"
+            "  - ESLint for source checks\n"
+            "  - Playwright for browser workflows\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `grafana`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("2.0.0"),
         languages=[ProgrammingLanguage.typescript],
-        frameworks=[WebFramework.nestjs],
+        frameworks=[WebFramework.nestjs, WebFramework.express],
         deployments=[DeploymentTarget.vercel],
         owners="Platform",
-        metric_tools=[],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.grafana,
+            MetricTool.loki,
+            MetricTool.jaeger,
+        ],
         links=[
             Link(
                 site_name="API v2 Reference",
@@ -107,12 +358,74 @@ email_block = Manifest(
     tags=["email", "notifications", "transactional"],
     connections=[],
     info=Info(
-        description="Transactional email service (SendGrid) that delivers booking confirmations, cancellations, reschedule requests, team invitations, and workflow-triggered reminders to attendees and organizers.",
+        description=Markdown(
+            "## Booking notifications\n"
+            "\n"
+            "Transactional email service (SendGrid) that delivers booking confirmations, cancellations, reschedule requests, team invitations, and workflow-triggered reminders to attendees and organizers.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Messages | Confirmations, cancellations, and reminders |\n"
+            "| Recipients | Attendees and organizers with localized content |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Preview a confirmation with a non-UTC appointment time.\n"
+            "2. Cancel the appointment and check that later reminders are suppressed.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** Provider acceptance does not prove delivery to the recipient inbox.\n"
+            "\n"
+            "Suggested diagnostic signals: *delivery failures, bounces, and time from booking to notification*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - TypeScript for static checks\n"
+            "  - ESLint for source checks\n"
+            "  - Playwright for browser workflows\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `grafana`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.0.0"),
         languages=[ProgrammingLanguage.typescript],
         deployments=[DeploymentTarget.vercel],
         owners="Product",
-        metric_tools=[],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.grafana,
+            MetricTool.loki,
+            MetricTool.jaeger,
+        ],
         links=[Link(site_name="Cal.com Docs", http_url=_DOCS)],
     ),
 )
@@ -123,12 +436,74 @@ workflow_cron_block = Manifest(
     tags=["cron", "workflows", "automation"],
     connections=[Manifest(name="PostgreSQL"), Manifest(name="Email")],
     info=Info(
-        description="Vercel cron-based job runner that processes automated cal.com workflows: scheduled email and SMS reminders (via Twilio), booking follow-ups, expired booking cleanup, and daily digest jobs.",
+        description=Markdown(
+            "## Scheduled workflow execution\n"
+            "\n"
+            "Vercel cron-based job runner that processes automated cal.com workflows: scheduled email and SMS reminders (via Twilio), booking follow-ups, expired booking cleanup, and daily digest jobs.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Selection | Find due workflow actions from persisted booking state |\n"
+            "| Delivery | Dispatch reminders and record the outcome |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Create a due reminder for a test booking.\n"
+            "2. Run a retry scenario and verify that it does not send duplicate reminders.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** A late scheduler should reconcile missed work without flooding recipients.\n"
+            "\n"
+            "Suggested diagnostic signals: *oldest due action, execution duration, and retry counts*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - TypeScript for static checks\n"
+            "  - ESLint for source checks\n"
+            "  - Playwright for browser workflows\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `grafana`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.0.0"),
         languages=[ProgrammingLanguage.typescript],
         deployments=[DeploymentTarget.vercel],
         owners="Product",
-        metric_tools=[],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.grafana,
+            MetricTool.loki,
+            MetricTool.jaeger,
+        ],
         links=[Link(site_name="Cal.com Docs", http_url=_DOCS)],
     ),
 )
@@ -139,12 +514,74 @@ daily_video_block = Manifest(
     tags=["video", "conferencing", "integration"],
     connections=[],
     info=Info(
-        description="Embedded video conferencing provider powering Cal Video — the built-in video call option for bookings. Rooms are created and managed via the Daily REST API.",
+        description=Markdown(
+            "## Video room lifecycle\n"
+            "\n"
+            "Embedded video conferencing provider powering Cal Video — the built-in video call option for bookings. Rooms are created and managed via the Daily REST API.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Provisioning | Associate a room with the intended booking |\n"
+            "| Access | Keep attendee access scoped to the appointment |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Create a video booking and inspect the join link.\n"
+            "2. Reschedule or cancel and verify the intended room access policy.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** Room creation failure needs a visible recovery path for the organizer.\n"
+            "\n"
+            "Suggested diagnostic signals: *room creation errors, provider timeouts, and join failures*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - npm for package workflows\n"
+            "  - ESLint for source checks\n"
+            "  - Playwright for browser workflows\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `grafana`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.0.0"),
         languages=[ProgrammingLanguage.javascript],
         deployments=[DeploymentTarget.unknown],
         owners="Product",
-        metric_tools=[],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.grafana,
+            MetricTool.loki,
+            MetricTool.jaeger,
+        ],
         links=[Link(site_name="Daily Docs", http_url=Url("https://docs.daily.co/reference"))],
     ),
 )
@@ -155,12 +592,74 @@ app_store_block = Manifest(
     tags=["integrations", "calendars", "payments"],
     connections=[Manifest(name="PostgreSQL"), Manifest(name="Web App")],
     info=Info(
-        description="Cal.com App Store — a collection of OAuth2 and API-key integrations: Google Calendar, Outlook, Zoom, Stripe, HubSpot, Salesforce, Zapier, and 100+ more. Each app is a self-contained package in packages/app-store.",
+        description=Markdown(
+            "## Integration boundaries\n"
+            "\n"
+            "Cal.com App Store — a collection of OAuth2 and API-key integrations: Google Calendar, Outlook, Zoom, Stripe, HubSpot, Salesforce, Zapier, and 100+ more. Each app is a self-contained package in packages/app-store.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Credentials | Keep provider tokens on the server |\n"
+            "| Lifecycle | Handle installation, refresh, revocation, and removal |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Install a calendar integration using a test account.\n"
+            "2. Revoke access at the provider and confirm that reconnect guidance appears.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** A connected app can become unavailable after token expiry or scope changes.\n"
+            "\n"
+            "Suggested diagnostic signals: *token refresh failures, provider quotas, and integration error rates*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - TypeScript for static checks\n"
+            "  - ESLint for source checks\n"
+            "  - Playwright for browser workflows\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `grafana`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.0.0"),
         languages=[ProgrammingLanguage.typescript],
         deployments=[DeploymentTarget.vercel],
         owners="Product",
-        metric_tools=[],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.grafana,
+            MetricTool.loki,
+            MetricTool.jaeger,
+        ],
         links=[Link(site_name="App Store", http_url=Url("https://app.cal.com/apps"))],
     ),
 )

@@ -8,6 +8,7 @@ import { currentTheme } from "@/theme/theme";
 import { useCardFocus } from "./CardFocusContext";
 import { CARD_HTML_Z_RANGE, useCardForeground } from "./CardFocusScene";
 import { getCardSurfaceLayout } from "./cardSurfaceLayout";
+import { CardContentInteractiveContext, CardTitleContext } from "./CardTitle";
 import styles from "./CardSurface.module.css";
 
 /** The only card-content renderer: ordinary React DOM with native CSS layout. */
@@ -16,17 +17,19 @@ export function CardSurface({
 	height,
 	focusId,
 	color,
+	titleInteractive,
 	children,
 }: {
 	width: number;
 	height: number;
 	focusId: string;
 	color: string;
+	titleInteractive: boolean;
 	children: ReactNode;
 }) {
 	// Html uses a separate DOM root; keep card data hooks on the app query cache.
 	const ContextBridge = useContextBridge(QueryClientContext);
-	const { focusedIds, expandedId, isSelecting, cards } = useCardFocus();
+	const { focusedIds, expandedId, isSelecting, cards, focusCard, closeFocus } = useCardFocus();
 	const visibleIds = expandedId ? [expandedId] : focusedIds;
 	const focused = visibleIds.includes(focusId);
 	const interactive = focused && !isSelecting;
@@ -111,8 +114,8 @@ export function CardSurface({
 						data-card-layout-width={layout.pixelWidth}
 						role="region"
 						aria-label={label}
-						aria-hidden={!interactive}
-						inert={!interactive}
+						aria-hidden={!interactive && !titleInteractive}
+						inert={!interactive && !titleInteractive}
 						tabIndex={interactive ? 0 : -1}
 						onPointerDown={(event) => event.stopPropagation()}
 						onPointerUp={(event) => event.stopPropagation()}
@@ -121,7 +124,20 @@ export function CardSurface({
 						onDoubleClick={(event) => event.stopPropagation()}
 						onWheel={(event) => event.stopPropagation()}
 					>
-						{children}
+						<CardTitleContext.Provider
+							value={
+								titleInteractive || interactive
+									? () => {
+											if (focusedIds.includes(focusId)) closeFocus();
+											else focusCard(focusId);
+										}
+									: null
+							}
+						>
+							<CardContentInteractiveContext.Provider value={interactive}>
+								{children}
+							</CardContentInteractiveContext.Provider>
+						</CardTitleContext.Provider>
 					</div>
 				</ContextBridge>
 			</Html>

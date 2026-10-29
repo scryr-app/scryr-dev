@@ -165,3 +165,34 @@
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 }
+
+.titleButton {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	color: inherit;
+	font-weight: inherit;
+	text-align: left;
+	cursor: pointer;
+	pointer-events: auto;
+}
+.header h2 .enlargeIcon {
+	width: 16px;
+	height: 16px;
+	opacity: 0;
+	transition: opacity 600ms ease-in-out;
+}
+.header h2 .titleButton:hover .enlargeIcon,
+.header h2 .titleButton:focus-visible .enlargeIcon {
+	opacity: 1;
+}
+.titleButton:focus-visible {
+	outline: 2px solid var(--card-link);
+	outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.header h2 .enlargeIcon {
+		transition: none;
+	}
+}

@@ -1,5 +1,6 @@
+import { CardContentInteractiveContext, CardTitle } from "./CardTitle";
 import { Activity, Code, ExternalLink, Info, Users } from "lucide-react";
-import type { ReactNode } from "react";
+import { type ReactNode, useContext } from "react";
 import type { BlockLink } from "@/block/Block";
 import { getClassificationMetadata } from "./ClassificationIcons";
 import { LogosDictionary } from "./LogosDictionary";
@@ -145,13 +146,14 @@ export function InfoCard({
 	return (
 		<article className={styles.card} aria-label="Service information">
 			<header className={styles.header}>
-				<h2>
+				<CardTitle>
 					<Info aria-hidden="true" />
 					Info
-				</h2>
+				</CardTitle>
 				{version && <span className={styles.version}>v{version}</span>}
 			</header>
 			<div
+				inert={!useContext(CardContentInteractiveContext)}
 				className={styles.sections}
 				data-columns={hasDetails && (stack.length > 0 || operations.length > 0) ? "two" : "one"}
 			>

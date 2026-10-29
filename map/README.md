@@ -148,6 +148,7 @@ one and use **Back to group** to restore the comparison. Escape closes the picke
 first, then an expanded card, then Focus mode. **Back to diagram** returns all
 cards to their original slots. The editor and normal toolbar reappear with their
 previous state. Opening focus again starts with one card.
+Clicking the expand icon in a focused card's title also returns to the regular canvas.
 
 ## UI styles
 

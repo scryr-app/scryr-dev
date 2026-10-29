@@ -110,7 +110,13 @@ export function CardSlot({
 					color={cardColor}
 					glowColor={blockColor}
 				>
-					<CardSurface width={cardWidth} height={cardHeight} focusId={focusId} color={surfaceColor}>
+					<CardSurface
+						width={cardWidth}
+						height={cardHeight}
+						focusId={focusId}
+						color={surfaceColor}
+						titleInteractive={!focusedIds.length && (isActive || isSlotHovered)}
+					>
 						{primaryComponent}
 					</CardSurface>
 				</CardFrame>

@@ -11,6 +11,7 @@ from scryr import Diagram, Info, Link, Manifest
 from scryr.types import (
     Classification,
     DeploymentTarget,
+    Markdown,
     MetricTool,
     ProgrammingLanguage,
     Url,
@@ -27,12 +28,66 @@ kafka_block = Manifest(
     tags=["messaging", "async", "infra"],
     connections=[],
     info=Info(
-        description="Apache Kafka message queue used for async order events between Checkout, Accounting, and Fraud Detection.",
+        description=Markdown(
+            "### Order event backbone\n"
+            "\n"
+            "Apache Kafka message queue used for async order events between Checkout, Accounting, and Fraud Detection.\n"
+            "\n"
+            "#### What to inspect\n"
+            "\n"
+            "| Area | Investigation |\n"
+            "| --- | --- |\n"
+            "| **Producer acknowledgements** | Distinguish accepted events from timed-out publishing attempts |\n"
+            "| **Consumer lag** | Compare Accounting and Fraud Detection independently |\n"
+            "| **Retention** | Keep a replay window appropriate for the exercise |\n"
+            "\n"
+            "#### Illustrative flow\n"
+            "\n"
+            "```text\n"
+            "Checkout -> Kafka -> Accounting / Fraud Detection\n"
+            "```\n"
+            "\n"
+            "#### Suggested demo exercise\n"
+            "\n"
+            "1. Establish a baseline.\n"
+            "   - Pause one consumer while continuing checkout traffic. Compare the growing backlog with the unaffected consumer, then resume it and follow the catch-up period.\n"
+            "2. Compare the evidence.\n"
+            "   - Correlate **traces**, *logs*, and metrics within the same time window.\n"
+            "   - Save the relevant trace ID with the observed result.\n"
+            "\n"
+            "- [ ] Replay the same sample order twice and inspect downstream duplicate handling.\n"
+            "- [ ] Restore the starting configuration after the exercise.\n"
+            "\n"
+            "> These are proposed learning exercises, not guarantees about configured alerts,\n"
+            "> recovery policies, or production readiness.\n"
+            "\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Maven or Gradle for builds\n"
+            "  - JUnit for focused tests\n"
+            "  - Java Flight Recorder for runtime investigation\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "  - `grafana`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("3.6.0"),
         languages=[ProgrammingLanguage.java],
         deployments=[DeploymentTarget.k8s_cluster, DeploymentTarget.helm],
         owners="Platform",
-        metric_tools=[MetricTool.prometheus, MetricTool.loki, MetricTool.jaeger],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.jaeger,
+            MetricTool.grafana,
+        ],
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -43,12 +98,66 @@ valkey_block = Manifest(
     tags=["cache", "infra"],
     connections=[],
     info=Info(
-        description="Valkey (Redis-compatible) in-memory cache used by the Cart Service to store shopping cart state.",
+        description=Markdown(
+            "### Session cart storage\n"
+            "\n"
+            "Valkey (Redis-compatible) in-memory cache used by the Cart Service to store shopping cart state.\n"
+            "\n"
+            "#### What to inspect\n"
+            "\n"
+            "| Area | Investigation |\n"
+            "| --- | --- |\n"
+            "| **Memory usage** | Compare cart growth with eviction pressure |\n"
+            "| **Command latency** | Separate storage time from Cart request time |\n"
+            "| **Missing key** | Distinguish an empty cart from a storage outage |\n"
+            "\n"
+            "#### Illustrative flow\n"
+            "\n"
+            "```text\n"
+            "Cart -> Valkey -> cart contents\n"
+            "```\n"
+            "\n"
+            "#### Suggested demo exercise\n"
+            "\n"
+            "1. Establish a baseline.\n"
+            "   - Add items to two independent sessions and confirm that their carts remain separate. Restart the cache in a disposable environment and observe how the storefront handles missing state.\n"
+            "2. Compare the evidence.\n"
+            "   - Correlate **traces**, *logs*, and metrics within the same time window.\n"
+            "   - Save the relevant trace ID with the observed result.\n"
+            "\n"
+            "- [ ] Record the intended cart lifetime and recovery behavior before choosing persistence settings.\n"
+            "- [ ] Restore the starting configuration after the exercise.\n"
+            "\n"
+            "> These are proposed learning exercises, not guarantees about configured alerts,\n"
+            "> recovery policies, or production readiness.\n"
+            "\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Container logs for process diagnostics\n"
+            "  - Resource metrics for capacity review\n"
+            "  - Versioned configuration for repeatable environments\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "  - `grafana`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("7.2.0"),
         languages=[ProgrammingLanguage.c],
         deployments=[DeploymentTarget.k8s_cluster, DeploymentTarget.helm],
         owners="Platform",
-        metric_tools=[MetricTool.prometheus, MetricTool.loki, MetricTool.jaeger],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.jaeger,
+            MetricTool.grafana,
+        ],
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -59,12 +168,66 @@ postgres_block = Manifest(
     tags=["database", "sql", "infra"],
     connections=[],
     info=Info(
-        description="Relational database used by the Accounting Service to persist order records.",
+        description=Markdown(
+            "### Accounting persistence\n"
+            "\n"
+            "Relational database used by the Accounting Service to persist order records.\n"
+            "\n"
+            "#### What to inspect\n"
+            "\n"
+            "| Area | Investigation |\n"
+            "| --- | --- |\n"
+            "| **Connection pool** | Watch waiting requests as worker concurrency increases |\n"
+            "| **Write latency** | Compare database time with event-processing time |\n"
+            "| **Record counts** | Reconcile persisted orders with consumed sample events |\n"
+            "\n"
+            "#### Illustrative flow\n"
+            "\n"
+            "```text\n"
+            "Kafka -> Accounting -> PostgreSQL\n"
+            "```\n"
+            "\n"
+            "#### Suggested demo exercise\n"
+            "\n"
+            "1. Establish a baseline.\n"
+            "   - Follow one sample order from its consumer span into the database write. Test a temporary connection failure and distinguish a failed write from an acknowledged event.\n"
+            "2. Compare the evidence.\n"
+            "   - Correlate **traces**, *logs*, and metrics within the same time window.\n"
+            "   - Save the relevant trace ID with the observed result.\n"
+            "\n"
+            "- [ ] Rehearse restoring a disposable dataset and compare order totals afterward.\n"
+            "- [ ] Restore the starting configuration after the exercise.\n"
+            "\n"
+            "> These are proposed learning exercises, not guarantees about configured alerts,\n"
+            "> recovery policies, or production readiness.\n"
+            "\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Container logs for process diagnostics\n"
+            "  - Resource metrics for capacity review\n"
+            "  - Versioned configuration for repeatable environments\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "  - `grafana`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("16.0.0"),
         languages=[ProgrammingLanguage.c],
         deployments=[DeploymentTarget.k8s_cluster, DeploymentTarget.helm],
         owners="Platform",
-        metric_tools=[MetricTool.prometheus, MetricTool.loki, MetricTool.jaeger],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.jaeger,
+            MetricTool.grafana,
+        ],
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -75,12 +238,66 @@ flagd_block = Manifest(
     tags=["feature-flags", "infra"],
     connections=[],
     info=Info(
-        description="OpenFeature-compatible feature flag daemon consumed by Ad and other services for runtime toggles.",
+        description=Markdown(
+            "### Controlled experiment switches\n"
+            "\n"
+            "OpenFeature-compatible feature flag daemon consumed by Ad and other services for runtime toggles.\n"
+            "\n"
+            "#### What to inspect\n"
+            "\n"
+            "| Area | Investigation |\n"
+            "| --- | --- |\n"
+            "| **Flag value** | Record the starting state before an experiment |\n"
+            "| **Evaluation errors** | Inspect fallback behavior when evaluation is unavailable |\n"
+            "| **Experiment window** | Annotate the period used for latency comparisons |\n"
+            "\n"
+            "#### Illustrative flow\n"
+            "\n"
+            "```text\n"
+            "Flagd-UI -> Flagd -> service evaluation\n"
+            "```\n"
+            "\n"
+            "#### Suggested demo exercise\n"
+            "\n"
+            "1. Establish a baseline.\n"
+            "   - Change a single flag, send the same shopping flow again, and compare traces before and after the change. Restore the original value before running another experiment.\n"
+            "2. Compare the evidence.\n"
+            "   - Correlate **traces**, *logs*, and metrics within the same time window.\n"
+            "   - Save the relevant trace ID with the observed result.\n"
+            "\n"
+            "- [ ] Document which services evaluate the selected flag and what their fallback values mean.\n"
+            "- [ ] Restore the starting configuration after the exercise.\n"
+            "\n"
+            "> These are proposed learning exercises, not guarantees about configured alerts,\n"
+            "> recovery policies, or production readiness.\n"
+            "\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Go tooling for builds and tests\n"
+            "  - gofmt for source formatting\n"
+            "  - Delve for local debugging\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "  - `grafana`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("0.10.0"),
         languages=[ProgrammingLanguage.go],
         deployments=[DeploymentTarget.k8s_cluster, DeploymentTarget.helm],
         owners="Platform",
-        metric_tools=[MetricTool.prometheus, MetricTool.loki, MetricTool.jaeger],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.jaeger,
+            MetricTool.grafana,
+        ],
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -91,12 +308,66 @@ accounting_block = Manifest(
     tags=["orders", "finance"],
     connections=[Manifest(name="Kafka"), Manifest(name="PostgreSQL")],
     info=Info(
-        description="Processes incoming orders from Kafka and tallies the sum of all orders (mock). Written in .NET.",
+        description=Markdown(
+            "### Asynchronous order bookkeeping\n"
+            "\n"
+            "Processes incoming orders from Kafka and tallies the sum of all orders (mock). Written in .NET.\n"
+            "\n"
+            "#### What to inspect\n"
+            "\n"
+            "| Area | Investigation |\n"
+            "| --- | --- |\n"
+            "| **Processing duration** | Find slow work after an order has already completed |\n"
+            "| **Database errors** | Check whether a failed write leads to retry or data loss |\n"
+            "| **Duplicate events** | Compare totals after replaying an order |\n"
+            "\n"
+            "#### Illustrative flow\n"
+            "\n"
+            "```text\n"
+            "Kafka order event -> Accounting -> PostgreSQL\n"
+            "```\n"
+            "\n"
+            "#### Suggested demo exercise\n"
+            "\n"
+            "1. Establish a baseline.\n"
+            "   - Complete a mock purchase and locate the later accounting work. Compare request latency with the time until that order becomes visible in accounting storage.\n"
+            "2. Compare the evidence.\n"
+            "   - Correlate **traces**, *logs*, and metrics within the same time window.\n"
+            "   - Save the relevant trace ID with the observed result.\n"
+            "\n"
+            "- [ ] Test replay and restart behavior with synthetic orders before assuming exactly-once processing.\n"
+            "- [ ] Restore the starting configuration after the exercise.\n"
+            "\n"
+            "> These are proposed learning exercises, not guarantees about configured alerts,\n"
+            "> recovery policies, or production readiness.\n"
+            "\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - dotnet CLI for builds and tests\n"
+            "  - NuGet for dependency management\n"
+            "  - dotnet-counters for runtime metrics\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "  - `grafana`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.0.0"),
         languages=[ProgrammingLanguage.csharp],
         deployments=[DeploymentTarget.k8s_cluster, DeploymentTarget.helm],
         owners="Finance",
-        metric_tools=[MetricTool.prometheus, MetricTool.loki, MetricTool.jaeger],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.jaeger,
+            MetricTool.grafana,
+        ],
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -107,13 +378,68 @@ ad_block = Manifest(
     tags=["ads", "recommendations"],
     connections=[Manifest(name="Flagd")],
     info=Info(
-        description="Provides contextual text ads based on product category keywords. Uses Flagd for feature-flag controlled ad campaigns. Written in Java.",
+        description=Markdown(
+            "### Contextual storefront content\n"
+            "\n"
+            "Provides contextual text ads based on product category keywords. Uses Flagd for feature-flag controlled ad campaigns. Written in Java.\n"
+            "\n"
+            "#### What to inspect\n"
+            "\n"
+            "| Area | Investigation |\n"
+            "| --- | --- |\n"
+            "| **Category input** | Compare matching and unknown category keywords |\n"
+            "| **Flag evaluation** | Record the campaign configuration used by each trial |\n"
+            "| **Response latency** | Measure how optional content affects page rendering |\n"
+            "\n"
+            "#### Illustrative flow\n"
+            "\n"
+            "```text\n"
+            "Product category -> Ad -> text advertisement\n"
+            "```\n"
+            "\n"
+            "#### Suggested demo exercise\n"
+            "\n"
+            "1. Establish a baseline.\n"
+            "   - Browse different product categories, then repeat the same navigation with one campaign flag changed. Inspect whether slow ad responses delay the rest of the page.\n"
+            "2. Compare the evidence.\n"
+            "   - Correlate **traces**, *logs*, and metrics within the same time window.\n"
+            "   - Save the relevant trace ID with the observed result.\n"
+            "\n"
+            "- [ ] Explore a graceful empty-ad fallback when this optional service is unavailable.\n"
+            "- [ ] Restore the starting configuration after the exercise.\n"
+            "\n"
+            "> These are proposed learning exercises, not guarantees about configured alerts,\n"
+            "> recovery policies, or production readiness.\n"
+            "\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - `spring_boot`\n"
+            "  - `spring`\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Maven or Gradle for builds\n"
+            "  - JUnit for focused tests\n"
+            "  - Java Flight Recorder for runtime investigation\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "  - `grafana`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.0.0"),
         languages=[ProgrammingLanguage.java],
-        frameworks=[WebFramework.spring_boot],
+        frameworks=[WebFramework.spring_boot, WebFramework.spring],
         deployments=[DeploymentTarget.k8s_cluster, DeploymentTarget.helm],
         owners="Growth",
-        metric_tools=[MetricTool.prometheus, MetricTool.loki, MetricTool.jaeger],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.jaeger,
+            MetricTool.grafana,
+        ],
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -124,12 +450,66 @@ cart_block = Manifest(
     tags=["cart", "shopping"],
     connections=[Manifest(name="Valkey"), Manifest(name="Flagd")],
     info=Info(
-        description="Stores and retrieves shopping cart items per user session in Valkey. Written in .NET.",
+        description=Markdown(
+            "### Shopping session boundary\n"
+            "\n"
+            "Stores and retrieves shopping cart items per user session in Valkey. Written in .NET.\n"
+            "\n"
+            "#### What to inspect\n"
+            "\n"
+            "| Area | Investigation |\n"
+            "| --- | --- |\n"
+            "| **Session identity** | Keep one cart isolated from another browser session |\n"
+            "| **Quantity changes** | Check add, update, and empty-cart flows |\n"
+            "| **Storage failures** | Separate an unavailable cache from a legitimately empty cart |\n"
+            "\n"
+            "#### Illustrative flow\n"
+            "\n"
+            "```text\n"
+            "Frontend -> Cart -> Valkey\n"
+            "```\n"
+            "\n"
+            "#### Suggested demo exercise\n"
+            "\n"
+            "1. Establish a baseline.\n"
+            "   - Build a cart, refresh the browser, and inspect the retrieval path. Then compare traces for a quantity update and a checkout request using the same synthetic session.\n"
+            "2. Compare the evidence.\n"
+            "   - Correlate **traces**, *logs*, and metrics within the same time window.\n"
+            "   - Save the relevant trace ID with the observed result.\n"
+            "\n"
+            "- [ ] Exercise simultaneous cart changes and document the resulting consistency behavior.\n"
+            "- [ ] Restore the starting configuration after the exercise.\n"
+            "\n"
+            "> These are proposed learning exercises, not guarantees about configured alerts,\n"
+            "> recovery policies, or production readiness.\n"
+            "\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - dotnet CLI for builds and tests\n"
+            "  - NuGet for dependency management\n"
+            "  - dotnet-counters for runtime metrics\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "  - `grafana`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.0.0"),
         languages=[ProgrammingLanguage.csharp],
         deployments=[DeploymentTarget.k8s_cluster, DeploymentTarget.helm],
         owners="Commerce",
-        metric_tools=[MetricTool.prometheus, MetricTool.loki, MetricTool.jaeger],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.jaeger,
+            MetricTool.grafana,
+        ],
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -148,12 +528,66 @@ checkout_block = Manifest(
         Manifest(name="Kafka"),
     ],
     info=Info(
-        description="Orchestrates the full purchase flow: retrieves cart, converts currency, charges payment, ships order, sends email, and publishes order events to Kafka. Written in Go.",
+        description=Markdown(
+            "### Purchase orchestration\n"
+            "\n"
+            "Orchestrates the full purchase flow: retrieves cart, converts currency, charges payment, ships order, sends email, and publishes order events to Kafka. Written in Go.\n"
+            "\n"
+            "#### What to inspect\n"
+            "\n"
+            "| Area | Investigation |\n"
+            "| --- | --- |\n"
+            "| **Before payment** | Validate cart contents and calculated totals |\n"
+            "| **After payment** | Inspect partial failure and retry boundaries |\n"
+            "| **After response** | Follow asynchronous accounting and fraud work |\n"
+            "\n"
+            "#### Illustrative flow\n"
+            "\n"
+            "```text\n"
+            "Cart + Product Catalog -> Currency -> Payment -> Shipping -> Email + Kafka\n"
+            "```\n"
+            "\n"
+            "#### Suggested demo exercise\n"
+            "\n"
+            "1. Establish a baseline.\n"
+            "   - Capture one successful mock purchase as a baseline. Introduce a delay in one dependency at a time and identify which child span dominates the checkout duration.\n"
+            "2. Compare the evidence.\n"
+            "   - Correlate **traces**, *logs*, and metrics within the same time window.\n"
+            "   - Save the relevant trace ID with the observed result.\n"
+            "\n"
+            "- [ ] Write down recovery steps for a timeout after a mock charge but before confirmation.\n"
+            "- [ ] Restore the starting configuration after the exercise.\n"
+            "\n"
+            "> These are proposed learning exercises, not guarantees about configured alerts,\n"
+            "> recovery policies, or production readiness.\n"
+            "\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Go tooling for builds and tests\n"
+            "  - gofmt for source formatting\n"
+            "  - Delve for local debugging\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "  - `grafana`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.0.0"),
         languages=[ProgrammingLanguage.go],
         deployments=[DeploymentTarget.k8s_cluster, DeploymentTarget.helm],
         owners="Commerce",
-        metric_tools=[MetricTool.prometheus, MetricTool.loki, MetricTool.jaeger],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.jaeger,
+            MetricTool.grafana,
+        ],
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -164,12 +598,66 @@ currency_block = Manifest(
     tags=["currency", "finance"],
     connections=[],
     info=Info(
-        description="Converts monetary amounts between currencies using real exchange rates from the European Central Bank. Highest QPS service. Written in C++.",
+        description=Markdown(
+            "### Price conversion boundary\n"
+            "\n"
+            "Converts monetary amounts between currencies using real exchange rates from the European Central Bank. Highest QPS service. Written in C++.\n"
+            "\n"
+            "#### What to inspect\n"
+            "\n"
+            "| Area | Investigation |\n"
+            "| --- | --- |\n"
+            "| **Currency pair** | Compare same-currency and cross-currency requests |\n"
+            "| **Rounding** | Check fractional amounts and repeated conversions |\n"
+            "| **Fan-out** | Count conversion calls during one rendered shopping page |\n"
+            "\n"
+            "#### Illustrative flow\n"
+            "\n"
+            "```text\n"
+            "Amount + source currency + target currency -> converted amount\n"
+            "```\n"
+            "\n"
+            "#### Suggested demo exercise\n"
+            "\n"
+            "1. Establish a baseline.\n"
+            "   - Change the storefront display currency and follow the resulting conversion spans. Compare the number of calls on catalog, cart, and checkout pages.\n"
+            "2. Compare the evidence.\n"
+            "   - Correlate **traces**, *logs*, and metrics within the same time window.\n"
+            "   - Save the relevant trace ID with the observed result.\n"
+            "\n"
+            "- [ ] Use fixed input amounts when comparing runs so rate changes do not obscure rounding behavior.\n"
+            "- [ ] Restore the starting configuration after the exercise.\n"
+            "\n"
+            "> These are proposed learning exercises, not guarantees about configured alerts,\n"
+            "> recovery policies, or production readiness.\n"
+            "\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Container logs for process diagnostics\n"
+            "  - Resource metrics for capacity review\n"
+            "  - Versioned configuration for repeatable environments\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "  - `grafana`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.0.0"),
         languages=[ProgrammingLanguage.cpp],
         deployments=[DeploymentTarget.k8s_cluster, DeploymentTarget.helm],
         owners="Commerce",
-        metric_tools=[MetricTool.prometheus, MetricTool.loki, MetricTool.jaeger],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.jaeger,
+            MetricTool.grafana,
+        ],
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -180,13 +668,67 @@ email_block = Manifest(
     tags=["email", "notifications"],
     connections=[],
     info=Info(
-        description="Sends order confirmation emails to customers (mock). Written in Ruby.",
+        description=Markdown(
+            "### Mock purchase notifications\n"
+            "\n"
+            "Sends order confirmation emails to customers (mock). Written in Ruby.\n"
+            "\n"
+            "#### What to inspect\n"
+            "\n"
+            "| Area | Investigation |\n"
+            "| --- | --- |\n"
+            "| **Template data** | Check order lines, totals, and synthetic recipient fields |\n"
+            "| **Delivery result** | Distinguish a mock response from actual delivery |\n"
+            "| **Retry behavior** | Observe repeated confirmation requests for one order |\n"
+            "\n"
+            "#### Illustrative flow\n"
+            "\n"
+            "```text\n"
+            "Checkout -> Email -> mock confirmation\n"
+            "```\n"
+            "\n"
+            "#### Suggested demo exercise\n"
+            "\n"
+            "1. Establish a baseline.\n"
+            "   - Complete a synthetic purchase and inspect the email span alongside payment and shipping. Introduce an email failure and record whether the order response changes.\n"
+            "2. Compare the evidence.\n"
+            "   - Correlate **traces**, *logs*, and metrics within the same time window.\n"
+            "   - Save the relevant trace ID with the observed result.\n"
+            "\n"
+            "- [ ] Keep real recipient addresses out of exercise payloads and telemetry.\n"
+            "- [ ] Restore the starting configuration after the exercise.\n"
+            "\n"
+            "> These are proposed learning exercises, not guarantees about configured alerts,\n"
+            "> recovery policies, or production readiness.\n"
+            "\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - `sinatra`\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Bundler for dependencies\n"
+            "  - RSpec for behavior checks\n"
+            "  - RuboCop for linting\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "  - `grafana`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.0.0"),
         languages=[ProgrammingLanguage.ruby],
         frameworks=[WebFramework.sinatra],
         deployments=[DeploymentTarget.k8s_cluster, DeploymentTarget.helm],
         owners="Commerce",
-        metric_tools=[MetricTool.prometheus, MetricTool.loki, MetricTool.jaeger],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.jaeger,
+            MetricTool.grafana,
+        ],
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -197,13 +739,68 @@ flagd_ui_block = Manifest(
     tags=["feature-flags", "admin"],
     connections=[Manifest(name="Flagd")],
     info=Info(
-        description="Web UI for toggling and editing OpenFeature feature flags backed by Flagd. Written in Elixir/Phoenix.",
+        description=Markdown(
+            "### Experiment control surface\n"
+            "\n"
+            "Web UI for toggling and editing OpenFeature feature flags backed by Flagd. Written in Elixir/Phoenix.\n"
+            "\n"
+            "#### What to inspect\n"
+            "\n"
+            "| Area | Investigation |\n"
+            "| --- | --- |\n"
+            "| **Initial state** | Capture the current flag values before making changes |\n"
+            "| **Changed state** | Verify the selected service receives the new value |\n"
+            "| **Reset state** | Return the demo to its baseline for the next participant |\n"
+            "\n"
+            "#### Illustrative flow\n"
+            "\n"
+            "```text\n"
+            "Operator -> Flagd-UI -> Flagd\n"
+            "```\n"
+            "\n"
+            "#### Suggested demo exercise\n"
+            "\n"
+            "1. Establish a baseline.\n"
+            "   - Use a single flag to create a repeatable fault scenario. Record the change time, reproduce the shopping flow, and correlate the observation window with backend traces.\n"
+            "2. Compare the evidence.\n"
+            "   - Correlate **traces**, *logs*, and metrics within the same time window.\n"
+            "   - Save the relevant trace ID with the observed result.\n"
+            "\n"
+            "- [ ] Restrict access to the control surface when adapting the demo for a shared environment.\n"
+            "- [ ] Restore the starting configuration after the exercise.\n"
+            "\n"
+            "> These are proposed learning exercises, not guarantees about configured alerts,\n"
+            "> recovery policies, or production readiness.\n"
+            "\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - `phoenix`\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Container logs for process diagnostics\n"
+            "  - Resource metrics for capacity review\n"
+            "  - Versioned configuration for repeatable environments\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "  - `grafana`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.0.0"),
         languages=[ProgrammingLanguage.elixir],
         deployments=[DeploymentTarget.k8s_cluster, DeploymentTarget.helm],
         owners="Platform",
-        metric_tools=[MetricTool.prometheus, MetricTool.loki, MetricTool.jaeger],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.jaeger,
+            MetricTool.grafana,
+        ],
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
+        frameworks=[WebFramework.phoenix],
     ),
 )
 fraud_detection_block = Manifest(
@@ -213,12 +810,66 @@ fraud_detection_block = Manifest(
     tags=["fraud", "risk", "async"],
     connections=[Manifest(name="Kafka")],
     info=Info(
-        description="Consumes order events from Kafka and applies heuristics to flag potentially fraudulent transactions (mock). Written in Kotlin.",
+        description=Markdown(
+            "### Mock asynchronous risk analysis\n"
+            "\n"
+            "Consumes order events from Kafka and applies heuristics to flag potentially fraudulent transactions (mock). Written in Kotlin.\n"
+            "\n"
+            "#### What to inspect\n"
+            "\n"
+            "| Area | Investigation |\n"
+            "| --- | --- |\n"
+            "| **Consumer lag** | Measure how long an order waits before analysis |\n"
+            "| **Decision output** | Use synthetic examples to explain each heuristic |\n"
+            "| **Replay** | Compare decisions for repeated copies of the same order |\n"
+            "\n"
+            "#### Illustrative flow\n"
+            "\n"
+            "```text\n"
+            "Kafka order event -> Fraud Detection -> mock decision\n"
+            "```\n"
+            "\n"
+            "#### Suggested demo exercise\n"
+            "\n"
+            "1. Establish a baseline.\n"
+            "   - Follow a checkout event into its consumer trace and compare that delay with the synchronous checkout duration. Pause consumption briefly to make the separation visible.\n"
+            "2. Compare the evidence.\n"
+            "   - Correlate **traces**, *logs*, and metrics within the same time window.\n"
+            "   - Save the relevant trace ID with the observed result.\n"
+            "\n"
+            "- [ ] Document that demo heuristics are teaching examples and are not a production risk policy.\n"
+            "- [ ] Restore the starting configuration after the exercise.\n"
+            "\n"
+            "> These are proposed learning exercises, not guarantees about configured alerts,\n"
+            "> recovery policies, or production readiness.\n"
+            "\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Container logs for process diagnostics\n"
+            "  - Resource metrics for capacity review\n"
+            "  - Versioned configuration for repeatable environments\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "  - `grafana`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.0.0"),
         languages=[ProgrammingLanguage.kotlin],
         deployments=[DeploymentTarget.k8s_cluster, DeploymentTarget.helm],
         owners="Trust & Safety",
-        metric_tools=[MetricTool.prometheus, MetricTool.loki, MetricTool.jaeger],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.jaeger,
+            MetricTool.grafana,
+        ],
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -229,12 +880,66 @@ image_provider_block = Manifest(
     tags=["assets", "static", "images"],
     connections=[],
     info=Info(
-        description="Serves product images via nginx. Acts as a static asset CDN inside the demo cluster.",
+        description=Markdown(
+            "### Product image delivery\n"
+            "\n"
+            "Serves product images via nginx. Acts as a static asset CDN inside the demo cluster.\n"
+            "\n"
+            "#### What to inspect\n"
+            "\n"
+            "| Area | Investigation |\n"
+            "| --- | --- |\n"
+            "| **Asset path** | Check valid, missing, and incorrectly cased filenames |\n"
+            "| **Response size** | Compare image transfer cost with page API time |\n"
+            "| **Caching** | Inspect browser reload behavior with and without cached assets |\n"
+            "\n"
+            "#### Illustrative flow\n"
+            "\n"
+            "```text\n"
+            "Browser -> Frontend Proxy -> Image Provider\n"
+            "```\n"
+            "\n"
+            "#### Suggested demo exercise\n"
+            "\n"
+            "1. Establish a baseline.\n"
+            "   - Open a product page with an empty browser cache, then reload it. Compare transferred bytes and image requests while keeping backend catalog responses constant.\n"
+            "2. Compare the evidence.\n"
+            "   - Correlate **traces**, *logs*, and metrics within the same time window.\n"
+            "   - Save the relevant trace ID with the observed result.\n"
+            "\n"
+            "- [ ] Try a missing image and check that the product page remains understandable.\n"
+            "- [ ] Restore the starting configuration after the exercise.\n"
+            "\n"
+            "> These are proposed learning exercises, not guarantees about configured alerts,\n"
+            "> recovery policies, or production readiness.\n"
+            "\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Go tooling for builds and tests\n"
+            "  - gofmt for source formatting\n"
+            "  - Delve for local debugging\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "  - `grafana`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.25.0"),
         languages=[ProgrammingLanguage.go],
         deployments=[DeploymentTarget.k8s_cluster, DeploymentTarget.helm],
         owners="Frontend",
-        metric_tools=[MetricTool.prometheus, MetricTool.loki, MetricTool.jaeger],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.jaeger,
+            MetricTool.grafana,
+        ],
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -245,13 +950,67 @@ payment_block = Manifest(
     tags=["payments", "billing"],
     connections=[Manifest(name="Flagd")],
     info=Info(
-        description="Charges credit cards (mock) with a given amount and returns a transaction ID. Written in JavaScript/Node.",
+        description=Markdown(
+            "### Mock payment boundary\n"
+            "\n"
+            "Charges credit cards (mock) with a given amount and returns a transaction ID. Written in JavaScript/Node.\n"
+            "\n"
+            "#### What to inspect\n"
+            "\n"
+            "| Area | Investigation |\n"
+            "| --- | --- |\n"
+            "| **Amount** | Compare the charged mock amount with the checkout total |\n"
+            "| **Failure mode** | Distinguish rejection from a response timeout |\n"
+            "| **Retry** | Inspect whether repeated calls produce repeated mock transactions |\n"
+            "\n"
+            "#### Illustrative flow\n"
+            "\n"
+            "```text\n"
+            "Checkout -> Payment -> synthetic transaction ID\n"
+            "```\n"
+            "\n"
+            "#### Suggested demo exercise\n"
+            "\n"
+            "1. Establish a baseline.\n"
+            "   - Capture a successful mock payment, then use a controlled failure scenario to inspect error propagation through Checkout and the storefront.\n"
+            "2. Compare the evidence.\n"
+            "   - Correlate **traces**, *logs*, and metrics within the same time window.\n"
+            "   - Save the relevant trace ID with the observed result.\n"
+            "\n"
+            "- [ ] Use only synthetic payment data; define an idempotency strategy before adapting this boundary.\n"
+            "- [ ] Restore the starting configuration after the exercise.\n"
+            "\n"
+            "> These are proposed learning exercises, not guarantees about configured alerts,\n"
+            "> recovery policies, or production readiness.\n"
+            "\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - `express`\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - npm for package workflows\n"
+            "  - ESLint for source checks\n"
+            "  - Playwright for browser workflows\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "  - `grafana`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.0.0"),
         languages=[ProgrammingLanguage.javascript],
         frameworks=[WebFramework.express],
         deployments=[DeploymentTarget.k8s_cluster, DeploymentTarget.helm],
         owners="Commerce",
-        metric_tools=[MetricTool.prometheus, MetricTool.loki, MetricTool.jaeger],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.jaeger,
+            MetricTool.grafana,
+        ],
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -262,12 +1021,66 @@ product_catalog_block = Manifest(
     tags=["products", "catalog"],
     connections=[Manifest(name="Flagd")],
     info=Info(
-        description="Serves a product list from a JSON file and supports product search and individual product lookup. Written in Go.",
+        description=Markdown(
+            "### Product discovery and lookup\n"
+            "\n"
+            "Serves a product list from a JSON file and supports product search and individual product lookup. Written in Go.\n"
+            "\n"
+            "#### What to inspect\n"
+            "\n"
+            "| Area | Investigation |\n"
+            "| --- | --- |\n"
+            "| **List** | Compare catalog size with response latency |\n"
+            "| **Search** | Exercise empty, matching, and unmatched search terms |\n"
+            "| **Lookup** | Compare valid product IDs with unknown IDs |\n"
+            "\n"
+            "#### Illustrative flow\n"
+            "\n"
+            "```text\n"
+            "JSON product data -> Product Catalog -> Frontend / Checkout\n"
+            "```\n"
+            "\n"
+            "#### Suggested demo exercise\n"
+            "\n"
+            "1. Establish a baseline.\n"
+            "   - Follow a product from the listing page into a cart and checkout. Inspect how the same identifier connects catalog retrieval with pricing in downstream spans.\n"
+            "2. Compare the evidence.\n"
+            "   - Correlate **traces**, *logs*, and metrics within the same time window.\n"
+            "   - Save the relevant trace ID with the observed result.\n"
+            "\n"
+            "- [ ] Validate a proposed catalog change against both browsing and checkout flows.\n"
+            "- [ ] Restore the starting configuration after the exercise.\n"
+            "\n"
+            "> These are proposed learning exercises, not guarantees about configured alerts,\n"
+            "> recovery policies, or production readiness.\n"
+            "\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Go tooling for builds and tests\n"
+            "  - gofmt for source formatting\n"
+            "  - Delve for local debugging\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "  - `grafana`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.0.0"),
         languages=[ProgrammingLanguage.go],
         deployments=[DeploymentTarget.k8s_cluster, DeploymentTarget.helm],
         owners="Catalog",
-        metric_tools=[MetricTool.prometheus, MetricTool.loki, MetricTool.jaeger],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.jaeger,
+            MetricTool.grafana,
+        ],
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -278,13 +1091,68 @@ product_reviews_block = Manifest(
     tags=["reviews", "genai", "llm"],
     connections=[],
     info=Info(
-        description="Returns product reviews and answers questions about products using GenAI (LLM). Written in Python.",
+        description=Markdown(
+            "### Review and generated-answer experience\n"
+            "\n"
+            "Returns product reviews and answers questions about products using GenAI (LLM). Written in Python.\n"
+            "\n"
+            "#### What to inspect\n"
+            "\n"
+            "| Area | Investigation |\n"
+            "| --- | --- |\n"
+            "| **Latency** | Separate model response time from the surrounding API call |\n"
+            "| **Grounding** | Compare generated statements with the supplied product context |\n"
+            "| **Errors** | Observe timeout and unavailable-model behavior |\n"
+            "\n"
+            "#### Illustrative flow\n"
+            "\n"
+            "```text\n"
+            "Product context + question -> Product Reviews -> answer\n"
+            "```\n"
+            "\n"
+            "#### Suggested demo exercise\n"
+            "\n"
+            "1. Establish a baseline.\n"
+            "   - Ask two synthetic questions about one product and compare response times and content. Try a question the product context cannot answer and examine the user-facing result.\n"
+            "2. Compare the evidence.\n"
+            "   - Correlate **traces**, *logs*, and metrics within the same time window.\n"
+            "   - Save the relevant trace ID with the observed result.\n"
+            "\n"
+            "- [ ] Plan prompt and response redaction before collecting detailed generative-AI telemetry.\n"
+            "- [ ] Restore the starting configuration after the exercise.\n"
+            "\n"
+            "> These are proposed learning exercises, not guarantees about configured alerts,\n"
+            "> recovery policies, or production readiness.\n"
+            "\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - `fastapi`\n"
+            "  - `starlette`\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - uv for Python environments\n"
+            "  - Ruff for linting and formatting\n"
+            "  - pytest for focused regression tests\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "  - `grafana`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.0.0"),
         languages=[ProgrammingLanguage.python],
-        frameworks=[WebFramework.fastapi],
+        frameworks=[WebFramework.fastapi, WebFramework.starlette],
         deployments=[DeploymentTarget.k8s_cluster, DeploymentTarget.helm],
         owners="Catalog",
-        metric_tools=[MetricTool.prometheus, MetricTool.loki, MetricTool.jaeger],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.jaeger,
+            MetricTool.grafana,
+        ],
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -295,13 +1163,67 @@ quote_block = Manifest(
     tags=["shipping", "quotes", "pricing"],
     connections=[],
     info=Info(
-        description="Calculates shipping cost estimates based on the number of items in the cart. Written in PHP.",
+        description=Markdown(
+            "### Shipping estimate calculation\n"
+            "\n"
+            "Calculates shipping cost estimates based on the number of items in the cart. Written in PHP.\n"
+            "\n"
+            "#### What to inspect\n"
+            "\n"
+            "| Area | Investigation |\n"
+            "| --- | --- |\n"
+            "| **Empty cart** | Define the expected estimate for zero items |\n"
+            "| **Quantity** | Compare one item with a larger basket |\n"
+            "| **Invalid input** | Inspect negative or malformed quantities in a controlled test |\n"
+            "\n"
+            "#### Illustrative flow\n"
+            "\n"
+            "```text\n"
+            "Item count -> Quote -> estimated shipping cost\n"
+            "```\n"
+            "\n"
+            "#### Suggested demo exercise\n"
+            "\n"
+            "1. Establish a baseline.\n"
+            "   - Compare estimates for several synthetic basket sizes. Follow the Quote child span inside Shipping to see how a small dependency contributes to total latency.\n"
+            "2. Compare the evidence.\n"
+            "   - Correlate **traces**, *logs*, and metrics within the same time window.\n"
+            "   - Save the relevant trace ID with the observed result.\n"
+            "\n"
+            "- [ ] Keep a shipping estimate distinct from a completed shipment or carrier commitment.\n"
+            "- [ ] Restore the starting configuration after the exercise.\n"
+            "\n"
+            "> These are proposed learning exercises, not guarantees about configured alerts,\n"
+            "> recovery policies, or production readiness.\n"
+            "\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - `symfony`\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Composer for dependencies\n"
+            "  - PHPUnit for application tests\n"
+            "  - PHPStan for static analysis\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "  - `grafana`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.0.0"),
         languages=[ProgrammingLanguage.php],
         frameworks=[WebFramework.symfony],
         deployments=[DeploymentTarget.k8s_cluster, DeploymentTarget.helm],
         owners="Logistics",
-        metric_tools=[MetricTool.prometheus, MetricTool.loki, MetricTool.jaeger],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.jaeger,
+            MetricTool.grafana,
+        ],
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -312,13 +1234,67 @@ recommendation_block = Manifest(
     tags=["recommendations", "personalization"],
     connections=[Manifest(name="Product Catalog")],
     info=Info(
-        description="Recommends related products based on the current cart contents. Written in Python.",
+        description=Markdown(
+            "### Related product selection\n"
+            "\n"
+            "Recommends related products based on the current cart contents. Written in Python.\n"
+            "\n"
+            "#### What to inspect\n"
+            "\n"
+            "| Area | Investigation |\n"
+            "| --- | --- |\n"
+            "| **Candidate set** | Check that recommended identifiers exist in the catalog |\n"
+            "| **Empty cart** | Inspect the initial browsing experience |\n"
+            "| **Dependency latency** | Measure the effect of a slow catalog lookup |\n"
+            "\n"
+            "#### Illustrative flow\n"
+            "\n"
+            "```text\n"
+            "Cart context -> Recommendation -> Product Catalog\n"
+            "```\n"
+            "\n"
+            "#### Suggested demo exercise\n"
+            "\n"
+            "1. Establish a baseline.\n"
+            "   - Change the contents of a synthetic cart and compare the resulting recommendations. Follow catalog calls and identify repeated lookups within one request.\n"
+            "2. Compare the evidence.\n"
+            "   - Correlate **traces**, *logs*, and metrics within the same time window.\n"
+            "   - Save the relevant trace ID with the observed result.\n"
+            "\n"
+            "- [ ] Explore an empty recommendation fallback so optional suggestions do not block shopping.\n"
+            "- [ ] Restore the starting configuration after the exercise.\n"
+            "\n"
+            "> These are proposed learning exercises, not guarantees about configured alerts,\n"
+            "> recovery policies, or production readiness.\n"
+            "\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - `flask`\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - uv for Python environments\n"
+            "  - Ruff for linting and formatting\n"
+            "  - pytest for focused regression tests\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "  - `grafana`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.0.0"),
         languages=[ProgrammingLanguage.python],
         frameworks=[WebFramework.flask],
         deployments=[DeploymentTarget.k8s_cluster, DeploymentTarget.helm],
         owners="Growth",
-        metric_tools=[MetricTool.prometheus, MetricTool.loki, MetricTool.jaeger],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.jaeger,
+            MetricTool.grafana,
+        ],
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -329,12 +1305,66 @@ shipping_block = Manifest(
     tags=["shipping", "logistics"],
     connections=[Manifest(name="Quote")],
     info=Info(
-        description="Provides shipping cost estimates and ships items to an address (mock). Written in Rust.",
+        description=Markdown(
+            "### Mock fulfillment boundary\n"
+            "\n"
+            "Provides shipping cost estimates and ships items to an address (mock). Written in Rust.\n"
+            "\n"
+            "#### What to inspect\n"
+            "\n"
+            "| Area | Investigation |\n"
+            "| --- | --- |\n"
+            "| **Estimate** | Compare the quoted amount with the checkout display |\n"
+            "| **Address input** | Use synthetic addresses to exercise validation paths |\n"
+            "| **Shipment result** | Distinguish a mock tracking response from real fulfillment |\n"
+            "\n"
+            "#### Illustrative flow\n"
+            "\n"
+            "```text\n"
+            "Checkout -> Shipping -> Quote -> mock shipment\n"
+            "```\n"
+            "\n"
+            "#### Suggested demo exercise\n"
+            "\n"
+            "1. Establish a baseline.\n"
+            "   - Trace a shipping estimate during cart browsing and compare it with the shipping work during checkout. Introduce a Quote delay and inspect the parent Shipping span.\n"
+            "2. Compare the evidence.\n"
+            "   - Correlate **traces**, *logs*, and metrics within the same time window.\n"
+            "   - Save the relevant trace ID with the observed result.\n"
+            "\n"
+            "- [ ] Document retry behavior for a timeout after the mock shipment was created.\n"
+            "- [ ] Restore the starting configuration after the exercise.\n"
+            "\n"
+            "> These are proposed learning exercises, not guarantees about configured alerts,\n"
+            "> recovery policies, or production readiness.\n"
+            "\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Cargo for builds and tests\n"
+            "  - Clippy for static analysis\n"
+            "  - rustfmt for formatting\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "  - `grafana`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.0.0"),
         languages=[ProgrammingLanguage.rust],
         deployments=[DeploymentTarget.k8s_cluster, DeploymentTarget.helm],
         owners="Logistics",
-        metric_tools=[MetricTool.prometheus, MetricTool.loki, MetricTool.jaeger],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.jaeger,
+            MetricTool.grafana,
+        ],
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -354,13 +1384,67 @@ frontend_block = Manifest(
         Manifest(name="Product Reviews"),
     ],
     info=Info(
-        description="Next.js web storefront. Auto-generates session IDs — no sign-up required. Calls all backend services directly. Written in TypeScript.",
+        description=Markdown(
+            "### Storefront journey\n"
+            "\n"
+            "Next.js web storefront. Auto-generates session IDs — no sign-up required. Calls all backend services directly. Written in TypeScript.\n"
+            "\n"
+            "#### What to inspect\n"
+            "\n"
+            "| Area | Investigation |\n"
+            "| --- | --- |\n"
+            "| **Catalog page** | Inspect catalog, ad, and recommendation dependencies |\n"
+            "| **Cart page** | Compare session state with quantity and currency changes |\n"
+            "| **Checkout page** | Follow the user-visible result through backend spans |\n"
+            "\n"
+            "#### Illustrative flow\n"
+            "\n"
+            "```text\n"
+            "Browse -> product details -> cart -> checkout -> confirmation\n"
+            "```\n"
+            "\n"
+            "#### Suggested demo exercise\n"
+            "\n"
+            "1. Establish a baseline.\n"
+            "   - Walk through a purchase using a fresh synthetic session. Compare browser timing with server spans to separate asset loading, rendering, and backend service latency.\n"
+            "2. Compare the evidence.\n"
+            "   - Correlate **traces**, *logs*, and metrics within the same time window.\n"
+            "   - Save the relevant trace ID with the observed result.\n"
+            "\n"
+            "- [ ] Test keyboard navigation and recoverable error messages during a controlled dependency failure.\n"
+            "- [ ] Restore the starting configuration after the exercise.\n"
+            "\n"
+            "> These are proposed learning exercises, not guarantees about configured alerts,\n"
+            "> recovery policies, or production readiness.\n"
+            "\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - `nextjs`\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - TypeScript for static checks\n"
+            "  - ESLint for source checks\n"
+            "  - Playwright for browser workflows\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "  - `grafana`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.0.0"),
         languages=[ProgrammingLanguage.typescript],
         frameworks=[WebFramework.nextjs],
         deployments=[DeploymentTarget.k8s_cluster, DeploymentTarget.helm],
         owners="Frontend",
-        metric_tools=[MetricTool.prometheus, MetricTool.loki, MetricTool.jaeger],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.jaeger,
+            MetricTool.grafana,
+        ],
         links=[
             Link(
                 site_name="Demo Screenshots",
@@ -380,12 +1464,66 @@ frontend_proxy_block = Manifest(
         Manifest(name="Image Provider"),
     ],
     info=Info(
-        description="Envoy reverse proxy that routes all inbound traffic to Frontend, Flagd-UI, and Image Provider. Single ingress point for the demo.",
+        description=Markdown(
+            "### Shared ingress routing\n"
+            "\n"
+            "Envoy reverse proxy that routes all inbound traffic to Frontend, Flagd-UI, and Image Provider. Single ingress point for the demo.\n"
+            "\n"
+            "#### What to inspect\n"
+            "\n"
+            "| Area | Investigation |\n"
+            "| --- | --- |\n"
+            "| **Route selection** | Verify that each request reaches the intended backend |\n"
+            "| **Upstream failures** | Separate proxy connection errors from application responses |\n"
+            "| **Request context** | Inspect trace continuity across the ingress boundary |\n"
+            "\n"
+            "#### Illustrative flow\n"
+            "\n"
+            "```text\n"
+            "Client -> Frontend Proxy -> Frontend / Flagd-UI / Image Provider\n"
+            "```\n"
+            "\n"
+            "#### Suggested demo exercise\n"
+            "\n"
+            "1. Establish a baseline.\n"
+            "   - Request a storefront page and one product image, then compare their upstream routes. Temporarily stop one backend in a disposable environment and inspect the proxy response.\n"
+            "2. Compare the evidence.\n"
+            "   - Correlate **traces**, *logs*, and metrics within the same time window.\n"
+            "   - Save the relevant trace ID with the observed result.\n"
+            "\n"
+            "- [ ] Review route exposure before sharing the demo, especially the experiment controls.\n"
+            "- [ ] Restore the starting configuration after the exercise.\n"
+            "\n"
+            "> These are proposed learning exercises, not guarantees about configured alerts,\n"
+            "> recovery policies, or production readiness.\n"
+            "\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Container logs for process diagnostics\n"
+            "  - Resource metrics for capacity review\n"
+            "  - Versioned configuration for repeatable environments\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "  - `grafana`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.29.0"),
         languages=[ProgrammingLanguage.cpp],
         deployments=[DeploymentTarget.k8s_cluster, DeploymentTarget.helm],
         owners="Platform",
-        metric_tools=[MetricTool.prometheus, MetricTool.loki, MetricTool.jaeger],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.jaeger,
+            MetricTool.grafana,
+        ],
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -396,12 +1534,66 @@ load_generator_block = Manifest(
     tags=["testing", "load", "simulation"],
     connections=[Manifest(name="Frontend Proxy")],
     info=Info(
-        description="Locust-based load generator that continuously simulates realistic user shopping flows against the Frontend Proxy. Written in Python.",
+        description=Markdown(
+            "### Repeatable synthetic traffic\n"
+            "\n"
+            "Locust-based load generator that continuously simulates realistic user shopping flows against the Frontend Proxy. Written in Python.\n"
+            "\n"
+            "#### What to inspect\n"
+            "\n"
+            "| Area | Investigation |\n"
+            "| --- | --- |\n"
+            "| **Workload shape** | Record user count, arrival pattern, and scenario mix |\n"
+            "| **Errors** | Separate intentional fault responses from test setup failures |\n"
+            "| **Saturation** | Compare latency growth with resource and queue pressure |\n"
+            "\n"
+            "#### Illustrative flow\n"
+            "\n"
+            "```text\n"
+            "Locust journey -> Frontend Proxy -> shopping services\n"
+            "```\n"
+            "\n"
+            "#### Suggested demo exercise\n"
+            "\n"
+            "1. Establish a baseline.\n"
+            "   - Run a modest baseline, change one workload parameter, and repeat. Keep the flag configuration fixed so differences can be attributed to traffic rather than a second experiment.\n"
+            "2. Compare the evidence.\n"
+            "   - Correlate **traces**, *logs*, and metrics within the same time window.\n"
+            "   - Save the relevant trace ID with the observed result.\n"
+            "\n"
+            "- [ ] Reset synthetic state between comparisons and avoid directing load at unintended hosts.\n"
+            "- [ ] Restore the starting configuration after the exercise.\n"
+            "\n"
+            "> These are proposed learning exercises, not guarantees about configured alerts,\n"
+            "> recovery policies, or production readiness.\n"
+            "\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - uv for Python environments\n"
+            "  - Ruff for linting and formatting\n"
+            "  - pytest for focused regression tests\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "  - `grafana`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.0.0"),
         languages=[ProgrammingLanguage.python],
         deployments=[DeploymentTarget.k8s_cluster, DeploymentTarget.helm],
         owners="Platform",
-        metric_tools=[MetricTool.prometheus, MetricTool.loki, MetricTool.jaeger],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.jaeger,
+            MetricTool.grafana,
+        ],
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
@@ -412,12 +1604,66 @@ react_native_app_block = Manifest(
     tags=["mobile", "react-native", "ui"],
     connections=[Manifest(name="Frontend Proxy")],
     info=Info(
-        description="React Native mobile application providing a shopping UI on top of the demo backend via the Frontend Proxy. Written in TypeScript.",
+        description=Markdown(
+            "### Mobile shopping client\n"
+            "\n"
+            "React Native mobile application providing a shopping UI on top of the demo backend via the Frontend Proxy. Written in TypeScript.\n"
+            "\n"
+            "#### What to inspect\n"
+            "\n"
+            "| Area | Investigation |\n"
+            "| --- | --- |\n"
+            "| **Connectivity** | Compare steady network, slow network, and reconnection |\n"
+            "| **Session state** | Check cart continuity across app backgrounding |\n"
+            "| **Parity** | Compare totals and error messages with the web storefront |\n"
+            "\n"
+            "#### Illustrative flow\n"
+            "\n"
+            "```text\n"
+            "Mobile session -> Frontend Proxy -> demo backend\n"
+            "```\n"
+            "\n"
+            "#### Suggested demo exercise\n"
+            "\n"
+            "1. Establish a baseline.\n"
+            "   - Browse and build a synthetic cart on the mobile client, then interrupt connectivity before checkout. Observe the recovery path and correlate requests with backend traces.\n"
+            "2. Compare the evidence.\n"
+            "   - Correlate **traces**, *logs*, and metrics within the same time window.\n"
+            "   - Save the relevant trace ID with the observed result.\n"
+            "\n"
+            "- [ ] Test duplicate taps and retries before assuming a mobile checkout request is sent once.\n"
+            "- [ ] Restore the starting configuration after the exercise.\n"
+            "\n"
+            "> These are proposed learning exercises, not guarantees about configured alerts,\n"
+            "> recovery policies, or production readiness.\n"
+            "\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - TypeScript for static checks\n"
+            "  - ESLint for source checks\n"
+            "  - Playwright for browser workflows\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "  - `grafana`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.0.0"),
         languages=[ProgrammingLanguage.typescript],
         deployments=[DeploymentTarget.k8s_cluster, DeploymentTarget.helm],
         owners="Mobile",
-        metric_tools=[MetricTool.prometheus, MetricTool.loki, MetricTool.jaeger],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.jaeger,
+            MetricTool.grafana,
+        ],
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
