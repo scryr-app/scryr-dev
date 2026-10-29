@@ -1,5 +1,5 @@
 import { CardContentInteractiveContext, CardTitle } from "./CardTitle";
-import { Activity, Code, ExternalLink, Info, Users } from "lucide-react";
+import { Activity, Code, Info, Link2, Users } from "lucide-react";
 import { type ReactNode, useContext } from "react";
 import type { BlockLink } from "@/block/Block";
 import { getClassificationMetadata } from "./ClassificationIcons";
@@ -60,6 +60,7 @@ function Technology({ value }: { value: string }) {
 	return url ? (
 		<a className={styles.chip} href={url} target="_blank" rel="noopener noreferrer">
 			{content}
+			<Link2 className={styles.linkIcon} aria-hidden="true" />
 		</a>
 	) : (
 		<span className={styles.chip}>{content}</span>
@@ -183,7 +184,7 @@ export function InfoCard({
 							<nav className={styles.links} aria-label="Service resources">
 								{externalLinks.map(({ label, url }, index) => (
 									<a key={`${url}-${index}`} href={url} target="_blank" rel="noopener noreferrer">
-										<ExternalLink aria-hidden="true" />
+										<Link2 className={styles.linkIcon} aria-hidden="true" />
 										{label}
 									</a>
 								))}

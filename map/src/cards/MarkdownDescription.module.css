@@ -79,11 +79,32 @@
 	max-width: 100%;
 	height: auto;
 }
-.markdown a,
 .controls button {
 	color: var(--card-link);
 	text-decoration: underline;
 	text-underline-offset: 3px;
+}
+.markdown a {
+	color: inherit;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+	text-decoration-thickness: 1px;
+	text-decoration-skip-ink: auto;
+	border-radius: 3px;
+}
+.markdown a:hover {
+	text-decoration-thickness: 2px;
+}
+.markdown a:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: 3px;
+}
+.linkIcon {
+	display: inline-block;
+	width: 0.85em;
+	height: 0.85em;
+	margin-left: 0.25em;
+	vertical-align: -0.1em;
 }
 .controls {
 	display: flex;

@@ -112,15 +112,36 @@
 	margin: 12px 0;
 }
 .links a {
-	color: var(--card-link);
+	color: inherit;
 	text-decoration: underline;
 	text-underline-offset: 3px;
 }
+.card a {
+	color: inherit;
+	text-decoration-line: underline;
+	text-decoration-thickness: 1px;
+	text-underline-offset: 0.2em;
+	text-decoration-skip-ink: auto;
+}
+a.chip,
+.links a {
+	border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+	border-radius: 6px;
+}
+.links a {
+	padding: 6px 8px;
+}
+.linkIcon {
+	width: 14px;
+	height: 14px;
+	flex: 0 0 auto;
+}
 .card a:hover {
 	background: color-mix(in srgb, var(--card-text) 12%, transparent);
+	text-decoration-thickness: 2px;
 }
 .card a:focus-visible {
-	outline: 2px solid var(--card-link);
+	outline: 2px solid currentColor;
 	outline-offset: 3px;
 }
 .technologyIcon {

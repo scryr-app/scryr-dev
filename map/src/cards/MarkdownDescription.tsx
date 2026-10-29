@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import { Link2 } from "lucide-react";
 import remarkGfm from "remark-gfm";
 import styles from "./MarkdownDescription.module.css";
 
@@ -46,6 +47,7 @@ export function MarkdownDescription({ source }: { source: string }) {
 									rel="noopener noreferrer"
 								>
 									{children}
+									<Link2 className={styles.linkIcon} aria-hidden="true" />
 								</a>
 							),
 						}}
