@@ -1,8 +1,6 @@
 //! GraphQL block types backed by raw manifest JSON.
 
-use super::json_access::{
-    section_string_array_or_top, section_string_or_top, section_value_or_top,
-};
+use super::json_access::{section_string_array_or_top, section_string_or_top};
 use async_graphql::{Object, SimpleObject};
 use serde_json::Value;
 
@@ -92,9 +90,9 @@ impl Block {
             .map(std::string::ToString::to_string)
     }
 
-    /// Primary programming language.
-    pub async fn language(&self) -> Option<String> {
-        section_string_or_top(&self.raw_json, "info", "language", &["language"])
+    /// Programming languages used by the component.
+    pub async fn languages(&self) -> Vec<String> {
+        block_languages(&self.raw_json)
     }
 
     /// Web frameworks in use.
@@ -122,56 +120,14 @@ impl Block {
             .unwrap_or_default()
     }
 
-    /// Primary deployment target identifier.
-    pub async fn deployment(&self) -> Option<String> {
-        section_value_or_top(&self.raw_json, "info", "deployment", &["deployment"]).and_then(
-            |value| {
-                // Handle both string and array formats [provider, target].
-                value
-                    .as_str()
-                    .map(std::string::ToString::to_string)
-                    .or_else(|| {
-                        value
-                            .as_array()
-                            .and_then(|arr| arr.get(1))
-                            .and_then(Value::as_str)
-                            .map(std::string::ToString::to_string)
-                    })
-            },
-        )
+    /// Hosting targets and Infrastructure as Code tools used for deployment.
+    pub async fn deployments(&self) -> Vec<String> {
+        block_deployments(&self.raw_json)
     }
 
-    /// Cloud provider extracted from the deployment tuple.
-    pub async fn deployment_provider(&self) -> Option<String> {
-        section_value_or_top(&self.raw_json, "info", "deployment", &["deployment"]).and_then(
-            |value| {
-                value
-                    .as_array()
-                    .and_then(|arr| arr.first())
-                    .and_then(Value::as_str)
-                    .map(std::string::ToString::to_string)
-            },
-        )
-    }
-
-    /// Team responsible for this service.
-    pub async fn owner_team(&self) -> Option<String> {
-        section_string_or_top(
-            &self.raw_json,
-            "info",
-            "ownerTeam",
-            &["owner_team", "ownerTeam"],
-        )
-    }
-
-    /// Primary authentication mechanism.
-    pub async fn auth_type(&self) -> Option<String> {
-        section_string_or_top(
-            &self.raw_json,
-            "info",
-            "authType",
-            &["auth_type", "authType"],
-        )
+    /// Owners responsible for this service.
+    pub async fn owners(&self) -> Option<String> {
+        block_owners(&self.raw_json)
     }
 
     /// Arbitrary tags for categorization and filtering.
@@ -187,24 +143,9 @@ impl Block {
             .unwrap_or_default()
     }
 
-    /// Monitoring and metrics platform.
-    pub async fn monitoring(&self) -> Option<String> {
-        section_string_or_top(&self.raw_json, "info", "monitoring", &["monitoring"])
-    }
-
-    /// Log aggregation and analysis platform.
-    pub async fn log_aggregation(&self) -> Option<String> {
-        section_string_or_top(
-            &self.raw_json,
-            "info",
-            "logAggregation",
-            &["log_aggregation", "logAggregation"],
-        )
-    }
-
-    /// Distributed tracing and APM platform.
-    pub async fn tracing(&self) -> Option<String> {
-        section_string_or_top(&self.raw_json, "info", "tracing", &["tracing"])
+    /// Monitoring, tracing, and log aggregation tools.
+    pub async fn metric_tools(&self) -> Vec<String> {
+        block_metric_tools(&self.raw_json)
     }
 
     /// Documentation URLs.
@@ -267,35 +208,91 @@ impl Block {
     pub async fn connections(&self) -> Vec<String> {
         block_connections(&self.raw_json)
     }
+}
 
-    /// Infrastructure as Code tooling (terraform, pulumi, cdk, etc.).
-    pub async fn iac_tool(&self) -> Option<String> {
-        section_string_or_top(&self.raw_json, "info", "iacTool", &["iac_tool", "iacTool"])
-    }
+// Accept old persisted manifests at the read boundary. New list fields take
+// precedence even when empty, so intentionally cleared values never reappear.
+fn info_value<'a>(raw_json: &'a Value, keys: &[&str]) -> Option<&'a Value> {
+    keys.iter()
+        .find_map(|key| raw_json.get("info").and_then(|info| info.get(key)))
+        .or_else(|| keys.iter().find_map(|key| raw_json.get(key)))
+}
 
-    /// Maximum number of service replicas.
-    pub async fn max_replicas(&self) -> Option<i32> {
-        section_value_or_top(
-            &self.raw_json,
-            "info",
-            "maxReplicas",
-            &["max_replicas", "maxReplicas"],
-        )
-        .and_then(Value::as_i64)
-        .and_then(|n| i32::try_from(n).ok())
-    }
+fn block_owners(raw_json: &Value) -> Option<String> {
+    info_value(raw_json, &["owners"])
+        .or_else(|| info_value(raw_json, &["ownerTeam", "owner_team"]))
+        .and_then(Value::as_str)
+        .map(str::to_owned)
+}
 
-    /// Minimum number of service replicas.
-    pub async fn min_replicas(&self) -> Option<i32> {
-        section_value_or_top(
-            &self.raw_json,
-            "info",
-            "minReplicas",
-            &["min_replicas", "minReplicas"],
-        )
-        .and_then(Value::as_i64)
-        .and_then(|n| i32::try_from(n).ok())
+fn unique_tools<'a>(values: impl Iterator<Item = &'a str>) -> Vec<String> {
+    let mut result = Vec::new();
+    for value in values {
+        let value = match value.trim() {
+            "" | "none" => continue,
+            "sumologic" => "sumo_logic",
+            other => other,
+        };
+        if !result.iter().any(|existing| existing == value) {
+            result.push(value.to_owned());
+        }
     }
+    result
+}
+
+fn string_list(value: &Value) -> Vec<String> {
+    unique_tools(
+        value
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(Value::as_str),
+    )
+}
+
+fn block_languages(raw_json: &Value) -> Vec<String> {
+    if let Some(value) = info_value(raw_json, &["languages"]) {
+        return string_list(value);
+    }
+    unique_tools(
+        info_value(raw_json, &["language"])
+            .and_then(Value::as_str)
+            .into_iter(),
+    )
+}
+
+fn block_deployments(raw_json: &Value) -> Vec<String> {
+    if let Some(value) = info_value(raw_json, &["deployments"]) {
+        return string_list(value);
+    }
+    let target = info_value(raw_json, &["deployment"]).and_then(|value| {
+        value.as_str().or_else(|| {
+            let tuple = value.as_array()?;
+            let target = tuple.get(1)?.as_str()?;
+            if tuple.first().and_then(Value::as_str) == Some("azure") && target == "batch" {
+                Some("batch_azure")
+            } else {
+                Some(target)
+            }
+        })
+    });
+    let iac = info_value(raw_json, &["iacTool", "iac_tool"]).and_then(Value::as_str);
+    unique_tools(target.into_iter().chain(iac))
+}
+
+fn block_metric_tools(raw_json: &Value) -> Vec<String> {
+    if let Some(value) = info_value(raw_json, &["metricTools", "metric_tools"]) {
+        return string_list(value);
+    }
+    unique_tools(
+        [
+            &["monitoring"][..],
+            &["tracing"][..],
+            &["logAggregation", "log_aggregation"][..],
+        ]
+        .into_iter()
+        .filter_map(|keys| info_value(raw_json, keys).and_then(Value::as_str)),
+    )
 }
 
 fn block_icon(raw_json: &Value) -> Option<String> {
@@ -327,9 +324,155 @@ fn block_connections(raw_json: &Value) -> Vec<String> {
 
 #[cfg(test)]
 mod tests {
+    use async_graphql::{EmptyMutation, EmptySubscription, Object, Schema};
     use serde_json::json;
 
-    use super::{block_connections, block_icon};
+    use super::{
+        Block, block_connections, block_deployments, block_icon, block_languages,
+        block_metric_tools, block_owners,
+    };
+
+    struct InfoQuery;
+
+    #[Object]
+    impl InfoQuery {
+        async fn block(&self) -> Block {
+            Block {
+                raw_json: json!({"info": {
+                    "languages": ["python", "rust"],
+                    "deployments": ["ec2", "terraform"],
+                    "metricTools": ["datadog", "jaeger"], "owners": "Platform and Data"
+                }}),
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn graphql_exposes_plural_lists_and_removes_obsolete_fields()
+    -> Result<(), serde_json::Error> {
+        let schema = Schema::build(InfoQuery, EmptyMutation, EmptySubscription).finish();
+        let response = schema
+            .execute("{ block { languages deployments metricTools owners } }")
+            .await;
+        assert_eq!(response.errors, Vec::new());
+        assert_eq!(
+            response.data.into_json()?,
+            json!({"block": {
+                "languages": ["python", "rust"],
+                "deployments": ["ec2", "terraform"],
+                "metricTools": ["datadog", "jaeger"], "owners": "Platform and Data"
+            }})
+        );
+        for field in [
+            "language",
+            "deployment",
+            "deploymentProvider",
+            "authType",
+            "ownerTeam",
+            "monitoring",
+            "tracing",
+            "logAggregation",
+            "iacTool",
+        ] {
+            let response = schema.execute(format!("{{ block {{ {field} }} }}")).await;
+            assert!(
+                !response.errors.is_empty(),
+                "obsolete field {field} remains"
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn ownership_migrates_legacy_strings_without_overriding_explicit_new_values() {
+        for block in [
+            json!({"info": {"ownerTeam": "Platform"}}),
+            json!({"owner_team": "Platform"}),
+            json!({"info": {"owners": "Platform"}}),
+        ] {
+            assert_eq!(block_owners(&block).as_deref(), Some("Platform"));
+        }
+        assert_eq!(
+            block_owners(&json!({"info": {"owners": "", "ownerTeam": "Platform"}})).as_deref(),
+            Some("")
+        );
+        assert_eq!(block_owners(&json!({})), None);
+    }
+
+    #[test]
+    fn plural_info_fields_return_all_values_and_deduplicate_tools() {
+        let block = json!({"info": {
+            "languages": ["python", "rust"],
+            "deployments": ["ec2", "terraform", "ec2"],
+            "metricTools": ["datadog", "loki", "datadog", "sumo_logic"]
+        }});
+        assert_eq!(block_languages(&block), vec!["python", "rust"]);
+        assert_eq!(block_deployments(&block), vec!["ec2", "terraform"]);
+        assert_eq!(
+            block_metric_tools(&block),
+            vec!["datadog", "loki", "sumo_logic"]
+        );
+    }
+
+    #[test]
+    fn legacy_nested_info_fields_remain_readable_without_authentication() {
+        let block = json!({"info": {
+            "language": "javascript", "deployment": ["aws", "ec2"],
+            "iacTool": "terraform", "monitoring": "datadog",
+            "tracing": "datadog", "logAggregation": "sumologic", "authType": "jwt"
+        }});
+        assert_eq!(block_languages(&block), vec!["javascript"]);
+        assert_eq!(block_deployments(&block), vec!["ec2", "terraform"]);
+        assert_eq!(block_metric_tools(&block), vec!["datadog", "sumo_logic"]);
+    }
+
+    #[test]
+    fn legacy_top_level_fields_and_snake_case_aliases_remain_readable() {
+        let block = json!({
+            "language": "python", "deployment": "helm", "iac_tool": "helm",
+            "monitoring": "none", "tracing": "jaeger", "log_aggregation": "loki"
+        });
+        assert_eq!(block_languages(&block), vec!["python"]);
+        assert_eq!(block_deployments(&block), vec!["helm"]);
+        assert_eq!(block_metric_tools(&block), vec!["jaeger", "loki"]);
+        assert_eq!(
+            block_deployments(&json!({"deployment": ["azure", "batch"]})),
+            vec!["batch_azure"]
+        );
+        assert_eq!(
+            block_metric_tools(&json!({"info": {"metric_tools": ["grafana"]}})),
+            vec!["grafana"]
+        );
+    }
+
+    #[test]
+    fn explicit_empty_lists_override_all_legacy_values() {
+        let block = json!({
+            "languages": ["ruby"], "deployments": ["heroku"], "metricTools": ["loki"],
+            "info": {
+                "languages": [], "language": "python",
+                "deployments": [], "deployment": "ec2", "iacTool": "terraform",
+                "metricTools": [], "monitoring": "datadog", "tracing": "jaeger"
+            }
+        });
+        assert_eq!(block_languages(&block), Vec::<String>::new());
+        assert_eq!(block_deployments(&block), Vec::<String>::new());
+        assert_eq!(block_metric_tools(&block), Vec::<String>::new());
+    }
+
+    #[test]
+    fn missing_and_malformed_info_lists_do_not_invent_defaults() {
+        for block in [
+            json!({}),
+            json!({"info": {
+                "languages": [null, 1, ""], "deployments": "ec2", "metricTools": ["none", {}]
+            }}),
+        ] {
+            assert_eq!(block_languages(&block), Vec::<String>::new());
+            assert_eq!(block_deployments(&block), Vec::<String>::new());
+            assert_eq!(block_metric_tools(&block), Vec::<String>::new());
+        }
+    }
 
     #[test]
     fn block_icon_does_not_invent_classification_icon() {

@@ -39,9 +39,9 @@ api = Manifest(
     connections=[Manifest(name="Postgres")],
     info=Info(
         description="Business API",
-        language=ProgrammingLanguage.python,
+        languages=[ProgrammingLanguage.python],
         frameworks=[WebFramework.fastapi],
-        owner_team="Platform",
+        owners="Platform",
     ),
 )
 

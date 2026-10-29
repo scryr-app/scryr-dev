@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { cameraStore } from "@/camera";
 import { InfoCard, OtherDiagramCard } from "@/cards";
 import { useMapTray } from "@/cards/MapTrayContext";
@@ -8,7 +8,6 @@ import { CardSlots } from "./CardSlots";
 import { BLOCK_DIMENSIONS } from "./dimensions";
 import { TopLabel } from "./TopLabel";
 import { Walls } from "./Walls";
-import { ZoomButton } from "./ZoomButton";
 
 export interface BlockLink {
 	siteName?: string | null;
@@ -27,15 +26,11 @@ export interface BlockProps {
 	description?: string;
 	classification?: string;
 	version?: string;
-	language?: string;
+	languages?: string[];
 	frameworks?: string[];
-	deployment?: string;
-	ownerTeam?: string;
-	authType?: string;
-	iacTool?: string;
-	monitoring?: string;
-	tracing?: string;
-	logAggregation?: string;
+	deployments?: string[];
+	owners?: string;
+	metricTools?: string[];
 	docs?: string[];
 	links?: BlockLink[];
 	diagrams?: string[];
@@ -63,15 +58,11 @@ export function Block({
 	description,
 	classification,
 	version,
-	language,
+	languages = [],
 	frameworks = [],
-	deployment,
-	ownerTeam,
-	authType,
-	iacTool,
-	monitoring,
-	tracing,
-	logAggregation,
+	deployments = [],
+	owners,
+	metricTools = [],
 	docs = [],
 	links = [],
 	diagrams = [],
@@ -80,7 +71,6 @@ export function Block({
 	const hw = width / 2;
 	const hh = height / 2;
 	const hd = depth / 2;
-	const [isHovered, setIsHovered] = useState(false);
 	const blockFocusId = blockData?.name ?? name;
 
 	/** Individual card choices override the shared toolbar selection. */
@@ -104,15 +94,11 @@ export function Block({
 			classification={classification ?? blockData?.consumerType ?? undefined}
 			description={description}
 			version={version}
-			language={language}
+			languages={languages}
 			frameworks={frameworks}
-			deployment={deployment}
-			ownerTeam={ownerTeam}
-			authType={authType}
-			iacTool={iacTool ?? blockData?.iacTool ?? undefined}
-			monitoring={monitoring}
-			tracing={tracing}
-			logAggregation={logAggregation}
+			deployments={deployments}
+			owners={owners}
+			metricTools={metricTools}
 			docs={docs}
 			links={links}
 		/>
@@ -143,11 +129,6 @@ export function Block({
 		// biome-ignore lint/a11y/noStaticElementInteractions: THREE.Group is not an HTML element; onClick is a valid R3F pointer event
 		<group
 			position={position as [number, number, number]}
-			onPointerOver={(event) => {
-				event.stopPropagation();
-				setIsHovered(true);
-			}}
-			onPointerOut={() => setIsHovered(false)}
 			onClick={() => {
 				handleBlockSelect();
 			}}
@@ -157,16 +138,6 @@ export function Block({
 
 			{/* Outer and inner walls */}
 			<Walls color={color} hw={hw} hh={hh} hd={hd} />
-
-			<ZoomButton
-				blockId={blockFocusId}
-				isVisible={isHovered}
-				blockPosition={position}
-				blockWidth={width}
-				blockHeight={height}
-				blockDepth={depth}
-				onSelectBlock={handleBlockSelect}
-			/>
 
 			{/* Card slots — OverviewCard is always first */}
 			<CardSlots

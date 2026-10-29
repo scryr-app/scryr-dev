@@ -15,15 +15,11 @@ it("renders complete metadata and every resource without shortening the content"
 			classification="Classification.public_api"
 			description={description}
 			version="2.3.4"
-			language="typescript"
+			languages={["typescript", "python"]}
 			frameworks={["react", "nextjs", "express", "angular"]}
-			deployment="docker"
-			ownerTeam="Platform engineering"
-			authType="oauth2"
-			iacTool="terraform"
-			monitoring="prometheus"
-			tracing="jaeger"
-			logAggregation="loki"
+			deployments={["ec2", "terraform"]}
+			owners="Platform engineering"
+			metricTools={["prometheus", "jaeger", "loki", "prometheus"]}
 			docs={["https://example.com/guide", "https://example.com/api"]}
 			links={[
 				{ siteName: "Source", httpUrl: "https://example.com/source" },
@@ -38,10 +34,13 @@ it("renders complete metadata and every resource without shortening the content"
 	expect(screen.getByText("Platform engineering")).toBeTruthy();
 	const stack = screen.getByRole("region", { name: "Stack" });
 	expect(within(stack).getByText("Angular")).toBeTruthy();
-	expect(within(stack).getAllByRole("listitem")).toHaveLength(7);
-	expect(within(screen.getByRole("region", { name: "Run" })).getAllByRole("listitem")).toHaveLength(
-		3,
-	);
+	expect(within(stack).getByText("Python")).toBeTruthy();
+	expect(within(stack).getByText("Terraform")).toBeTruthy();
+	expect(within(stack).getAllByRole("listitem")).toHaveLength(8);
+	expect(screen.queryByText("Auth")).toBeNull();
+	expect(
+		within(screen.getByRole("region", { name: "Metric tools" })).getAllByRole("listitem"),
+	).toHaveLength(3);
 	const links = within(screen.getByRole("navigation", { name: "Service resources" })).getAllByRole(
 		"link",
 	);
@@ -53,7 +52,9 @@ it("renders complete metadata and every resource without shortening the content"
 });
 
 it("uses browser SVG assets and renders unknown classifications without dropping their label", () => {
-	const { container } = render(<InfoCard classification="custom_service" language="typescript" />);
+	const { container } = render(
+		<InfoCard classification="custom_service" languages={["typescript"]} />,
+	);
 	expect(screen.getByText("Custom service")).toBeTruthy();
 	expect(container.querySelector("svg path")).toBeTruthy();
 	const logo = container.querySelector("img");

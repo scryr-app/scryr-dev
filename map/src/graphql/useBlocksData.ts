@@ -56,17 +56,6 @@ function nonEmptyString(value: unknown): string | null {
 	return typeof value === "string" && value.trim().length > 0 ? value : null;
 }
 
-function firstNumber(source: RawRecord | undefined, paths: string[][]): number | null {
-	for (const path of paths) {
-		const value = getValue(source, path);
-		if (typeof value === "number" && Number.isFinite(value)) {
-			return value;
-		}
-	}
-
-	return null;
-}
-
 function firstStringArray(source: RawRecord | undefined, paths: string[][]): string[] {
 	for (const path of paths) {
 		const value = getValue(source, path);
@@ -110,7 +99,7 @@ function normalizeLinks(value: unknown): Block["links"] {
 		}));
 }
 
-function normalizeBlock(block: Block): Block {
+export function normalizeBlock(block: Block): Block {
 	// The 3D text font does not include these Unicode punctuation glyphs.
 	// Normalize them at the data boundary so labels and metadata cards are safe.
 	const sanitizedBlock = JSON.parse(
@@ -126,58 +115,29 @@ function normalizeBlock(block: Block): Block {
 			nonEmptyString(sanitizedBlock.description) ??
 			firstString(raw, [["info", "description"], ["description"]]),
 		version: sanitizedBlock.version ?? firstString(raw, [["info", "version"], ["version"]]),
-		language: sanitizedBlock.language ?? firstString(raw, [["info", "language"], ["language"]]),
+		languages: Array.isArray(sanitizedBlock.languages)
+			? asStringArray(sanitizedBlock.languages)
+			: firstStringArray(raw, [["info", "languages"], ["languages"]]),
 		frameworks:
 			asStringArray(sanitizedBlock.frameworks).length > 0
 				? asStringArray(sanitizedBlock.frameworks)
 				: firstStringArray(raw, [["info", "frameworks"], ["frameworks"]]),
-		deployment:
-			sanitizedBlock.deployment ?? firstString(raw, [["info", "deployment"], ["deployment"]]),
+		deployments: Array.isArray(sanitizedBlock.deployments)
+			? asStringArray(sanitizedBlock.deployments)
+			: firstStringArray(raw, [["info", "deployments"], ["deployments"]]),
 		docs:
 			asStringArray(sanitizedBlock.docs).length > 0
 				? asStringArray(sanitizedBlock.docs)
 				: firstStringArray(raw, [["info", "docs"], ["docs"]]),
-		ownerTeam:
-			sanitizedBlock.ownerTeam ??
-			firstString(raw, [
-				["info", "ownerTeam"],
-				["info", "owner_team"],
-				["ownerTeam"],
-				["owner_team"],
-			]),
-		authType:
-			sanitizedBlock.authType ??
-			firstString(raw, [["info", "authType"], ["info", "auth_type"], ["authType"], ["auth_type"]]),
-		monitoring:
-			sanitizedBlock.monitoring ?? firstString(raw, [["info", "monitoring"], ["monitoring"]]),
-		logAggregation:
-			sanitizedBlock.logAggregation ??
-			firstString(raw, [
-				["info", "logAggregation"],
-				["info", "log_aggregation"],
-				["logAggregation"],
-				["log_aggregation"],
-			]),
-		tracing: sanitizedBlock.tracing ?? firstString(raw, [["info", "tracing"], ["tracing"]]),
-		iacTool:
-			sanitizedBlock.iacTool ??
-			firstString(raw, [["info", "iacTool"], ["info", "iac_tool"], ["iacTool"], ["iac_tool"]]),
-		maxReplicas:
-			sanitizedBlock.maxReplicas ??
-			firstNumber(raw, [
-				["info", "maxReplicas"],
-				["info", "max_replicas"],
-				["maxReplicas"],
-				["max_replicas"],
-			]),
-		minReplicas:
-			sanitizedBlock.minReplicas ??
-			firstNumber(raw, [
-				["info", "minReplicas"],
-				["info", "min_replicas"],
-				["minReplicas"],
-				["min_replicas"],
-			]),
+		owners: sanitizedBlock.owners ?? firstString(raw, [["info", "owners"], ["owners"]]),
+		metricTools: Array.isArray(sanitizedBlock.metricTools)
+			? asStringArray(sanitizedBlock.metricTools)
+			: firstStringArray(raw, [
+					["info", "metricTools"],
+					["info", "metric_tools"],
+					["metricTools"],
+					["metric_tools"],
+				]),
 		links: sanitizedBlock.links.length > 0 ? normalizeLinks(sanitizedBlock.links) : rawLinks,
 		tags: asStringArray(sanitizedBlock.tags),
 	};

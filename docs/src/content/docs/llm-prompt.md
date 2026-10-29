@@ -27,7 +27,7 @@ Investigation
 1. Read the main README and contribution/build instructions.
 2. Inspect workspace/package manifests, lockfiles, containers, infrastructure, CI workflows, deployment config, API schemas, and executable entrypoints.
 3. Identify runtime boundaries and data/control flow, not just folders.
-4. Derive languages, frameworks, deployment targets, ownership, auth, observability, documentation links, and source repositories only from evidence.
+4. Derive languages, frameworks, deployment targets and IaC tools, owners, metric tools, documentation links, and source repositories only from evidence.
 5. Notice background workers, scheduled jobs, message brokers, databases, third-party APIs, and CI/CD paths.
 
 Authoring rules

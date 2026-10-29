@@ -46,3 +46,27 @@ class TracingType(StrEnum):
     aws_xray = "aws_xray"
     honeycomb = "honeycomb"
     none = "none"
+
+
+class MetricTool(StrEnum):
+    """Monitoring, distributed tracing, and log aggregation tools."""
+
+    prometheus = "prometheus"
+    datadog = "datadog"
+    new_relic = "new_relic"
+    elastic = "elastic"
+    splunk = "splunk"
+    cloudwatch = "cloudwatch"
+    stackdriver = "stackdriver"
+    dynatrace = "dynatrace"
+    grafana = "grafana"
+    sumo_logic = "sumo_logic"
+    elk_stack = "elk_stack"
+    papertrail = "papertrail"
+    loggly = "loggly"
+    loki = "loki"
+    jaeger = "jaeger"
+    zipkin = "zipkin"
+    elastic_apm = "elastic_apm"
+    aws_xray = "aws_xray"
+    honeycomb = "honeycomb"

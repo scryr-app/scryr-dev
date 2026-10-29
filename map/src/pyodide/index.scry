@@ -2,15 +2,12 @@
 
 from scryr import Diagram, Info, Link, Manifest
 from scryr.types import (
-    AuthType,
     Classification,
     DeploymentTarget,
-    IaCToolType,
-    LogAggregationType,
-    MonitoringType,
+    Markdown,
+    MetricTool,
     ProgrammingLanguage,
     SemVer,
-    TracingType,
     Url,
     WebFramework,
 )
@@ -28,17 +25,11 @@ react_block = Manifest(
             "React frontend. Boy Howdy"
         ),
         version=SemVer("0.1.0-alpha.1"),
-        language=ProgrammingLanguage.javascript,
+        languages=[ProgrammingLanguage.javascript],
         frameworks=[WebFramework.express, WebFramework.nextjs],
-        deployment=DeploymentTarget.ec2,
-        owner_team="Frontend Team",
-        auth_type=AuthType.oauth2,
-        monitoring=MonitoringType.datadog,
-        log_aggregation=LogAggregationType.cloudwatch,
-        tracing=TracingType.datadog,
-        iac_tool=IaCToolType.terraform,
-        max_replicas=5,
-        min_replicas=2,
+        deployments=[DeploymentTarget.ec2, DeploymentTarget.terraform],
+        owners="Frontend Team",
+        metric_tools=[MetricTool.datadog, MetricTool.cloudwatch],
         links=[Link(site_name="Example Site", http_url=Url("https://www.example.com"))],
         docs=["https://www.mongodb.com/docs/", "https://expressjs.com/", "https://reactjs.org/"],
     ),
@@ -52,16 +43,10 @@ redis_pubsub_block = Manifest(
     info=Info(
         description="Redis configured for real-time messaging and event streaming",
         version=SemVer("7.2.0"),
-        language=ProgrammingLanguage.c,
-        deployment=DeploymentTarget.ec2,
-        owner_team="Events Team",
-        auth_type=AuthType.api_key,
-        monitoring=MonitoringType.prometheus,
-        log_aggregation=LogAggregationType.elk_stack,
-        tracing=TracingType.jaeger,
-        iac_tool=IaCToolType.terraform,
-        max_replicas=4,
-        min_replicas=2,
+        languages=[ProgrammingLanguage.c],
+        deployments=[DeploymentTarget.ec2, DeploymentTarget.terraform],
+        owners="Events Team",
+        metric_tools=[MetricTool.prometheus, MetricTool.elk_stack, MetricTool.jaeger],
         links=[
             Link(
                 site_name="Redis Pub/Sub Documentation",
@@ -76,15 +61,30 @@ express_block = Manifest(
     classification=Classification.internal_api,
     connections=[Manifest(name="MongoDB")],
     info=Info(
-        language=ProgrammingLanguage.javascript,
-        deployment=DeploymentTarget.amplify,
-        owner_team="Backend Team",
-        auth_type=AuthType.jwt,
-        log_aggregation=LogAggregationType.elk_stack,
-        tracing=TracingType.jaeger,
-        iac_tool=IaCToolType.cloudformation,
-        max_replicas=3,
-        min_replicas=1,
+        description=Markdown(
+            "**Backend API** for customer accounts and application data.\n\n"
+            "- Validates requests and persists records in MongoDB\n"
+            "- Publishes live updates through Redis\n\n"
+            "| Endpoint | Purpose |\n"
+            "| --- | --- |\n"
+            "| `GET /health` | Readiness check |\n"
+            "| `GET /customers` | Customer records |\n\n"
+            "- [x] Request validation\n"
+            "- [ ] Rate-limit rollout\n\n"
+            "> Coordinate schema changes with the frontend team.\n\n"
+            "See the [API guide](https://api.example.com/docs)."
+        ),
+        version=SemVer("1.4.2"),
+        languages=[ProgrammingLanguage.javascript],
+        frameworks=[WebFramework.express],
+        deployments=[DeploymentTarget.amplify, DeploymentTarget.cloudformation],
+        owners="Backend Team",
+        metric_tools=[MetricTool.prometheus, MetricTool.elk_stack, MetricTool.jaeger],
+        links=[
+            Link(site_name="API Explorer", http_url=Url("https://api.example.com/docs")),
+            Link(site_name="API Health", http_url=Url("https://api.example.com/health")),
+        ],
+        docs=["https://expressjs.com/", "https://docs.example.com/runbooks/backend"],
     ),
 )
 mongo_block = Manifest(
@@ -92,15 +92,27 @@ mongo_block = Manifest(
     classification=Classification.database,
     connections=[Manifest(name="Express"), Manifest(name="React")],
     info=Info(
+        description=(
+            "Primary document store for customer profiles and application records. "
+            "The sample deployment uses a replica set with scheduled backups."
+        ),
+        version=SemVer("7.0.12"),
+        languages=[ProgrammingLanguage.cpp],
+        deployments=[DeploymentTarget.ec2, DeploymentTarget.terraform],
         frameworks=[WebFramework.nextjs],
-        owner_team="Data Team",
-        auth_type=AuthType.basic,
-        monitoring=MonitoringType.cloudwatch,
-        log_aggregation=LogAggregationType.cloudwatch,
-        tracing=TracingType.aws_xray,
-        iac_tool=IaCToolType.terraform,
-        max_replicas=3,
-        min_replicas=1,
+        owners="Data Team",
+        metric_tools=[MetricTool.cloudwatch, MetricTool.aws_xray],
+        links=[
+            Link(
+                site_name="Database Dashboard",
+                http_url=Url("https://monitoring.example.com/mongodb"),
+            ),
+            Link(
+                site_name="Backup Runbook",
+                http_url=Url("https://docs.example.com/runbooks/database-backups"),
+            ),
+        ],
+        docs=["https://www.mongodb.com/docs/"],
     ),
 )
 # Legacy AngularJS admin console (static site)
@@ -112,16 +124,10 @@ angularjs_admin_block = Manifest(
     info=Info(
         description="Legacy AngularJS-based admin console for operational management",
         version=SemVer("1.7.9"),
-        language=ProgrammingLanguage.javascript,
-        deployment=DeploymentTarget.cloudfront,
-        owner_team="Ops Team",
-        auth_type=AuthType.basic,
-        monitoring=MonitoringType.cloudwatch,
-        log_aggregation=LogAggregationType.elk_stack,
-        tracing=TracingType.none,
-        iac_tool=IaCToolType.cloudformation,
-        max_replicas=2,
-        min_replicas=1,
+        languages=[ProgrammingLanguage.javascript],
+        deployments=[DeploymentTarget.cloudfront, DeploymentTarget.cloudformation],
+        owners="Ops Team",
+        metric_tools=[MetricTool.cloudwatch, MetricTool.elk_stack],
         links=[Link(site_name="Admin Portal", http_url=Url("https://admin.example.com"))],
         docs=["https://docs.angularjs.org/"],
     ),

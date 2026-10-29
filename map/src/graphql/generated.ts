@@ -39,18 +39,14 @@ export enum ArtifactKind {
 
 export type Block = {
   __typename?: 'Block';
-  /** Primary authentication mechanism. */
-  authType?: Maybe<Scalars['String']['output']>;
   /** CI/CD pipeline platform (`github_actions`, `jenkins`, `circleci`, etc.). */
   cicdTool?: Maybe<Scalars['String']['output']>;
   /** Named connections to other components in the graph. */
   connections: Array<Scalars['String']['output']>;
   /** Service classification (e.g. `public_api`, `worker`, `database`). */
   consumerType?: Maybe<Scalars['String']['output']>;
-  /** Primary deployment target identifier. */
-  deployment?: Maybe<Scalars['String']['output']>;
-  /** Cloud provider extracted from the deployment tuple. */
-  deploymentProvider?: Maybe<Scalars['String']['output']>;
+  /** Hosting targets and Infrastructure as Code tools used for deployment. */
+  deployments: Array<Scalars['String']['output']>;
   /** Short description of the component. */
   description?: Maybe<Scalars['String']['output']>;
   /** Documentation URLs. */
@@ -59,38 +55,28 @@ export type Block = {
   frameworks: Array<Scalars['String']['output']>;
   /** Recent GitHub workflow runs and their observed status history. */
   githubActions?: Maybe<Scalars['JSON']['output']>;
-  /** Infrastructure as Code tooling (terraform, pulumi, cdk, etc.). */
-  iacTool?: Maybe<Scalars['String']['output']>;
   /** Emoji or small icon string for the component. */
   icon?: Maybe<Scalars['String']['output']>;
-  /** Primary programming language. */
-  language?: Maybe<Scalars['String']['output']>;
+  /** Programming languages used by the component. */
+  languages: Array<Scalars['String']['output']>;
   /** 1-based line number of the manifest assignment in the source file. */
   lineNumber?: Maybe<Scalars['Int']['output']>;
   /** Helpful external links with display name and URL. */
   links: Array<Link>;
-  /** Log aggregation and analysis platform. */
-  logAggregation?: Maybe<Scalars['String']['output']>;
   /** Stable Manifest identity used to attach operational history. */
   manifestId?: Maybe<Scalars['String']['output']>;
-  /** Maximum number of service replicas. */
-  maxReplicas?: Maybe<Scalars['Int']['output']>;
-  /** Minimum number of service replicas. */
-  minReplicas?: Maybe<Scalars['Int']['output']>;
-  /** Monitoring and metrics platform. */
-  monitoring?: Maybe<Scalars['String']['output']>;
+  /** Monitoring, tracing, and log aggregation tools. */
+  metricTools: Array<Scalars['String']['output']>;
   /** Display name for the component (used as the block label). */
   name?: Maybe<Scalars['String']['output']>;
-  /** Team responsible for this service. */
-  ownerTeam?: Maybe<Scalars['String']['output']>;
+  /** Owners responsible for this service. */
+  owners?: Maybe<Scalars['String']['output']>;
   /** Returns the raw JSON as a string for debugging. */
   rawJsonString: Scalars['String']['output'];
   /** Repository or source URL (also used by `GithubCard`). */
   sourceCodeUrl?: Maybe<Scalars['String']['output']>;
   /** Arbitrary tags for categorization and filtering. */
   tags: Array<Scalars['String']['output']>;
-  /** Distributed tracing and APM platform. */
-  tracing?: Maybe<Scalars['String']['output']>;
   /** Semver-like version string (e.g. "1.2.3"). */
   version?: Maybe<Scalars['String']['output']>;
 };
@@ -280,7 +266,7 @@ export type GetBlocksQueryVariables = Exact<{
 }>;
 
 
-export type GetBlocksQuery = { blocks: Array<{ name: string | null, description: string | null, version: string | null, lineNumber: number | null, consumerType: string | null, icon: string | null, language: string | null, frameworks: Array<string>, deployment: string | null, deploymentProvider: string | null, sourceCodeUrl: string | null, connections: Array<string>, docs: Array<string>, ownerTeam: string | null, tags: Array<string>, authType: string | null, monitoring: string | null, logAggregation: string | null, tracing: string | null, iacTool: string | null, cicdTool: string | null, maxReplicas: number | null, minReplicas: number | null, rawJsonString: string, links: Array<{ siteName: string | null, httpUrl: string | null }> }> };
+export type GetBlocksQuery = { blocks: Array<{ name: string | null, description: string | null, version: string | null, lineNumber: number | null, consumerType: string | null, icon: string | null, languages: Array<string>, frameworks: Array<string>, deployments: Array<string>, sourceCodeUrl: string | null, connections: Array<string>, docs: Array<string>, owners: string | null, tags: Array<string>, metricTools: Array<string>, cicdTool: string | null, rawJsonString: string, links: Array<{ siteName: string | null, httpUrl: string | null }> }> };
 
 
 export class TypedDocumentString<TResult, TVariables>
@@ -378,23 +364,16 @@ export const GetBlocksDocument = new TypedDocumentString(`
     lineNumber
     consumerType
     icon
-    language
+    languages
     frameworks
-    deployment
-    deploymentProvider
+    deployments
     sourceCodeUrl
     connections
     docs
-    ownerTeam
+    owners
     tags
-    authType
-    monitoring
-    logAggregation
-    tracing
-    iacTool
+    metricTools
     cicdTool
-    maxReplicas
-    minReplicas
     links {
       siteName
       httpUrl

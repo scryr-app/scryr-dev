@@ -6,6 +6,7 @@ from enum import Enum, StrEnum
 class CloudProvider(StrEnum):
     """Cloud provider enum."""
 
+    tooling = "tooling"
     aws = "aws"
     azure = "azure"
     gcp = "gcp"
@@ -51,7 +52,7 @@ class DeploymentTarget(Enum):
     vm = (CloudProvider.azure, "vm")
     static_web_apps = (CloudProvider.azure, "static_web_apps")
     service_fabric = (CloudProvider.azure, "service_fabric")
-    batch_azure = (CloudProvider.azure, "batch")
+    batch_azure = (CloudProvider.azure, "batch_azure")
 
     # ----------------------- GCP -----------------------
     cloud_run = (CloudProvider.gcp, "cloud_run")
@@ -95,6 +96,14 @@ class DeploymentTarget(Enum):
     cloudflare_workers = (CloudProvider.serverless, "cloudflare_workers")
     railway = (CloudProvider.serverless, "railway")
     amplify_serverless = (CloudProvider.serverless, "amplify_serverless")
+
+    # Infrastructure as Code tools share this list with their deployment targets.
+    terraform = (CloudProvider.tooling, "terraform")
+    cloudformation = (CloudProvider.tooling, "cloudformation")
+    arm_template = (CloudProvider.tooling, "arm_template")
+    pulumi = (CloudProvider.tooling, "pulumi")
+    cdktf = (CloudProvider.tooling, "cdktf")
+    kustomize = (CloudProvider.tooling, "kustomize")
 
     unknown = (CloudProvider.metal, "unknown")
 

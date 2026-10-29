@@ -13,7 +13,7 @@ from scryr.saas.deployment_target import DeploymentTarget
 from scryr.saas.environment import AuthType
 from scryr.saas.interface import InterfaceType
 from scryr.saas.programming_languages import ProgrammingLanguage
-from scryr.saas.telemetry import LogAggregationType, MonitoringType, TracingType
+from scryr.saas.telemetry import LogAggregationType, MetricTool, MonitoringType, TracingType
 from scryr.saas.web_frameworks import WebFramework
 from scryr.text import Label, Markdown, Url
 from scryr.version import (
@@ -38,6 +38,7 @@ __all__ = [
     "Label",
     "LogAggregationType",
     "Markdown",
+    "MetricTool",
     "MonitoringType",
     "ProgrammingLanguage",
     "SemVer",

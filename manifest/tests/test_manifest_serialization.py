@@ -18,16 +18,12 @@ from scryr.manifest import (
     ManifestQuery,
 )
 from scryr.types import (
-    AuthType,
     CalendarVersion,
     Classification,
     DeploymentTarget,
-    IaCToolType,
-    LogAggregationType,
-    MonitoringType,
+    MetricTool,
     ProgrammingLanguage,
     SemVer,
-    TracingType,
     Url,
     WebFramework,
 )
@@ -40,14 +36,10 @@ def test_manifest_dict_serializes_enums_and_version_to_strings() -> None:
         classification=Classification.internal_api,
         info=Info(
             version=SemVer("1.2.3"),
-            language=ProgrammingLanguage.javascript,
+            languages=[ProgrammingLanguage.javascript],
             frameworks=[WebFramework.express, WebFramework.nextjs],
-            deployment=DeploymentTarget.cloud_run,
-            auth_type=AuthType.oauth2,
-            monitoring=MonitoringType.datadog,
-            log_aggregation=LogAggregationType.elk_stack,
-            tracing=TracingType.jaeger,
-            iac_tool=IaCToolType.terraform,
+            deployments=[DeploymentTarget.cloud_run, DeploymentTarget.terraform],
+            metric_tools=[MetricTool.datadog, MetricTool.elk_stack, MetricTool.jaeger],
         ),
     )
 
@@ -55,15 +47,11 @@ def test_manifest_dict_serializes_enums_and_version_to_strings() -> None:
 
     info = data["info"]
     assert info["version"] == "1.2.3"
-    assert info["language"] == "javascript"
+    assert info["languages"] == ["javascript"]
     assert info["frameworks"] == ["express", "nextjs"]
-    assert info["deployment"] == "cloud_run"
+    assert info["deployments"] == ["cloud_run", "terraform"]
     assert data["classification"] == "internal_api"
-    assert info["authType"] == "oauth2"
-    assert info["monitoring"] == "datadog"
-    assert info["logAggregation"] == "elk_stack"
-    assert info["tracing"] == "jaeger"
-    assert info["iacTool"] == "terraform"
+    assert info["metricTools"] == ["datadog", "elk_stack", "jaeger"]
     assert data["icon"] == ""
 
 
@@ -103,14 +91,14 @@ def test_manifest_accepts_flat_section_constructor_fields() -> None:
     manifest = Manifest(
         name="FlatSections",
         description="visible",
-        language=ProgrammingLanguage.javascript,
+        languages=[ProgrammingLanguage.javascript],
         frameworks=[WebFramework.nextjs],
     )
 
     data = manifest.to_dict()
 
     assert data["info"]["description"] == "visible"
-    assert data["info"]["language"] == "javascript"
+    assert data["info"]["languages"] == ["javascript"]
     assert data["info"]["frameworks"] == ["nextjs"]
 
 
@@ -184,8 +172,8 @@ def test_manifest_preserves_explicit_icon() -> None:
 
 def test_diagram_serializes_included_manifests() -> None:
     """Diagram captures a high-level list of manifests to render together."""
-    web = Manifest(name="Web", language=ProgrammingLanguage.typescript)
-    api = Manifest(name="API", language=ProgrammingLanguage.python)
+    web = Manifest(name="Web", languages=[ProgrammingLanguage.typescript])
+    api = Manifest(name="API", languages=[ProgrammingLanguage.python])
     diagram = Diagram(name="Product", description="Product surface", manifests=[web, api])
 
     data = diagram.to_dict()
@@ -199,26 +187,26 @@ def test_manifest_query_filters_by_shorthand_and_list_fields() -> None:
     """ManifestQuery matches common Pydantic fields with compact keyword syntax."""
     api = Manifest(
         name="API",
-        language=ProgrammingLanguage.python,
+        languages=[ProgrammingLanguage.python],
         frameworks=[WebFramework.fastapi],
         tags=["backend", "public"],
     )
     web = Manifest(
         name="Web",
-        language=ProgrammingLanguage.typescript,
+        languages=[ProgrammingLanguage.typescript],
         frameworks=[WebFramework.nextjs],
         tags=["frontend", "public"],
     )
 
     query = ManifestQuery(
-        language=ProgrammingLanguage.python,
+        languages=ProgrammingLanguage.python,
         frameworks=WebFramework.fastapi,
         tags="backend",
     )
 
     assert query.filter([api, web]) == [api]
     assert query.model_dump(mode="json", by_alias=True)["where"] == {
-        "info.language": "python",
+        "info.languages": "python",
         "info.frameworks": "fastapi",
         "tags": "backend",
     }
@@ -228,16 +216,16 @@ def test_manifest_query_filters_by_nested_field_paths() -> None:
     """ManifestQuery accepts nested mappings and Python-safe double-underscore paths."""
     api = Manifest(
         name="API",
-        info=Info(owner_team="backend"),
+        info=Info(owners="backend", languages=[ProgrammingLanguage.python]),
     )
     web = Manifest(
         name="Web",
-        info=Info(owner_team="frontend"),
+        info=Info(owners="frontend"),
     )
 
     query = ManifestQuery(
-        where={"info": {"ownerTeam": "backend"}},
-        info__language=ProgrammingLanguage.python,
+        where={"info": {"owners": "backend"}},
+        info__languages=ProgrammingLanguage.python,
     )
 
     assert query.filter([api, web]) == [api]
@@ -245,9 +233,9 @@ def test_manifest_query_filters_by_nested_field_paths() -> None:
 
 def test_diagram_query_resolves_against_manifest_pool() -> None:
     """Diagram can use a query instead of an explicit manifest list."""
-    web = Manifest(name="Web", language=ProgrammingLanguage.typescript)
-    api = Manifest(name="API", language=ProgrammingLanguage.python)
-    diagram = Diagram(name="Python Services", query=Diagram.Query(language="python"))
+    web = Manifest(name="Web", languages=[ProgrammingLanguage.typescript])
+    api = Manifest(name="API", languages=[ProgrammingLanguage.python])
+    diagram = Diagram(name="Python Services", query=Diagram.Query(languages="python"))
 
     data = diagram.to_dict(manifest_pool=[web, api])
 
@@ -256,10 +244,10 @@ def test_diagram_query_resolves_against_manifest_pool() -> None:
 
 def test_diagram_rejects_mixed_manifest_selection_modes() -> None:
     """Diagram treats query as an alternative to explicit manifests."""
-    api = Manifest(name="API", language=ProgrammingLanguage.python)
+    api = Manifest(name="API", languages=[ProgrammingLanguage.python])
 
     with pytest.raises(ValueError, match="either manifests or query"):
-        Diagram(name="Mixed", manifests=[api], query=ManifestQuery(language="python"))
+        Diagram(name="Mixed", manifests=[api], query=ManifestQuery(languages="python"))
 
 
 @pytest.mark.parametrize("classification", list(Classification))

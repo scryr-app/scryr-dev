@@ -11,16 +11,13 @@ Source: https://github.com/mattermost/mattermost
 
 from scryr import Diagram, Info, Link, Manifest
 from scryr.types import (
-    AuthType,
     CalendarVersion,
     Classification,
     DeploymentTarget,
-    IaCToolType,
     IncrementalVersion,
-    LogAggregationType,
-    MonitoringType,
+    Markdown,
+    MetricTool,
     ProgrammingLanguage,
-    TracingType,
     Url,
     WebFramework,
     parse_version,
@@ -28,11 +25,6 @@ from scryr.types import (
 
 _SOURCE = Url("https://github.com/mattermost/mattermost")
 _DOCS = Url("https://docs.mattermost.com/")
-_DEPLOYMENT = DeploymentTarget.docker_swarm
-_IAC = IaCToolType.none
-_MONITOR = MonitoringType.prometheus
-_LOGS = LogAggregationType.loki
-_TRACING = TracingType.none
 postgres_block = Manifest(
     name="PostgreSQL",
     icon="🐘",
@@ -40,18 +32,74 @@ postgres_block = Manifest(
     tags=["database", "sql", "infra"],
     connections=[],
     info=Info(
-        description="Primary relational database storing all Mattermost data: users, teams, channels, posts, preferences, and plugin configurations.",
+        description=Markdown(
+            "## Conversation records\n"
+            "\n"
+            "Primary relational database storing all Mattermost data: users, teams, channels, posts, preferences, and plugin configurations.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Relational state | Users, channel memberships, and posts |\n"
+            "| Recovery scope | Pair database recovery with attachment recovery |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Create a channel and post a message with a test account.\n"
+            "2. Restore a test backup and verify membership and post relationships.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** An attachment reference may survive even when its object is unavailable.\n"
+            "\n"
+            "Suggested diagnostic signals: *transaction latency, lock waits, and replication or backup age*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - SQL clients for read-only inspection\n"
+            "  - Query plans for index review\n"
+            "  - Migration tooling for schema changes\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `grafana`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("15.0.0"),
-        language=ProgrammingLanguage.sql,
-        deployment=_DEPLOYMENT,
-        owner_team="Platform",
-        auth_type=AuthType.basic,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
+        languages=[ProgrammingLanguage.sql],
+        deployments=[DeploymentTarget.docker_swarm],
+        owners="Platform",
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.grafana,
+            MetricTool.jaeger,
+        ],
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
 )
@@ -62,18 +110,74 @@ redis_block = Manifest(
     tags=["cache", "pubsub", "infra"],
     connections=[],
     info=Info(
-        description="In-memory cache used for session tokens, rate limiting, cluster-wide pub/sub events, and push notification queuing.",
+        description=Markdown(
+            "## Shared transient state\n"
+            "\n"
+            "In-memory cache used for session tokens, rate limiting, cluster-wide pub/sub events, and push notification queuing.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Cache entries | Document expiry and invalidation rules |\n"
+            "| Events | Distinguish ephemeral notifications from persisted posts |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Expire a test cache entry and observe the application fallback.\n"
+            "2. Reconnect a client and compare its history against the database-backed API.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** Lost transient events must not be treated as lost persisted conversations.\n"
+            "\n"
+            "Suggested diagnostic signals: *evictions, client connections, and publish or consume failures*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Container logs for process diagnostics\n"
+            "  - Resource metrics for capacity review\n"
+            "  - Versioned configuration for repeatable environments\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `grafana`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("7.0.0"),
-        language=ProgrammingLanguage.c,
-        deployment=_DEPLOYMENT,
-        owner_team="Platform",
-        auth_type=AuthType.none,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
+        languages=[ProgrammingLanguage.c],
+        deployments=[DeploymentTarget.docker_swarm],
+        owners="Platform",
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.grafana,
+            MetricTool.jaeger,
+        ],
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
 )
@@ -84,18 +188,74 @@ minio_block = Manifest(
     tags=["storage", "s3", "infra"],
     connections=[],
     info=Info(
-        description="S3-compatible object storage for file and image attachments, custom emoji, and plugin assets uploaded by users.",
+        description=Markdown(
+            "## Attachment storage\n"
+            "\n"
+            "S3-compatible object storage for file and image attachments, custom emoji, and plugin assets uploaded by users.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Objects | Images, documents, and generated previews |\n"
+            "| References | Application records identify objects and their owners |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Upload an attachment and retrieve it through an authorized account.\n"
+            "2. Remove access to the channel and verify attachment access behavior.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** Database backups alone cannot restore uploaded binary content.\n"
+            "\n"
+            "Suggested diagnostic signals: *upload failures, object retrieval latency, and capacity*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Go tooling for builds and tests\n"
+            "  - gofmt for source formatting\n"
+            "  - Delve for local debugging\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `grafana`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=IncrementalVersion.parse("1"),
-        language=ProgrammingLanguage.go,
-        deployment=_DEPLOYMENT,
-        owner_team="Platform",
-        auth_type=AuthType.api_key,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
+        languages=[ProgrammingLanguage.go],
+        deployments=[DeploymentTarget.docker_swarm],
+        owners="Platform",
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.grafana,
+            MetricTool.jaeger,
+        ],
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
 )
@@ -106,18 +266,74 @@ elasticsearch_block = Manifest(
     tags=["search", "index", "infra"],
     connections=[],
     info=Info(
-        description="Full-text search index providing fast channel, user, and post search across large Mattermost deployments. OpenSearch is supported as an alternative.",
+        description=Markdown(
+            "## Search projection\n"
+            "\n"
+            "Full-text search index providing fast channel, user, and post search across large Mattermost deployments. OpenSearch is supported as an alternative.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Source | Persisted messages and searchable account data |\n"
+            "| Projection | Search results can lag behind committed application state |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Create a uniquely named test post and wait for it to become searchable.\n"
+            "2. Delete or restrict it and check the resulting search visibility.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** Search recovery should rebuild the projection without replacing the primary data.\n"
+            "\n"
+            "Suggested diagnostic signals: *indexing lag, rejected writes, and query latency*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Maven or Gradle for builds\n"
+            "  - JUnit for focused tests\n"
+            "  - Java Flight Recorder for runtime investigation\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `grafana`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("8.11.0"),
-        language=ProgrammingLanguage.java,
-        deployment=_DEPLOYMENT,
-        owner_team="Platform",
-        auth_type=AuthType.basic,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
+        languages=[ProgrammingLanguage.java],
+        deployments=[DeploymentTarget.docker_swarm],
+        owners="Platform",
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.grafana,
+            MetricTool.jaeger,
+        ],
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
 )
@@ -128,18 +344,74 @@ openldap_block = Manifest(
     tags=["ldap", "auth", "infra"],
     connections=[],
     info=Info(
-        description="LDAP directory server providing AD/LDAP-based user authentication and group synchronisation for on-premises deployments.",
+        description=Markdown(
+            "## Directory identity\n"
+            "\n"
+            "LDAP directory server providing AD/LDAP-based user authentication and group synchronisation for on-premises deployments.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Authentication | Directory accounts establish user identity |\n"
+            "| Synchronization | Group changes influence application access |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Sign in with a directory-backed test user.\n"
+            "2. Remove a test group assignment and verify the expected access change.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** Directory availability and synchronization freshness are separate failure modes.\n"
+            "\n"
+            "Suggested diagnostic signals: *bind failures, sync duration, and stale group mappings*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Container logs for process diagnostics\n"
+            "  - Resource metrics for capacity review\n"
+            "  - Versioned configuration for repeatable environments\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `grafana`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("2.6.0"),
-        language=ProgrammingLanguage.c,
-        deployment=_DEPLOYMENT,
-        owner_team="Identity",
-        auth_type=AuthType.basic,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
+        languages=[ProgrammingLanguage.c],
+        deployments=[DeploymentTarget.docker_swarm],
+        owners="Identity",
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.grafana,
+            MetricTool.jaeger,
+        ],
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
 )
@@ -150,19 +422,75 @@ keycloak_block = Manifest(
     tags=["sso", "auth", "infra"],
     connections=[],
     info=Info(
-        description="Identity provider running as a Keycloak-based SAML/OAuth2 IdP, enabling SSO login for enterprise deployments via SAML 2.0 and OpenID Connect.",
+        description=Markdown(
+            "## Federated sign-in\n"
+            "\n"
+            "Identity provider running as a Keycloak-based SAML/OAuth2 IdP, enabling SSO login for enterprise deployments via SAML 2.0 and OpenID Connect.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Browser flow | Redirect to the identity provider and validate the response |\n"
+            "| Configuration | Keep issuer, audience, and redirect settings aligned |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Complete sign-in with a test identity.\n"
+            "2. Exercise an expired session and a user without the required assignment.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** Successful authentication must still be followed by application authorization.\n"
+            "\n"
+            "Suggested diagnostic signals: *failed callbacks, token validation errors, and login completion rate*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - `quarkus`\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Maven or Gradle for builds\n"
+            "  - JUnit for focused tests\n"
+            "  - Java Flight Recorder for runtime investigation\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `grafana`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("24.0.0"),
-        language=ProgrammingLanguage.java,
+        languages=[ProgrammingLanguage.java],
         frameworks=[WebFramework.quarkus],
-        deployment=_DEPLOYMENT,
-        owner_team="Identity",
-        auth_type=AuthType.oauth2,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
+        deployments=[DeploymentTarget.docker_swarm],
+        owners="Identity",
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.grafana,
+            MetricTool.jaeger,
+        ],
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
 )
@@ -180,19 +508,75 @@ server_block = Manifest(
         Manifest(name="Keycloak"),
     ],
     info=Info(
-        description="Core Go application binary exposing the REST API v4, WebSocket event bus, plugin system, workflow automations (Playbooks), Calls voice/video (WebRTC), and the clustering layer for HA deployments.",
+        description=Markdown(
+            "## Messaging service\n"
+            "\n"
+            "Core Go application binary exposing the REST API v4, WebSocket event bus, plugin system, workflow automations (Playbooks), Calls voice/video (WebRTC), and the clustering layer for HA deployments.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Request path | Authorize channel access before reading or writing posts |\n"
+            "| Event path | Notify connected clients after durable application changes |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Post a message, upload a file, and confirm another client receives the update.\n"
+            "2. Disconnect the second client and verify its history after reconnecting.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** A healthy HTTP endpoint does not establish that WebSocket delivery is healthy.\n"
+            "\n"
+            "Suggested diagnostic signals: *API latency, active sockets, post errors, and dependency failures*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - `chi`\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Go tooling for builds and tests\n"
+            "  - gofmt for source formatting\n"
+            "  - Delve for local debugging\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `grafana`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("11.5.1"),
-        language=ProgrammingLanguage.go,
+        languages=[ProgrammingLanguage.go],
         frameworks=[WebFramework.chi],
-        deployment=_DEPLOYMENT,
-        owner_team="Server",
-        auth_type=AuthType.jwt,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
-        max_replicas=3,
-        min_replicas=1,
+        deployments=[DeploymentTarget.docker_swarm],
+        owners="Server",
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.grafana,
+            MetricTool.jaeger,
+        ],
         links=[
             Link(site_name="Mattermost Docs", http_url=_DOCS),
             Link(site_name="API Reference", http_url=Url("https://api.mattermost.com/")),
@@ -206,18 +590,74 @@ webapp_block = Manifest(
     tags=["spa", "react", "ui"],
     connections=[Manifest(name="Mattermost Server")],
     info=Info(
-        description="TypeScript/React (Redux) single-page application served from the server binary. Houses the channels workspace, Playbooks UI, Boards, and the plugin component extension points.",
+        description=Markdown(
+            "## Collaboration workspace\n"
+            "\n"
+            "TypeScript/React (Redux) single-page application served from the server binary. Houses the channels workspace, Playbooks UI, Boards, and the plugin component extension points.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Local state | Compose messages and reflect optimistic updates |\n"
+            "| Synchronization | Reconcile API history with live server events |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Compose a message while switching between channels.\n"
+            "2. Interrupt connectivity and inspect retry, draft preservation, and reconnect behavior.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** Optimistic UI state needs a clear indication when a write has not completed.\n"
+            "\n"
+            "Suggested diagnostic signals: *client errors, reconnect loops, and message acknowledgement delay*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - TypeScript for static checks\n"
+            "  - ESLint for source checks\n"
+            "  - Playwright for browser workflows\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `grafana`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("11.5.1"),
-        language=ProgrammingLanguage.typescript,
-        deployment=_DEPLOYMENT,
-        owner_team="Frontend",
-        auth_type=AuthType.jwt,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
+        languages=[ProgrammingLanguage.typescript],
+        deployments=[DeploymentTarget.docker_swarm],
+        owners="Frontend",
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.grafana,
+            MetricTool.jaeger,
+        ],
         links=[
             Link(site_name="Mattermost Docs", http_url=_DOCS),
             Link(
@@ -234,18 +674,74 @@ nginx_block = Manifest(
     tags=["proxy", "load-balancer", "infra"],
     connections=[Manifest(name="Mattermost Server")],
     info=Info(
-        description="Reverse proxy and load balancer routing incoming HTTPS traffic across multiple Mattermost Server nodes (leader/follower), terminating TLS and forwarding WebSocket upgrades.",
+        description=Markdown(
+            "## HTTPS and socket ingress\n"
+            "\n"
+            "Reverse proxy and load balancer routing incoming HTTPS traffic across multiple Mattermost Server nodes (leader/follower), terminating TLS and forwarding WebSocket upgrades.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| HTTP traffic | Forward application requests with the required headers |\n"
+            "| Live traffic | Preserve WebSocket upgrade and long-lived connections |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Load the application through the public ingress.\n"
+            "2. Keep a socket open across a backend rollout and observe reconnect behavior.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** Short proxy timeouts can break live updates while ordinary pages still load.\n"
+            "\n"
+            "Suggested diagnostic signals: *upstream errors, TLS failures, and connection resets*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Container logs for process diagnostics\n"
+            "  - Resource metrics for capacity review\n"
+            "  - Versioned configuration for repeatable environments\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `grafana`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.27.0"),
-        language=ProgrammingLanguage.c,
-        deployment=_DEPLOYMENT,
-        owner_team="Platform",
-        auth_type=AuthType.none,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
+        languages=[ProgrammingLanguage.c],
+        deployments=[DeploymentTarget.docker_swarm],
+        owners="Platform",
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.grafana,
+            MetricTool.jaeger,
+        ],
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
 )
@@ -256,18 +752,74 @@ prometheus_block = Manifest(
     tags=["metrics", "monitoring", "infra"],
     connections=[Manifest(name="Mattermost Server")],
     info=Info(
-        description="Metrics collection and storage. Mattermost Server exposes a `/metrics` endpoint; Prometheus scrapes it and feeds Grafana dashboards.",
+        description=Markdown(
+            "## Service measurements\n"
+            "\n"
+            "Metrics collection and storage. Mattermost Server exposes a `/metrics` endpoint; Prometheus scrapes it and feeds Grafana dashboards.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Collection | Scrape application and infrastructure metrics |\n"
+            "| Interpretation | Separate target absence from a genuinely healthy zero |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Confirm that a test service appears as a scrape target.\n"
+            "2. Stop the test target and verify that missing data is visible.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** Unbounded labels such as message IDs can overwhelm metric storage.\n"
+            "\n"
+            "Suggested diagnostic signals: *scrape failures, sample volume, and rule evaluation duration*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Go tooling for builds and tests\n"
+            "  - gofmt for source formatting\n"
+            "  - Delve for local debugging\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `grafana`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=CalendarVersion.parse("2026.5"),
-        language=ProgrammingLanguage.go,
-        deployment=_DEPLOYMENT,
-        owner_team="SRE",
-        auth_type=AuthType.none,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
+        languages=[ProgrammingLanguage.go],
+        deployments=[DeploymentTarget.docker_swarm],
+        owners="SRE",
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.grafana,
+            MetricTool.jaeger,
+        ],
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
 )
@@ -278,18 +830,74 @@ grafana_block = Manifest(
     tags=["dashboards", "observability", "infra"],
     connections=[Manifest(name="Prometheus"), Manifest(name="Loki")],
     info=Info(
-        description="Observability and dashboarding UI. Ships with a pre-built Mattermost performance monitoring dashboard powered by the Prometheus and Loki data sources.",
+        description=Markdown(
+            "## Incident dashboards\n"
+            "\n"
+            "Observability and dashboarding UI. Ships with a pre-built Mattermost performance monitoring dashboard powered by the Prometheus and Loki data sources.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Overview | Compare user-visible failures with dependency signals |\n"
+            "| Drill-down | Use the same time window across charts and log queries |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Select a fixed incident window and inspect the messaging dashboard.\n"
+            "2. Follow a spike in errors to matching application logs.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** A stale dashboard panel can look calm during a telemetry outage.\n"
+            "\n"
+            "Suggested diagnostic signals: *data-source errors, query duration, and dashboard freshness*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Go tooling for builds and tests\n"
+            "  - gofmt for source formatting\n"
+            "  - Delve for local debugging\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `grafana`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("11.0.0"),
-        language=ProgrammingLanguage.go,
-        deployment=_DEPLOYMENT,
-        owner_team="SRE",
-        auth_type=AuthType.basic,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
+        languages=[ProgrammingLanguage.go],
+        deployments=[DeploymentTarget.docker_swarm],
+        owners="SRE",
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.grafana,
+            MetricTool.jaeger,
+        ],
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
 )
@@ -300,18 +908,74 @@ loki_block = Manifest(
     tags=["logs", "observability", "infra"],
     connections=[],
     info=Info(
-        description="Log aggregation store. Mattermost Server, Nginx, and other services ship structured logs to Loki via the OpenTelemetry Collector or Promtail.",
+        description=Markdown(
+            "## Structured log store\n"
+            "\n"
+            "Log aggregation store. Mattermost Server, Nginx, and other services ship structured logs to Loki via the OpenTelemetry Collector or Promtail.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Ingestion | Collect application and ingress events |\n"
+            "| Queries | Filter by stable service labels and incident time window |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Find a test request using a correlation identifier.\n"
+            "2. Verify that tokens and message bodies are excluded from diagnostic output.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** Retention and ingestion limits determine which incident evidence remains available.\n"
+            "\n"
+            "Suggested diagnostic signals: *ingestion errors, dropped entries, and query latency*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Go tooling for builds and tests\n"
+            "  - gofmt for source formatting\n"
+            "  - Delve for local debugging\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `grafana`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("3.0.0"),
-        language=ProgrammingLanguage.go,
-        deployment=_DEPLOYMENT,
-        owner_team="SRE",
-        auth_type=AuthType.none,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
+        languages=[ProgrammingLanguage.go],
+        deployments=[DeploymentTarget.docker_swarm],
+        owners="SRE",
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.grafana,
+            MetricTool.jaeger,
+        ],
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
 )
@@ -322,18 +986,74 @@ otel_collector_block = Manifest(
     tags=["opentelemetry", "traces", "infra"],
     connections=[Manifest(name="Prometheus"), Manifest(name="Loki")],
     info=Info(
-        description="OpenTelemetry Collector pipeline that receives traces, metrics, and logs from Mattermost Server and forwards them to Prometheus, Loki, and a configured trace backend.",
+        description=Markdown(
+            "## Telemetry routing\n"
+            "\n"
+            "OpenTelemetry Collector pipeline that receives traces, metrics, and logs from Mattermost Server and forwards them to Prometheus, Loki, and a configured trace backend.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Receivers | Accept the configured telemetry protocols |\n"
+            "| Processors and exporters | Batch, filter, and forward each signal |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Send a synthetic telemetry event through the test pipeline.\n"
+            "2. Make an exporter unavailable and observe queueing and recovery.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** Backpressure should be visible before telemetry is silently discarded.\n"
+            "\n"
+            "Suggested diagnostic signals: *exporter failures, queue utilization, and dropped telemetry*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Go tooling for builds and tests\n"
+            "  - gofmt for source formatting\n"
+            "  - Delve for local debugging\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `loki`\n"
+            "  - `grafana`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("0.100.0"),
-        language=ProgrammingLanguage.go,
-        deployment=_DEPLOYMENT,
-        owner_team="SRE",
-        auth_type=AuthType.none,
-        monitoring=_MONITOR,
-        log_aggregation=_LOGS,
-        tracing=_TRACING,
-        iac_tool=_IAC,
-        max_replicas=1,
-        min_replicas=1,
+        languages=[ProgrammingLanguage.go],
+        deployments=[DeploymentTarget.docker_swarm],
+        owners="SRE",
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.loki,
+            MetricTool.grafana,
+            MetricTool.jaeger,
+        ],
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
 )

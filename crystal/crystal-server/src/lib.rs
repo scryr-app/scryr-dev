@@ -25,9 +25,15 @@ mod schema_snapshot_tests {
     use async_graphql::{EmptySubscription, Schema};
 
     #[test]
-    fn graphql_schema_matches_snapshot() {
+    fn graphql_schema_matches_snapshot() -> Result<(), std::io::Error> {
         let schema = Schema::build(QueryRoot, MutationRoot::default(), EmptySubscription).finish();
         let sdl = schema.sdl();
+        if std::env::var("UPDATE_GRAPHQL_SCHEMA").as_deref() == Ok("1") {
+            let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("src/graphql_schema.snapshot.graphql");
+            std::fs::write(path, &sdl)?;
+            return Ok(());
+        }
         let expected = include_str!("graphql_schema.snapshot.graphql");
 
         if expected.trim().is_empty() {
@@ -35,5 +41,6 @@ mod schema_snapshot_tests {
         }
 
         assert_eq!(sdl.trim(), expected.trim());
+        Ok(())
     }
 }

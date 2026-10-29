@@ -24,6 +24,9 @@ function block(name: string, connections: string[] = [], tags: string[] = []): B
 		tags,
 		docs: [],
 		frameworks: [],
+		languages: [],
+		deployments: [],
+		metricTools: [],
 		links: [],
 		rawJsonString: "{}",
 	};
