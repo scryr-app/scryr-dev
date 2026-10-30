@@ -50,45 +50,29 @@ type Block {
 	"""
 	consumerType: String
 	"""
-	Primary programming language.
+	Programming languages used by the component.
 	"""
-	language: String
+	languages: [String!]!
 	"""
 	Web frameworks in use.
 	"""
 	frameworks: [String!]!
 	"""
-	Primary deployment target identifier.
+	Hosting targets and Infrastructure as Code tools used for deployment.
 	"""
-	deployment: String
+	deployments: [String!]!
 	"""
-	Cloud provider extracted from the deployment tuple.
+	Owners responsible for this service.
 	"""
-	deploymentProvider: String
-	"""
-	Team responsible for this service.
-	"""
-	ownerTeam: String
-	"""
-	Primary authentication mechanism.
-	"""
-	authType: String
+	owners: String
 	"""
 	Arbitrary tags for categorization and filtering.
 	"""
 	tags: [String!]!
 	"""
-	Monitoring and metrics platform.
+	Monitoring, tracing, and log aggregation tools.
 	"""
-	monitoring: String
-	"""
-	Log aggregation and analysis platform.
-	"""
-	logAggregation: String
-	"""
-	Distributed tracing and APM platform.
-	"""
-	tracing: String
+	metricTools: [String!]!
 	"""
 	Documentation URLs.
 	"""
@@ -109,18 +93,6 @@ type Block {
 	Named connections to other components in the graph.
 	"""
 	connections: [String!]!
-	"""
-	Infrastructure as Code tooling (terraform, pulumi, cdk, etc.).
-	"""
-	iacTool: String
-	"""
-	Maximum number of service replicas.
-	"""
-	maxReplicas: Int
-	"""
-	Minimum number of service replicas.
-	"""
-	minReplicas: Int
 }
 
 type GeneratedManifestMutationRoot {

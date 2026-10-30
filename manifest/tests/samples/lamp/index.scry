@@ -2,15 +2,12 @@
 
 from scryr import Diagram, Info, Link, Manifest
 from scryr.types import (
-    AuthType,
     Classification,
     DeploymentTarget,
-    IaCToolType,
-    LogAggregationType,
-    MonitoringType,
+    Markdown,
+    MetricTool,
     ProgrammingLanguage,
     SemVer,
-    TracingType,
     Url,
     WebFramework,
 )
@@ -24,16 +21,63 @@ linux_host_block = Manifest(
         Manifest(name="MySQL Database"),
     ],
     info=Info(
-        description="Ubuntu VM providing the operating system, firewall rules, process supervision, and local package management for the LAMP deployment.",
+        description=Markdown(
+            "Ubuntu VM providing the operating system, firewall rules, process supervision, and local package management for the LAMP deployment.\n"
+            "\n"
+            "### Shared host boundary\n"
+            "\n"
+            "**One machine, several failure domains:** Apache, PHP, and MySQL compete for CPU, memory, disk space, and file descriptors. Use this sample to discuss which services would move to separate hosts as traffic grows.\n"
+            "\n"
+            "| Resource | Proposed observation | Investigate when |\n"
+            "| --- | --- | --- |\n"
+            "| Memory | Available memory and swap activity | PHP workers grow while database latency rises |\n"
+            "| Disk | Free space and inode usage | Logs or database files expand unexpectedly |\n"
+            "| Processes | Restart count and exit reason | A service repeatedly disappears |\n"
+            "\n"
+            "#### Maintenance exercise\n"
+            "\n"
+            "1. Record the running package versions and service configuration.\n"
+            "   - Identify the owner of each persistent directory.\n"
+            "   - Keep application uploads separate from disposable release artifacts.\n"
+            "2. Rehearse a restart on an isolated copy of the stack.\n"
+            "3. Verify a static page, a dynamic page, and a database-backed workflow.\n"
+            "\n"
+            "```text\n"
+            "Internet -> host firewall -> Apache -> PHP -> MySQL\n"
+            "                         shared CPU / memory / disk\n"
+            "```\n"
+            "\n"
+            "> These are proposed operating checks for the sample, not evidence of a hardened host.\n"
+            "\n"
+            "- [ ] Define a patch window and rollback owner\n"
+            "- [ ] Exercise recovery after a full host restart\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - ShellCheck for script analysis\n"
+            "  - shfmt for formatting\n"
+            "  - Bats for shell regression tests\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `elk_stack`\n"
+            "  - `grafana`\n"
+            "  - `elastic_apm`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=SemVer("22.4.0"),
-        language=ProgrammingLanguage.bash,
-        deployment=DeploymentTarget.vm,
-        owner_team="Platform Team",
-        auth_type=AuthType.service_account,
-        monitoring=MonitoringType.prometheus,
-        log_aggregation=LogAggregationType.elk_stack,
-        tracing=TracingType.none,
-        iac_tool=IaCToolType.terraform,
+        languages=[ProgrammingLanguage.bash],
+        deployments=[DeploymentTarget.vm, DeploymentTarget.terraform],
+        owners="Platform Team",
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.elk_stack,
+            MetricTool.grafana,
+            MetricTool.elastic_apm,
+        ],
         docs=["https://ubuntu.com/server/docs"],
     ),
 )
@@ -43,16 +87,65 @@ apache_web_block = Manifest(
     classification=Classification.public_ui,
     connections=[Manifest(name="PHP Application")],
     info=Info(
-        description="Apache HTTP Server terminates browser traffic, serves static assets, and forwards dynamic page requests to the PHP application runtime.",
+        description=Markdown(
+            "Apache HTTP Server terminates browser traffic, serves static assets, and forwards dynamic page requests to the PHP application runtime.\n"
+            "\n"
+            "### Request routing and edge behavior\n"
+            "\n"
+            "The web server is the first application-visible hop. For this example, distinguish **static delivery** from requests that need PHP so a slow database does not look like a failure of every asset.\n"
+            "\n"
+            "| Request example | Intended destination | Review concern |\n"
+            "| --- | --- | --- |\n"
+            "| `/assets/site.css` | Static document root | Cache policy and content type |\n"
+            "| `/account` | PHP application | Session handling and response time |\n"
+            "| `/missing-page` | Error handler | Consistent status code and useful error page |\n"
+            "\n"
+            "#### Suggested routing exercise\n"
+            "\n"
+            "1. Follow a request from the virtual host to its handler.\n"
+            "   - Check the host name and document root.\n"
+            "   - Identify which paths invoke PHP and which are served directly.\n"
+            "2. Compare access-log timing with the corresponding application log.\n"
+            "3. Recheck routing after a configuration reload.\n"
+            "\n"
+            "```http\n"
+            "GET /assets/site.css HTTP/1.1\n"
+            "Host: lamp.example.com\n"
+            "Accept: text/css\n"
+            "```\n"
+            "\n"
+            "> The request is illustrative; `lamp.example.com` is a placeholder, not a running service.\n"
+            "\n"
+            "- [ ] Verify redirects preserve the intended path\n"
+            "- [ ] Check that application source and configuration files cannot be downloaded\n"
+            "- [ ] Document upload-size and timeout decisions\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Container logs for process diagnostics\n"
+            "  - Resource metrics for capacity review\n"
+            "  - Versioned configuration for repeatable environments\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `elk_stack`\n"
+            "  - `grafana`\n"
+            "  - `elastic_apm`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=SemVer("2.4.0"),
-        language=ProgrammingLanguage.html,
-        deployment=DeploymentTarget.vm,
-        owner_team="Web Team",
-        auth_type=AuthType.basic,
-        monitoring=MonitoringType.prometheus,
-        log_aggregation=LogAggregationType.elk_stack,
-        tracing=TracingType.none,
-        iac_tool=IaCToolType.terraform,
+        languages=[ProgrammingLanguage.html],
+        deployments=[DeploymentTarget.vm, DeploymentTarget.terraform],
+        owners="Web Team",
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.elk_stack,
+            MetricTool.grafana,
+            MetricTool.elastic_apm,
+        ],
         docs=["https://httpd.apache.org/docs/2.4/"],
         links=[Link(site_name="Example Site", http_url=Url("https://lamp.example.com"))],
     ),
@@ -63,17 +156,67 @@ php_app_block = Manifest(
     classification=Classification.internal_api,
     connections=[Manifest(name="MySQL Database")],
     info=Info(
-        description="PHP application layer rendering server-side pages, handling form submissions, and coordinating reads and writes against MySQL.",
+        description=Markdown(
+            "PHP application layer rendering server-side pages, handling form submissions, and coordinating reads and writes against MySQL.\n"
+            "\n"
+            "### Application responsibilities\n"
+            "\n"
+            "This layer turns browser actions into **validated business operations**. In a sample account workflow, it reads the session, checks permissions, validates submitted fields, and saves the resulting change through MySQL.\n"
+            "\n"
+            "| Workflow | Example input | Review question |\n"
+            "| --- | --- | --- |\n"
+            "| Sign in | Credentials and session cookie | How are failures presented without leaking account details? |\n"
+            "| Edit content | Form fields and record ID | Is authorization checked for this specific record? |\n"
+            "| Submit order | Item IDs and quantities | Can a duplicate submission create duplicate work? |\n"
+            "\n"
+            "#### Walk through a write\n"
+            "\n"
+            "1. Validate the request before opening a database transaction.\n"
+            "   - Reject unsupported values with a useful field error.\n"
+            "   - Preserve safe form values so the user can correct a mistake.\n"
+            "2. Commit related database changes together.\n"
+            "3. Render or redirect to a result that can be safely refreshed.\n"
+            "\n"
+            "```text\n"
+            "form -> validation -> authorization -> transaction -> response\n"
+            "                         |                 |\n"
+            "                    denied action      rollback on error\n"
+            "```\n"
+            "\n"
+            "> This is a design walkthrough, not a claim that every control is implemented in the sample.\n"
+            "\n"
+            "- [ ] Exercise expired sessions and invalid forms\n"
+            "- [ ] Verify errors omit database credentials and stack traces\n"
+            "- [ ] Rehearse a compatible schema migration with the Data Team\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - `laravel`\n"
+            "  - `symfony`\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Composer for dependencies\n"
+            "  - PHPUnit for application tests\n"
+            "  - PHPStan for static analysis\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `elk_stack`\n"
+            "  - `grafana`\n"
+            "  - `elastic_apm`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=SemVer("8.3.0"),
-        language=ProgrammingLanguage.php,
-        frameworks=[WebFramework.laravel],
-        deployment=DeploymentTarget.vm,
-        owner_team="App Team",
-        auth_type=AuthType.jwt,
-        monitoring=MonitoringType.prometheus,
-        log_aggregation=LogAggregationType.elk_stack,
-        tracing=TracingType.none,
-        iac_tool=IaCToolType.terraform,
+        languages=[ProgrammingLanguage.php],
+        frameworks=[WebFramework.laravel, WebFramework.symfony],
+        deployments=[DeploymentTarget.vm, DeploymentTarget.terraform],
+        owners="App Team",
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.elk_stack,
+            MetricTool.grafana,
+            MetricTool.elastic_apm,
+        ],
         docs=["https://www.php.net/manual/en/", "https://laravel.com/docs"],
     ),
 )
@@ -82,16 +225,67 @@ mysql_database_block = Manifest(
     name="MySQL Database",
     classification=Classification.database,
     info=Info(
-        description="Relational datastore for users, sessions, application content, and transactional records used by the PHP application.",
+        description=Markdown(
+            "Relational datastore for users, sessions, application content, and transactional records used by the PHP application.\n"
+            "\n"
+            "### Data ownership and recovery\n"
+            "\n"
+            "Treat the database as the **durable boundary** of this example. Application releases may be replaced; user records and transactional history need an explicit recovery plan.\n"
+            "\n"
+            "| Example data | Typical access | Design consideration |\n"
+            "| --- | --- | --- |\n"
+            "| Users | Lookup by stable identifier | Unique constraints and access control |\n"
+            "| Sessions | Lookup and expiry | Retention and cleanup |\n"
+            "| Content | Filter, paginate, update | Indexes aligned with actual queries |\n"
+            "| Transactions | Insert and audit by date | Atomic writes and immutable identifiers |\n"
+            "\n"
+            "#### Suggested recovery drill\n"
+            "\n"
+            "1. Restore a backup into a separate test database.\n"
+            "   - Record the backup timestamp and expected data gap.\n"
+            "   - Compare representative row counts and referential relationships.\n"
+            "2. Point an isolated application instance at the restored database.\n"
+            "3. Run a read and a rolled-back write before declaring the drill complete.\n"
+            "\n"
+            "```sql\n"
+            "-- Illustrative read-only investigation; adapt table names to your schema.\n"
+            "SELECT table_name, table_rows\n"
+            "FROM information_schema.tables\n"
+            "WHERE table_schema = DATABASE();\n"
+            "```\n"
+            "\n"
+            "> Estimated table counts are diagnostic hints, not proof that a backup is complete.\n"
+            "\n"
+            "- [ ] Define recovery time and data-loss objectives\n"
+            "- [ ] Review slow queries before adding indexes\n"
+            "- [ ] Test migration rollback and restore procedures separately\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - SQL clients for read-only inspection\n"
+            "  - Query plans for index review\n"
+            "  - Migration tooling for schema changes\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `elk_stack`\n"
+            "  - `grafana`\n"
+            "  - `elastic_apm`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=SemVer("8.4.0"),
-        language=ProgrammingLanguage.sql,
-        deployment=DeploymentTarget.vm,
-        owner_team="Data Team",
-        auth_type=AuthType.basic,
-        monitoring=MonitoringType.prometheus,
-        log_aggregation=LogAggregationType.elk_stack,
-        tracing=TracingType.none,
-        iac_tool=IaCToolType.terraform,
+        languages=[ProgrammingLanguage.sql],
+        deployments=[DeploymentTarget.vm, DeploymentTarget.terraform],
+        owners="Data Team",
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.elk_stack,
+            MetricTool.grafana,
+            MetricTool.elastic_apm,
+        ],
         docs=["https://dev.mysql.com/doc/"],
     ),
 )

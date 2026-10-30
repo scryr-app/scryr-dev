@@ -8,9 +8,10 @@ export interface ScryrComponent {
 	description?: string;
 	version?: string;
 	icon?: string;
-	language?: string;
+	languages: string[];
 	frameworks: string[];
-	deployment?: string;
+	deployments: string[];
+	metricTools: string[];
 	sourceCodeUrl?: string;
 	connections: string[];
 	docs: string[];
@@ -33,9 +34,10 @@ export const GET_MERN_COMPONENT_QUERY = `
       description
       version
       icon
-      language
+      languages
       frameworks
-      deployment
+      deployments
+      metricTools
       sourceCodeUrl
       connections
       docs

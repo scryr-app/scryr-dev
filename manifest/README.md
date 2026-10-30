@@ -11,7 +11,7 @@ from scryr import Info, Manifest, ProgrammingLanguage, WebFramework
 api = Manifest(
     name="Public API",
     info=Info(
-        language=ProgrammingLanguage.python,
+        languages=[ProgrammingLanguage.python],
         frameworks=[WebFramework.fastapi],
     ),
 )

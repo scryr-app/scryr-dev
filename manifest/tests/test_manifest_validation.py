@@ -32,15 +32,6 @@ def test_forge_rejects_unknown_top_level_fields() -> None:
         Forge.model_validate({"name": "Strict", "unknown_field": "nope"})
 
 
-def test_manifest_enforces_replica_minimum_constraints() -> None:
-    """Replica fields enforce minimum value constraints."""
-    with pytest.raises(ValidationError, match="greater than or equal to 1"):
-        Manifest(name="BadReplicas", info=Info(max_replicas=0))
-
-    with pytest.raises(ValidationError, match="greater than or equal to 1"):
-        Manifest(name="BadReplicas", info=Info(min_replicas=0))
-
-
 def test_manifest_default_list_fields_are_isolated_per_instance() -> None:
     """List defaults are isolated; mutating one instance does not affect another."""
     first = Manifest(name="First")
@@ -68,9 +59,15 @@ def test_manifest_docs_field_accepts_url_and_plain_text_values() -> None:
     assert data["info"]["docs"] == ["https://api.example.com", "Architecture RFC"]
 
 
-def test_manifest_rejects_min_replicas_above_max_replicas() -> None:
-    """Replica bounds must remain ordered."""
-    with pytest.raises(
-        ValidationError, match="min_replicas must be less than or equal to max_replicas"
-    ):
-        Manifest(name="ReplicaBounds", info=Info(min_replicas=3, max_replicas=2))
+@pytest.mark.parametrize("field", ["min_replicas", "max_replicas", "minReplicas", "maxReplicas"])
+def test_info_rejects_removed_replica_fields(field: str) -> None:
+    """Removed replica fields are rejected in source and serialized manifests."""
+    with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
+        Manifest.model_validate({"name": "Service", "info": {field: 2}})
+
+
+def test_info_schema_and_serialization_omit_replica_fields() -> None:
+    """Default manifests and published schemas no longer advertise replicas."""
+    removed = {"min_replicas", "max_replicas", "minReplicas", "maxReplicas"}
+    assert removed.isdisjoint(Manifest(name="Service").to_dict()["info"])
+    assert removed.isdisjoint(Info.model_json_schema()["properties"])

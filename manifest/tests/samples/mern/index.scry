@@ -1,14 +1,11 @@
 from scryr import Diagram, Forge, ForgeTask, ForgeTool, Info, Link, Manifest, ManifestQuery
 from scryr.types import (
-    AuthType,
     Classification,
     DeploymentTarget,
-    IaCToolType,
-    LogAggregationType,
-    MonitoringType,
+    Markdown,
+    MetricTool,
     ProgrammingLanguage,
     SemVer,
-    TracingType,
     Url,
     WebFramework,
 )
@@ -51,21 +48,104 @@ react_block = Manifest(
     forges=[mern_forge.name],
     connections=[Manifest(name="Express")],
     info=Info(
-        description="This be a Billy Goat! A sample MERN-style application: MongoDB datastore, Express backend, React frontend. Boy Howdy",
+        description=Markdown(
+            "This be a Billy Goat! A sample MERN-style application: MongoDB datastore, Express backend, React frontend. Boy Howdy\n"
+            "\n"
+            "### Customer experience\n"
+            "**React storefront** for browsing products, managing accounts, and tracking orders.\n"
+            "\n"
+            "- Server-rendered pages use Next.js.\n"
+            "- Live order updates arrive from the Express API.\n"
+            "- Shared components support keyboard navigation and responsive layouts.\n"
+            "\n"
+            "| Route | Purpose |\n"
+            "| --- | --- |\n"
+            "| `/catalog` | Product discovery |\n"
+            "| `/orders` | Order history and live status |\n"
+            "\n"
+            "- [x] Accessible navigation\n"
+            "- [x] Error reporting\n"
+            "- [ ] Offline order history\n"
+            "\n"
+            "> Example architecture: links on example.com are placeholders.\n"
+            "\n"
+            "#### Request lifecycle\n"
+            "\n"
+            "1. Open the catalog and choose a product.\n"
+            "   - Show a loading skeleton while the API responds.\n"
+            "   - Keep an empty result distinct from a network failure.\n"
+            "2. Submit an order with a stable request identifier.\n"
+            "3. Refresh order details after a live notification; treat the API response as authoritative.\n"
+            "\n"
+            "#### Suggested UI states\n"
+            "\n"
+            "| State | Customer feedback | Recovery |\n"
+            "| :--- | :--- | :--- |\n"
+            "| Loading | Progress indicator and disabled submit | Wait for the current request |\n"
+            "| API unavailable | Inline error with preserved form values | Retry explicitly |\n"
+            "| Session expired | Sign-in prompt | Resume after authentication |\n"
+            "\n"
+            "```json\n"
+            "{\n"
+            '  "orderId": "sample-order-1042",\n'
+            '  "status": "processing",\n'
+            '  "items": [{"productId": "sample-product", "quantity": 2}]\n'
+            "}\n"
+            "```\n"
+            "\n"
+            "> **Design exercise:** this payload and the behaviors above are illustrative requirements,\n"
+            "> not a guarantee that a running sample implements them.\n"
+            "\n"
+            "---\n"
+            "\n"
+            "**Review checklist:** test keyboard-only checkout, long product names, narrow screens,\n"
+            "and a notification arriving while an order refresh is already in flight.\n"
+            "\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - `express`\n"
+            "  - `nextjs`\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - TypeScript for static checks\n"
+            "  - ESLint for source checks\n"
+            "  - Playwright for browser workflows\n"
+            "- **Example observability tools**\n"
+            "  - `datadog`\n"
+            "  - `cloudwatch`\n"
+            "  - `grafana`\n"
+            "  - `prometheus`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=SemVer("0.1.0-alpha.1"),
-        language=ProgrammingLanguage.javascript,
+        languages=[
+            ProgrammingLanguage.typescript,
+            ProgrammingLanguage.javascript,
+            ProgrammingLanguage.html,
+        ],
         frameworks=[WebFramework.express, WebFramework.nextjs],
-        deployment=DeploymentTarget.ec2,
-        owner_team="Frontend Team",
-        auth_type=AuthType.oauth2,
-        monitoring=MonitoringType.datadog,
-        log_aggregation=LogAggregationType.cloudwatch,
-        tracing=TracingType.datadog,
-        iac_tool=IaCToolType.terraform,
-        max_replicas=5,
-        min_replicas=2,
-        links=[Link(site_name="Example Site", http_url=Url("https://www.example.com"))],
-        docs=["https://www.mongodb.com/docs/", "https://expressjs.com/", "https://reactjs.org/"],
+        deployments=[DeploymentTarget.ec2, DeploymentTarget.cloudfront, DeploymentTarget.terraform],
+        owners="Frontend Team",
+        metric_tools=[
+            MetricTool.datadog,
+            MetricTool.cloudwatch,
+            MetricTool.grafana,
+            MetricTool.prometheus,
+        ],
+        links=[
+            Link(site_name="Storefront", http_url=Url("https://www.example.com")),
+            Link(site_name="Component Library", http_url=Url("https://ui.example.com")),
+            Link(
+                site_name="Frontend Dashboard", http_url=Url("https://metrics.example.com/frontend")
+            ),
+        ],
+        docs=[
+            Url("https://react.dev/"),
+            Url("https://nextjs.org/docs"),
+            Url("https://docs.example.com/mern/frontend"),
+        ],
     ),
 )
 redis_pubsub_block = Manifest(
@@ -75,23 +155,83 @@ redis_pubsub_block = Manifest(
     forges=[mern_forge.name],
     connections=[Manifest(name="Express"), Manifest(name="React")],
     info=Info(
-        description="Redis configured for real-time messaging and event streaming",
+        description=Markdown(
+            "### Live event distribution\n"
+            "Redis Pub/Sub distributes **ephemeral notifications** between API instances.\n"
+            "\n"
+            "- `orders.updated` refreshes customer order status.\n"
+            "- `inventory.changed` invalidates cached stock views.\n"
+            "- `admin.activity` updates the operations console.\n"
+            "\n"
+            "> Pub/Sub is not durable: disconnected subscribers miss messages. MongoDB remains the source of truth; clients resynchronize through the API.\n"
+            "\n"
+            "```text\n"
+            "Express publisher -> Redis channel -> Express subscriber -> browser\n"
+            "```\n"
+            "\n"
+            "#### Event contract exercise\n"
+            "\n"
+            "```json\n"
+            "{\n"
+            '  "type": "orders.updated",\n'
+            '  "version": 1,\n'
+            '  "orderId": "sample-order-1042",\n'
+            '  "correlationId": "sample-request-81"\n'
+            "}\n"
+            "```\n"
+            "\n"
+            "| Situation | Suggested consumer response |\n"
+            "| :--- | :--- |\n"
+            "| Duplicate notification | Refresh once; avoid repeating a mutation |\n"
+            "| Unknown event version | Record the mismatch and fetch current state |\n"
+            "| Connection interruption | Reconnect and reload the active order |\n"
+            "\n"
+            "1. Begin an investigation with the publisher's request identifier.\n"
+            "   - Compare publication time with subscriber receipt time.\n"
+            "   - Check whether the browser connection remained open.\n"
+            "2. Verify the persisted order before replaying any business action.\n"
+            "\n"
+            "- [ ] Exercise reconnect behavior during an active order\n"
+            "- [ ] Measure subscriber lag separately from API latency\n"
+            "- [ ] Confirm payloads exclude customer contact details\n"
+            "\n"
+            "> These are proposed resilience checks for this example. A successful publish does\n"
+            "> **not** prove that every browser received or processed the notification.\n"
+            "\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Container logs for process diagnostics\n"
+            "  - Resource metrics for capacity review\n"
+            "  - Versioned configuration for repeatable environments\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `elk_stack`\n"
+            "  - `jaeger`\n"
+            "  - `grafana`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=SemVer("7.2.0"),
-        language=ProgrammingLanguage.c,
-        deployment=DeploymentTarget.ec2,
-        owner_team="Events Team",
-        auth_type=AuthType.api_key,
-        monitoring=MonitoringType.prometheus,
-        log_aggregation=LogAggregationType.elk_stack,
-        tracing=TracingType.jaeger,
-        iac_tool=IaCToolType.terraform,
-        max_replicas=4,
-        min_replicas=2,
+        languages=[ProgrammingLanguage.c],
+        deployments=[DeploymentTarget.ec2, DeploymentTarget.terraform],
+        owners="Events Team",
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.elk_stack,
+            MetricTool.jaeger,
+            MetricTool.grafana,
+        ],
         links=[
             Link(
                 site_name="Redis Pub/Sub Documentation",
                 http_url=Url("https://redis.io/docs/manual/pubsub/"),
-            )
+            ),
+            Link(site_name="Event Dashboard", http_url=Url("https://metrics.example.com/redis")),
+            Link(site_name="Channel Catalog", http_url=Url("https://docs.example.com/mern/events")),
         ],
         docs=["https://redis.io/docs/latest/", "https://redis.io/docs/latest/apis/"],
     ),
@@ -102,15 +242,94 @@ express_block = Manifest(
     connections=[Manifest(name="MongoDB")],
     forges=[mern_forge.name],
     info=Info(
-        language=ProgrammingLanguage.javascript,
-        deployment=DeploymentTarget.amplify,
-        owner_team="Backend Team",
-        auth_type=AuthType.jwt,
-        log_aggregation=LogAggregationType.elk_stack,
-        tracing=TracingType.jaeger,
-        iac_tool=IaCToolType.cloudformation,
-        max_replicas=3,
-        min_replicas=1,
+        description=Markdown(
+            "### Application API\n"
+            "Express coordinates **customer, catalog, and order workflows**. It validates inputs, persists records in MongoDB, and publishes Redis notifications.\n"
+            "\n"
+            "| Endpoint | Responsibility |\n"
+            "| --- | --- |\n"
+            "| `GET /catalog` | Search products |\n"
+            "| `POST /orders` | Create an order |\n"
+            "| `GET /health` | Report readiness |\n"
+            "\n"
+            "- [x] Request validation\n"
+            "- [x] Structured request logs\n"
+            "- [ ] Idempotency coverage for every write endpoint\n"
+            "\n"
+            "Deploy API changes before frontend features that depend on them. Keep the previous response shape available during the rollout.\n"
+            "\n"
+            "#### Write-path design\n"
+            "\n"
+            "1. Authenticate the caller and validate the order body.\n"
+            "   - Reject invalid quantities before writing records.\n"
+            "   - Resolve prices on the server rather than trusting browser totals.\n"
+            "2. Persist the order, then make its identifier available to the caller.\n"
+            "3. Publish an update so connected clients can fetch the latest state.\n"
+            "\n"
+            "```http\n"
+            "POST /orders HTTP/1.1\n"
+            "Content-Type: application/json\n"
+            "Idempotency-Key: sample-request-81\n"
+            "\n"
+            '{"items": [{"productId": "sample-product", "quantity": 2}]}\n'
+            "```\n"
+            "\n"
+            "| Failure boundary | Question for the implementation |\n"
+            "| :--- | :--- |\n"
+            "| Database timeout | Can the caller determine whether the write committed? |\n"
+            "| Notification failure | How will readers discover a committed order? |\n"
+            "| Repeated request | Is the original result returned without a second order? |\n"
+            "\n"
+            "> **Proposed contract:** the request above illustrates an idempotency design;\n"
+            "> it does not imply that idempotency is already implemented.\n"
+            "\n"
+            "#### Rollout rehearsal\n"
+            "\n"
+            "- [ ] Exercise old and new clients against the same API\n"
+            "- [ ] Compare error rate and tail latency before expanding traffic\n"
+            "- [ ] Confirm rollback can read records written by the new version\n"
+            "\n"
+            "Use **structured logs** for request identifiers and *traces* for dependency timing;\n"
+            "exclude authentication tokens and complete customer records.\n"
+            "\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - `express`\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - TypeScript for static checks\n"
+            "  - ESLint for source checks\n"
+            "  - Playwright for browser workflows\n"
+            "- **Example observability tools**\n"
+            "  - `elk_stack`\n"
+            "  - `jaeger`\n"
+            "  - `prometheus`\n"
+            "  - `grafana`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
+        version=SemVer("1.4.2"),
+        languages=[ProgrammingLanguage.typescript, ProgrammingLanguage.javascript],
+        frameworks=[WebFramework.express],
+        deployments=[DeploymentTarget.amplify, DeploymentTarget.cloudformation],
+        owners="Backend Team",
+        metric_tools=[
+            MetricTool.elk_stack,
+            MetricTool.jaeger,
+            MetricTool.prometheus,
+            MetricTool.grafana,
+        ],
+        docs=[
+            Url("https://expressjs.com/"),
+            Url("https://docs.example.com/mern/api"),
+            Url("https://docs.example.com/runbooks/api-rollout"),
+        ],
+        links=[
+            Link(site_name="API Explorer", http_url=Url("https://api.example.com/docs")),
+            Link(site_name="API Dashboard", http_url=Url("https://metrics.example.com/api")),
+            Link(site_name="Request Traces", http_url=Url("https://traces.example.com/api")),
+        ],
     ),
 )
 mongo_block = Manifest(
@@ -119,15 +338,91 @@ mongo_block = Manifest(
     connections=[Manifest(name="Express"), Manifest(name="React")],
     forges=[mern_forge.name],
     info=Info(
-        frameworks=[WebFramework.nextjs],
-        owner_team="Data Team",
-        auth_type=AuthType.basic,
-        monitoring=MonitoringType.cloudwatch,
-        log_aggregation=LogAggregationType.cloudwatch,
-        tracing=TracingType.aws_xray,
-        iac_tool=IaCToolType.terraform,
-        max_replicas=3,
-        min_replicas=1,
+        description=Markdown(
+            "### Primary application datastore\n"
+            "MongoDB stores customer profiles, product documents, and order records.\n"
+            "\n"
+            "| Collection | Access pattern |\n"
+            "| --- | --- |\n"
+            "| `customers` | Lookup by customer ID |\n"
+            "| `products` | Browse by category and availability |\n"
+            "| `orders` | Lookup by customer and creation date |\n"
+            "\n"
+            "A replica set supports failover. Review index changes with the Data Team and rehearse restores before relying on backups.\n"
+            "\n"
+            "> Sample configuration only; production retention and recovery policies belong in the database runbook.\n"
+            "\n"
+            "#### Data-model review\n"
+            "\n"
+            "```json\n"
+            "{\n"
+            '  "_id": "sample-order-1042",\n'
+            '  "customerId": "sample-customer-17",\n'
+            '  "status": "processing",\n'
+            '  "items": [{"productId": "sample-product", "quantity": 2}]\n'
+            "}\n"
+            "```\n"
+            "\n"
+            "This illustrative document keeps order identity separate from customer identity.\n"
+            "Decide explicitly whether historical orders preserve a product snapshot or reference\n"
+            "mutable product records.\n"
+            "\n"
+            "1. Review the highest-volume queries before adding an index.\n"
+            "   - Compare the query plan on representative data.\n"
+            "   - Account for added write cost and disk usage.\n"
+            "2. Rehearse migration on an isolated copy.\n"
+            "3. Restore a backup into a separate environment and verify application reads.\n"
+            "\n"
+            "| Investigation | Evidence to collect |\n"
+            "| :--- | :--- |\n"
+            "| Slow order history | Query shape, index usage, returned document count |\n"
+            "| Write slowdown | Disk latency, lock contention, replication health |\n"
+            "| Unexpected growth | Collection size, index size, retention decisions |\n"
+            "\n"
+            "- [ ] Define a recovery point objective with the application owner\n"
+            "- [ ] Record restore duration and validation steps\n"
+            "- [ ] Test application behavior during a database interruption\n"
+            "\n"
+            "> The checklist describes a planning exercise, not an existing backup or recovery guarantee.\n"
+            "\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Container logs for process diagnostics\n"
+            "  - Resource metrics for capacity review\n"
+            "  - Versioned configuration for repeatable environments\n"
+            "- **Example observability tools**\n"
+            "  - `cloudwatch`\n"
+            "  - `aws_xray`\n"
+            "  - `prometheus`\n"
+            "  - `grafana`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
+        version=SemVer("8.0.0"),
+        languages=[ProgrammingLanguage.cpp],
+        owners="Data Team",
+        metric_tools=[
+            MetricTool.cloudwatch,
+            MetricTool.aws_xray,
+            MetricTool.prometheus,
+            MetricTool.grafana,
+        ],
+        deployments=[DeploymentTarget.ec2, DeploymentTarget.terraform],
+        docs=[
+            Url("https://www.mongodb.com/docs/"),
+            Url("https://docs.example.com/mern/data-model"),
+            Url("https://docs.example.com/runbooks/mongodb-restore"),
+        ],
+        links=[
+            Link(
+                site_name="Database Dashboard", http_url=Url("https://metrics.example.com/mongodb")
+            ),
+            Link(site_name="Backup Reports", http_url=Url("https://ops.example.com/backups")),
+        ],
     ),
 )
 angularjs_admin_block = Manifest(
@@ -137,20 +432,87 @@ angularjs_admin_block = Manifest(
     forges=[mern_forge.name],
     connections=[Manifest(name="Express")],
     info=Info(
-        description="Legacy AngularJS-based admin console for operational management",
+        description=Markdown(
+            "### Operations console\n"
+            "Legacy AngularJS interface for support staff and operational management.\n"
+            "\n"
+            "- Review customer accounts and investigate order status.\n"
+            "- Inspect recent events and retry supported operational workflows.\n"
+            "- Link investigations to the API and database dashboards.\n"
+            "\n"
+            "~~Add new customer-facing features here~~ — new product features belong in the React storefront.\n"
+            "\n"
+            "- [x] Document existing workflows\n"
+            "- [ ] Migrate remaining screens to React\n"
+            "\n"
+            "#### Support workflow exercise\n"
+            "\n"
+            "1. Search using a customer or order identifier.\n"
+            "   - Display only the fields needed for the investigation.\n"
+            "   - Keep the original request identifier with the support case.\n"
+            "2. Read the latest API state before proposing a retry.\n"
+            "3. Confirm the outcome through a fresh read after any approved action.\n"
+            "\n"
+            "| Action | Suggested guardrail | Verification |\n"
+            "| :--- | :--- | :--- |\n"
+            "| Account lookup | Role-based access | Correct customer selected |\n"
+            "| Workflow retry | Explicit confirmation and idempotency | No duplicate side effect |\n"
+            "| Data export | Minimal fields and scoped access | Export matches the case |\n"
+            "\n"
+            "```text\n"
+            "support case -> order lookup -> API trace -> reviewed action -> fresh order read\n"
+            "```\n"
+            "\n"
+            "#### Migration acceptance criteria\n"
+            "\n"
+            "- [ ] Inventory screens and their API dependencies\n"
+            "  - [ ] Capture empty, loading, and permission-denied states\n"
+            "  - [ ] Include keyboard and screen-reader workflows\n"
+            "- [ ] Compare the replacement screen with the legacy workflow\n"
+            "- [ ] Document a rollback path before moving support traffic\n"
+            "\n"
+            "> **Sample planning notes:** these controls are suggested acceptance criteria.\n"
+            "> Migration completion and authorization enforcement must be verified in the implementation.\n"
+            "\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - npm for package workflows\n"
+            "  - ESLint for source checks\n"
+            "  - Playwright for browser workflows\n"
+            "- **Example observability tools**\n"
+            "  - `cloudwatch`\n"
+            "  - `elk_stack`\n"
+            "  - `grafana`\n"
+            "  - `prometheus`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=SemVer("1.7.9"),
-        language=ProgrammingLanguage.javascript,
-        deployment=DeploymentTarget.cloudfront,
-        owner_team="Ops Team",
-        auth_type=AuthType.basic,
-        monitoring=MonitoringType.cloudwatch,
-        log_aggregation=LogAggregationType.elk_stack,
-        tracing=TracingType.none,
-        iac_tool=IaCToolType.cloudformation,
-        max_replicas=2,
-        min_replicas=1,
-        links=[Link(site_name="Admin Portal", http_url=Url("https://admin.example.com"))],
-        docs=["https://docs.angularjs.org/"],
+        languages=[
+            ProgrammingLanguage.javascript,
+            ProgrammingLanguage.html,
+        ],
+        deployments=[DeploymentTarget.cloudfront, DeploymentTarget.cloudformation],
+        owners="Ops Team",
+        metric_tools=[
+            MetricTool.cloudwatch,
+            MetricTool.elk_stack,
+            MetricTool.grafana,
+            MetricTool.prometheus,
+        ],
+        links=[
+            Link(site_name="Admin Portal", http_url=Url("https://admin.example.com")),
+            Link(site_name="Support Playbook", http_url=Url("https://docs.example.com/support")),
+            Link(
+                site_name="Migration Plan",
+                http_url=Url("https://docs.example.com/mern/admin-migration"),
+            ),
+        ],
+        docs=[Url("https://docs.angularjs.org/"), Url("https://docs.example.com/mern/admin")],
     ),
 )
 
@@ -176,10 +538,10 @@ mern_customer_path_diagram = Diagram(
 
 mern_terraform_managed_diagram = Diagram(
     name="MERN Terraform Managed",
-    query=ManifestQuery(iac_tool=IaCToolType.terraform),
+    query=ManifestQuery(deployments=DeploymentTarget.terraform),
 )
 
 mern_operability_diagram = Diagram(
     name="MERN Operability",
-    query=ManifestQuery(where={"info": {"logAggregation": LogAggregationType.elk_stack}}),
+    query=ManifestQuery(where={"info": {"metricTools": MetricTool.elk_stack}}),
 )

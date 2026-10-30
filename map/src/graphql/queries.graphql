@@ -29,23 +29,16 @@ query GetBlocks($scryIdentifier: String, $sample: String) {
 		lineNumber
 		consumerType
 		icon
-		language
+		languages
 		frameworks
-		deployment
-		deploymentProvider
+		deployments
 		sourceCodeUrl
 		connections
 		docs
-		ownerTeam
+		owners
 		tags
-		authType
-		monitoring
-		logAggregation
-		tracing
-		iacTool
+		metricTools
 		cicdTool
-		maxReplicas
-		minReplicas
 		links {
 			siteName
 			httpUrl

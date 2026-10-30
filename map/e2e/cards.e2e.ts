@@ -14,14 +14,11 @@ const blocks = ["Orders API", "Payments API"].map((name, index) => ({
 	description: index === 0 ? description : "Processes payments and publishes settlement events.",
 	version: "2.3.4",
 	consumerType: "public_api",
-	language: "typescript",
+	languages: ["typescript"],
 	frameworks: ["react", "express"],
-	deployment: "docker",
-	ownerTeam: "Platform engineering",
-	authType: "oauth2",
-	monitoring: "prometheus",
-	tracing: "jaeger",
-	logAggregation: "loki",
+	deployments: ["ec2", "terraform"],
+	owners: "Platform engineering",
+	metricTools: ["prometheus", "jaeger", "loki"],
 	connections: index === 0 ? ["Payments API"] : [],
 	docs: ["https://example.com/docs"],
 	tags: ["Commerce", "Platform"],
@@ -178,6 +175,21 @@ test("all cards use DOM, reflow in focus, compare, scroll, and return without re
 	await expect(
 		orders.getByText("Deployment requires coordinated releases", { exact: false }),
 	).toContainText(description.trim());
+	const showMore = orders.getByRole("button", { name: "Show more", exact: true });
+	await expect(showMore).toHaveAttribute("aria-expanded", "false");
+	const previewId = await showMore.getAttribute("aria-controls");
+	const preview = orders.locator(`[id=${JSON.stringify(previewId)}]`);
+	expect(await preview.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(
+		true,
+	);
+	await showMore.click();
+	await expect(orders.getByRole("button", { name: "Show less" })).toHaveAttribute(
+		"aria-expanded",
+		"true",
+	);
+	expect(
+		await preview.evaluate((element) => element.scrollHeight <= element.clientHeight + 1),
+	).toBe(true);
 	const resources = orders.getByRole("navigation", { name: "Service resources" });
 	await expect(resources.getByRole("link", { name: "Docs" })).toHaveAttribute(
 		"href",

@@ -21,8 +21,8 @@ def test_manifest_str_representation_uses_language_and_deployment() -> None:
     manifest = Manifest(
         name="Stringified",
         info=Info(
-            language=ProgrammingLanguage.rust,
-            deployment=DeploymentTarget.k8s_cluster,
+            languages=[ProgrammingLanguage.rust],
+            deployments=[DeploymentTarget.k8s_cluster],
         ),
     )
 

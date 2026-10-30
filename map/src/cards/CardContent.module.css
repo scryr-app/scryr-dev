@@ -75,10 +75,6 @@
 	width: 16px;
 	height: 16px;
 }
-.description {
-	margin: 0 0 12px;
-	white-space: pre-wrap;
-}
 .metadata,
 .links {
 	flex-wrap: wrap;
@@ -116,15 +112,36 @@
 	margin: 12px 0;
 }
 .links a {
-	color: var(--card-link);
+	color: inherit;
 	text-decoration: underline;
 	text-underline-offset: 3px;
 }
+.card a {
+	color: inherit;
+	text-decoration-line: underline;
+	text-decoration-thickness: 1px;
+	text-underline-offset: 0.2em;
+	text-decoration-skip-ink: auto;
+}
+a.chip,
+.links a {
+	border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+	border-radius: 6px;
+}
+.links a {
+	padding: 6px 8px;
+}
+.linkIcon {
+	width: 14px;
+	height: 14px;
+	flex: 0 0 auto;
+}
 .card a:hover {
 	background: color-mix(in srgb, var(--card-text) 12%, transparent);
+	text-decoration-thickness: 2px;
 }
 .card a:focus-visible {
-	outline: 2px solid var(--card-link);
+	outline: 2px solid currentColor;
 	outline-offset: 3px;
 }
 .technologyIcon {
@@ -167,5 +184,36 @@
 	}
 	.diagrams {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+.titleButton {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	color: inherit;
+	font-weight: inherit;
+	text-align: left;
+	cursor: pointer;
+	pointer-events: auto;
+}
+.header h2 .enlargeIcon {
+	width: 16px;
+	height: 16px;
+	opacity: 0;
+	transition: opacity 600ms ease-in-out;
+}
+.header h2 .titleButton:hover .enlargeIcon,
+.header h2 .titleButton:focus-visible .enlargeIcon {
+	opacity: 1;
+}
+.titleButton:focus-visible {
+	outline: 2px solid var(--card-link);
+	outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.header h2 .enlargeIcon {
+		transition: none;
 	}
 }

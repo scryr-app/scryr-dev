@@ -135,7 +135,7 @@ Drag the console’s top bar to reposition it. Its controls remain clickable, an
 
 ## Card focus
 
-Click a block's top focus control, or click **Enlarge Card** and then choose a
+Click **Enlarge Card** and then choose a
 subtly highlighted card or slot tab. Escape or clicking **Enlarge Card** again
 cancels selection. The actual 3D card moves toward the camera, turns
 face-on, and enlarges to fit most of the canvas while preserving its proportions.
@@ -148,6 +148,7 @@ one and use **Back to group** to restore the comparison. Escape closes the picke
 first, then an expanded card, then Focus mode. **Back to diagram** returns all
 cards to their original slots. The editor and normal toolbar reappear with their
 previous state. Opening focus again starts with one card.
+Clicking the expand icon in a focused card's title also returns to the regular canvas.
 
 ## UI styles
 
@@ -177,7 +178,10 @@ viewport resizing change the actual CSS width/height to match the available
 screen area; container queries reflow content instead of merely magnifying it.
 The same mounted content stays with its frame during all transitions, preserving
 component state and browser scroll positions where the new dimensions allow.
-Descriptions, resource links, and technology lists are no longer truncated.
+Descriptions render GitHub-flavored Markdown (including tables, task lists,
+strikethrough, and fenced code). They wrap within the card and show an eight-line-height
+preview with **Show more** / **Show less** for longer content. Raw HTML is omitted.
+Resource links and technology lists remain fully visible.
 
 Every card uses blending occlusion: a depth-tested mask reveals the transformed
 DOM below the transparent scene canvas. This clips cards as they slide out from
@@ -185,7 +189,12 @@ behind blocks, while the foreground pass keeps focused cards above the diagram.
 All masks share a stacking range within an isolated scene stacking context.
 Only focused card content accepts DOM input; unfocused/hidden card content is
 inert so it cannot steal map navigation or slot selection. Use **Enlarge Card**
-or the block's focus control to read, select text, scroll, and follow card links.
+to read, select text, scroll, and follow card links.
 
 Run `mise run verify:cards` for browser checks of card focus, layout reflow,
 comparison, scrolling, and return to the diagram using isolated fixture data.
+
+Info cards consume `languages`, `frameworks`, `deployments`, and `metricTools`
+arrays. Deployment chips include IaC tools; metric chips combine monitoring,
+tracing, and logging tools. Ownership uses the single `owners` string.
+Authentication is not an Info card field.
