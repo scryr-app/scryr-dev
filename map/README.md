@@ -179,8 +179,14 @@ screen area; container queries reflow content instead of merely magnifying it.
 The same mounted content stays with its frame during all transitions, preserving
 component state and browser scroll positions where the new dimensions allow.
 Descriptions render GitHub-flavored Markdown (including tables, task lists,
-strikethrough, and fenced code). They wrap within the card and show an eight-line-height
+strikethrough, and fenced code). Docked cards use a compact details section and
+side-by-side Stack and Metric tools sections with light padding. Descriptions
+are truncated to two lines; type, owner, custom links, and technology icons
+remain visible. Enlarged cards show an eight-line-height
 preview with **Show more** / **Show less** for longer content. Raw HTML is omitted.
+Card links have no underlines or link icons, and the enlarge icon is always visible.
+Technology chips show logos with names on hover and accessible labels. Card
+padding and panel gaps are compact, with tighter spacing when docked.
 Resource links and technology lists remain fully visible.
 
 Every card uses blending occlusion: a depth-tested mask reveals the transformed

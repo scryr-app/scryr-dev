@@ -33,9 +33,11 @@ it("renders complete metadata and every resource without shortening the content"
 	expect(screen.getByText("Public API")).toBeTruthy();
 	expect(screen.getByText("Platform engineering")).toBeTruthy();
 	const stack = screen.getByRole("region", { name: "Stack" });
-	expect(within(stack).getByText("Angular")).toBeTruthy();
-	expect(within(stack).getByText("Python")).toBeTruthy();
-	expect(within(stack).getByText("Terraform")).toBeTruthy();
+	for (const name of ["Angular", "Python", "Terraform"]) {
+		const chip = within(stack).getByRole("link", { name });
+		expect(chip.getAttribute("title")).toBe(name);
+		expect(chip.textContent).toBe("");
+	}
 	expect(within(stack).getAllByRole("listitem")).toHaveLength(8);
 	expect(screen.queryByText("Auth")).toBeNull();
 	expect(

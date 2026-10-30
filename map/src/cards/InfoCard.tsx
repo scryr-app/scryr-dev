@@ -1,5 +1,5 @@
 import { CardContentInteractiveContext, CardTitle } from "./CardTitle";
-import { Activity, Code, Info, Link2, Users } from "lucide-react";
+import { Activity, Code, Info, Users } from "lucide-react";
 import { type ReactNode, useContext } from "react";
 import type { BlockLink } from "@/block/Block";
 import { getClassificationMetadata } from "./ClassificationIcons";
@@ -51,19 +51,26 @@ function Technology({ value }: { value: string }) {
 	const source = metadata?.iconFile ? assets[`../icons/${metadata.iconFile}`] : undefined;
 	const label = enumLabel(value);
 	const url = safeUrl(metadata?.docUrl);
-	const content = (
-		<>
-			{source && <img src={source} alt="" className={styles.technologyIcon} />}
-			<span>{label}</span>
-		</>
+	const content = source ? (
+		<img src={source} alt="" className={styles.technologyIcon} />
+	) : (
+		<Code className={styles.technologyIcon} aria-hidden="true" />
 	);
 	return url ? (
-		<a className={styles.chip} href={url} target="_blank" rel="noopener noreferrer">
+		<a
+			className={styles.chip}
+			href={url}
+			title={label}
+			aria-label={label}
+			target="_blank"
+			rel="noopener noreferrer"
+		>
 			{content}
-			<Link2 className={styles.linkIcon} aria-hidden="true" />
 		</a>
 	) : (
-		<span className={styles.chip}>{content}</span>
+		<span className={styles.chip} title={label} role="img" aria-label={label}>
+			{content}
+		</span>
 	);
 }
 
@@ -184,7 +191,6 @@ export function InfoCard({
 							<nav className={styles.links} aria-label="Service resources">
 								{externalLinks.map(({ label, url }, index) => (
 									<a key={`${url}-${index}`} href={url} target="_blank" rel="noopener noreferrer">
-										<Link2 className={styles.linkIcon} aria-hidden="true" />
 										{label}
 									</a>
 								))}
