@@ -13,6 +13,8 @@ from scryr import Diagram, Info, Link, Manifest
 from scryr.types import (
     Classification,
     DeploymentTarget,
+    Markdown,
+    MetricTool,
     ProgrammingLanguage,
     Url,
     WebFramework,
@@ -33,13 +35,58 @@ dokku_core_block = Manifest(
         Manifest(name="Nginx Proxy"),
     ],
     info=Info(
-        description="Central PaaS engine (Go + Shell, v0.37.7). Provides the `dokku` CLI, the plugin trigger dispatcher, app lifecycle management (create / deploy / scale / destroy / run), environment config, and the admin HTTP API used by CI integrations and the Dokku Pro dashboard.",
+        description=Markdown(
+            "Central PaaS engine (Go + Shell, v0.37.7). Provides the `dokku` CLI, the plugin trigger dispatcher, app lifecycle management (create / deploy / scale / destroy / run), environment config, and the admin HTTP API used by CI integrations and the Dokku Pro dashboard.\n"
+            "\n"
+            "### Platform control plane\n"
+            "\n"
+            "Use this block to explain the handoff from **developer intent** to running processes. The CLI coordinates several plugins; a successful command should be investigated in the context of the build, scheduler, and proxy stages it triggered.\n"
+            "\n"
+            "| Stage | Example evidence | Proposed owner |\n"
+            "| --- | --- | --- |\n"
+            "| Configuration | App settings and selected plugins | Platform |\n"
+            "| Build | Commit reference and image identity | Application team |\n"
+            "| Runtime | Process state and readiness result | Platform |\n"
+            "| Routing | Host name and upstream mapping | Platform |\n"
+            "\n"
+            "#### Deployment review exercise\n"
+            "\n"
+            "1. Choose a disposable app and record its starting state.\n"
+            "   - Capture the source revision without copying secrets.\n"
+            "   - Identify persistent mounts and external dependencies.\n"
+            "2. Follow one deployment through builder, scheduler, and proxy.\n"
+            "3. Describe how the previous release could be recovered.\n"
+            "\n"
+            "```text\n"
+            "CLI intent -> plugin triggers -> build -> schedule -> route\n"
+            "```\n"
+            "\n"
+            "> This checklist illustrates platform review; it does not certify a production deployment.\n"
+            "\n"
+            "- [ ] Assign a rollback owner\n"
+            "- [ ] Separate app configuration from release artifacts\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - `chi`\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Go tooling for builds and tests\n"
+            "  - gofmt for source formatting\n"
+            "  - Delve for local debugging\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `grafana`\n"
+            "  - `loki`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("0.37.7"),
         languages=[ProgrammingLanguage.go],
         frameworks=[WebFramework.chi],
         deployments=[DeploymentTarget.bare_metal],
         owners="Platform",
-        metric_tools=[],
+        metric_tools=[MetricTool.prometheus, MetricTool.grafana, MetricTool.loki],
         links=[
             Link(site_name="Dokku Docs", http_url=_DOCS),
             Link(site_name="Source", http_url=_SOURCE),
@@ -53,12 +100,56 @@ ssh_gateway_block = Manifest(
     tags=["ssh", "auth", "access-control"],
     connections=[Manifest(name="Git Server")],
     info=Info(
-        description="SSH server layer built on `sshcommand`. Authenticates incoming connections using stored public keys (`dokku ssh-keys:add`), then translates the git push command into a dokku deploy trigger — without granting shell access to the server.",
+        description=Markdown(
+            "SSH server layer built on `sshcommand`. Authenticates incoming connections using stored public keys (`dokku ssh-keys:add`), then translates the git push command into a dokku deploy trigger — without granting shell access to the server.\n"
+            "\n"
+            "### Deployment identity boundary\n"
+            "\n"
+            "The gateway links a **public-key identity** to a deployment request. During a sample investigation, distinguish failed authentication from an accepted connection whose downstream build later failed.\n"
+            "\n"
+            "| Symptom | Suggested evidence | Next boundary |\n"
+            "| --- | --- | --- |\n"
+            "| Connection refused | Host reachability and SSH listener | Network / host |\n"
+            "| Key rejected | Offered key fingerprint and registered identity | Access management |\n"
+            "| Push accepted, deploy fails | App name and deployment log | Git Server / App Builder |\n"
+            "\n"
+            "#### Access-review exercise\n"
+            "\n"
+            "1. Inventory deploy identities for a disposable app.\n"
+            "   - Separate a developer's key from a CI automation key.\n"
+            "   - Record an accountable owner and removal condition.\n"
+            "2. Exercise key removal using a dedicated test identity.\n"
+            "3. Verify that other authorized deployment paths still work.\n"
+            "\n"
+            "```text\n"
+            "public key -> identity check -> restricted command -> deploy handoff\n"
+            "```\n"
+            "\n"
+            "> Suggested checks only. Do not paste private keys or full credential material into an incident note.\n"
+            "\n"
+            "- [ ] Document key rotation ownership\n"
+            "- [ ] Test the denied-access path as well as successful deployment\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - ShellCheck for script analysis\n"
+            "  - shfmt for formatting\n"
+            "  - Bats for shell regression tests\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `grafana`\n"
+            "  - `loki`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("0.37.7"),
         languages=[ProgrammingLanguage.bash],
         deployments=[DeploymentTarget.bare_metal],
         owners="Platform",
-        metric_tools=[],
+        metric_tools=[MetricTool.prometheus, MetricTool.grafana, MetricTool.loki],
         links=[
             Link(
                 site_name="User Mgmt Docs",
@@ -74,12 +165,57 @@ git_server_block = Manifest(
     tags=["git", "vcs", "deploy-trigger"],
     connections=[Manifest(name="App Builder")],
     info=Info(
-        description="Bare git repository manager (Go plugin). Maintains one bare repo per app under `/var/lib/dokku/`. On `git push`, the post-receive hook fires and passes the source archive to the build pipeline.",
+        description=Markdown(
+            "Bare git repository manager (Go plugin). Maintains one bare repo per app under `/var/lib/dokku/`. On `git push`, the post-receive hook fires and passes the source archive to the build pipeline.\n"
+            "\n"
+            "### Source-to-build handoff\n"
+            "\n"
+            "This component is the source intake point. For a sample release, keep the **commit identity**, target application, and build result together so an operator can distinguish an uploaded revision from the revision currently serving traffic.\n"
+            "\n"
+            "| Identity | Why record it? |\n"
+            "| --- | --- |\n"
+            "| Target app | Prevent confusion between preview and production destinations |\n"
+            "| Commit reference | Connect the deployment to reviewed source |\n"
+            "| Build result | Distinguish accepted source from a runnable artifact |\n"
+            "| Active release | Establish what users actually receive |\n"
+            "\n"
+            "#### Trace a sample push\n"
+            "\n"
+            "1. Identify the intended application and remote destination.\n"
+            "   - Review branch selection.\n"
+            "   - Check that ignored local files are not required to build.\n"
+            "2. Follow the source handoff to App Builder.\n"
+            "3. Compare the resulting release with the active runtime.\n"
+            "\n"
+            "```text\n"
+            "developer commit -> app repository -> source archive -> App Builder\n"
+            "```\n"
+            "\n"
+            "> A successful source upload is not, by itself, proof that deployment completed.\n"
+            "\n"
+            "- [ ] Capture the revision in release notes\n"
+            "- [ ] Practice diagnosing a deliberately failed test build\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Go tooling for builds and tests\n"
+            "  - gofmt for source formatting\n"
+            "  - Delve for local debugging\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `grafana`\n"
+            "  - `loki`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("0.37.7"),
         languages=[ProgrammingLanguage.go],
         deployments=[DeploymentTarget.bare_metal],
         owners="Platform",
-        metric_tools=[],
+        metric_tools=[MetricTool.prometheus, MetricTool.grafana, MetricTool.loki],
         links=[
             Link(
                 site_name="Git Deploy Docs",
@@ -95,12 +231,57 @@ app_builder_block = Manifest(
     tags=["buildpack", "docker", "image-build"],
     connections=[Manifest(name="Docker Scheduler")],
     info=Info(
-        description="Pluggable build subsystem. Default builder is Herokuish — auto-detects language via official Heroku Buildpacks and compiles a Docker image. Alternatives include Dockerfile, Cloud Native Buildpacks (pack), Nixpacks, and Railpack. Outputs a tagged Docker image pushed to the local daemon.",
+        description=Markdown(
+            "Pluggable build subsystem. Default builder is Herokuish — auto-detects language via official Heroku Buildpacks and compiles a Docker image. Alternatives include Dockerfile, Cloud Native Buildpacks (pack), Nixpacks, and Railpack. Outputs a tagged Docker image pushed to the local daemon.\n"
+            "\n"
+            "### Reproducible artifact exercise\n"
+            "\n"
+            "The builder converts source into an image. Use this sample to compare **build inputs** with **runtime configuration**: compiler dependencies belong to the former, while environment-specific settings should be reviewed separately.\n"
+            "\n"
+            "| Input | Suggested review |\n"
+            "| --- | --- |\n"
+            "| Source revision | Is the intended commit being built? |\n"
+            "| Builder selection | Is detection deliberate and documented? |\n"
+            "| Dependency lockfiles | Can the same dependency graph be reconstructed? |\n"
+            "| Build cache | Does a clean build produce the same application behavior? |\n"
+            "\n"
+            "#### Diagnose a build failure\n"
+            "\n"
+            "1. Locate the earliest failing build step.\n"
+            "   - Separate dependency download errors from compiler failures.\n"
+            "   - Redact credentials before sharing logs.\n"
+            "2. Reproduce with the same source and builder inputs.\n"
+            "3. Confirm the image starts before investigating proxy routing.\n"
+            "\n"
+            "```text\n"
+            "source + builder + dependencies -> image -> Docker Scheduler\n"
+            "```\n"
+            "\n"
+            "> These are proposed troubleshooting steps; no reproducibility guarantee is implied.\n"
+            "\n"
+            "- [ ] Record builder and runtime versions\n"
+            "- [ ] Compare cached and clean builds in a test environment\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Go tooling for builds and tests\n"
+            "  - gofmt for source formatting\n"
+            "  - Delve for local debugging\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `grafana`\n"
+            "  - `loki`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("0.37.7"),
         languages=[ProgrammingLanguage.go],
         deployments=[DeploymentTarget.bare_metal],
         owners="Platform",
-        metric_tools=[],
+        metric_tools=[MetricTool.prometheus, MetricTool.grafana, MetricTool.loki],
         links=[
             Link(
                 site_name="Builders Docs",
@@ -117,12 +298,57 @@ docker_scheduler_block = Manifest(
     tags=["scheduler", "containers", "runtime"],
     connections=[Manifest(name="Nginx Proxy")],
     info=Info(
-        description="Default container scheduler (`scheduler-docker-local`). Runs app processes defined in `Procfile` as Docker containers on the local daemon, enforces resource limits, performs zero-downtime deploy checks, and manages persistent storage mounts.",
+        description=Markdown(
+            "Default container scheduler (`scheduler-docker-local`). Runs app processes defined in `Procfile` as Docker containers on the local daemon, enforces resource limits, performs zero-downtime deploy checks, and manages persistent storage mounts.\n"
+            "\n"
+            "### Runtime lifecycle\n"
+            "\n"
+            "Once an image exists, the scheduler owns its process lifecycle. In this sample, examine **startup**, **readiness**, and **steady-state operation** as separate stages; a process that exists may still be unable to serve a useful request.\n"
+            "\n"
+            "| Stage | Suggested observation | Failure example |\n"
+            "| --- | --- | --- |\n"
+            "| Start | Exit status and startup log | Missing required setting |\n"
+            "| Ready | Application readiness result | Dependency unavailable |\n"
+            "| Serve | Error rate and resource use | Memory pressure under load |\n"
+            "| Replace | Old and new process behavior | Long requests interrupted |\n"
+            "\n"
+            "#### Replacement exercise\n"
+            "\n"
+            "1. Record process types and required persistent mounts.\n"
+            "   - Identify which paths are disposable.\n"
+            "   - Check ownership expectations for mounted data.\n"
+            "2. Deploy a test image with a deliberately slow startup.\n"
+            "3. Observe when routing changes and what happens to in-flight work.\n"
+            "\n"
+            "```text\n"
+            "image -> start process -> readiness decision -> proxy upstream\n"
+            "```\n"
+            "\n"
+            "> Exercise guidance only; continuity depends on app behavior and deployment configuration.\n"
+            "\n"
+            "- [ ] Test graceful termination\n"
+            "- [ ] Set and review resource budgets\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Go tooling for builds and tests\n"
+            "  - gofmt for source formatting\n"
+            "  - Delve for local debugging\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `grafana`\n"
+            "  - `loki`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("0.37.7"),
         languages=[ProgrammingLanguage.go],
         deployments=[DeploymentTarget.bare_metal],
         owners="Platform",
-        metric_tools=[],
+        metric_tools=[MetricTool.prometheus, MetricTool.grafana, MetricTool.loki],
         links=[
             Link(
                 site_name="Scheduler Docs",
@@ -138,12 +364,57 @@ cron_scheduler_block = Manifest(
     tags=["cron", "tasks", "scheduler"],
     connections=[Manifest(name="Docker Scheduler")],
     info=Info(
-        description="Manages scheduled one-off tasks declared in `app.json` (cron section). Writes systemd crontab entries per app and fires `dokku run` containers on schedule, with full log capture.",
+        description=Markdown(
+            "Manages scheduled one-off tasks declared in `app.json` (cron section). Writes systemd crontab entries per app and fires `dokku run` containers on schedule, with full log capture.\n"
+            "\n"
+            "### Scheduled work and repeatability\n"
+            "\n"
+            "Scheduled jobs need an outcome that can be inspected after the process exits. For this sample, document **when a job should run**, what it changes, and what a safe retry means.\n"
+            "\n"
+            "| Concern | Proposed question |\n"
+            "| --- | --- |\n"
+            "| Schedule | Which timezone determines the intended run time? |\n"
+            "| Overlap | What happens if one run has not finished before the next starts? |\n"
+            "| Retry | Can the same business operation run twice safely? |\n"
+            "| Evidence | Where are start time, completion time, and exit status recorded? |\n"
+            "\n"
+            "#### Job rehearsal\n"
+            "\n"
+            "1. Choose a harmless job against disposable data.\n"
+            "   - Observe one successful run.\n"
+            "   - Introduce a controlled dependency failure.\n"
+            "2. Compare failure reporting with the success record.\n"
+            "3. Document how to resume without duplicating completed work.\n"
+            "\n"
+            "```text\n"
+            "scheduled time -> one-off container -> work -> exit status + log\n"
+            "```\n"
+            "\n"
+            "> Proposed exercises; the sample does not promise exactly-once execution.\n"
+            "\n"
+            "- [ ] Define a maximum expected runtime\n"
+            "- [ ] Assign an owner for missed or failed runs\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Go tooling for builds and tests\n"
+            "  - gofmt for source formatting\n"
+            "  - Delve for local debugging\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `grafana`\n"
+            "  - `loki`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("0.37.7"),
         languages=[ProgrammingLanguage.go],
         deployments=[DeploymentTarget.bare_metal],
         owners="Platform",
-        metric_tools=[],
+        metric_tools=[MetricTool.prometheus, MetricTool.grafana, MetricTool.loki],
         links=[
             Link(
                 site_name="Cron Docs",
@@ -159,12 +430,57 @@ nginx_proxy_block = Manifest(
     tags=["proxy", "routing", "tls"],
     connections=[],
     info=Info(
-        description="Default HTTP/HTTPS reverse proxy (`nginx-vhosts` plugin). Renders per-app nginx vhost configs on every deploy, routes `$APP.domain.tld` to the running container port, upgrades WebSocket connections, and terminates TLS. Caddy, Traefik, HAProxy, and OpenResty are plug-in alternatives.",
+        description=Markdown(
+            "Default HTTP/HTTPS reverse proxy (`nginx-vhosts` plugin). Renders per-app nginx vhost configs on every deploy, routes `$APP.domain.tld` to the running container port, upgrades WebSocket connections, and terminates TLS. Caddy, Traefik, HAProxy, and OpenResty are plug-in alternatives.\n"
+            "\n"
+            "### Public routing boundary\n"
+            "\n"
+            "The proxy joins a public host name to a running application. In this diagram, inspect **DNS**, **TLS**, and **upstream selection** separately so an unreachable hostname is not confused with an unhealthy container.\n"
+            "\n"
+            "| Observation | Suggested investigation |\n"
+            "| --- | --- |\n"
+            "| Wrong site appears | Host header and virtual-host selection |\n"
+            "| TLS handshake fails | Certificate names, expiry, and served chain |\n"
+            "| Gateway error | Upstream address, port, and readiness |\n"
+            "| WebSocket disconnect | Upgrade handling and timeout behavior |\n"
+            "\n"
+            "#### Routing walkthrough\n"
+            "\n"
+            "1. Pick a disposable app hostname.\n"
+            "   - Follow it from public request to proxy configuration.\n"
+            "   - Match the upstream to the intended running process.\n"
+            "2. Compare ordinary HTTP and long-lived connections.\n"
+            "3. Repeat the checks after a test release.\n"
+            "\n"
+            "```text\n"
+            "hostname + path -> virtual host -> upstream port -> application\n"
+            "```\n"
+            "\n"
+            "> Review prompts only. Routing and timeout policies depend on local configuration.\n"
+            "\n"
+            "- [ ] Check error pages and request-size limits\n"
+            "- [ ] Document where access logs are collected\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Container logs for process diagnostics\n"
+            "  - Resource metrics for capacity review\n"
+            "  - Versioned configuration for repeatable environments\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `grafana`\n"
+            "  - `loki`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.27.0"),
         languages=[ProgrammingLanguage.c],
         deployments=[DeploymentTarget.bare_metal],
         owners="Platform",
-        metric_tools=[],
+        metric_tools=[MetricTool.prometheus, MetricTool.grafana, MetricTool.loki],
         links=[
             Link(
                 site_name="Proxy Docs",
@@ -180,12 +496,57 @@ certs_plugin_block = Manifest(
     tags=["tls", "certs", "security"],
     connections=[Manifest(name="Nginx Proxy")],
     info=Info(
-        description="TLS certificate manager. Stores and applies per-app or wildcard certs (`dokku certs:add`). Integrates with the community `dokku-letsencrypt` plugin for automatic ACME certificate issuance and renewal via the Nginx HTTP-01 challenge.",
+        description=Markdown(
+            "TLS certificate manager. Stores and applies per-app or wildcard certs (`dokku certs:add`). Integrates with the community `dokku-letsencrypt` plugin for automatic ACME certificate issuance and renewal via the Nginx HTTP-01 challenge.\n"
+            "\n"
+            "### Certificate lifecycle\n"
+            "\n"
+            "A certificate has a lifecycle beyond initial installation: issuance, distribution, serving, renewal, and retirement. Use the sample to explain how **certificate material** reaches the proxy and how operators would notice a renewal failure.\n"
+            "\n"
+            "| Check | Proposed evidence |\n"
+            "| --- | --- |\n"
+            "| Identity | Hostnames included in the certificate |\n"
+            "| Validity | Expiration date and intended renewal window |\n"
+            "| Delivery | Certificate actually served by the public endpoint |\n"
+            "| Renewal | Last successful renewal and actionable failure record |\n"
+            "\n"
+            "#### Renewal rehearsal\n"
+            "\n"
+            "1. Use a test domain and an isolated certificate workflow.\n"
+            "   - Check name resolution and challenge routing.\n"
+            "   - Identify who can access private key material.\n"
+            "2. Simulate a failed validation without affecting a live hostname.\n"
+            "3. Confirm that an operator can locate and understand the failure.\n"
+            "\n"
+            "```text\n"
+            "issue / renew -> store certificate -> proxy reload -> served certificate\n"
+            "```\n"
+            "\n"
+            "> Suggested lifecycle exercise, not a claim that automatic renewal is configured.\n"
+            "\n"
+            "- [ ] Assign an expiry-alert owner\n"
+            "- [ ] Verify the served chain after replacement\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Go tooling for builds and tests\n"
+            "  - gofmt for source formatting\n"
+            "  - Delve for local debugging\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `grafana`\n"
+            "  - `loki`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("0.37.7"),
         languages=[ProgrammingLanguage.go],
         deployments=[DeploymentTarget.bare_metal],
         owners="Platform",
-        metric_tools=[],
+        metric_tools=[MetricTool.prometheus, MetricTool.grafana, MetricTool.loki],
         links=[
             Link(site_name="SSL Docs", http_url=Url("https://dokku.com/docs/configuration/ssl/"))
         ],
@@ -198,12 +559,57 @@ plugin_system_block = Manifest(
     tags=["plugins", "extensibility", "hooks"],
     connections=[Manifest(name="Dokku Core")],
     info=Info(
-        description="Bash-based plugin trigger and lifecycle system. Installs community plugins from git URLs (`dokku plugin:install`), manages plugin updates, and dispatches named trigger hooks (50+ built-in triggers) to all registered plugins in priority order, enabling the full plugin ecosystem.",
+        description=Markdown(
+            "Bash-based plugin trigger and lifecycle system. Installs community plugins from git URLs (`dokku plugin:install`), manages plugin updates, and dispatches named trigger hooks (50+ built-in triggers) to all registered plugins in priority order, enabling the full plugin ecosystem.\n"
+            "\n"
+            "### Extension and compatibility review\n"
+            "\n"
+            "Plugins expand the platform's behavior at lifecycle boundaries. For a sample extension, document **which trigger it handles**, which inputs it reads, and whether a failure should stop deployment or merely report a warning.\n"
+            "\n"
+            "| Review area | Proposed question |\n"
+            "| --- | --- |\n"
+            "| Source | Who maintains the plugin and which revision is installed? |\n"
+            "| Ordering | Does its behavior depend on another trigger handler? |\n"
+            "| Side effects | Which host files, services, or application settings can change? |\n"
+            "| Upgrade | How will compatibility and rollback be tested? |\n"
+            "\n"
+            "#### Extension exercise\n"
+            "\n"
+            "1. Inspect a plugin in a disposable environment.\n"
+            "   - Map its trigger entry points.\n"
+            "   - Record expected outputs and failure behavior.\n"
+            "2. Run a deployment with the extension enabled.\n"
+            "3. Compare behavior after a controlled plugin failure.\n"
+            "\n"
+            "```text\n"
+            "lifecycle event -> ordered handlers -> side effects -> result\n"
+            "```\n"
+            "\n"
+            "> Treat these as review prompts; installing an extension requires its own operational assessment.\n"
+            "\n"
+            "- [ ] Record the installed revision\n"
+            "- [ ] Rehearse removal and recovery before relying on the extension\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - ShellCheck for script analysis\n"
+            "  - shfmt for formatting\n"
+            "  - Bats for shell regression tests\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `grafana`\n"
+            "  - `loki`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("0.37.7"),
         languages=[ProgrammingLanguage.bash],
         deployments=[DeploymentTarget.bare_metal],
         owners="Platform",
-        metric_tools=[],
+        metric_tools=[MetricTool.prometheus, MetricTool.grafana, MetricTool.loki],
         links=[
             Link(
                 site_name="Plugin Docs",

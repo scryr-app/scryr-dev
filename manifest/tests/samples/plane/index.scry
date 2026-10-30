@@ -12,6 +12,8 @@ from scryr.types import (
     Classification,
     DeploymentTarget,
     IncrementalVersion,
+    Markdown,
+    MetricTool,
     ProgrammingLanguage,
     Url,
     WebFramework,
@@ -27,12 +29,74 @@ postgres_block = Manifest(
     tags=["database", "sql", "infra"],
     connections=[],
     info=Info(
-        description="Primary relational database (postgres:15-alpine) storing all Plane data: workspaces, projects, issues, cycles, modules, pages, and members.",
+        description=Markdown(
+            "## Project data model\n"
+            "\n"
+            "Primary relational database (postgres:15-alpine) storing all Plane data: workspaces, projects, issues, cycles, modules, pages, and members.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Workspace boundary | Keep members and projects scoped to their workspace |\n"
+            "| Issue history | Preserve relationships between issues, cycles, and modules |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Create an issue in a test workspace and move it into a cycle.\n"
+            "2. Restore a test backup and inspect membership and issue associations.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** Schema changes can affect API requests and background workers at different times.\n"
+            "\n"
+            "Suggested diagnostic signals: *query latency, lock contention, and connection pool usage*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - SQL clients for read-only inspection\n"
+            "  - Query plans for index review\n"
+            "  - Migration tooling for schema changes\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `grafana`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("15.7.0"),
         languages=[ProgrammingLanguage.sql],
         deployments=[DeploymentTarget.docker_swarm],
         owners="Platform",
-        metric_tools=[],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.grafana,
+            MetricTool.loki,
+            MetricTool.jaeger,
+        ],
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
 )
@@ -43,12 +107,74 @@ valkey_block = Manifest(
     tags=["cache", "celery", "infra"],
     connections=[],
     info=Info(
-        description="Valkey 7 (Redis-compatible) used as both a cache layer and the Celery task broker for background workers and beat scheduler.",
+        description=Markdown(
+            "## Cache and task state\n"
+            "\n"
+            "Valkey 7 (Redis-compatible) used as both a cache layer and the Celery task broker for background workers and beat scheduler.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Cache | Separate disposable responses from task-related state |\n"
+            "| Expiry | Document which keys can be safely regenerated |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Invalidate a cached project response and reload it.\n"
+            "2. Restart a test worker and inspect pending work before clearing any keys.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** Treating every key as disposable can remove task state as well as cached data.\n"
+            "\n"
+            "Suggested diagnostic signals: *evictions, memory usage, and task backlog*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Container logs for process diagnostics\n"
+            "  - Resource metrics for capacity review\n"
+            "  - Versioned configuration for repeatable environments\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `grafana`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("7.2.11"),
         languages=[ProgrammingLanguage.c],
         deployments=[DeploymentTarget.docker_swarm],
         owners="Platform",
-        metric_tools=[],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.grafana,
+            MetricTool.loki,
+            MetricTool.jaeger,
+        ],
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
 )
@@ -59,12 +185,74 @@ rabbitmq_block = Manifest(
     tags=["messaging", "async", "infra"],
     connections=[],
     info=Info(
-        description="RabbitMQ 3.13 AMQP message broker used to fan-out async tasks from the API to Celery workers, including webhook dispatch and notification delivery.",
+        description=Markdown(
+            "## Asynchronous delivery\n"
+            "\n"
+            "RabbitMQ 3.13 AMQP message broker used to fan-out async tasks from the API to Celery workers, including webhook dispatch and notification delivery.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Publishing | Enqueue work after the originating change is committed |\n"
+            "| Consumption | Track acknowledgements, retries, and failed deliveries |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Trigger a test notification and follow it from API to worker.\n"
+            "2. Interrupt the consumer and verify the expected redelivery behavior.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** A retried message can repeat a side effect unless the handler is idempotent.\n"
+            "\n"
+            "Suggested diagnostic signals: *queue depth, oldest message age, and unacknowledged deliveries*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Container logs for process diagnostics\n"
+            "  - Resource metrics for capacity review\n"
+            "  - Versioned configuration for repeatable environments\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `grafana`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("3.13.6"),
         languages=[ProgrammingLanguage.erlang],
         deployments=[DeploymentTarget.docker_swarm],
         owners="Platform",
-        metric_tools=[],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.grafana,
+            MetricTool.loki,
+            MetricTool.jaeger,
+        ],
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
 )
@@ -75,12 +263,74 @@ minio_block = Manifest(
     tags=["storage", "s3", "infra"],
     connections=[],
     info=Info(
-        description="S3-compatible object storage (MinIO) used for file and image attachments uploaded to issues, pages, and workspace assets.",
+        description=Markdown(
+            "## Issue attachments\n"
+            "\n"
+            "S3-compatible object storage (MinIO) used for file and image attachments uploaded to issues, pages, and workspace assets.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Object data | Store uploaded files and workspace images |\n"
+            "| Metadata | Keep ownership and references in application records |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Attach a small file to a private issue.\n"
+            "2. Check access using a user outside that workspace.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** Storage access must preserve the visibility of the parent issue or page.\n"
+            "\n"
+            "Suggested diagnostic signals: *upload errors, retrieval latency, and object storage capacity*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Go tooling for builds and tests\n"
+            "  - gofmt for source formatting\n"
+            "  - Delve for local debugging\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `grafana`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=IncrementalVersion.parse("1"),
         languages=[ProgrammingLanguage.go],
         deployments=[DeploymentTarget.docker_swarm],
         owners="Platform",
-        metric_tools=[],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.grafana,
+            MetricTool.loki,
+            MetricTool.jaeger,
+        ],
         links=[Link(site_name="MinIO Docs", http_url=Url("https://min.io/docs/"))],
     ),
 )
@@ -96,13 +346,75 @@ api_block = Manifest(
         Manifest(name="MinIO"),
     ],
     info=Info(
-        description="Django REST Framework API server — the core backend of Plane. Handles authentication (magic-link, OAuth2, SAML), workspace and project management, issues, cycles, modules, views, analytics, webhooks, and Prisma-free direct PostgreSQL access via Django ORM.",
+        description=Markdown(
+            "## Workspace API boundary\n"
+            "\n"
+            "Django REST Framework API server — the core backend of Plane. Handles authentication (magic-link, OAuth2, SAML), workspace and project management, issues, cycles, modules, views, analytics, webhooks, and Prisma-free direct PostgreSQL access via Django ORM.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Authorization | Check membership for every workspace-scoped action |\n"
+            "| Persistence | Commit issue changes before dispatching dependent tasks |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Create and update an issue through an authorized test client.\n"
+            "2. Repeat the request using a user from another workspace.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** A valid user session alone does not grant access to every project.\n"
+            "\n"
+            "Suggested diagnostic signals: *request errors, database latency, and task publication failures*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - `django`\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - uv for Python environments\n"
+            "  - Ruff for linting and formatting\n"
+            "  - pytest for focused regression tests\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `grafana`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.2.3"),
         languages=[ProgrammingLanguage.python],
         frameworks=[WebFramework.django],
         deployments=[DeploymentTarget.docker_swarm],
         owners="Backend",
-        metric_tools=[],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.grafana,
+            MetricTool.loki,
+            MetricTool.jaeger,
+        ],
         links=[
             Link(
                 site_name="API Reference",
@@ -123,13 +435,75 @@ worker_block = Manifest(
         Manifest(name="RabbitMQ"),
     ],
     info=Info(
-        description="Celery worker process (same image as API Server) that consumes tasks from RabbitMQ/Valkey. Handles async webhook dispatch, email notifications, export jobs, and bulk issue operations.",
+        description=Markdown(
+            "## Background processing\n"
+            "\n"
+            "Celery worker process (same image as API Server) that consumes tasks from RabbitMQ/Valkey. Handles async webhook dispatch, email notifications, export jobs, and bulk issue operations.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Jobs | Notifications, exports, webhooks, and bulk operations |\n"
+            "| Retries | Record attempts and prevent duplicate external side effects |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Queue an export for a small test project.\n"
+            "2. Retry a failed webhook and inspect the delivery record.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** Long exports can starve short notification jobs when they share capacity.\n"
+            "\n"
+            "Suggested diagnostic signals: *oldest queued task, retry count, and execution duration*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - `django`\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - uv for Python environments\n"
+            "  - Ruff for linting and formatting\n"
+            "  - pytest for focused regression tests\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `grafana`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.2.3"),
         languages=[ProgrammingLanguage.python],
         frameworks=[WebFramework.django],
         deployments=[DeploymentTarget.docker_swarm],
         owners="Backend",
-        metric_tools=[],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.grafana,
+            MetricTool.loki,
+            MetricTool.jaeger,
+        ],
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
 )
@@ -140,13 +514,75 @@ beat_worker_block = Manifest(
     tags=["celery", "cron", "scheduler"],
     connections=[Manifest(name="API Server"), Manifest(name="PostgreSQL"), Manifest(name="Valkey")],
     info=Info(
-        description="Celery Beat scheduler process that triggers periodic tasks on a cron-like schedule: digest emails, stale issue cleanup, cycle auto-close, and analytics aggregation jobs.",
+        description=Markdown(
+            "## Periodic work\n"
+            "\n"
+            "Celery Beat scheduler process that triggers periodic tasks on a cron-like schedule: digest emails, stale issue cleanup, cycle auto-close, and analytics aggregation jobs.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Schedule | Select due periodic jobs |\n"
+            "| Execution | Hand work to the configured background processing path |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Observe a periodic job become due in a test environment.\n"
+            "2. Restart the scheduler and check that the same interval is not dispatched twice.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** Multiple active schedulers can duplicate periodic work without coordination.\n"
+            "\n"
+            "Suggested diagnostic signals: *last successful dispatch, scheduler lag, and duplicate executions*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - `django`\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - uv for Python environments\n"
+            "  - Ruff for linting and formatting\n"
+            "  - pytest for focused regression tests\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `grafana`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.2.3"),
         languages=[ProgrammingLanguage.python],
         frameworks=[WebFramework.django],
         deployments=[DeploymentTarget.docker_swarm],
         owners="Backend",
-        metric_tools=[],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.grafana,
+            MetricTool.loki,
+            MetricTool.jaeger,
+        ],
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
 )
@@ -157,12 +593,74 @@ live_block = Manifest(
     tags=["realtime", "collaboration", "pages"],
     connections=[Manifest(name="API Server")],
     info=Info(
-        description="Node.js real-time collaboration server powering Plane Pages co-editing. Uses Hocuspocus (a Yjs CRDT server) over WebSocket so multiple users can edit the same document simultaneously without conflicts.",
+        description=Markdown(
+            "## Collaborative editing\n"
+            "\n"
+            "Node.js real-time collaboration server powering Plane Pages co-editing. Uses Hocuspocus (a Yjs CRDT server) over WebSocket so multiple users can edit the same document simultaneously without conflicts.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Connections | Authenticate collaborators before joining a page session |\n"
+            "| State | Reconcile edits across disconnects and reconnects |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Edit one test page simultaneously in two browser sessions.\n"
+            "2. Disconnect one session, make an edit, then reconnect and compare content.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** Converging document state does not replace workspace authorization.\n"
+            "\n"
+            "Suggested diagnostic signals: *active sessions, socket disconnects, and synchronization errors*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - TypeScript for static checks\n"
+            "  - ESLint for source checks\n"
+            "  - Playwright for browser workflows\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `grafana`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.2.3"),
         languages=[ProgrammingLanguage.typescript],
         deployments=[DeploymentTarget.docker_swarm],
         owners="Product",
-        metric_tools=[],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.grafana,
+            MetricTool.loki,
+            MetricTool.jaeger,
+        ],
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
 )
@@ -173,13 +671,75 @@ web_block = Manifest(
     tags=["frontend", "issues", "kanban"],
     connections=[Manifest(name="API Server"), Manifest(name="Live Server")],
     info=Info(
-        description="Main Plane web application built with React Router v7 (SSR) and TypeScript. Provides the full project management UI: issue tracker, Kanban/list/timeline views, cycles, modules, pages, analytics, and workspace settings.",
+        description=Markdown(
+            "## Issue management workspace\n"
+            "\n"
+            "Main Plane web application built with React Router v7 (SSR) and TypeScript. Provides the full project management UI: issue tracker, Kanban/list/timeline views, cycles, modules, pages, analytics, and workspace settings.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Navigation | Move between boards, cycles, modules, and pages |\n"
+            "| Feedback | Expose pending writes and recoverable request errors |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Move a test issue between board columns.\n"
+            "2. Interrupt the request and check rollback or retry feedback.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** A local optimistic update should not conceal a rejected server change.\n"
+            "\n"
+            "Suggested diagnostic signals: *client exceptions, page load time, and failed mutations*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - `remix`\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - TypeScript for static checks\n"
+            "  - ESLint for source checks\n"
+            "  - Playwright for browser workflows\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `grafana`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.2.3"),
         languages=[ProgrammingLanguage.typescript],
         frameworks=[WebFramework.remix],
         deployments=[DeploymentTarget.docker_swarm],
         owners="Frontend",
-        metric_tools=[],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.grafana,
+            MetricTool.loki,
+            MetricTool.jaeger,
+        ],
         links=[
             Link(site_name="Plane", http_url=Url("https://app.plane.so")),
             Link(site_name="Source", http_url=_SOURCE),
@@ -193,13 +753,75 @@ admin_block = Manifest(
     tags=["admin", "instance", "config"],
     connections=[Manifest(name="API Server"), Manifest(name="Web App")],
     info=Info(
-        description="God Mode admin panel (React Router v7 / TypeScript) for instance administrators. Manages global instance configuration, SSO/SAML setup, email settings, feature flags, and workspace-level oversight.",
+        description=Markdown(
+            "## Instance administration\n"
+            "\n"
+            "God Mode admin panel (React Router v7 / TypeScript) for instance administrators. Manages global instance configuration, SSO/SAML setup, email settings, feature flags, and workspace-level oversight.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Configuration | Manage instance-wide settings and identity integrations |\n"
+            "| Access | Limit administrative changes to authorized operators |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Change a reversible setting in a test instance.\n"
+            "2. Verify the setting from a normal user session and record the change.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** Instance configuration can affect all workspaces, including sign-in behavior.\n"
+            "\n"
+            "Suggested diagnostic signals: *configuration errors, failed admin actions, and authentication regressions*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - `remix`\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - TypeScript for static checks\n"
+            "  - ESLint for source checks\n"
+            "  - Playwright for browser workflows\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `grafana`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.2.3"),
         languages=[ProgrammingLanguage.typescript],
         frameworks=[WebFramework.remix],
         deployments=[DeploymentTarget.docker_swarm],
         owners="Platform",
-        metric_tools=[],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.grafana,
+            MetricTool.loki,
+            MetricTool.jaeger,
+        ],
         links=[
             Link(
                 site_name="God Mode Docs",
@@ -215,13 +837,75 @@ space_block = Manifest(
     tags=["public", "embed", "spaces"],
     connections=[Manifest(name="API Server"), Manifest(name="Web App")],
     info=Info(
-        description="Public-facing React Router v7 app that renders Plane issue boards as embeddable or publicly shareable 'spaces'. Allows external stakeholders to view and vote on issues without a Plane account.",
+        description=Markdown(
+            "## Public project view\n"
+            "\n"
+            "Public-facing React Router v7 app that renders Plane issue boards as embeddable or publicly shareable 'spaces'. Allows external stakeholders to view and vote on issues without a Plane account.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Publication | Expose only intentionally published issue information |\n"
+            "| Interaction | Define which anonymous actions the instance permits |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Open a published space in a signed-out browser.\n"
+            "2. Inspect an unpublished issue and confirm it stays outside the public view.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** Public rendering must not inherit private fields from an internal API response.\n"
+            "\n"
+            "Suggested diagnostic signals: *public request errors, stale content, and rejected interactions*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - `remix`\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - TypeScript for static checks\n"
+            "  - ESLint for source checks\n"
+            "  - Playwright for browser workflows\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `grafana`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.2.3"),
         languages=[ProgrammingLanguage.typescript],
         frameworks=[WebFramework.remix],
         deployments=[DeploymentTarget.docker_swarm],
         owners="Product",
-        metric_tools=[],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.grafana,
+            MetricTool.loki,
+            MetricTool.jaeger,
+        ],
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
 )
@@ -238,12 +922,74 @@ proxy_block = Manifest(
         Manifest(name="Live Server"),
     ],
     info=Info(
-        description="Nginx reverse proxy that acts as the single ingress point for all Plane traffic. Routes requests to Web, Admin, Space, API, and Live services. Also handles file upload size limits and serves MinIO uploads.",
+        description=Markdown(
+            "## Application ingress\n"
+            "\n"
+            "Nginx reverse proxy that acts as the single ingress point for all Plane traffic. Routes requests to Web, Admin, Space, API, and Live services. Also handles file upload size limits and serves MinIO uploads.\n"
+            "\n"
+            "> **Illustrative sample notes:** the checks below are design and runbook examples, not claims about an active deployment.\n"
+            "\n"
+            "### Responsibilities\n"
+            "\n"
+            "| Area | Review focus |\n"
+            "| --- | --- |\n"
+            "| Routing | Send UI, API, and live traffic to the appropriate service |\n"
+            "| Limits | Align upload size and timeout policies across the request path |\n"
+            "\n"
+            "### Walkthrough\n"
+            "\n"
+            "1. Load the main UI and establish a live editing session through ingress.\n"
+            "2. Upload a file near the configured size limit and inspect error feedback.\n"
+            "   - Capture the relevant request or job identifier.\n"
+            "   - Compare the user-visible outcome with the persisted or provider state.\n"
+            "\n"
+            "### Failure handling\n"
+            "\n"
+            "**Watch for:** Mismatched path rewrites or socket headers can break only one product surface.\n"
+            "\n"
+            "Suggested diagnostic signals: *upstream failures, request size rejections, and socket disconnects*. Compare them over the same time window.\n"
+            "\n"
+            "```text\n"
+            "observe the symptom\n"
+            "  -> identify the affected dependency\n"
+            "  -> reproduce with test data\n"
+            "  -> verify recovery from the user perspective\n"
+            "```\n"
+            "\n"
+            "### Readiness checklist\n"
+            "\n"
+            "- [ ] Exercise the happy path with test data.\n"
+            "- [ ] Rehearse the failure and recovery path.\n"
+            "- [ ] Record the owner, evidence, and follow-up in the deployment runbook.\n"
+            "\n"
+            "~~Assume a green process means the workflow works~~ — verify the end-to-end outcome as well.\n"
+            "\n"
+            "### Frameworks and tools\n"
+            "\n"
+            "- **Framework layers in this sample**\n"
+            "  - No web framework is modeled for this component; inspect its service runtime and integration clients instead.\n"
+            "- **Example development and investigation toolkit**\n"
+            "  - Container logs for process diagnostics\n"
+            "  - Resource metrics for capacity review\n"
+            "  - Versioned configuration for repeatable environments\n"
+            "- **Example observability tools**\n"
+            "  - `prometheus`\n"
+            "  - `grafana`\n"
+            "  - `loki`\n"
+            "  - `jaeger`\n"
+            "\n"
+            "The tool lists illustrate a possible setup for this architecture; they do not install tools or assert that an upstream project uses every listed tool.\n"
+        ),
         version=parse_version("1.25.0"),
         languages=[ProgrammingLanguage.c],
         deployments=[DeploymentTarget.docker_swarm],
         owners="Platform",
-        metric_tools=[],
+        metric_tools=[
+            MetricTool.prometheus,
+            MetricTool.grafana,
+            MetricTool.loki,
+            MetricTool.jaeger,
+        ],
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
 )
