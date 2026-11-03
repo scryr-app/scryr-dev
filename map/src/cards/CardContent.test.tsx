@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, expect, it } from "vite-plus/test";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, expect, it, vi } from "vite-plus/test";
 import typescriptLogo from "../icons/typescript.svg?url";
+import { CardCloseContext } from "./CardTitle";
 import { InfoCard } from "./InfoCard";
 import { OtherDiagramCard } from "./OtherDiagramCard";
 
@@ -33,9 +34,11 @@ it("renders complete metadata and every resource without shortening the content"
 	expect(screen.getByText("Public API")).toBeTruthy();
 	expect(screen.getByText("Platform engineering")).toBeTruthy();
 	const stack = screen.getByRole("region", { name: "Stack" });
-	expect(within(stack).getByText("Angular")).toBeTruthy();
-	expect(within(stack).getByText("Python")).toBeTruthy();
-	expect(within(stack).getByText("Terraform")).toBeTruthy();
+	for (const name of ["Angular", "Python", "Terraform"]) {
+		const chip = within(stack).getByRole("link", { name });
+		expect(chip.getAttribute("title")).toBe(name);
+		expect(chip.textContent).toBe("");
+	}
 	expect(within(stack).getAllByRole("listitem")).toHaveLength(8);
 	expect(screen.queryByText("Auth")).toBeNull();
 	expect(
@@ -91,4 +94,23 @@ it("renders empty cards and all unique diagram names as ordinary DOM", () => {
 	expect(screen.getAllByRole("listitem")).toHaveLength(2);
 	expect(screen.getByText("Services")).toBeTruthy();
 	expect(screen.getByText("Data")).toBeTruthy();
+});
+
+it("keeps version-only metadata in the body and shows a working close button only in focus", () => {
+	const close = vi.fn();
+	const view = render(<InfoCard version="1.2.3" />);
+	expect(
+		within(screen.getByRole("region", { name: "Service details" })).getByText("v1.2.3"),
+	).toBeTruthy();
+	expect(screen.queryByText("No service details provided.")).toBeNull();
+	expect(screen.queryByRole("button", { name: "Close focus mode" })).toBeNull();
+	view.rerender(
+		<CardCloseContext.Provider value={close}>
+			<InfoCard version="1.2.3" />
+		</CardCloseContext.Provider>,
+	);
+	const button = screen.getByRole("button", { name: "Close focus mode" });
+	expect(button.closest("header")).toBeTruthy();
+	fireEvent.click(button);
+	expect(close).toHaveBeenCalledOnce();
 });

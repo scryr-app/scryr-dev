@@ -112,8 +112,8 @@ export async function layoutBlocks(
 	const {
 		algorithm = "layered",
 		direction = "DOWN",
-		nodeSpacing = 120,
-		layerSpacing = 150,
+		nodeSpacing = 80,
+		layerSpacing = 100,
 		// ELK works on the ground footprint; visibility also accounts for height.
 		nodeWidth = BLOCK_DIMENSIONS.width / LAYOUT_SCALE,
 		nodeHeight = BLOCK_DIMENSIONS.depth / LAYOUT_SCALE,

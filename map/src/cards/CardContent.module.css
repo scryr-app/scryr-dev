@@ -1,7 +1,7 @@
 .card {
 	box-sizing: border-box;
 	min-width: 0;
-	padding: 16px;
+	padding: 10px;
 	color: var(--card-text);
 	font:
 		14px/1.5 system-ui,
@@ -22,8 +22,8 @@
 }
 .header {
 	justify-content: space-between;
-	gap: 16px;
-	margin-bottom: 12px;
+	gap: 10px;
+	margin-bottom: 8px;
 }
 .header h2 {
 	margin: 0;
@@ -35,34 +35,29 @@
 	height: 22px;
 	flex: 0 0 auto;
 }
-.version,
 .caption,
 .empty {
 	color: var(--card-muted);
 }
-.version {
-	min-width: 0;
-	max-width: 45%;
-}
 .sections {
 	display: grid;
 	grid-template-columns: minmax(0, 1fr);
-	gap: 12px;
+	gap: 8px;
 }
 .technicalPanels {
 	display: grid;
 	min-width: 0;
-	gap: 12px;
+	gap: 8px;
 	align-content: start;
 }
 .panel {
 	min-width: 0;
-	padding: 12px;
+	padding: 8px;
 	border-radius: 8px;
 	background: var(--card-inset);
 }
 .panel h3 {
-	margin: 0 0 10px;
+	margin: 0 0 6px;
 	font-size: 12px;
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
@@ -95,7 +90,7 @@
 	display: inline-flex;
 	align-items: center;
 	gap: 7px;
-	padding: 6px 8px;
+	padding: 4px 6px;
 	border-radius: 6px;
 	background: color-mix(in srgb, var(--card-text) 7%, transparent);
 	color: inherit;
@@ -109,19 +104,15 @@
 	letter-spacing: 0.04em;
 }
 .owner {
-	margin: 12px 0;
+	margin: 8px 0;
 }
 .links a {
 	color: inherit;
-	text-decoration: underline;
-	text-underline-offset: 3px;
+	text-decoration: none;
 }
 .card a {
 	color: inherit;
-	text-decoration-line: underline;
-	text-decoration-thickness: 1px;
-	text-underline-offset: 0.2em;
-	text-decoration-skip-ink: auto;
+	text-decoration: none;
 }
 a.chip,
 .links a {
@@ -129,16 +120,10 @@ a.chip,
 	border-radius: 6px;
 }
 .links a {
-	padding: 6px 8px;
-}
-.linkIcon {
-	width: 14px;
-	height: 14px;
-	flex: 0 0 auto;
+	padding: 4px 6px;
 }
 .card a:hover {
 	background: color-mix(in srgb, var(--card-text) 12%, transparent);
-	text-decoration-thickness: 2px;
 }
 .card a:focus-visible {
 	outline: 2px solid currentColor;
@@ -174,7 +159,7 @@ a.chip,
 }
 .empty {
 	margin: 0;
-	padding: 24px 0;
+	padding: 16px 0;
 	text-align: center;
 }
 @container (min-width: 640px) {
@@ -197,23 +182,84 @@ a.chip,
 	cursor: pointer;
 	pointer-events: auto;
 }
-.header h2 .enlargeIcon {
-	width: 16px;
-	height: 16px;
-	opacity: 0;
-	transition: opacity 600ms ease-in-out;
-}
-.header h2 .titleButton:hover .enlargeIcon,
-.header h2 .titleButton:focus-visible .enlargeIcon {
-	opacity: 1;
-}
 .titleButton:focus-visible {
 	outline: 2px solid var(--card-link);
 	outline-offset: 3px;
 }
 
-@media (prefers-reduced-motion: reduce) {
-	.header h2 .enlargeIcon {
-		transition: none;
-	}
+[data-card-focused="false"] .card {
+	padding: 5px;
+	font-size: 12px;
+	line-height: 1.3;
+}
+[data-card-focused="false"] :is(.header, .sections, .technicalPanels, .chips, .metadata, .links) {
+	gap: 3px;
+}
+[data-card-focused="false"] .header {
+	margin-bottom: 3px;
+}
+[data-card-focused="false"] .sections {
+	gap: 4px;
+}
+[data-card-focused="false"] .technicalPanels {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 4px;
+}
+[data-card-focused="false"] .technicalPanels > :only-child {
+	grid-column: 1 / -1;
+}
+[data-card-focused="false"] .panel {
+	padding: 4px;
+}
+[data-card-focused="false"] .panel[aria-label="Service details"] {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 3px 4px;
+}
+[data-card-focused="false"] .panel h3 {
+	margin-bottom: 3px;
+	font-size: 10px;
+}
+[data-card-focused="false"] :is(.chip, .links a) {
+	padding: 2px 3px;
+}
+[data-card-focused="false"] .owner {
+	margin: 0;
+}
+[data-card-focused="false"] .header h2 {
+	font-size: 17px;
+}
+[data-card-focused="false"] .header h2 svg {
+	width: 18px;
+	height: 18px;
+}
+[data-card-focused="false"] .technologyIcon {
+	width: 20px;
+	height: 20px;
+}
+[data-card-focused="false"] .diagrams {
+	gap: 6px;
+}
+
+.closeButton {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	width: 28px;
+	height: 28px;
+	padding: 4px;
+	border: 0;
+	border-radius: 6px;
+	background: var(--card-inset);
+	color: inherit;
+	cursor: pointer;
+}
+.closeButton:hover {
+	background: color-mix(in srgb, var(--card-text) 12%, transparent);
+}
+.closeButton:focus-visible {
+	outline: 2px solid var(--card-link);
+	outline-offset: 2px;
 }

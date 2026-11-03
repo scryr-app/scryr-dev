@@ -1,6 +1,6 @@
 .description {
 	min-width: 0;
-	margin: 0 0 12px;
+	margin: 0 0 8px;
 	line-height: 1.5;
 }
 .preview {
@@ -81,30 +81,16 @@
 }
 .controls button {
 	color: var(--card-link);
-	text-decoration: underline;
-	text-underline-offset: 3px;
+	text-decoration: none;
 }
 .markdown a {
 	color: inherit;
-	text-decoration: underline;
-	text-underline-offset: 3px;
-	text-decoration-thickness: 1px;
-	text-decoration-skip-ink: auto;
+	text-decoration: none;
 	border-radius: 3px;
-}
-.markdown a:hover {
-	text-decoration-thickness: 2px;
 }
 .markdown a:focus-visible {
 	outline: 2px solid currentColor;
 	outline-offset: 3px;
-}
-.linkIcon {
-	display: inline-block;
-	width: 0.85em;
-	height: 0.85em;
-	margin-left: 0.25em;
-	vertical-align: -0.1em;
 }
 .controls {
 	display: flex;
@@ -122,4 +108,32 @@
 .controls button:focus-visible {
 	outline: 2px solid var(--card-link);
 	outline-offset: 3px;
+}
+
+[data-card-focused="false"] .description {
+	flex-basis: 100%;
+	margin: 0;
+	font-size: 12px;
+	line-height: 1.3;
+}
+[data-card-focused="false"] .preview {
+	max-height: 3em;
+}
+[data-card-focused="false"] .controls {
+	display: none;
+}
+
+[data-card-focused="false"] .markdown {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	overflow: hidden;
+}
+[data-card-focused="false"] .markdown * {
+	display: inline;
+	margin: 0;
+	padding: 0;
+	font-size: inherit;
+	line-height: inherit;
+	white-space: normal;
 }

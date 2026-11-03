@@ -167,13 +167,13 @@ export async function layoutBlocksForView(
 ): Promise<LayoutResult> {
 	let best = await layoutBlocks(blocks);
 	let bestScore = measureLayoutOverlap(best, view);
-	let spacing: LayoutOptions = { nodeSpacing: 120, layerSpacing: 150 };
+	let spacing: LayoutOptions = { nodeSpacing: 80, layerSpacing: 100 };
 	for (const [nodeFactor, layerFactor] of SPACING_CANDIDATES.slice(1)) {
 		if (bestScore < 0.001 || !isCurrent()) break;
 		const candidateSpacing = {
-			nodeSpacing: 120 * nodeFactor,
-			layerSpacing: 150 * layerFactor,
-			componentSpacing: 120 * nodeFactor,
+			nodeSpacing: 80 * nodeFactor,
+			layerSpacing: 100 * layerFactor,
+			componentSpacing: 80 * nodeFactor,
 		};
 		const candidate = await layoutBlocks(blocks, candidateSpacing);
 		const score = measureLayoutOverlap(candidate, view);
@@ -187,10 +187,10 @@ export async function layoutBlocksForView(
 			spacing = candidateSpacing;
 		}
 	}
-	// Trim the coarse search's excess clearance in four steps. Each trial
+	// Trim the coarse search's excess clearance in eight steps. Each trial
 	// gets fresh ELK routes and must preserve visibility while reducing area.
 	// Try axes separately when reducing both would hide a card behind a neighbor.
-	for (let round = 0; round < 4 && isCurrent() && blocks.length > 1; round++) {
+	for (let round = 0; round < 8 && isCurrent() && blocks.length > 1; round++) {
 		for (const [nodeFactor, layerFactor] of [
 			[0.8, 0.8],
 			[0.8, 1],
@@ -201,8 +201,8 @@ export async function layoutBlocksForView(
 		]) {
 			if (!isCurrent()) return best;
 			const candidateSpacing = {
-				nodeSpacing: (spacing.nodeSpacing ?? 120) * nodeFactor,
-				layerSpacing: (spacing.layerSpacing ?? 150) * layerFactor,
+				nodeSpacing: (spacing.nodeSpacing ?? 80) * nodeFactor,
+				layerSpacing: (spacing.layerSpacing ?? 100) * layerFactor,
 				componentSpacing:
 					spacing.componentSpacing === undefined
 						? undefined
