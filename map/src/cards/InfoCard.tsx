@@ -1,4 +1,4 @@
-import { CardContentInteractiveContext, CardTitle } from "./CardTitle";
+import { CardCloseButton, CardContentInteractiveContext, CardTitle } from "./CardTitle";
 import { Activity, Code, Info, Users } from "lucide-react";
 import { type ReactNode, useContext } from "react";
 import type { BlockLink } from "@/block/Block";
@@ -149,7 +149,9 @@ export function InfoCard({
 			url: safeUrl(link.httpUrl),
 		})),
 	].filter((link): link is { label: string; url: string } => Boolean(link.url));
-	const hasDetails = Boolean(description?.trim() || info || owners || externalLinks.length);
+	const hasDetails = Boolean(
+		description?.trim() || version || info || owners || externalLinks.length,
+	);
 
 	return (
 		<article className={styles.card} aria-label="Service information">
@@ -158,7 +160,7 @@ export function InfoCard({
 					<Info aria-hidden="true" />
 					Info
 				</CardTitle>
-				{version && <span className={styles.version}>v{version}</span>}
+				<CardCloseButton />
 			</header>
 			<div
 				inert={!useContext(CardContentInteractiveContext)}
@@ -170,8 +172,13 @@ export function InfoCard({
 						{description?.trim() && (
 							<MarkdownDescription key={description} source={description.trim()} />
 						)}
-						{info && (
+						{(info || version) && (
 							<div className={styles.metadata}>
+								{version && (
+									<span className={styles.chip}>
+										<span className={styles.caption}>Version</span>v{version}
+									</span>
+								)}
 								{info && ClassificationIcon && (
 									<span className={styles.chip}>
 										<span className={styles.caption}>Type</span>

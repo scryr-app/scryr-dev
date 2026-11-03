@@ -148,7 +148,7 @@ one and use **Back to group** to restore the comparison. Escape closes the picke
 first, then an expanded card, then Focus mode. **Back to diagram** returns all
 cards to their original slots. The editor and normal toolbar reappear with their
 previous state. Opening focus again starts with one card.
-Clicking the expand icon in a focused card's title also returns to the regular canvas.
+Clicking a focused card’s title or its close button also returns to the regular canvas.
 
 ## UI styles
 
@@ -184,7 +184,7 @@ side-by-side Stack and Metric tools sections with light padding. Descriptions
 are truncated to two lines; type, owner, custom links, and technology icons
 remain visible. Enlarged cards show an eight-line-height
 preview with **Show more** / **Show less** for longer content. Raw HTML is omitted.
-Card links have no underlines or link icons, and the enlarge icon is always visible.
+Card links have no underlines or link icons. Card titles remain clickable without an expand icon.
 Technology chips show logos with names on hover and accessible labels. Card
 padding and panel gaps are compact, with tighter spacing when docked.
 Resource links and technology lists remain fully visible.

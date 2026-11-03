@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { CardContentInteractiveContext, CardTitle } from "./CardTitle";
+import { CardCloseButton, CardContentInteractiveContext, CardTitle } from "./CardTitle";
 import { Layers } from "lucide-react";
 import styles from "./CardContent.module.css";
 
@@ -18,6 +18,7 @@ export function OtherDiagramCard({ diagrams = [] }: OtherDiagramCardProps) {
 					<Layers aria-hidden="true" />
 					Other diagrams
 				</CardTitle>
+				<CardCloseButton />
 			</header>
 			{names.length === 0 ? (
 				<p inert={!interactive} className={styles.empty}>

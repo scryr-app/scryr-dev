@@ -8,7 +8,7 @@ import { currentTheme } from "@/theme/theme";
 import { useCardFocus } from "./CardFocusContext";
 import { CARD_HTML_Z_RANGE, useCardForeground } from "./CardFocusScene";
 import { getCardSurfaceLayout } from "./cardSurfaceLayout";
-import { CardContentInteractiveContext, CardTitleContext } from "./CardTitle";
+import { CardCloseContext, CardContentInteractiveContext, CardTitleContext } from "./CardTitle";
 import styles from "./CardSurface.module.css";
 
 /** The only card-content renderer: ordinary React DOM with native CSS layout. */
@@ -135,7 +135,9 @@ export function CardSurface({
 							}
 						>
 							<CardContentInteractiveContext.Provider value={interactive}>
-								{children}
+								<CardCloseContext.Provider value={focused ? closeFocus : null}>
+									{children}
+								</CardCloseContext.Provider>
 							</CardContentInteractiveContext.Provider>
 						</CardTitleContext.Provider>
 					</div>
