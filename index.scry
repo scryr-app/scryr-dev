@@ -1,0 +1,88 @@
+"""Scryr's CLI, server, and map, with GitHub delivery sources for this repository."""
+
+from scryr import Diagram, Forge, ForgeTool, Info, Manifest
+from scryr.delivery import (
+    ActionsBuildSource,
+    DeliveryEnvironment,
+    DeliveryTask,
+    DeliveryTasks,
+    DeliveryVerificationTask,
+    GitHubDelivery,
+    GitHubDeploymentSource,
+    GitHubReleaseSource,
+    GitHubRepository,
+)
+from scryr.types import Classification, Markdown, ProgrammingLanguage, WebFramework
+
+scryr_forge = Forge(
+    name="Scryr delivery",
+    description="GitHub CLI used to collect repository delivery observations.",
+    tools={"github-cli": ForgeTool(version="2.83.1")},
+)
+
+_delivery = GitHubDelivery(
+    repository=GitHubRepository(owner="scryr-app", name="scryr-dev"),
+    builds=ActionsBuildSource(workflow=".github/workflows/ci.yml"),
+    releases=GitHubReleaseSource(include_drafts=False, include_prereleases=False),
+    environments=[
+        DeliveryEnvironment(
+            name="production",
+            deployments=GitHubDeploymentSource(environment="production", task="deploy"),
+        )
+    ],
+    tasks=DeliveryTasks(
+        collect=DeliveryTask(limit=20, verify_attestations=False),
+        verify=DeliveryVerificationTask(limit=20),
+    ),
+)
+
+scryr_cli = Manifest(
+    manifest_id="scryr/cli",
+    name="Scryr CLI",
+    icon="📦",
+    classification=Classification.sdk,
+    forges=[scryr_forge.name],
+    info=Info(
+        description=Markdown(
+            "The standalone Scryr CLI embeds the map and Python SDK. GitHub CI runs and "
+            "published release assets are collected from this repository. Production "
+            "deployment records are shown only if GitHub reports them; runtime identity "
+            "requires separate probe evidence."
+        ),
+        languages=[ProgrammingLanguage.rust],
+        owners="Scryr",
+    ),
+    delivery=_delivery,
+)
+
+scryr_server = Manifest(
+    name="Scryr server",
+    classification=Classification.internal_api,
+    connections=[scryr_cli],
+    info=Info(
+        description=Markdown(
+            "GraphQL API, authentication, and persistence for Scryr diagrams."
+        ),
+        languages=[ProgrammingLanguage.rust],
+        frameworks=[WebFramework.actix],
+        owners="Scryr",
+    ),
+)
+
+scryr_map = Manifest(
+    name="Scryr map",
+    classification=Classification.public_ui,
+    connections=[scryr_server],
+    info=Info(
+        description=Markdown(
+            "Interactive architecture map embedded in the CLI release."
+        ),
+        languages=[ProgrammingLanguage.typescript],
+        owners="Scryr",
+    ),
+)
+
+scryr_diagram = Diagram(
+    name="Scryr",
+    manifests=[scryr_cli, scryr_server, scryr_map],
+)
