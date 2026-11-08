@@ -8,6 +8,7 @@ Source: https://github.com/open-telemetry/opentelemetry-demo
 """
 
 from scryr import Diagram, Info, Link, Manifest
+from scryr.delivery import ActionsBuildSource, GitHubDelivery, GitHubRepository
 from scryr.types import (
     Classification,
     DeploymentTarget,
@@ -1667,6 +1668,38 @@ react_native_app_block = Manifest(
         links=[Link(site_name="Demo Docs", http_url=_DOCS)],
     ),
 )
+
+_delivery = GitHubDelivery(
+    repository=GitHubRepository(owner="open-telemetry", name="opentelemetry-demo"),
+    builds=ActionsBuildSource(workflow=".github/workflows/ci.yml"),
+)
+for _manifest_id, _manifest in {
+    "kafka": kafka_block,
+    "valkey": valkey_block,
+    "postgres": postgres_block,
+    "flagd": flagd_block,
+    "accounting": accounting_block,
+    "ad": ad_block,
+    "cart": cart_block,
+    "checkout": checkout_block,
+    "currency": currency_block,
+    "email": email_block,
+    "flagd-ui": flagd_ui_block,
+    "fraud-detection": fraud_detection_block,
+    "image-provider": image_provider_block,
+    "payment": payment_block,
+    "product-catalog": product_catalog_block,
+    "product-reviews": product_reviews_block,
+    "quote": quote_block,
+    "recommendation": recommendation_block,
+    "shipping": shipping_block,
+    "frontend": frontend_block,
+    "frontend-proxy": frontend_proxy_block,
+    "load-generator": load_generator_block,
+    "react-native-app": react_native_app_block,
+}.items():
+    _manifest.manifest_id = f"otel-demo/{_manifest_id}"
+    _manifest.delivery = _delivery
 
 otel_demo_diagram = Diagram(
     name="OpenTelemetry Demo",

@@ -1,4 +1,5 @@
 from scryr import Diagram, Forge, ForgeTask, ForgeTool, Info, Link, Manifest, ManifestQuery
+from scryr.delivery import ActionsBuildSource, GitHubDelivery, GitHubRepository
 from scryr.types import (
     Classification,
     DeploymentTarget,
@@ -515,6 +516,20 @@ angularjs_admin_block = Manifest(
         docs=[Url("https://docs.angularjs.org/"), Url("https://docs.example.com/mern/admin")],
     ),
 )
+
+_delivery = GitHubDelivery(
+    repository=GitHubRepository(owner="example", name="mern-store"),
+    builds=ActionsBuildSource(workflow=".github/workflows/build.yml"),
+)
+for _manifest_id, _manifest in {
+    "react": react_block,
+    "redis-pubsub": redis_pubsub_block,
+    "express": express_block,
+    "mongodb": mongo_block,
+    "angularjs-admin": angularjs_admin_block,
+}.items():
+    _manifest.manifest_id = f"mern/{_manifest_id}"
+    _manifest.delivery = _delivery
 
 mern_diagram = Diagram(
     name="MERN",

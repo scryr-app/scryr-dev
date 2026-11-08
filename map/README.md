@@ -24,8 +24,9 @@ uses the checked-in npm lockfile.
 - `@tanstack/react-query` for fetching and caching
 - `graphql-codegen` to generate TypeScript types and query hooks
 
-The generated client code lives in `src/graphql/generated.ts`. Do not edit that
-file directly; it is overwritten on each codegen run.
+The generated client code lives in `src/graphql/generated.ts`, with shared schema
+types in `src/graphql/schema.generated.ts`. Do not edit these files directly;
+they are overwritten on each codegen run.
 
 When you add or change GraphQL operations:
 
@@ -204,3 +205,28 @@ Info cards consume `languages`, `frameworks`, `deployments`, and `metricTools`
 arrays. Deployment chips include IaC tools; metric chips combine monitoring,
 tracing, and logging tools. Ownership uses the single `owners` string.
 Authentication is not an Info card field.
+
+## Builds & releases card
+
+Manifests with a typed `delivery` configuration get a **Builds & releases** card,
+available through the toolbar, individual card slots, and the focus picker.
+The card reads typed GraphQL delivery observations collected by the CLI through
+GitHub CLI; opening the card does not run workflows or contact deployment targets.
+Collection and verification settings are declared in `GitHubDelivery.tasks`,
+with typed `collect` and `verify` entries for the observation limit and attestation
+verification. Forge supplies tool versions; delivery task settings belong to the
+delivery definition in `index.scry`.
+
+Builds, artifact inventory, published releases, and recorded deployments are
+shown separately. A successful GitHub deployment is labeled as reported status;
+running code stays unverified until a workflow supplies runtime evidence.
+Runtime details preserve the observed digest distribution during a mixed rollout,
+including replica readiness, probe time, schema identity, and configuration identity.
+Stale evidence remains visible with its timestamp and is not presented as current.
+
+Rollback candidates display the server's evidence checks and one of **Unknown**,
+**Blocked**, or **Eligible under policy**. The card does not execute rollback.
+Provenance is shown per artifact, while reproducibility remains **Not tested**;
+a successful workflow or provenance verification does not prove a repeat build
+produces identical bytes. Collection errors and missing permissions appear in
+the evidence-source panel instead of becoming empty successful results.

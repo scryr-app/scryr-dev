@@ -46,6 +46,46 @@ async fn attach_action_history(
     Ok(())
 }
 
+/// Attach validated delivery evidence only for the declared repository and active organization.
+async fn attach_delivery_history(
+    pool: &persistence::DatabasePool,
+    clerk_org_id: &str,
+    raw_json: &mut serde_json::Value,
+) -> Result<(), String> {
+    // Observations are server-owned. Never trust an embedded manifest snapshot.
+    if let Some(object) = raw_json.as_object_mut() {
+        object.remove("deliverySnapshot");
+    }
+    let Some(config) = raw_json.get("delivery").filter(|v| !v.is_null()) else {
+        return Ok(());
+    };
+    let config: crystal_core::delivery::GitHubDelivery =
+        serde_json::from_value(config.clone()).map_err(|e| e.to_string())?;
+    config.validate()?;
+    let manifest_id = raw_json
+        .get("manifestId")
+        .and_then(serde_json::Value::as_str)
+        .ok_or("delivery requires a stable manifestId")?;
+    if let Some(snapshot) =
+        persistence::read_delivery_snapshot(pool, clerk_org_id, manifest_id).await?
+        && snapshot.host == config.repository.host
+        && snapshot.repository == format!("{}/{}", config.repository.owner, config.repository.name)
+        && snapshot.configuration.as_ref().is_some_and(|observed| {
+            serde_json::to_value(observed).ok() == serde_json::to_value(&config).ok()
+        })
+    {
+        snapshot.validate_for_manifest(manifest_id)?;
+        raw_json
+            .as_object_mut()
+            .ok_or("manifest must be an object")?
+            .insert(
+                "deliverySnapshot".into(),
+                serde_json::to_value(snapshot).map_err(|e| e.to_string())?,
+            );
+    }
+    Ok(())
+}
+
 /// Root query type for GraphQL schema.
 pub(crate) struct QueryRoot;
 
@@ -234,6 +274,7 @@ impl QueryRoot {
             for item in items {
                 let mut item = item.clone();
                 attach_action_history(pool, &request_context.clerk_org_id, &mut item).await?;
+                attach_delivery_history(pool, &request_context.clerk_org_id, &mut item).await?;
                 blocks.push(Block { raw_json: item });
             }
         }
@@ -299,6 +340,58 @@ mod tests {
         assert_eq!(block["cicd"]["lastBuild"], "2026-09-08T10:02:00Z");
         assert_eq!(block["cicd"]["githubActions"]["runs"][0]["runId"], 12345);
 
+        sqlite.close().await;
+        Ok(())
+    }
+    #[tokio::test]
+    async fn delivery_history_cannot_cross_organizations_or_configuration_changes()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let sqlite = sqlx::sqlite::SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await?;
+        let pool = DatabasePool::Sqlite(sqlite.clone());
+        let context = ManifestRequestContext {
+            clerk_user_id: "user".into(),
+            clerk_org_id: "a".into(),
+            clerk_org_slug: None,
+            clerk_org_role: Some("org:admin".into()),
+            clerk_org_permissions: vec![],
+        };
+        let configuration: crystal_core::delivery::GitHubDelivery =
+            serde_json::from_value(serde_json::json!({
+                "kind":"github", "repository":{"host":"github.com","owner":"example","name":"api"},
+                "builds":{"workflow":".github/workflows/build.yml","artifactNames":[]},
+                "releases":{"includeDrafts":false,"includePrereleases":false}, "environments":[]
+            }))?;
+        let mut snapshot = crystal_core::delivery::DeliverySnapshot::new(
+            "github.com".into(),
+            "example/api".into(),
+        );
+        snapshot.configuration = Some(configuration.clone());
+        let report = crystal_core::reports::Report {
+            schema_version: 1,
+            source: "github".into(),
+            scope: "github.com/example/api".into(),
+            run_id: "1".into(),
+            attempt: 1,
+            commit_sha: None,
+            branch: None,
+            observed_at: snapshot.observed_at,
+            report_url: None,
+            data: crystal_core::reports::ReportData::Delivery {
+                snapshot: Box::new(snapshot),
+            },
+        };
+        persistence::record_report(&pool, &context, "api", report).await?;
+        let mut block = serde_json::json!({"manifestId":"api","delivery":configuration,"deliverySnapshot":{"untrusted":true}});
+        super::attach_delivery_history(&pool, "b", &mut block).await?;
+        assert!(block.get("deliverySnapshot").is_none());
+        super::attach_delivery_history(&pool, "a", &mut block).await?;
+        assert_eq!(block["deliverySnapshot"]["repository"], "example/api");
+        block["delivery"]["builds"]["workflow"] = serde_json::json!(".github/workflows/other.yml");
+        super::attach_delivery_history(&pool, "a", &mut block).await?;
+        assert!(block.get("deliverySnapshot").is_none());
         sqlite.close().await;
         Ok(())
     }

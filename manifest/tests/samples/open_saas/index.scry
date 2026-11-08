@@ -9,6 +9,7 @@ Source: https://github.com/wasp-lang/open-saas
 """
 
 from scryr import Diagram, Info, Link, Manifest, ManifestQuery
+from scryr.delivery import ActionsBuildSource, GitHubDelivery, GitHubRepository
 from scryr.types import (
     Classification,
     DeploymentTarget,
@@ -678,6 +679,23 @@ analytics_block = Manifest(
         ],
     ),
 )
+
+_delivery = GitHubDelivery(
+    repository=GitHubRepository(owner="wasp-lang", name="open-saas"),
+    builds=ActionsBuildSource(workflow=".github/workflows/ci.yml"),
+)
+for _manifest_id, _manifest in {
+    "postgres": postgres_block,
+    "server": server_block,
+    "client": client_block,
+    "blog": blog_block,
+    "stripe": stripe_block,
+    "email": email_block,
+    "s3": s3_block,
+    "analytics": analytics_block,
+}.items():
+    _manifest.manifest_id = f"open-saas/{_manifest_id}"
+    _manifest.delivery = _delivery
 
 open_saas_diagram = Diagram(
     name="OpenSaaS",

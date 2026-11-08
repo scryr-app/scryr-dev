@@ -36,7 +36,7 @@ it.each([
 	expect(screen.queryByText(label)).toBeNull();
 });
 
-it("offers only Info and Diagrams card categories", () => {
+it("offers Info, Diagrams, and Builds & releases card categories", () => {
 	render(
 		<MapTrayProvider>
 			<MapTray isPyodideOpen={false} onTogglePyodide={vi.fn()} />
@@ -46,6 +46,9 @@ it("offers only Info and Diagrams card categories", () => {
 	const diagrams = screen.getByRole("button", { name: "Diagrams" });
 	fireEvent.click(diagrams);
 	expect(diagrams.getAttribute("aria-pressed")).toBe("true");
+	const delivery = screen.getByRole("button", { name: "Builds & releases" });
+	fireEvent.click(delivery);
+	expect(delivery.getAttribute("aria-pressed")).toBe("true");
 	for (const name of ["GitHub", "Metrics", "CI/CD", "Tests", "Dependencies", "Performance"]) {
 		expect(screen.queryByRole("button", { name })).toBeNull();
 	}

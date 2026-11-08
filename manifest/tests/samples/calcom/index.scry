@@ -9,6 +9,7 @@ Source: https://github.com/calcom/cal.com
 """
 
 from scryr import Diagram, Info, Link, Manifest
+from scryr.delivery import ActionsBuildSource, GitHubDelivery, GitHubRepository
 from scryr.types import (
     Classification,
     DeploymentTarget,
@@ -663,6 +664,23 @@ app_store_block = Manifest(
         links=[Link(site_name="App Store", http_url=Url("https://app.cal.com/apps"))],
     ),
 )
+
+_delivery = GitHubDelivery(
+    repository=GitHubRepository(owner="calcom", name="cal.com"),
+    builds=ActionsBuildSource(workflow=".github/workflows/build.yml"),
+)
+for _manifest_id, _manifest in {
+    "postgres": postgres_block,
+    "redis": redis_block,
+    "web": web_block,
+    "api-v2": api_v2_block,
+    "email": email_block,
+    "workflow-cron": workflow_cron_block,
+    "daily-video": daily_video_block,
+    "app-store": app_store_block,
+}.items():
+    _manifest.manifest_id = f"calcom/{_manifest_id}"
+    _manifest.delivery = _delivery
 
 calcom_diagram = Diagram(
     name="Cal.com",

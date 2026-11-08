@@ -1,6 +1,7 @@
 """LAMP stack sample focused on Info card fields only."""
 
 from scryr import Diagram, Info, Link, Manifest
+from scryr.delivery import ActionsBuildSource, GitHubDelivery, GitHubRepository
 from scryr.types import (
     Classification,
     DeploymentTarget,
@@ -289,6 +290,19 @@ mysql_database_block = Manifest(
         docs=["https://dev.mysql.com/doc/"],
     ),
 )
+
+_delivery = GitHubDelivery(
+    repository=GitHubRepository(owner="example", name="lamp-stack"),
+    builds=ActionsBuildSource(workflow=".github/workflows/build.yml"),
+)
+for _manifest_id, _manifest in {
+    "linux-host": linux_host_block,
+    "apache-web": apache_web_block,
+    "php-app": php_app_block,
+    "mysql-database": mysql_database_block,
+}.items():
+    _manifest.manifest_id = f"lamp/{_manifest_id}"
+    _manifest.delivery = _delivery
 
 lamp_diagram = Diagram(
     name="LAMP",

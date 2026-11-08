@@ -373,6 +373,73 @@ run and attempt. Jobs enrich existing run history, and identical retries are ide
 The existing `report coverage`, `report dependencies`, and `report deployment`
 commands remain supported. All reporters support `--dry-run` and `--json`.
 
+### GitHub builds and releases
+
+Configure `Manifest.delivery` in `index.scry`, then collect its selected GitHub
+workflows, release assets, and deployment environments:
+
+```bash
+gh auth login
+scryr report delivery --path index.scry --manifest payments-api --task collect --dry-run
+scryr report delivery --path index.scry --manifest payments-api --task collect
+scryr report delivery --path index.scry --manifest payments-api --task verify
+```
+
+The collector uses the open-source `gh` executable and its existing authentication.
+GitHub remains the hosted data source. Repository, Actions, and deployment read
+access are required for the configured sources. Credentials are never stored in
+the manifest or uploaded report. Collection actions are typed definitions in
+`GitHubDelivery.tasks`; Forge installs the tools. Opening the card or editing the
+manifest does not execute the collector.
+
+`--task collect` selects `delivery.tasks.collect`; `--task verify` selects
+`delivery.tasks.verify`. Omitting `--task` selects `collect`. Each task has a
+`limit` from 1 to 100 and a `verify_attestations` boolean. Existing declarations
+without `tasks` default to a limit of 20 for both tasks, with verification disabled
+for `collect` and enabled for `verify`. Partial task declarations retain those
+defaults. Explicit task settings are honored, including disabling verification
+in the verify task.
+
+`--limit` overrides the selected task's history bound. `--verify-attestations`
+enables verification regardless of the task's default; omitting it preserves the
+declared setting. `--dry-run` performs collection and validation but prints the report
+without uploading it. `--file snapshot.json` imports a previously collected typed
+snapshot while still validating it against the selected manifest configuration.
+Offline import does not execute collection or verify attestations; it rejects
+`--task verify`, `--verify-attestations`, and a collect task configured to verify.
+The dry-run output is the upload envelope; its `report.data.snapshot` member is
+the object accepted by `--file`. Reimporting that exact snapshot preserves its
+observation time and is idempotent.
+Native provider failures stop collection instead of reporting an empty successful
+history. Optional runtime or compatibility collection failures are recorded as
+source errors while retaining the independently collected native delivery data.
+
+The default verify task, or `--verify-attestations`, downloads release assets (up to 256 MB each),
+checks their SHA-256 digest, and runs `gh attestation verify` with the configured
+repository and build signer workflow. It requires a GitHub CLI version supporting
+`--signer-workflow`. Failed or unavailable verification remains unknown; it never
+becomes verified from a successful build. Reusable signer workflows that differ
+from the configured build workflow are not currently supported. Collection is
+bounded to 45 seconds per CLI invocation.
+
+For explicit source-to-deployment links, create the GitHub deployment with
+`payload.scryr` containing a `scryr.delivery.v1` record. Omit `deploymentId` when
+creating it; Scryr binds the link to the enclosing GitHub deployment ID. A supplied
+conflicting ID is rejected. Runtime and compatibility report artifacts must each
+contain one root `report.json` with their configured schema. Scryr accepts them
+only from successful runs of the selected workflow in the selected repository,
+excluding pull-request events, and checks the manifest and environment identity.
+Report artifacts and extracted contents are limited to 2 MB. The latest matching
+report within the bounded run history is used; missing or expired artifacts are
+not treated as successful verification.
+
+Workflow success, release publication, and deployment success are separate facts.
+A successful GitHub deployment does not prove what is running. Runtime and
+compatibility reports must be produced by configured workflows that actually
+inspect the environment and test the candidate version. Missing evidence stays
+unknown; expired evidence stays stale. Artifact provenance is not a reproducible
+build claim, and an Actions archive digest is not the digest of a binary inside it.
+
 ## Query declared providers
 
 ```bash

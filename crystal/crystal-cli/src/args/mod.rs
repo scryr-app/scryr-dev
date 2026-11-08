@@ -2,7 +2,7 @@
 #![allow(clippy::missing_docs_in_private_items, clippy::redundant_pub_crate)]
 
 mod observations;
-pub(crate) use observations::{ObservationArgs, ReportCommand, ReportsArgs};
+pub(crate) use observations::{DeliveryArgs, ObservationArgs, ReportCommand, ReportsArgs};
 mod auth;
 mod report;
 pub(crate) use report::ReportArgs;

@@ -16,6 +16,7 @@ from pydantic import (
     model_validator,
 )
 
+from .delivery import GitHubDelivery
 from .metrics_source import PostHogSource  # noqa: TC001
 from .types import (
     CalendarVersion,
@@ -427,6 +428,7 @@ class Manifest(BaseModel):
     # domain-level Manifest section models rather than UI component references.
     info: Info = Field(default_factory=Info)
     analytics: PostHogSource | None = Field(default=None)
+    delivery: GitHubDelivery | None = Field(default=None)
     other_diagram: OtherDiagram | None = Field(
         default=None,
         serialization_alias="otherDiagram",
@@ -445,6 +447,7 @@ class Manifest(BaseModel):
         forges: list[Label | str] | None = None,
         info: Info | None = None,
         analytics: PostHogSource | None = None,
+        delivery: GitHubDelivery | None = None,
         other_diagram: OtherDiagram | None = None,
         description: Markdown | str | None = None,
         version: Version | str | None = None,
@@ -470,6 +473,7 @@ class Manifest(BaseModel):
             "connections": connections,
             "forges": forges,
             "analytics": analytics,
+            "delivery": delivery,
             "other_diagram": other_diagram,
         }
         data.update(
@@ -501,6 +505,13 @@ class Manifest(BaseModel):
             data["info"] = info
 
         super().__init__(**data)
+
+    @model_validator(mode="after")
+    def _validate_delivery_identity(self) -> Manifest:
+        if self.delivery is not None and self.manifest_id is None:
+            msg = "Delivery configuration requires a stable manifest_id"
+            raise ValueError(msg)
+        return self
 
     @field_serializer("classification")
     def _serialize_classification(self, value: Classification) -> str:
@@ -561,6 +572,7 @@ class Manifest(BaseModel):
 
 
 _MANIFEST_QUERY_SECTION_MODELS: dict[str, type[BaseModel]] = {
+    "delivery": GitHubDelivery,
     "info": Info,
     "other_diagram": OtherDiagram,
 }

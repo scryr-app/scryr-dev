@@ -1,4 +1,5 @@
 //! GraphQL block types backed by raw manifest JSON.
+#![allow(clippy::unused_async_trait_impl)] // async-graphql requires async field resolvers.
 
 use super::json_access::{section_string_array_or_top, section_string_or_top};
 use async_graphql::{Object, SimpleObject};
@@ -9,6 +10,31 @@ use serde_json::Value;
 pub struct Block {
     /// The raw JSON representation of the component.
     pub raw_json: Value,
+}
+
+impl Block {
+    fn delivery_config(&self) -> Result<Option<crate::delivery::GitHubDelivery>, String> {
+        let Some(value) = self.raw_json.get("delivery").filter(|v| !v.is_null()) else {
+            return Ok(None);
+        };
+        let config: crate::delivery::GitHubDelivery =
+            serde_json::from_value(value.clone()).map_err(|e| e.to_string())?;
+        config.validate()?;
+        Ok(Some(config))
+    }
+
+    fn snapshot(&self) -> Result<Option<crate::delivery::DeliverySnapshot>, String> {
+        let Some(value) = self
+            .raw_json
+            .get("deliverySnapshot")
+            .filter(|v| !v.is_null())
+        else {
+            return Ok(None);
+        };
+        serde_json::from_value(value.clone())
+            .map(Some)
+            .map_err(|e| e.to_string())
+    }
 }
 
 /// External reference associated with a block (e.g., repo, docs, dashboard).
@@ -22,6 +48,35 @@ pub struct Link {
 
 #[Object]
 impl Block {
+    /// Declarative GitHub delivery sources, without credentials or network access.
+    /// # Errors
+    /// Rejects an invalid persisted configuration.
+    pub async fn delivery(&self) -> async_graphql::Result<Option<crate::delivery::GitHubDelivery>> {
+        self.delivery_config().map_err(async_graphql::Error::new)
+    }
+
+    /// Latest organization-scoped delivery observation attached by the server.
+    /// # Errors
+    /// Rejects malformed persisted evidence.
+    pub async fn delivery_snapshot(
+        &self,
+    ) -> async_graphql::Result<Option<crate::delivery::DeliverySnapshot>> {
+        self.snapshot().map_err(async_graphql::Error::new)
+    }
+
+    /// Freshness and rollback eligibility evaluated at query time.
+    /// # Errors
+    /// Rejects malformed configuration or evidence.
+    pub async fn delivery_assessments(
+        &self,
+    ) -> async_graphql::Result<Vec<crate::delivery::DeliveryAssessment>> {
+        let Some(config) = self.delivery_config().map_err(async_graphql::Error::new)? else {
+            return Ok(vec![]);
+        };
+        let snapshot = self.snapshot().map_err(async_graphql::Error::new)?;
+        Ok(config.assess(snapshot.as_ref(), chrono::Utc::now()))
+    }
+
     /// Stable Manifest identity used to attach operational history.
     pub async fn manifest_id(&self) -> Option<String> {
         self.raw_json

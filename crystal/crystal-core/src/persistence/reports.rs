@@ -20,6 +20,9 @@ pub async fn record_report(
         return Err("active organization role cannot report".into());
     }
     report.validate()?;
+    if let crate::reports::ReportData::Delivery { snapshot } = &report.data {
+        snapshot.validate_for_manifest(id)?;
+    }
     let serialized = serde_json::to_string(&report).map_err(|e| e.to_string())?;
     if serialized.len() > 2_000_000 {
         return Err("report exceeds 2 MB".into());
@@ -127,6 +130,28 @@ pub async fn read_reports(
     query(pool,"SELECT content FROM manifest_reports WHERE clerk_org_id=? AND manifest_id=? ORDER BY observed_at DESC, CAST(json_extract(content, '$.attempt') AS INTEGER) DESC, fingerprint DESC LIMIT ? OFFSET ?",vec![org.into(),id.into(),limit.to_string(),offset.to_string()]).await
 }
 
+/// Read only the newest delivery snapshot, without unrelated reports hiding it.
+/// # Errors
+/// Rejects missing organization, malformed identity, and storage failures.
+pub async fn read_delivery_snapshot(
+    pool: &DatabasePool,
+    org: &str,
+    id: &str,
+) -> Result<Option<crate::delivery::DeliverySnapshot>, String> {
+    crate::reports::validate_manifest_id(id)?;
+    if org.is_empty() {
+        return Err("active organization required".into());
+    }
+    let reports = query(pool,
+        "SELECT content FROM manifest_reports WHERE clerk_org_id=? AND manifest_id=? AND kind='delivery' ORDER BY observed_at DESC, fingerprint DESC LIMIT 1",
+        vec![org.into(), id.into()],
+    ).await?;
+    Ok(reports.into_iter().find_map(|report| match report.data {
+        crate::reports::ReportData::Delivery { snapshot } => Some(*snapshot),
+        _ => None,
+    }))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -190,6 +215,46 @@ mod tests {
         drop(pool);
         let pool = super::super::connect_sqlite_path(&path).await?;
         assert_eq!(read_reports(&pool, "a", "api", 100, 0).await?.len(), 2);
+        Ok(())
+    }
+    #[tokio::test]
+    async fn delivery_snapshots_are_scoped_and_retry_stable()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let directory = tempfile::tempdir()?;
+        let pool = super::super::connect_sqlite_path(&directory.path().join("delivery.db")).await?;
+        let mut snapshot =
+            crate::delivery::DeliverySnapshot::new("github.com".into(), "example/api".into());
+        let newer_time = snapshot.observed_at;
+        let delivery = Report {
+            schema_version: 1,
+            source: "github".into(),
+            scope: "example/api".into(),
+            run_id: "snapshot-1".into(),
+            attempt: 1,
+            commit_sha: None,
+            branch: None,
+            observed_at: snapshot.observed_at,
+            report_url: None,
+            data: ReportData::Delivery {
+                snapshot: Box::new(snapshot.clone()),
+            },
+        };
+        assert!(record_report(&pool, &principal("a"), "api", delivery.clone()).await?);
+        assert!(!record_report(&pool, &principal("a"), "api", delivery.clone()).await?);
+        assert!(read_delivery_snapshot(&pool, "b", "api").await?.is_none());
+        snapshot.observed_at -= chrono::Duration::days(1);
+        let older = Report {
+            observed_at: snapshot.observed_at,
+            data: ReportData::Delivery {
+                snapshot: Box::new(snapshot),
+            },
+            ..delivery
+        };
+        assert!(record_report(&pool, &principal("a"), "api", older).await?);
+        let latest = read_delivery_snapshot(&pool, "a", "api")
+            .await?
+            .ok_or("missing snapshot")?;
+        assert_eq!(latest.observed_at, newer_time);
         Ok(())
     }
 }

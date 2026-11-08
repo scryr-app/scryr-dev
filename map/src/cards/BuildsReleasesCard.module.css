@@ -1,0 +1,116 @@
+.card {
+	box-sizing: border-box;
+	min-width: 0;
+	padding: 10px;
+	color: var(--card-text);
+	font:
+		14px/1.5 system-ui,
+		sans-serif;
+	overflow-wrap: anywhere;
+}
+
+.header,
+.header h2 {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.header {
+	justify-content: space-between;
+	margin-bottom: 8px;
+}
+
+.header h2 {
+	margin: 0;
+	font-size: 20px;
+	line-height: 1.2;
+}
+
+.header h2 svg {
+	width: 22px;
+	height: 22px;
+	flex-shrink: 0;
+}
+
+.sections {
+	display: grid;
+	gap: 8px;
+}
+
+.panel {
+	min-width: 0;
+	padding: 8px;
+	border-radius: 8px;
+	background: var(--card-inset);
+}
+
+.panel h3 {
+	margin: 0 0 6px;
+	font-size: 13px;
+}
+
+.panel p {
+	margin: 4px 0;
+}
+
+.facts {
+	display: grid;
+	grid-template-columns: minmax(90px, 1fr) minmax(0, 2fr);
+	gap: 4px 10px;
+	margin: 0;
+}
+
+.facts dt,
+.muted {
+	color: var(--card-muted);
+}
+
+.facts dd {
+	margin: 0;
+	min-width: 0;
+}
+
+.card a {
+	color: var(--card-link);
+	text-decoration: none;
+}
+
+.card a:hover {
+	text-decoration: underline;
+}
+
+.card a:focus-visible,
+.card summary:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: 3px;
+}
+
+.card code {
+	font-size: 12px;
+	word-break: break-all;
+}
+
+.history {
+	padding-left: 20px;
+	margin: 6px 0 0;
+}
+
+.history li + li {
+	margin-top: 8px;
+}
+
+.card summary {
+	cursor: pointer;
+}
+
+.state {
+	font-size: 12px;
+	color: var(--card-muted);
+}
+
+@container (min-width: 700px) {
+	.sections {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}

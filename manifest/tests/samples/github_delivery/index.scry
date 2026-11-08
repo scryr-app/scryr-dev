@@ -1,0 +1,81 @@
+"""GitHub delivery configuration example; this sample does not claim live observations.
+
+Replace example/payments and workflow/artifact selectors with your repository.
+Authenticate gh outside the manifest, then run the selected delivery task:
+scryr report delivery --path index.scry --manifest payments-api --task collect
+"""
+
+from scryr import Diagram, Forge, ForgeTool, Info, Manifest, SemVer
+from scryr.delivery import (
+    ActionsBuildSource,
+    ActionsReportSource,
+    DeliveryEnvironment,
+    DeliveryReportSchema,
+    DeliveryTask,
+    DeliveryTasks,
+    DeliveryVerificationTask,
+    GitHubDelivery,
+    GitHubDeploymentSource,
+    GitHubReleaseSource,
+    GitHubRepository,
+    RollbackPolicy,
+)
+from scryr.types import Markdown
+
+delivery_forge = Forge(
+    name="GitHub delivery",
+    description="Pinned tools for GitHub delivery collection.",
+    tools={"github-cli": ForgeTool(version="2.83.1")},
+)
+
+payments = Manifest(
+    manifest_id="payments-api",
+    name="Payments API",
+    icon="📦",
+    forges=["GitHub delivery"],
+    info=Info(
+        description=Markdown(
+            "Example GitHub-backed delivery configuration. Replace the repository and selectors "
+            "before collecting. Deployment success is reported by GitHub; running versions and "
+            "rollback compatibility require separate workflow evidence."
+        ),
+        version=SemVer("1.0.0"),
+    ),
+    delivery=GitHubDelivery(
+        repository=GitHubRepository(owner="example", name="payments"),
+        builds=ActionsBuildSource(
+            workflow=".github/workflows/build.yml",
+            artifact_names=["payments-linux-amd64"],
+        ),
+        tasks=DeliveryTasks(
+            collect=DeliveryTask(limit=20, verify_attestations=False),
+            verify=DeliveryVerificationTask(limit=20),
+        ),
+        releases=GitHubReleaseSource(include_drafts=False, include_prereleases=False),
+        environments=[
+            DeliveryEnvironment(
+                name="production",
+                deployments=GitHubDeploymentSource(environment="production", task="deploy"),
+                runtime=ActionsReportSource(
+                    workflow=".github/workflows/verify-runtime.yml",
+                    artifact_name="scryr-runtime",
+                    report_schema=DeliveryReportSchema.runtime,
+                    max_age_seconds=900,
+                ),
+                compatibility=ActionsReportSource(
+                    workflow=".github/workflows/rollback-check.yml",
+                    artifact_name="scryr-compatibility",
+                    report_schema=DeliveryReportSchema.compatibility,
+                    max_age_seconds=3600,
+                ),
+                rollback=RollbackPolicy(
+                    require_artifact_available=True,
+                    require_verified_provenance=True,
+                    require_compatibility_evidence=True,
+                ),
+            ),
+        ],
+    ),
+)
+
+delivery_diagram = Diagram(name="GitHub delivery", manifests=[payments])

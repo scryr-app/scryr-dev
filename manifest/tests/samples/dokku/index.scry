@@ -10,6 +10,7 @@ Source: https://github.com/dokku/dokku
 """
 
 from scryr import Diagram, Info, Link, Manifest
+from scryr.delivery import ActionsBuildSource, GitHubDelivery, GitHubRepository
 from scryr.types import (
     Classification,
     DeploymentTarget,
@@ -622,6 +623,24 @@ plugin_system_block = Manifest(
         ],
     ),
 )
+
+_delivery = GitHubDelivery(
+    repository=GitHubRepository(owner="dokku", name="dokku"),
+    builds=ActionsBuildSource(workflow=".github/workflows/ci.yml"),
+)
+for _manifest_id, _manifest in {
+    "core": dokku_core_block,
+    "ssh-gateway": ssh_gateway_block,
+    "git-server": git_server_block,
+    "app-builder": app_builder_block,
+    "docker-scheduler": docker_scheduler_block,
+    "cron-scheduler": cron_scheduler_block,
+    "nginx-proxy": nginx_proxy_block,
+    "certs-plugin": certs_plugin_block,
+    "plugin-system": plugin_system_block,
+}.items():
+    _manifest.manifest_id = f"dokku/{_manifest_id}"
+    _manifest.delivery = _delivery
 
 dokku_diagram = Diagram(
     name="Dokku",

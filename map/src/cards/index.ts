@@ -6,4 +6,5 @@ export type { InfoCardProps } from "./InfoCard";
 export { InfoCard } from "./InfoCard";
 export type { OtherDiagramCardProps } from "./OtherDiagramCard";
 export { OtherDiagramCard } from "./OtherDiagramCard";
+export { BuildsReleasesCard } from "./BuildsReleasesCard";
 export { useCardSlideAnimation } from "./useCardSlideAnimation";

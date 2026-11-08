@@ -1,6 +1,7 @@
 """Browser-runner MERN sample manifest."""
 
 from scryr import Diagram, Info, Link, Manifest
+from scryr.delivery import ActionsBuildSource, GitHubDelivery, GitHubRepository
 from scryr.types import (
     Classification,
     DeploymentTarget,
@@ -132,6 +133,20 @@ angularjs_admin_block = Manifest(
         docs=["https://docs.angularjs.org/"],
     ),
 )
+
+_delivery = GitHubDelivery(
+    repository=GitHubRepository(owner="example", name="mern-store"),
+    builds=ActionsBuildSource(workflow=".github/workflows/build.yml"),
+)
+for _manifest_id, _manifest in {
+    "react": react_block,
+    "redis-pubsub": redis_pubsub_block,
+    "express": express_block,
+    "mongodb": mongo_block,
+    "angularjs-admin": angularjs_admin_block,
+}.items():
+    _manifest.manifest_id = f"mern/{_manifest_id}"
+    _manifest.delivery = _delivery
 
 diagram = Diagram(
     name="MERN",

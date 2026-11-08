@@ -7,6 +7,9 @@ function block(
 ): GetBlocksQuery["blocks"][number] {
 	return {
 		name: "API",
+		manifestId: null,
+		delivery: null,
+		deliverySnapshot: null,
 		description: null,
 		version: null,
 		lineNumber: null,
@@ -24,6 +27,7 @@ function block(
 		tags: [],
 		links: [],
 		rawJsonString: "{}",
+		deliveryAssessments: [],
 		...overrides,
 	};
 }

@@ -281,3 +281,124 @@ test("all cards use DOM, reflow in focus, compare, scroll, and return without re
 	await capture(page, testInfo, "diagram-card");
 	expect(errors).toEqual([]);
 });
+
+test("delivery card separates recorded deployment from runtime and rollback evidence", async ({
+	page,
+}, testInfo) => {
+	const errors: string[] = [];
+	const startupErrors: string[] = [];
+	let deliveryReady = false;
+	page.on("pageerror", (error) => (deliveryReady ? errors : startupErrors).push(error.message));
+	const deliveryBlock = {
+		...blocks[0],
+		tags: [],
+		connections: [],
+		manifestId: "orders-api",
+		delivery: {
+			kind: "GITHUB",
+			tasks: {
+				collect: { limit: 20, verifyAttestations: false },
+				verify: { limit: 20, verifyAttestations: true },
+			},
+			repository: { host: "github.com", owner: "example", name: "orders" },
+			builds: { workflow: ".github/workflows/build.yml", artifactNames: [] },
+			releases: { includeDrafts: false, includePrereleases: false },
+			environments: [
+				{
+					name: "production",
+					deployments: { environment: "production", task: "deploy" },
+					runtime: null,
+					compatibility: null,
+					rollback: {
+						requireArtifactAvailable: true,
+						requireVerifiedProvenance: true,
+						requireCompatibilityEvidence: true,
+					},
+				},
+			],
+		},
+		deliverySnapshot: {
+			host: "github.com",
+			repository: "example/orders",
+			observedAt: "2026-11-04T12:00:00Z",
+			sources: [
+				{
+					category: "RUNTIME",
+					environment: "production",
+					state: "MISSING",
+					message: "No runtime report configured",
+				},
+			],
+			builds: [],
+			artifacts: [],
+			releases: [],
+			links: [],
+			runtime: [],
+			compatibility: [],
+			deployments: [
+				{
+					id: "184",
+					environment: "production",
+					commitSha: "a".repeat(40),
+					status: "SUCCESS",
+					createdAt: "2026-11-04T11:59:00Z",
+					updatedAt: "2026-11-04T12:00:00Z",
+					url: "https://github.com/example/orders/deployments",
+					statuses: [{ status: "SUCCESS", createdAt: "2026-11-04T12:00:00Z", url: null }],
+				},
+			],
+		},
+		deliveryAssessments: [
+			{
+				environment: "production",
+				runtimeState: "MISSING",
+				runningMatchesDeployment: null,
+				candidateDeploymentId: null,
+				candidateDigest: null,
+				eligibility: "UNKNOWN",
+				checks: [],
+			},
+		],
+	};
+	await page.route("**/graphql", async (route) => {
+		const query = route.request().postDataJSON().query as string;
+		const data = query.includes("GetBlocks")
+			? { blocks: [deliveryBlock] }
+			: query.includes("GetScryrMaps")
+				? { scryrMaps: [] }
+				: query.includes("HealthCheck")
+					? { health: { status: "ok", databaseOk: true } }
+					: { manifestDocument: null };
+		await route.fulfill({ json: { data } });
+	});
+	await page.goto(base);
+	await expect(page.locator("[data-card-id]")).toHaveCount(2, { timeout: 60_000 });
+	await page.getByRole("button", { name: "Hide terminal file" }).click();
+	// Scope this regression to delivery interactions; retain shared startup errors as evidence.
+	deliveryReady = true;
+	await page.getByRole("button", { name: "Builds & releases", exact: true }).click();
+	const card = surface(page, "Orders API", 2);
+	await focus(page, card);
+	await expect(card.getByRole("article", { name: "Builds and releases" })).toBeVisible();
+	await expect(card.getByText("Not verified · missing")).toBeVisible();
+	await expect(card.getByText("#184 · success reported", { exact: true }).first()).toBeVisible();
+	await expect(card.getByText("No runtime report configured")).toBeVisible();
+	await expect(card.getByText("Eligible under policy")).toHaveCount(0);
+	await card.getByText("Deployment history (1)", { exact: true }).click();
+	await expect(card.getByText("success · 2026-11-04 12:00:00 UTC", { exact: true })).toBeVisible();
+	await capture(page, testInfo, "delivery-card");
+	await page.getByRole("button", { name: "Back to diagram", exact: true }).click();
+	await expect(card).toHaveAttribute("data-card-focused", "false");
+	await expect(card.locator("article > div").first()).toHaveAttribute("inert", "");
+	if (startupErrors.length) {
+		await testInfo.attach("shared-startup-errors", {
+			body: JSON.stringify(startupErrors),
+			contentType: "application/json",
+		});
+		testInfo.annotations.push({
+			type: "shared-startup-error",
+			description: startupErrors.join("; "),
+		});
+	}
+	expect(errors).toEqual([]);
+});

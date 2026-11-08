@@ -8,7 +8,7 @@ use uuid::Uuid;
 /// Revision-checked editing of a manifest and all its diagrams.
 pub mod documents;
 mod reports;
-pub use reports::{read_reports, record_report};
+pub use reports::{read_delivery_snapshot, read_reports, record_report};
 mod action_history;
 pub use action_history::{read_action_history, record_action_run};
 

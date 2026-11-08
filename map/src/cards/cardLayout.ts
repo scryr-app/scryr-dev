@@ -27,9 +27,10 @@ export function getCardLayout(cardConfigs: Array<{ components: ReactNode[] }>): 
 
 	const offsets = offsetPatterns[count] || [];
 
-	// Map offsets to card configs
-	return cardConfigs.map((config, index) => ({
-		...config,
-		zOffset: offsets[index] ?? 0,
-	}));
+	// Empty categories retain their toolbar index but do not consume a physical slot.
+	let visibleIndex = 0;
+	return cardConfigs.map((config) => {
+		const zOffset = config.components.length > 0 ? (offsets[visibleIndex++] ?? 0) : 0;
+		return { ...config, zOffset };
+	});
 }

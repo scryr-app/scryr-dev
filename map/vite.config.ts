@@ -9,6 +9,7 @@ export default defineConfig({
 		useTabs: true,
 		ignorePatterns: [
 			"src/graphql/generated.ts",
+			"src/graphql/schema.generated.ts",
 			"src/pyodide/sdkSources.generated.json",
 			"src/icons/**/*.svg",
 			"package-lock.json",
@@ -17,6 +18,7 @@ export default defineConfig({
 	lint: {
 		ignorePatterns: [
 			"src/graphql/generated.ts",
+			"src/graphql/schema.generated.ts",
 			"src/pyodide/sdkSources.generated.json",
 			"src/icons/**/*.svg",
 		],

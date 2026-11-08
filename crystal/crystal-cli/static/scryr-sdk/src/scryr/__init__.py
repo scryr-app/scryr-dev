@@ -2,6 +2,20 @@
 
 from . import manifest as _manifest
 from .action_client import GithubActionsClient, ScryrClient
+from .delivery import (
+    ActionsBuildSource,
+    ActionsReportSource,
+    DeliveryEnvironment,
+    DeliveryReportSchema,
+    DeliveryTask,
+    DeliveryTasks,
+    DeliveryVerificationTask,
+    GitHubDelivery,
+    GitHubDeploymentSource,
+    GitHubReleaseSource,
+    GitHubRepository,
+    RollbackPolicy,
+)
 from .github import ActionStatusEvent, GithubActionJob, GithubActionRun, GithubActionsLog
 from .metrics_source import CredentialRef, PostHogSource
 from .runtime import (
@@ -57,11 +71,18 @@ OtherDiagram = _manifest.OtherDiagram
 
 __all__ = [
     "ActionStatusEvent",
+    "ActionsBuildSource",
+    "ActionsReportSource",
     "AuthType",
     "CICDToolType",
     "CalendarVersion",
     "Classification",
     "CredentialRef",
+    "DeliveryEnvironment",
+    "DeliveryReportSchema",
+    "DeliveryTask",
+    "DeliveryTasks",
+    "DeliveryVerificationTask",
     "DeploymentTarget",
     "Diagram",
     "Forge",
@@ -71,6 +92,10 @@ __all__ = [
     "ForgeTaskCommand",
     "ForgeTaskConfirm",
     "ForgeTool",
+    "GitHubDelivery",
+    "GitHubDeploymentSource",
+    "GitHubReleaseSource",
+    "GitHubRepository",
     "GithubActionJob",
     "GithubActionRun",
     "GithubActionsClient",
@@ -91,6 +116,7 @@ __all__ = [
     "OtherDiagram",
     "PostHogSource",
     "ProgrammingLanguage",
+    "RollbackPolicy",
     "ScryrClient",
     "SemVer",
     "TracingType",

@@ -178,6 +178,9 @@ function MapBlocks({ blocks, layout }: MapBlocksProps) {
 								},
 							]
 						: []),
+					...(block.delivery
+						? [{ id: getFocusCardId(blockId, 2), blockId, label: "Builds & releases", color }]
+						: []),
 				];
 			}),
 		[blocks, nodeById, diagramTagsByBlockName],

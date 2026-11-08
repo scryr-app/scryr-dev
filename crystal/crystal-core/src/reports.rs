@@ -38,6 +38,11 @@ pub struct Report {
 )]
 /// Validated payloads supported by operational reporting.
 pub enum ReportData {
+    /// GitHub build, release, deployment, and workflow-published evidence.
+    Delivery {
+        /// Typed collection snapshot.
+        snapshot: Box<crate::delivery::DeliverySnapshot>,
+    },
     /// Results from one complete test scope.
     Tests {
         /// Successful test cases.
@@ -102,6 +107,7 @@ impl Report {
     #[must_use]
     pub const fn kind(&self) -> &'static str {
         match self.data {
+            ReportData::Delivery { .. } => "delivery",
             ReportData::Tests { .. } => "tests",
             ReportData::Coverage { .. } => "coverage",
             ReportData::Dependencies { .. } => "dependencies",
@@ -131,6 +137,12 @@ impl Report {
             return Err("invalid report URL".into());
         }
         match &self.data {
+            ReportData::Delivery { snapshot } => {
+                snapshot.validate()?;
+                if snapshot.observed_at != self.observed_at {
+                    return Err("delivery report time must match its snapshot".into());
+                }
+            }
             ReportData::Tests {
                 duration,
                 passing,
@@ -232,7 +244,7 @@ impl Report {
                     });
                 json!({"vulnerableDeps":packages.len(),"openAlerts":open.len(),"maxSeverity":severity})
             }
-            ReportData::Deployment { .. } => json!({}),
+            ReportData::Deployment { .. } | ReportData::Delivery { .. } => json!({}),
         }
     }
 }

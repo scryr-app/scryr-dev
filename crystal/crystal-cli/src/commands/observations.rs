@@ -3,6 +3,7 @@
 use crate::args::{ObservationArgs, ReportCommand, ReportsArgs};
 use crystal_core::reports::{DependencyAlert, Report, ReportData};
 use serde_json::{Value, json};
+mod delivery;
 mod parsers;
 
 fn required<'a>(v: Option<&'a str>, name: &str) -> Result<&'a str, String> {
@@ -122,6 +123,9 @@ async fn dependencies(args: &ObservationArgs) -> Result<ReportData, String> {
 }
 
 pub(crate) async fn run(args: &ReportsArgs) -> Result<(), String> {
+    if let ReportCommand::Delivery(a) = &args.command {
+        return delivery::run(a).await;
+    }
     if let ReportCommand::Actions(a) = &args.command {
         return super::report::run(a).await;
     }
@@ -131,7 +135,7 @@ pub(crate) async fn run(args: &ReportsArgs) -> Result<(), String> {
         | ReportCommand::Coverage(a)
         | ReportCommand::Dependencies(a)
         | ReportCommand::Deployment(a) => a,
-        ReportCommand::Actions(_) => unreachable!(),
+        ReportCommand::Actions(_) | ReportCommand::Delivery(_) => unreachable!(),
     };
     if let Some((manifest, root)) =
         super::report_config::resolve(&observation.source, &observation.manifest_id)?
@@ -178,7 +182,7 @@ pub(crate) async fn run(args: &ReportsArgs) -> Result<(), String> {
                 version: required(a.version.as_deref(), "version")?.into(),
             },
         ),
-        ReportCommand::Actions(_) => unreachable!(),
+        ReportCommand::Actions(_) | ReportCommand::Delivery(_) => unreachable!(),
     };
     let scope = match &data {
         ReportData::Dependencies {
@@ -199,6 +203,7 @@ pub(crate) async fn run(args: &ReportsArgs) -> Result<(), String> {
             ReportData::Tests { .. } => "junit",
             ReportData::Coverage { .. } => a.format.as_deref().unwrap_or("coverage"),
             ReportData::Deployment { .. } => "cli",
+            ReportData::Delivery { .. } => "github",
         }
         .into(),
         scope,

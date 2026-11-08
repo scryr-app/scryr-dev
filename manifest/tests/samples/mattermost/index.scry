@@ -10,6 +10,7 @@ Source: https://github.com/mattermost/mattermost
 """
 
 from scryr import Diagram, Info, Link, Manifest
+from scryr.delivery import ActionsBuildSource, GitHubDelivery, GitHubRepository
 from scryr.types import (
     CalendarVersion,
     Classification,
@@ -1057,6 +1058,28 @@ otel_collector_block = Manifest(
         links=[Link(site_name="Mattermost Docs", http_url=_DOCS)],
     ),
 )
+
+_delivery = GitHubDelivery(
+    repository=GitHubRepository(owner="mattermost", name="mattermost"),
+    builds=ActionsBuildSource(workflow=".github/workflows/ci.yml"),
+)
+for _manifest_id, _manifest in {
+    "postgres": postgres_block,
+    "redis": redis_block,
+    "minio": minio_block,
+    "elasticsearch": elasticsearch_block,
+    "openldap": openldap_block,
+    "keycloak": keycloak_block,
+    "server": server_block,
+    "webapp": webapp_block,
+    "nginx": nginx_block,
+    "prometheus": prometheus_block,
+    "grafana": grafana_block,
+    "loki": loki_block,
+    "otel-collector": otel_collector_block,
+}.items():
+    _manifest.manifest_id = f"mattermost/{_manifest_id}"
+    _manifest.delivery = _delivery
 
 mattermost_diagram = Diagram(
     name="Mattermost",

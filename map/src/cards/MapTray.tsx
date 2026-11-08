@@ -16,6 +16,7 @@ import {
 	Palette,
 	PencilLine,
 	Plus,
+	Package,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { cameraStore } from "@/camera";
@@ -29,6 +30,7 @@ import { useMapTray } from "./MapTrayContext";
 const CARD_TYPES = [
 	{ index: 0, icon: Info, label: "Info" },
 	{ index: 1, icon: Layers, label: "Diagrams" },
+	{ index: 2, icon: Package, label: "Builds & releases" },
 ] as const;
 
 /**

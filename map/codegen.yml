@@ -1,15 +1,26 @@
 overwrite: true
 schema: "../crystal/crystal-server/src/graphql_schema.snapshot.graphql"
 documents: "src/graphql/**/*.graphql"
+config:
+  scalars:
+    DateTime:
+      input: string
+      output: string
 generates:
+  src/graphql/schema.generated.ts:
+    plugins:
+      - "typescript"
   src/graphql/generated.ts:
     plugins:
       - add:
-          content: "import { graphqlFetcher } from './client';"
-      - "typescript"
+          content: |
+            import { graphqlFetcher } from './client';
+            export * from './schema.generated';
       - "typescript-operations"
       - "typescript-react-query"
     config:
+      importSchemaTypesFrom: "./schema.generated"
+      namespacedImportName: Schema
       fetcher:
         func: graphqlFetcher
         isReactHook: false

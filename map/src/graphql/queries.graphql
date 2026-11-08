@@ -23,6 +23,178 @@ query GetScryrMaps {
 
 query GetBlocks($scryIdentifier: String, $sample: String) {
 	blocks(scryIdentifier: $scryIdentifier, sample: $sample) {
+		manifestId
+		delivery {
+			kind
+			tasks {
+				collect {
+					limit
+					verifyAttestations
+				}
+				verify {
+					limit
+					verifyAttestations
+				}
+			}
+			repository {
+				host
+				owner
+				name
+			}
+			builds {
+				workflow
+				artifactNames
+			}
+			releases {
+				includeDrafts
+				includePrereleases
+			}
+			environments {
+				name
+				deployments {
+					environment
+					task
+				}
+				runtime {
+					workflow
+					artifactName
+					schema
+					maxAgeSeconds
+				}
+				compatibility {
+					workflow
+					artifactName
+					schema
+					maxAgeSeconds
+				}
+				rollback {
+					requireArtifactAvailable
+					requireVerifiedProvenance
+					requireCompatibilityEvidence
+				}
+			}
+		}
+		deliverySnapshot {
+			host
+			repository
+			observedAt
+			sources {
+				category
+				environment
+				state
+				message
+			}
+			builds {
+				id
+				attempt
+				workflow
+				name
+				commitSha
+				status
+				conclusion
+				createdAt
+				updatedAt
+				url
+				jobs {
+					id
+					name
+					status
+					conclusion
+					url
+				}
+			}
+			artifacts {
+				id
+				kind
+				name
+				digest
+				runId
+				releaseId
+				expired
+				url
+				provenance
+			}
+			releases {
+				id
+				tag
+				name
+				publishedAt
+				draft
+				prerelease
+				url
+				assetIds
+			}
+			deployments {
+				statuses {
+					status
+					createdAt
+					url
+				}
+				id
+				environment
+				commitSha
+				status
+				createdAt
+				updatedAt
+				url
+			}
+			links {
+				schema
+				manifestId
+				environment
+				deploymentId
+				buildRunId
+				buildAttempt
+				sourceRevision
+				artifactDigest
+				releaseId
+				configurationRevision
+			}
+			runtime {
+				schema
+				manifestId
+				environment
+				deploymentId
+				configurationRevision
+				schemaRevision
+				observedAt
+				workloads {
+					name
+					artifactDigest
+					replicas
+					readyReplicas
+				}
+			}
+			compatibility {
+				schema
+				manifestId
+				environment
+				candidateDigest
+				currentSchemaRevision
+				currentConfigurationRevision
+				candidateConfigurationRevision
+				suiteRevision
+				observedAt
+				checks {
+					name
+					outcome
+					message
+				}
+			}
+		}
+		deliveryAssessments {
+			environment
+			runtimeState
+			runningMatchesDeployment
+			candidateDeploymentId
+			candidateDigest
+			eligibility
+			checks {
+				name
+				outcome
+				message
+			}
+		}
 		name
 		description
 		version

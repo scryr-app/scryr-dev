@@ -446,6 +446,26 @@ fn export_forge_backed_targets_have_expected_sample_behavior() -> Result<(), Box
                 .success()
                 .stdout(predicate::str::contains("mongodb:"))
                 .stdout(predicate::str::contains("redis:"));
+        } else if sample_name == "github_delivery" {
+            devcontainer
+                .assert()
+                .success()
+                .stdout(predicate::str::contains("GitHub delivery"));
+            cli_command()?
+                .args([
+                    "export",
+                    "mise",
+                    "--path",
+                    &relative,
+                    "--manifest-dir",
+                    &manifest_dir.to_string_lossy(),
+                    "--scryr-dir",
+                    &scryr_dir.to_string_lossy(),
+                ])
+                .assert()
+                .success()
+                .stdout(predicate::str::contains("github-cli"))
+                .stdout(predicate::str::contains("[tasks").not());
         } else {
             devcontainer
                 .assert()

@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { cameraStore } from "@/camera";
-import { InfoCard, OtherDiagramCard } from "@/cards";
+import { BuildsReleasesCard, InfoCard, OtherDiagramCard } from "@/cards";
 import { useMapTray } from "@/cards/MapTrayContext";
-import type { Block as GraphqlBlock } from "@/graphql/generated";
+import type { GetBlocksQuery } from "@/graphql/generated";
 import { currentTheme } from "@/theme/theme";
 import { CardSlots } from "./CardSlots";
 import { BLOCK_DIMENSIONS } from "./dimensions";
@@ -34,7 +34,7 @@ export interface BlockProps {
 	docs?: string[];
 	links?: BlockLink[];
 	diagrams?: string[];
-	blockData?: GraphqlBlock;
+	blockData?: GetBlocksQuery["blocks"][number];
 }
 
 /**
@@ -109,6 +109,18 @@ export function Block({
 	const allCards = [
 		{ components: [overviewCard] },
 		{ components: diagrams.length > 0 ? [otherDiagramCard] : [] },
+		{
+			components: blockData?.delivery
+				? [
+						<BuildsReleasesCard
+							key="builds-releases-card"
+							delivery={blockData.delivery}
+							snapshot={blockData.deliverySnapshot}
+							assessments={blockData.deliveryAssessments}
+						/>,
+					]
+				: [],
+		},
 	];
 
 	useEffect(() => {

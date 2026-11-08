@@ -1,4 +1,40 @@
 """
+Typed `ActionsBuildSource` record.
+"""
+type ActionsBuildSource {
+	"""
+	Workflow path or numeric identifier.
+	"""
+	workflow: String!
+	"""
+	Selected Actions artifact names; empty selects all.
+	"""
+	artifactNames: [String!]!
+}
+
+"""
+Typed `ActionsReportSource` record.
+"""
+type ActionsReportSource {
+	"""
+	Trusted reporting workflow path.
+	"""
+	workflow: String!
+	"""
+	Artifact containing the report JSON.
+	"""
+	artifactName: String!
+	"""
+	Expected versioned report schema.
+	"""
+	schema: String!
+	"""
+	Maximum evidence age in seconds.
+	"""
+	maxAgeSeconds: Int!
+}
+
+"""
 Logical kind for a generated artifact persisted to storage.
 """
 enum ArtifactKind {
@@ -13,6 +49,24 @@ enum ArtifactKind {
 }
 
 type Block {
+	"""
+	Declarative GitHub delivery sources, without credentials or network access.
+	# Errors
+	Rejects an invalid persisted configuration.
+	"""
+	delivery: GitHubDelivery
+	"""
+	Latest organization-scoped delivery observation attached by the server.
+	# Errors
+	Rejects malformed persisted evidence.
+	"""
+	deliverySnapshot: DeliverySnapshot
+	"""
+	Freshness and rollback eligibility evaluated at query time.
+	# Errors
+	Rejects malformed configuration or evidence.
+	"""
+	deliveryAssessments: [DeliveryAssessment!]!
 	"""
 	Stable Manifest identity used to attach operational history.
 	"""
@@ -95,6 +149,841 @@ type Block {
 	connections: [String!]!
 }
 
+"""
+Implement the DateTime<Utc> scalar
+
+The input/output is a string in RFC3339 format.
+"""
+scalar DateTime
+
+"""
+Typed `DeliveryArtifact` record.
+"""
+type DeliveryArtifact {
+	"""
+	Provider artifact/asset identity.
+	"""
+	id: String!
+	"""
+	Artifact storage kind.
+	"""
+	kind: DeliveryArtifactKind!
+	"""
+	Artifact display name.
+	"""
+	name: String!
+	"""
+	Digest of this artifact, distinct from contained files.
+	"""
+	digest: String
+	"""
+	Producing workflow run when provided.
+	"""
+	runId: String
+	"""
+	Owning GitHub release when provided.
+	"""
+	releaseId: String
+	"""
+	Provider reports artifact expired.
+	"""
+	expired: Boolean!
+	"""
+	Artifact reference URL.
+	"""
+	url: String
+	"""
+	Verified cryptographic provenance, never inferred from build success.
+	"""
+	provenance: DeliveryVerification!
+}
+
+"""
+Values for `DeliveryArtifactKind`.
+"""
+enum DeliveryArtifactKind {
+	"""
+	Actions artifact.
+	"""
+	ACTIONS_ARTIFACT
+	"""
+	Release asset.
+	"""
+	RELEASE_ASSET
+	"""
+	Oci image.
+	"""
+	OCI_IMAGE
+}
+
+"""
+Typed `DeliveryAssessment` record.
+"""
+type DeliveryAssessment {
+	"""
+	Configured environment name.
+	"""
+	environment: String!
+	"""
+	Freshness and availability of runtime evidence.
+	"""
+	runtimeState: DeliveryEvidenceState!
+	"""
+	Whether every observed workload matches the deployment link.
+	"""
+	runningMatchesDeployment: Boolean
+	"""
+	Previous successful deployment candidate.
+	"""
+	candidateDeploymentId: String
+	"""
+	Explicit candidate artifact digest.
+	"""
+	candidateDigest: String
+	"""
+	Whether configured checks establish rollback eligibility.
+	"""
+	eligibility: DeliveryEligibility!
+	"""
+	Assessment checks with explicit unknown outcomes.
+	"""
+	checks: [DeliveryCompatibilityCheck!]!
+}
+
+"""
+Typed `DeliveryBuild` record.
+"""
+type DeliveryBuild {
+	"""
+	GitHub run ID.
+	"""
+	id: String!
+	"""
+	Workflow attempt number.
+	"""
+	attempt: Int!
+	"""
+	Workflow path.
+	"""
+	workflow: String!
+	"""
+	Run display name.
+	"""
+	name: String!
+	"""
+	Workflow head commit, not inferred artifact provenance.
+	"""
+	commitSha: String!
+	"""
+	Execution state.
+	"""
+	status: DeliveryRunStatus!
+	"""
+	Completed outcome.
+	"""
+	conclusion: DeliveryConclusion
+	"""
+	Provider creation time.
+	"""
+	createdAt: DateTime!
+	"""
+	Provider update time.
+	"""
+	updatedAt: DateTime!
+	"""
+	Workflow run URL.
+	"""
+	url: String!
+	"""
+	Jobs for this run attempt.
+	"""
+	jobs: [DeliveryJob!]!
+}
+
+"""
+Values for `DeliveryCheckOutcome`.
+"""
+enum DeliveryCheckOutcome {
+	"""
+	Passed.
+	"""
+	PASSED
+	"""
+	Failed.
+	"""
+	FAILED
+	"""
+	Unknown.
+	"""
+	UNKNOWN
+}
+
+"""
+Typed `DeliveryCompatibilityCheck` record.
+"""
+type DeliveryCompatibilityCheck {
+	"""
+	Performed compatibility check.
+	"""
+	name: String!
+	"""
+	Check result.
+	"""
+	outcome: DeliveryCheckOutcome!
+	"""
+	Human-readable result detail.
+	"""
+	message: String
+}
+
+"""
+Typed `DeliveryCompatibilityEvidence` record.
+"""
+type DeliveryCompatibilityEvidence {
+	"""
+	Must be scryr.compatibility.v1.
+	"""
+	schema: String!
+	"""
+	Stable Scryr manifest identity.
+	"""
+	manifestId: String!
+	"""
+	Configured environment name.
+	"""
+	environment: String!
+	"""
+	Exact candidate artifact tested.
+	"""
+	candidateDigest: String!
+	"""
+	Candidate configuration tested; omission only applies when current and candidate configurations match.
+	"""
+	candidateConfigurationRevision: String
+	"""
+	Schema identity against which the candidate was tested.
+	"""
+	currentSchemaRevision: String!
+	"""
+	Configuration identity against which the candidate was tested.
+	"""
+	currentConfigurationRevision: String!
+	"""
+	Version of the checks that were executed.
+	"""
+	suiteRevision: String!
+	"""
+	Actual check completion time.
+	"""
+	observedAt: DateTime!
+	"""
+	Individual check outcomes.
+	"""
+	checks: [DeliveryCompatibilityCheck!]!
+}
+
+"""
+Values for `DeliveryConclusion`.
+"""
+enum DeliveryConclusion {
+	"""
+	Success.
+	"""
+	SUCCESS
+	"""
+	Failure.
+	"""
+	FAILURE
+	"""
+	Cancelled.
+	"""
+	CANCELLED
+	"""
+	Skipped.
+	"""
+	SKIPPED
+	"""
+	Timed out.
+	"""
+	TIMED_OUT
+	"""
+	Action required.
+	"""
+	ACTION_REQUIRED
+	"""
+	Neutral.
+	"""
+	NEUTRAL
+	"""
+	Stale.
+	"""
+	STALE
+	"""
+	Startup failure.
+	"""
+	STARTUP_FAILURE
+	"""
+	Unknown.
+	"""
+	UNKNOWN
+}
+
+"""
+Typed `DeliveryDeployment` record.
+"""
+type DeliveryDeployment {
+	"""
+	Append-only provider status history, newest first.
+	"""
+	statuses: [DeliveryDeploymentEvent!]!
+	"""
+	GitHub deployment ID.
+	"""
+	id: String!
+	"""
+	Provider environment name.
+	"""
+	environment: String!
+	"""
+	Requested deployment revision.
+	"""
+	commitSha: String!
+	"""
+	Latest reported status.
+	"""
+	status: DeliveryDeploymentStatus!
+	"""
+	Deployment creation time.
+	"""
+	createdAt: DateTime!
+	"""
+	Latest status time.
+	"""
+	updatedAt: DateTime!
+	"""
+	Environment or deployment log URL.
+	"""
+	url: String
+}
+
+"""
+One GitHub deployment status event.
+"""
+type DeliveryDeploymentEvent {
+	"""
+	Reported deployment state.
+	"""
+	status: DeliveryDeploymentStatus!
+	"""
+	Time reported by GitHub.
+	"""
+	createdAt: DateTime!
+	"""
+	Environment or log URL.
+	"""
+	url: String
+}
+
+"""
+Values for `DeliveryDeploymentStatus`.
+"""
+enum DeliveryDeploymentStatus {
+	"""
+	Pending.
+	"""
+	PENDING
+	"""
+	Queued.
+	"""
+	QUEUED
+	"""
+	In progress.
+	"""
+	IN_PROGRESS
+	"""
+	Success.
+	"""
+	SUCCESS
+	"""
+	Failure.
+	"""
+	FAILURE
+	"""
+	Error.
+	"""
+	ERROR
+	"""
+	Inactive.
+	"""
+	INACTIVE
+	"""
+	Unknown.
+	"""
+	UNKNOWN
+}
+
+"""
+Values for `DeliveryEligibility`.
+"""
+enum DeliveryEligibility {
+	"""
+	Eligible.
+	"""
+	ELIGIBLE
+	"""
+	Blocked.
+	"""
+	BLOCKED
+	"""
+	Unknown.
+	"""
+	UNKNOWN
+}
+
+"""
+Typed `DeliveryEnvironment` record.
+"""
+type DeliveryEnvironment {
+	"""
+	Stable environment identity.
+	"""
+	name: String!
+	"""
+	Native deployment source.
+	"""
+	deployments: GitHubDeploymentSource!
+	"""
+	Optional running-artifact evidence.
+	"""
+	runtime: ActionsReportSource
+	"""
+	Optional candidate compatibility evidence.
+	"""
+	compatibility: ActionsReportSource
+	"""
+	Rollback evidence requirements.
+	"""
+	rollback: DeliveryRollbackPolicy!
+}
+
+"""
+Values for `DeliveryEvidenceState`.
+"""
+enum DeliveryEvidenceState {
+	"""
+	Available.
+	"""
+	AVAILABLE
+	"""
+	Missing.
+	"""
+	MISSING
+	"""
+	Stale.
+	"""
+	STALE
+	"""
+	Access denied.
+	"""
+	ACCESS_DENIED
+	"""
+	Unsupported.
+	"""
+	UNSUPPORTED
+	"""
+	Error.
+	"""
+	ERROR
+}
+
+"""
+Typed `DeliveryJob` record.
+"""
+type DeliveryJob {
+	"""
+	GitHub job ID.
+	"""
+	id: String!
+	"""
+	Job display name.
+	"""
+	name: String!
+	"""
+	Execution state.
+	"""
+	status: DeliveryRunStatus!
+	"""
+	Completed outcome.
+	"""
+	conclusion: DeliveryConclusion
+	"""
+	Job log URL.
+	"""
+	url: String!
+}
+
+"""
+Typed `DeliveryLink` record.
+"""
+type DeliveryLink {
+	"""
+	Must be scryr.delivery.v1.
+	"""
+	schema: String!
+	"""
+	Stable Scryr manifest identity.
+	"""
+	manifestId: String!
+	"""
+	Configured environment name.
+	"""
+	environment: String!
+	"""
+	Explicit GitHub deployment ID.
+	"""
+	deploymentId: String!
+	"""
+	Explicit producing build run ID.
+	"""
+	buildRunId: String!
+	"""
+	Producing run attempt.
+	"""
+	buildAttempt: Int!
+	"""
+	Actual source revision reported by the build.
+	"""
+	sourceRevision: String!
+	"""
+	Deployed artifact content digest.
+	"""
+	artifactDigest: String!
+	"""
+	Explicit GitHub release ID.
+	"""
+	releaseId: String
+	"""
+	Deployed configuration identity.
+	"""
+	configurationRevision: String!
+}
+
+"""
+Values for `DeliveryProvider`.
+"""
+enum DeliveryProvider {
+	"""
+	Github.
+	"""
+	GITHUB
+}
+
+"""
+Typed `DeliveryRelease` record.
+"""
+type DeliveryRelease {
+	"""
+	GitHub release ID.
+	"""
+	id: String!
+	"""
+	Release tag.
+	"""
+	tag: String!
+	"""
+	Display title.
+	"""
+	name: String
+	"""
+	Publication time.
+	"""
+	publishedAt: DateTime
+	"""
+	Whether release is a draft.
+	"""
+	draft: Boolean!
+	"""
+	Whether release is a prerelease.
+	"""
+	prerelease: Boolean!
+	"""
+	Release URL.
+	"""
+	url: String!
+	"""
+	Explicit release asset identities.
+	"""
+	assetIds: [String!]!
+}
+
+"""
+Typed `DeliveryRollbackPolicy` record.
+"""
+type DeliveryRollbackPolicy {
+	"""
+	Require candidate artifact availability.
+	"""
+	requireArtifactAvailable: Boolean!
+	"""
+	Require candidate provenance verification.
+	"""
+	requireVerifiedProvenance: Boolean!
+	"""
+	Require scoped compatibility evidence.
+	"""
+	requireCompatibilityEvidence: Boolean!
+}
+
+"""
+Values for `DeliveryRunStatus`.
+"""
+enum DeliveryRunStatus {
+	"""
+	Queued.
+	"""
+	QUEUED
+	"""
+	In progress.
+	"""
+	IN_PROGRESS
+	"""
+	Completed.
+	"""
+	COMPLETED
+	"""
+	Waiting.
+	"""
+	WAITING
+	"""
+	Requested.
+	"""
+	REQUESTED
+	"""
+	Pending.
+	"""
+	PENDING
+	"""
+	Unknown.
+	"""
+	UNKNOWN
+}
+
+"""
+Typed `DeliveryRuntimeEvidence` record.
+"""
+type DeliveryRuntimeEvidence {
+	"""
+	Must be scryr.runtime.v1.
+	"""
+	schema: String!
+	"""
+	Stable Scryr manifest identity.
+	"""
+	manifestId: String!
+	"""
+	Configured environment name.
+	"""
+	environment: String!
+	"""
+	Deployment the probe identifies.
+	"""
+	deploymentId: String!
+	"""
+	Observed configuration identity.
+	"""
+	configurationRevision: String!
+	"""
+	Observed database schema identity.
+	"""
+	schemaRevision: String!
+	"""
+	Time of actual probe.
+	"""
+	observedAt: DateTime!
+	"""
+	Observed workload digest distribution.
+	"""
+	workloads: [DeliveryRuntimeWorkload!]!
+}
+
+"""
+Typed `DeliveryRuntimeWorkload` record.
+"""
+type DeliveryRuntimeWorkload {
+	"""
+	Workload/container identity.
+	"""
+	name: String!
+	"""
+	Observed content digest.
+	"""
+	artifactDigest: String!
+	"""
+	Observed replica count.
+	"""
+	replicas: Int!
+	"""
+	Ready replicas for this digest.
+	"""
+	readyReplicas: Int!
+}
+
+"""
+Typed `DeliverySnapshot` record.
+"""
+type DeliverySnapshot {
+	"""
+	Exact declaration used by the collector; prevents reusing evidence after source changes.
+	"""
+	configuration: GitHubDelivery
+	"""
+	GitHub host.
+	"""
+	host: String!
+	"""
+	Repository owner/name.
+	"""
+	repository: String!
+	"""
+	Collection snapshot time.
+	"""
+	observedAt: DateTime!
+	"""
+	Collection status per source.
+	"""
+	sources: [DeliverySourceState!]!
+	"""
+	Observed build runs.
+	"""
+	builds: [DeliveryBuild!]!
+	"""
+	Observed artifact inventory.
+	"""
+	artifacts: [DeliveryArtifact!]!
+	"""
+	Observed published releases.
+	"""
+	releases: [DeliveryRelease!]!
+	"""
+	Observed deployment history.
+	"""
+	deployments: [DeliveryDeployment!]!
+	"""
+	Explicit source/build/artifact/deployment links.
+	"""
+	links: [DeliveryLink!]!
+	"""
+	Workflow-published runtime observations.
+	"""
+	runtime: [DeliveryRuntimeEvidence!]!
+	"""
+	Workflow-published compatibility observations.
+	"""
+	compatibility: [DeliveryCompatibilityEvidence!]!
+}
+
+"""
+Values for `DeliverySourceCategory`.
+"""
+enum DeliverySourceCategory {
+	"""
+	Builds.
+	"""
+	BUILDS
+	"""
+	Artifacts.
+	"""
+	ARTIFACTS
+	"""
+	Releases.
+	"""
+	RELEASES
+	"""
+	Deployments.
+	"""
+	DEPLOYMENTS
+	"""
+	Runtime.
+	"""
+	RUNTIME
+	"""
+	Compatibility.
+	"""
+	COMPATIBILITY
+	"""
+	Provenance.
+	"""
+	PROVENANCE
+}
+
+"""
+Typed `DeliverySourceState` record.
+"""
+type DeliverySourceState {
+	"""
+	Evidence category.
+	"""
+	category: DeliverySourceCategory!
+	"""
+	Environment when the source is scoped.
+	"""
+	environment: String
+	"""
+	Collection result.
+	"""
+	state: DeliveryEvidenceState!
+	"""
+	Non-sensitive diagnostic.
+	"""
+	message: String
+}
+
+"""
+Typed collection options declared inside a delivery definition.
+"""
+type DeliveryTask {
+	"""
+	Maximum recent records requested from each source, between one and 100.
+	"""
+	limit: Int!
+	"""
+	Download release assets and verify their build-workflow attestations.
+	"""
+	verifyAttestations: Boolean!
+}
+
+"""
+Built-in delivery actions with declarative, typed options rather than shell commands.
+"""
+type DeliveryTasks {
+	"""
+	Collect native delivery records and configured workflow reports.
+	"""
+	collect: DeliveryTask!
+	"""
+	Collect records and verify release-asset attestations by default.
+	"""
+	verify: DeliveryTask!
+}
+
+"""
+Values for `DeliveryVerification`.
+"""
+enum DeliveryVerification {
+	"""
+	Verified.
+	"""
+	VERIFIED
+	"""
+	Failed.
+	"""
+	FAILED
+	"""
+	Unknown.
+	"""
+	UNKNOWN
+}
+
 type GeneratedManifestMutationRoot {
 	"""
 	Save source and all its diagram artifacts with optimistic concurrency.
@@ -112,6 +1001,82 @@ type GeneratedManifestMutationRoot {
 	Upsert a generated manifest artifact into storage.
 	"""
 	upsertGeneratedManifest(input: UpsertGeneratedManifestInput!): UpsertGeneratedManifestPayload!
+}
+
+"""
+Typed `GitHubDelivery` record.
+"""
+type GitHubDelivery {
+	"""
+	Provider discriminator.
+	"""
+	kind: DeliveryProvider!
+	"""
+	Repository identity.
+	"""
+	repository: GitHubRepository!
+	"""
+	Build source selection.
+	"""
+	builds: ActionsBuildSource!
+	"""
+	Release source selection.
+	"""
+	releases: GitHubReleaseSource!
+	"""
+	Configured deployment environments.
+	"""
+	environments: [DeliveryEnvironment!]!
+	"""
+	Named, typed collection actions; defaults preserve legacy definitions.
+	"""
+	tasks: DeliveryTasks!
+}
+
+"""
+Typed `GitHubDeploymentSource` record.
+"""
+type GitHubDeploymentSource {
+	"""
+	Exact GitHub environment name.
+	"""
+	environment: String!
+	"""
+	Deployment task filter.
+	"""
+	task: String!
+}
+
+"""
+Typed `GitHubReleaseSource` record.
+"""
+type GitHubReleaseSource {
+	"""
+	Include unpublished drafts.
+	"""
+	includeDrafts: Boolean!
+	"""
+	Include prereleases.
+	"""
+	includePrereleases: Boolean!
+}
+
+"""
+Typed `GitHubRepository` record.
+"""
+type GitHubRepository {
+	"""
+	GitHub host, without scheme.
+	"""
+	host: String!
+	"""
+	Repository owner.
+	"""
+	owner: String!
+	"""
+	Repository name.
+	"""
+	name: String!
 }
 
 """

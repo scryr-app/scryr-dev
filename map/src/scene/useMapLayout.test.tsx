@@ -26,6 +26,7 @@ const blocks: Block[] = [
 		metricTools: [],
 		links: [],
 		rawJsonString: "{}",
+		deliveryAssessments: [],
 	},
 ];
 const view: LayoutView = { position: [8, 6, 8], fov: 40, aspect: 16 / 9 };

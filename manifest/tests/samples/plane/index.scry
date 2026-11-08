@@ -8,6 +8,7 @@ Source: https://github.com/makeplane/plane
 """
 
 from scryr import Diagram, Info, Link, Manifest
+from scryr.delivery import ActionsBuildSource, GitHubDelivery, GitHubRepository
 from scryr.types import (
     Classification,
     DeploymentTarget,
@@ -993,6 +994,27 @@ proxy_block = Manifest(
         links=[Link(site_name="Plane Docs", http_url=_DOCS)],
     ),
 )
+
+_delivery = GitHubDelivery(
+    repository=GitHubRepository(owner="makeplane", name="plane"),
+    builds=ActionsBuildSource(workflow=".github/workflows/ci.yml"),
+)
+for _manifest_id, _manifest in {
+    "postgres": postgres_block,
+    "valkey": valkey_block,
+    "rabbitmq": rabbitmq_block,
+    "minio": minio_block,
+    "api": api_block,
+    "worker": worker_block,
+    "beat-worker": beat_worker_block,
+    "live": live_block,
+    "web": web_block,
+    "admin": admin_block,
+    "space": space_block,
+    "proxy": proxy_block,
+}.items():
+    _manifest.manifest_id = f"plane/{_manifest_id}"
+    _manifest.delivery = _delivery
 
 plane_diagram = Diagram(
     name="Plane",

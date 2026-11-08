@@ -3,6 +3,8 @@
 
 /// GitHub Actions run and status history models.
 pub mod action_history;
+/// Typed GitHub delivery configuration, evidence, and assessments.
+pub mod delivery;
 /// Typed operational report observations.
 pub mod reports;
 
